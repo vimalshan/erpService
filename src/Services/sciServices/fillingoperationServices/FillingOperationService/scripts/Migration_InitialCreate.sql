@@ -1,0 +1,202 @@
+﻿IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317223841_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [FILLING_CAPACITY] (
+        [FILLING_POINT_GROUP_ID] int NOT NULL,
+        [MAIN_PRODUCT_ID] int NOT NULL,
+        [PACKAGE_TYPE_ID] int NOT NULL,
+        [ITEM_CAPACITY_ID] int NOT NULL,
+        [CAPACITY_PER_SHIFT] int NOT NULL,
+        [USAGE_PRIORITY] int NOT NULL,
+        [SCI_USERID_CREATED] int NOT NULL,
+        [CREATION_DATE] datetime2 NOT NULL,
+        [SCI_USERID_MODIFIED] int NULL,
+        [MODIFIED_DATE] datetime2 NULL,
+        CONSTRAINT [PK_FILLING_CAPACITY] PRIMARY KEY ([FILLING_POINT_GROUP_ID], [MAIN_PRODUCT_ID], [PACKAGE_TYPE_ID])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317223841_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [FILLING_LINE_PRODUCT_MAP] (
+        [FILLING_LINE_ID] int NOT NULL IDENTITY,
+        [MAIN_PRODUCT_ID] int NOT NULL,
+        [SCI_USER_ID_MODIFIED] int NOT NULL,
+        [MODIFIED_DATE] datetime2 NOT NULL,
+        CONSTRAINT [PK_FILLING_LINE_PRODUCT_MAP] PRIMARY KEY ([FILLING_LINE_ID])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317223841_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [FILLING_PLANT] (
+        [FILLING_PLANT_ID] int NOT NULL IDENTITY,
+        [COMPANY_UNIT_ID] int NOT NULL,
+        [FILLING_PLANT_NAME] nvarchar(40) NOT NULL,
+        [LOCATION] nvarchar(20) NOT NULL,
+        [SCI_USER_ID_CREATED] int NOT NULL,
+        [CREATION_DATE] datetime2 NOT NULL,
+        [SCI_USER_ID_MODIFIED] int NULL,
+        [MODIFIED_DATE] datetime2 NULL,
+        CONSTRAINT [PK_FILLING_PLANT] PRIMARY KEY ([FILLING_PLANT_ID])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317223841_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [FL_SWITCHOVER_TIME] (
+        [FILLING_LINE_ID] int NOT NULL,
+        [FROM_MAIN_PRODUCT_ID] int NOT NULL,
+        [TO_MAIN_PRODUCT_ID] int NOT NULL,
+        [TIME_IN_HOURS] int NOT NULL,
+        [SCI_USER_ID_CREATED] int NOT NULL,
+        [CREATION_DATE] datetime2 NOT NULL,
+        [SCI_USER_ID_MODIFIED] int NULL,
+        [MODIFIED_DATE] datetime2 NULL,
+        CONSTRAINT [PK_FL_SWITCHOVER_TIME] PRIMARY KEY ([FILLING_LINE_ID], [FROM_MAIN_PRODUCT_ID], [TO_MAIN_PRODUCT_ID])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317223841_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [FL_WORKING_SHIFT] (
+        [FL_WORKING_ID] decimal(38,0) NULL,
+        [FILLINGLINE_ID] decimal(38,0) NOT NULL,
+        [SHIFT_CODE] char(1) NOT NULL,
+        [START_DATE] datetime2 NOT NULL,
+        [CLOSE_DATE] datetime2 NULL,
+        [SCI_USER_ID_MODIFIED] int NULL,
+        [MODIFIED_DATE] datetime2 NULL
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317223841_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [FPG_DOWNTIME] (
+        [FPG_ID] int NOT NULL IDENTITY,
+        [FILLING_POINT_GROUP_ID] int NULL,
+        [START_DATE_TIME] datetime2 NOT NULL,
+        [END_DATE_TIME] datetime2 NOT NULL,
+        [NO_OF_FILLING_POINTS] nvarchar(4) NULL,
+        [DOWNTIME_TYPE] nvarchar(255) NULL,
+        [SCI_USER_ID_CREATED] int NULL,
+        [CREATION_DATE] datetime2 NOT NULL,
+        [SCI_USER_ID_MODIFIED] int NULL,
+        [MODIFIED_DATE] datetime2 NULL,
+        CONSTRAINT [PK_FPG_DOWNTIME] PRIMARY KEY ([FPG_ID])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317223841_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [PLAN_DEVIATION] (
+        [REASON_ID] int NOT NULL IDENTITY,
+        [PLAN_DATE] datetime2 NOT NULL,
+        [FILLING_LINE_ID] int NOT NULL,
+        [PRODUCT_ID] int NOT NULL,
+        [REASON] nvarchar(200) NULL,
+        CONSTRAINT [PK_PLAN_DEVIATION] PRIMARY KEY ([REASON_ID])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317223841_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [FILLING_LINE] (
+        [FILLING_LINE_ID] int NOT NULL IDENTITY,
+        [FILLING_PLANT_ID] int NOT NULL,
+        [FILLING_LINE_NAME] nvarchar(30) NOT NULL,
+        [NO_OF_FILLING_POINTS] int NOT NULL,
+        [PACKAGE_TYPE_ID] int NULL,
+        [ISCLOSED] nvarchar(1) NULL,
+        [SCI_USER_ID_CREATED] int NOT NULL,
+        [CREATION_DATE] datetime2 NOT NULL,
+        [SCI_USER_ID_MODIFIED] int NULL,
+        [MODIFIED_DATE] datetime2 NULL,
+        CONSTRAINT [PK_FILLING_LINE] PRIMARY KEY ([FILLING_LINE_ID]),
+        CONSTRAINT [FK_FILLING_LINE_FILLING_PLANT_FILLING_PLANT_ID] FOREIGN KEY ([FILLING_PLANT_ID]) REFERENCES [FILLING_PLANT] ([FILLING_PLANT_ID]) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317223841_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [FILLING_POINT_GROUP] (
+        [FILLING_POINT_GROUP_ID] int NOT NULL IDENTITY,
+        [FILLING_POINT_GROUP_NAM] nvarchar(30) NOT NULL,
+        [FILLING_LINE_ID] int NOT NULL,
+        [NO_OF_FILLING_POINT] int NOT NULL,
+        [EXCLUSIVE_USE] int NULL,
+        [ISCLOSED] nvarchar(1) NULL,
+        [SCI_USER_ID_CREATED] int NOT NULL,
+        [CREATION_DATE] datetime2 NOT NULL,
+        [SCI_USER_ID_MODIFIED] int NULL,
+        [MODIFIED_DATE] datetime2 NULL,
+        CONSTRAINT [PK_FILLING_POINT_GROUP] PRIMARY KEY ([FILLING_POINT_GROUP_ID]),
+        CONSTRAINT [FK_FILLING_POINT_GROUP_FILLING_LINE_FILLING_LINE_ID] FOREIGN KEY ([FILLING_LINE_ID]) REFERENCES [FILLING_LINE] ([FILLING_LINE_ID]) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317223841_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IX_FILLING_LINE_FILLING_PLANT_ID] ON [FILLING_LINE] ([FILLING_PLANT_ID]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317223841_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IX_FILLING_POINT_GROUP_FILLING_LINE_ID] ON [FILLING_POINT_GROUP] ([FILLING_LINE_ID]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317223841_InitialCreate'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260317223841_InitialCreate', N'10.0.5');
+END;
+
+COMMIT;
+GO
+

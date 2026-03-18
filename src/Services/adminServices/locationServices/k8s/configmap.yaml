@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: location-services
+  labels:
+    name: location-services
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: location-services-config
+  namespace: location-services
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:7136"
+  Jwt__Issuer: "LocationServices"
+  Jwt__Audience: "LocationServices.Client"
+  Jwt__ExpirationMinutes: "60"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft: "Warning"

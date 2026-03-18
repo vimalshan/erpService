@@ -1,0 +1,62 @@
+@SettlementService.API_HostAddress = http://localhost:5149
+
+### Get all settlements
+GET {{SettlementService.API_HostAddress}}/api/settlements
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Get settlement by ID
+GET {{SettlementService.API_HostAddress}}/api/settlements/1001
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Get settlements by member
+GET {{SettlementService.API_HostAddress}}/api/settlements/member/500001
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Generate JWT token
+POST {{SettlementService.API_HostAddress}}/api/auth/token
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin"
+}
+
+### Create settlement
+POST {{SettlementService.API_HostAddress}}/api/settlements
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "settlementNumber": 1004,
+  "memberNo": 500004,
+  "settlementType": "F",
+  "settlementAmount": 150000,
+  "settlementDate": "2026-03-18T00:00:00",
+  "createdBy": 1,
+  "trustCode": "PF1",
+  "reason": "Retirement"
+}
+
+### Approve settlement
+POST {{SettlementService.API_HostAddress}}/api/settlements/1004/approve
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "approvedBy": 2,
+  "remarks": "Approved after verification"
+}
+
+### Health check
+GET {{SettlementService.API_HostAddress}}/health
+Accept: application/json
+
+### Minimal API - Get all settlements
+GET {{SettlementService.API_HostAddress}}/api/v2/settlements
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###

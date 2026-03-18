@@ -1,0 +1,118 @@
+-- =========================================================================
+-- LOAN MODULE - Database Tables and Procedures
+-- Database: PFDB
+-- Module: PF Loan Management
+-- Description: Manages advance/loan against PF
+-- Created: March 9, 2026
+-- =========================================================================
+
+USE PFDB;
+GO
+
+-- Loan Main Records
+CREATE TABLE [LOAN_MAIN] (
+    [LOAN_NO] BIGINT NOT NULL PRIMARY KEY,
+    [LOAN_TRUST_CODE] CHAR(3) NULL,
+    [LOAN_MEMBER_ID] BIGINT NULL,
+    [LOAN_DATE] DATETIME2(3) NULL,
+    [LOAN_AMOUNT] DECIMAL(19,0) NULL,
+    [LOAN_TYPE] BIGINT NULL,
+    [LOAN_REASON] VARCHAR(200) NULL,
+    [LOAN_TENURE] VARCHAR(10) NULL,
+    [LOAN_PRINCIPALOS] DECIMAL(19,0) NULL,
+    [LOAN_CLSFLAG] CHAR(1) NULL,
+    [LOAN_UPDBY_EMP_SYSIDC] BIGINT NULL,
+    [LOAN_UPDON] DATETIME2(3) NULL,
+    [LOAN_STATUS] CHAR(1) DEFAULT 'A',
+    [LOAN_RATE] DECIMAL(5,2) NULL,
+    [LOAN_APPROVAL_DATE] DATETIME2(3) NULL,
+    [LOAN_CLOSURE_DATE] DATETIME2(3) NULL
+);
+GO
+
+-- Loan Repayment Schedule
+CREATE TABLE [LOAN_REPAYMENT] (
+    [REPAY_ID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+    [LOAN_NO] BIGINT NOT NULL,
+    [REPAY_INSTALLMENT_NO] INT NOT NULL,
+    [REPAY_AMOUNT] DECIMAL(19,0) NOT NULL,
+    [REPAY_DUE_DATE] DATETIME2(3) NOT NULL,
+    [REPAY_PAID_DATE] DATETIME2(3) NULL,
+    [REPAY_PAID_AMOUNT] DECIMAL(19,0) NULL,
+    [REPAY_STATUS] CHAR(1) DEFAULT 'O',
+    CONSTRAINT [FK_LOAN_REPAYMENT] FOREIGN KEY ([LOAN_NO]) REFERENCES [LOAN_MAIN]([LOAN_NO])
+);
+GO
+
+-- Loan Deduction from Contribution
+CREATE TABLE [LOAN_DEDUCTION] (
+    [DED_ID] BIGINT IDENTITY(1,1) PRIMARY KEY,
+    [LOAN_NO] BIGINT NOT NULL,
+    [CONTRIBUTION_ID] DECIMAL(38) NULL,
+    [DED_AMOUNT] DECIMAL(19,0) NOT NULL,
+    [DED_DATE] DATETIME2(3) NOT NULL,
+    CONSTRAINT [FK_LOAN_DEDUCTION] FOREIGN KEY ([LOAN_NO]) REFERENCES [LOAN_MAIN]([LOAN_NO])
+);
+GO
+
+CREATE NONCLUSTERED INDEX [IDX_LOAN_MAIN_MEMBER] ON [LOAN_MAIN] ([LOAN_MEMBER_ID]) INCLUDE ([LOAN_NO], [LOAN_STATUS]);
+CREATE NONCLUSTERED INDEX [IDX_LOAN_REPAYMENT_LOAN] ON [LOAN_REPAYMENT] ([LOAN_NO], [REPAY_STATUS]);
+
+-- PROCEDURE: Create Loan
+IF OBJECT_ID('dbo.usp_CreateLoan', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_CreateLoan;
+GO
+
+CREATE PROCEDURE dbo.usp_CreateLoan
+    @p_LoanNo BIGINT,
+    @p_MemberNo BIGINT,
+    @p_LoanAmount DECIMAL(19,0),
+    @p_LoanType BIGINT,
+    @p_LoanReason VARCHAR(200),
+    @p_CreatedBy BIGINT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        
+        INSERT INTO dbo.LOAN_MAIN (
+            LOAN_NO, LOAN_MEMBER_ID, LOAN_AMOUNT, LOAN_TYPE, LOAN_REASON,
+            LOAN_DATE, LOAN_UPDBY_EMP_SYSIDC, LOAN_UPDON, LOAN_STATUS
+        ) VALUES (
+            @p_LoanNo, @p_MemberNo, @p_LoanAmount, @p_LoanType, @p_LoanReason,
+            GETDATE(), @p_CreatedBy, GETDATE(), 'A'
+        );
+        
+        COMMIT TRANSACTION;
+        PRINT 'Loan created successfully';
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- VIEW: Active Loans
+IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'vw_ActiveLoans' AND type = 'V')
+BEGIN
+    CREATE VIEW dbo.vw_ActiveLoans AS
+    SELECT 
+        lm.LOAN_NO,
+        lm.LOAN_MEMBER_ID,
+        lm.LOAN_AMOUNT,
+        lm.LOAN_PRINCIPALOS,
+        lm.LOAN_DATE,
+        lm.LOAN_APPROVAL_DATE,
+        COUNT(lr.REPAY_ID) AS RemainingInstallments
+    FROM dbo.LOAN_MAIN lm
+    LEFT JOIN dbo.LOAN_REPAYMENT lr ON lm.LOAN_NO = lr.LOAN_NO AND lr.REPAY_STATUS = 'O'
+    WHERE lm.LOAN_STATUS = 'A'
+    GROUP BY lm.LOAN_NO, lm.LOAN_MEMBER_ID, lm.LOAN_AMOUNT, lm.LOAN_PRINCIPALOS, lm.LOAN_DATE, lm.LOAN_APPROVAL_DATE;
+END
+GO
+
+PRINT 'Loan Module created successfully!';
+GO

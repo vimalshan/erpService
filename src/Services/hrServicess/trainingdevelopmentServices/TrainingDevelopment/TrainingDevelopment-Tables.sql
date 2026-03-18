@@ -1,0 +1,64 @@
+-- TrainingDevelopment Module - Tables
+USE [HRDB];
+GO
+
+-- Table: TRAINING_DET
+CREATE TABLE [TRAINING_DET] (
+    [TR_ID] DECIMAL(38) NOT NULL  -- Training Need ID,
+    [TR_FINYEAR] DECIMAL(38) NOT NULL  -- Financial Year,
+    [TR_EMPSYSID] DECIMAL(38) NOT NULL  -- Employee System ID,
+    [TR_NEED] VARCHAR(1000) NOT NULL  -- Technical Training Need,
+    [TR_GAPS] VARCHAR(1000) NOT NULL  -- Current Gap Area,
+    [TR_MODE] DECIMAL(38) NOT NULL  -- Mode of Training On-The-Job / Classroom,
+    [TR_PROGRAMID] DECIMAL(38) NOT NULL  -- Proposed program, If any,
+    [TR_PROGRAMDESC] VARCHAR(1000) NOT NULL  -- Proposed program, If any,
+    [TR_PLANFROM] DATETIME2(3) NOT NULL  -- Plannned date of Training,
+    [TR_PLANTO] DATETIME2(3) NOT NULL  -- Plannned date of Training,
+    [TR_STATUS] CHAR(1) NOT NULL  -- Training Status P- Pending / C- Completed / D - Dropped,
+    [TR_ACTFROM] DATETIME2(3) NULL  -- Actual From Date of Trainng,
+    [TR_ACTTO] DATETIME2(3) NULL  -- Actual To Date of Trainng,
+    [TR_INSTITUTEID] DECIMAL(38) NULL  -- Institute ID,
+    [TR_INSTITUTEDESC] VARCHAR(1000) NULL  -- Institute Desc,
+    [TR_TRAINERID] DECIMAL(38) NULL  -- Trainer ID,
+    [TR_TRAINERDESC] VARCHAR(65) NULL  -- Trainer Description,
+    [TR_PLACEID] DECIMAL(38) NULL  -- Place ID,
+    [TR_PLACE] VARCHAR(65) NULL  -- Place of training,
+    [TR_COST] DECIMAL(38) NULL  -- Cost of Training (In Rs.),
+    [TR_DROPREMARKS] VARCHAR(1000) NULL  -- Dropped Remarks,
+    [TR_LASTMODIFIEDBY] DECIMAL(22,0) NULL,
+    [TR_LASTMODIFIEDON] DATETIME2(3) NULL,
+    CONSTRAINT [PK_TRAINING_DET] PRIMARY KEY ([TR_ID])
+);
+
+
+
+-- Table: INSTITUTE_MASTER
+CREATE TABLE [INSTITUTE_MASTER] (
+    [INSTITUTE_CODE] DECIMAL(22,0) NOT NULL  -- Education Institute Code,
+    [INSTITUTE_NAME] VARCHAR(100) NULL  -- Institute Name,
+    [INSTITUTE_ADD1] VARCHAR(100) NULL  -- Address - 1,
+    [INSTITUTE_ADD2] VARCHAR(100) NULL  -- Address - 2,
+    [INSTITUTE_CITY] VARCHAR(50) NULL  -- City,
+    [INSTITUTE_STATE] VARCHAR(50) NULL  -- State,
+    [INSTITUTE_PIN] VARCHAR(50) NULL  -- PIN No,
+    [INSTITUTE_PHONE] VARCHAR(50) NULL  -- Phone No,
+    [INSTITUTE_FAX] VARCHAR(50) NULL  -- Fax No,
+    [INSTITUTE_EMAIL] VARCHAR(50) NULL  -- Email ID,
+    [INSTITUTE_URL] VARCHAR(50) NULL  -- Internet URL,
+    [INSTITUTE_TYPE] VARCHAR(50) NULL  -- Education Standard Type,
+    [INSTITUTE_CAMPUSRECRUIT] CHAR(1) NOT NULL,
+    [INSTITUTE_CLASS] VARCHAR(3) NULL,
+    [INSTITUTE_MODIFIEDBY] DECIMAL(22,0) NULL,
+    [INSTITUTE_MODIFIEDON] DATETIME2(3) NULL
+);
+
+
+
+-- Table: PROGRAMLOV_MAST
+CREATE TABLE [PROGRAMLOV_MAST] (
+    [PRLOV_TYPECODE] VARCHAR(20) NOT NULL,
+    [PRLOV_CODE] VARCHAR(5) NOT NULL,
+    [PRLOV_NAME] VARCHAR(200) NOT NULL,
+    CONSTRAINT [PK_PROGRAMLOV_MAST] PRIMARY KEY ([PRLOV_TYPECODE])
+);
+

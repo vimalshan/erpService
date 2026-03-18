@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stationery-service
+  labels:
+    name: stationery-service
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stationery-service-config
+  namespace: stationery-service
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:5181"
+  Jwt__Issuer: "StationeryService"
+  Jwt__Audience: "StationeryServiceClients"
+  Jwt__ExpiresInMinutes: "60"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft: "Warning"

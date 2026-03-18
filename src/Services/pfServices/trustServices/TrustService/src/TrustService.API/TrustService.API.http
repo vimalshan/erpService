@@ -1,0 +1,58 @@
+@TrustService.API_HostAddress = http://localhost:5079
+@token = Bearer YOUR_JWT_TOKEN_HERE
+
+### Get all trusts
+GET {{TrustService.API_HostAddress}}/api/trusts
+Accept: application/json
+Authorization: {{token}}
+
+### Get active trusts
+GET {{TrustService.API_HostAddress}}/api/trusts/active
+Accept: application/json
+Authorization: {{token}}
+
+### Get trust by code
+GET {{TrustService.API_HostAddress}}/api/trusts/T01
+Accept: application/json
+Authorization: {{token}}
+
+### Get trusts via Dapper
+GET {{TrustService.API_HostAddress}}/api/trusts/dapper?statusFilter=A
+Accept: application/json
+Authorization: {{token}}
+
+### Create a trust
+POST {{TrustService.API_HostAddress}}/api/trusts
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "trustCode": "T03",
+  "trustShortName": "New Test Trust",
+  "trustType": "PF3",
+  "trustStartDate": "2026-01-01T00:00:00",
+  "addressLine1": "789 Test Street",
+  "city": "Bangalore",
+  "state": "Karnataka",
+  "pinCode": "560001",
+  "country": "India",
+  "email": "test@example.com"
+}
+
+### Close a trust
+POST {{TrustService.API_HostAddress}}/api/trusts/T03/close
+Content-Type: application/json
+Authorization: {{token}}
+
+"2026-12-31T00:00:00"
+
+### Minimal API - Get all trusts
+GET {{TrustService.API_HostAddress}}/api/minimal/trusts
+Accept: application/json
+Authorization: {{token}}
+
+### Health check
+GET {{TrustService.API_HostAddress}}/health
+Accept: application/json
+
+###

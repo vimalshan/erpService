@@ -1,0 +1,65 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: finyear-api
+  labels:
+    name: finyear-api
+    environment: production
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: finyear-api
+  namespace: finyear-api
+  labels:
+    app: finyear-api
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: finyear-api-role
+  namespace: finyear-api
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+  resourceNames: ["finyear-api-config"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+  resourceNames: ["finyear-api-secret"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: finyear-api-rolebinding
+  namespace: finyear-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: finyear-api-role
+subjects:
+- kind: ServiceAccount
+  name: finyear-api
+  namespace: finyear-api
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: finyear-api-pdb
+  namespace: finyear-api
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: finyear-api

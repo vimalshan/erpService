@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: erp-api-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5000
+    depends_on:
+      - finyear-service
+      - location-service
+      - vendor-service
+      - scholarship-service
+      - stationery-service
+      - tds-service
+      - lov-service
+      - shared-service
+    networks:
+      - erp-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Microservices (placeholders - replace with actual service configurations)
+  finyear-service:
+    container_name: finyear-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    ports:
+      - "5001:5001"
+    networks:
+      - erp-network
+    restart: unless-stopped
+    # Replace image with actual finyear service image
+    image: finyear-service:latest
+
+  location-service:
+    container_name: location-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    ports:
+      - "5002:5002"
+    networks:
+      - erp-network
+    restart: unless-stopped
+    image: location-service:latest
+
+  vendor-service:
+    container_name: vendor-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    ports:
+      - "5003:5003"
+    networks:
+      - erp-network
+    restart: unless-stopped
+    image: vendor-service:latest
+
+  scholarship-service:
+    container_name: scholarship-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    ports:
+      - "5004:5004"
+    networks:
+      - erp-network
+    restart: unless-stopped
+    image: scholarship-service:latest
+
+  stationery-service:
+    container_name: stationery-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    ports:
+      - "5005:5005"
+    networks:
+      - erp-network
+    restart: unless-stopped
+    image: stationery-service:latest
+
+  tds-service:
+    container_name: tds-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    ports:
+      - "5006:5006"
+    networks:
+      - erp-network
+    restart: unless-stopped
+    image: tds-service:latest
+
+  lov-service:
+    container_name: lov-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    ports:
+      - "5007:5007"
+    networks:
+      - erp-network
+    restart: unless-stopped
+    image: lov-service:latest
+
+  shared-service:
+    container_name: shared-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    ports:
+      - "5008:5008"
+    networks:
+      - erp-network
+    restart: unless-stopped
+    image: shared-service:latest
+
+networks:
+  erp-network:
+    driver: bridge

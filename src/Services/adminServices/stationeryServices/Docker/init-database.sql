@@ -1,0 +1,365 @@
+﻿-- =====================================================
+-- Docker init script for STATIONERYDB
+-- Runs on first container startup via sqlcmd
+-- =====================================================
+
+USE MASTER;
+GO
+
+-- ====================================================
+-- 1. Create database
+-- ====================================================
+IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = N'STATIONERYDB')
+BEGIN
+    CREATE DATABASE [STATIONERYDB];
+    PRINT '+ STATIONERYDB created';
+END
+ELSE
+    PRINT '+ STATIONERYDB already exists';
+GO
+
+USE [STATIONERYDB];
+GO
+
+-- ====================================================
+-- 2. Create Tables
+-- ====================================================
+
+-- STATIONARY_MASTER
+IF OBJECT_ID(N'[dbo].[STATIONARY_MASTER]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[STATIONARY_MASTER] (
+        [SM_STATIONARYID] BIGINT NOT NULL,
+        [SM_CATID] BIGINT NOT NULL,
+        [SM_LOC_ID] BIGINT NOT NULL,
+        [SM_DESC] VARCHAR(200) NOT NULL,
+        [SM_UOMID] BIGINT NOT NULL,
+        [SM_MAKE] VARCHAR(10) NOT NULL,
+        [SM_PRICE_PERUNIT] BIGINT NULL,
+        [SM_REORDER_LEVEL] BIGINT NULL,
+        [SM_UPDATED_BY] BIGINT NOT NULL,
+        [SM_UPDATED_ON] DATETIME2(3) NOT NULL,
+        [SM_VMID] BIGINT NOT NULL,
+        [SM_CLOSED] CHAR(1) NOT NULL,
+        [SM_OPENINGSTOCK] BIGINT NOT NULL,
+        CONSTRAINT [PK_STATIONARY_MASTER] PRIMARY KEY ([SM_STATIONARYID])
+    );
+    PRINT '+ STATIONARY_MASTER table created';
+END
+ELSE
+    PRINT '+ STATIONARY_MASTER table already exists';
+GO
+
+-- SP_REQUEST_MAIN
+IF OBJECT_ID(N'[dbo].[SP_REQUEST_MAIN]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[SP_REQUEST_MAIN] (
+        [RM_REQUESTID] BIGINT NOT NULL,
+        [RM_REQUESTEDBY] BIGINT NOT NULL,
+        [RM_REQUESTEDON] DATETIME2(3) NOT NULL,
+        [RM_LOCATIONID] BIGINT NULL,
+        [RM_UNITCODE] CHAR(3) NULL,
+        CONSTRAINT [PK_SP_REQUEST_MAIN] PRIMARY KEY ([RM_REQUESTID])
+    );
+    PRINT '+ SP_REQUEST_MAIN table created';
+END
+ELSE
+    PRINT '+ SP_REQUEST_MAIN table already exists';
+GO
+
+-- SP_REQUEST_SUB
+IF OBJECT_ID(N'[dbo].[SP_REQUEST_SUB]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[SP_REQUEST_SUB] (
+        [RS_REQUESTSUB_ID] BIGINT NOT NULL,
+        [RS_REQUESTID] BIGINT NOT NULL,
+        [RS_STATIONARYID] BIGINT NOT NULL,
+        [RS_DEPTID] BIGINT NOT NULL,
+        [RS_EXPECTED_DATE] DATETIME2(3) NOT NULL,
+        [RS_USER_SYSID] BIGINT NULL,
+        [RS_REQUESTEDQTY] BIGINT NOT NULL,
+        [RS_INDENTEDQTY] BIGINT NULL,
+        [RS_APPROVEDQTY] BIGINT NULL,
+        [RS_APPROVER_SYSID] BIGINT NULL,
+        [RS_APPROVER_RAMARKS] VARCHAR(255) NULL,
+        [RS_RECEIVED_DATE] DATETIME2(3) NULL,
+        [RS_STATUS] VARCHAR(1) NOT NULL,
+        [RS_UPDATED_BY] BIGINT NOT NULL,
+        [RS_UPDATED_ON] DATETIME2(3) NOT NULL,
+        [RS_APPROVED_ON] DATETIME2(3) NULL,
+        CONSTRAINT [PK_SP_REQUEST_SUB] PRIMARY KEY ([RS_REQUESTSUB_ID]),
+        CONSTRAINT [FK_SP_REQUEST_SUB_MAIN] FOREIGN KEY ([RS_REQUESTID]) REFERENCES [SP_REQUEST_MAIN]([RM_REQUESTID])
+    );
+    PRINT '+ SP_REQUEST_SUB table created';
+END
+ELSE
+    PRINT '+ SP_REQUEST_SUB table already exists';
+GO
+
+-- SP_ORDER_MAIN
+IF OBJECT_ID(N'[dbo].[SP_ORDER_MAIN]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[SP_ORDER_MAIN] (
+        [OM_ORDERMAIN_ID] BIGINT NOT NULL,
+        [OM_LOCATION_ID] BIGINT NOT NULL,
+        [OM_VENDORID] BIGINT NOT NULL,
+        [OM_DELIVERYDATE] DATETIME2(3) NOT NULL,
+        [OM_ORDEREDDATE] DATETIME2(3) NOT NULL,
+        [OM_ORDEREDBY] BIGINT NOT NULL,
+        CONSTRAINT [PK_SP_ORDER_MAIN] PRIMARY KEY ([OM_ORDERMAIN_ID])
+    );
+    PRINT '+ SP_ORDER_MAIN table created';
+END
+ELSE
+    PRINT '+ SP_ORDER_MAIN table already exists';
+GO
+
+-- SP_ORDER_SUB
+IF OBJECT_ID(N'[dbo].[SP_ORDER_SUB]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[SP_ORDER_SUB] (
+        [OS_ORDERSUB_ID] BIGINT NOT NULL,
+        [OS_ORDERMAIN_ID] BIGINT NOT NULL,
+        [OS_REQUESTSUB_ID] BIGINT NOT NULL,
+        [OS_ORDERED_QTY] BIGINT NOT NULL,
+        [OS_RECEIVEDON] DATETIME2(3) NULL,
+        [OS_RECEIVED_BY] BIGINT NOT NULL,
+        [OS_ORDERPRICE] BIGINT NOT NULL,
+        [OS_ACTUALPRICE] BIGINT NOT NULL,
+        [OS_RECEIVEDDATE] DATETIME2(3) NOT NULL,
+        [OS_DELIVERYDATE] DATETIME2(3) NOT NULL,
+        [OS_RECEIPTENTRYBY] BIGINT NULL,
+        [OS_RECEIPTENTRYON] DATETIME2(3) NULL,
+        CONSTRAINT [PK_SP_ORDER_SUB] PRIMARY KEY ([OS_ORDERSUB_ID]),
+        CONSTRAINT [FK_SP_ORDER_SUB_MAIN] FOREIGN KEY ([OS_ORDERMAIN_ID]) REFERENCES [SP_ORDER_MAIN]([OM_ORDERMAIN_ID])
+    );
+    PRINT '+ SP_ORDER_SUB table created';
+END
+ELSE
+    PRINT '+ SP_ORDER_SUB table already exists';
+GO
+
+-- SP_DEPT_BUDGET
+IF OBJECT_ID(N'[dbo].[SP_DEPT_BUDGET]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[SP_DEPT_BUDGET] (
+        [DB_LOCATION_ID] BIGINT NOT NULL,
+        [DB_UNIT_CODE] CHAR(3) NOT NULL,
+        [DB_DEPT_ID] BIGINT NOT NULL,
+        [DB_FINYEAR_ID] BIGINT NOT NULL,
+        [DB_BUDGETAMOUNT] BIGINT NOT NULL,
+        [DB_UPDATED_BY] BIGINT NOT NULL,
+        [DB_UPDATED_ON] DATETIME2(3) NOT NULL,
+        CONSTRAINT [PK_SP_DEPT_BUDGET] PRIMARY KEY ([DB_LOCATION_ID], [DB_DEPT_ID], [DB_FINYEAR_ID])
+    );
+    PRINT '+ SP_DEPT_BUDGET table created';
+END
+ELSE
+    PRINT '+ SP_DEPT_BUDGET table already exists';
+GO
+
+-- SP_UNIT_BUDGET
+IF OBJECT_ID(N'[dbo].[SP_UNIT_BUDGET]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[SP_UNIT_BUDGET] (
+        [UB_LOCATION_ID] BIGINT NOT NULL,
+        [UB_UNIT_CODE] CHAR(3) NOT NULL,
+        [UB_FINYEAR_ID] BIGINT NOT NULL,
+        [UB_BUDGETAMOUNT] BIGINT NOT NULL,
+        [UB_UPDATED_BY] BIGINT NOT NULL,
+        [UB_UPDATED_ON] DATETIME2(3) NOT NULL,
+        CONSTRAINT [PK_SP_UNIT_BUDGET] PRIMARY KEY ([UB_LOCATION_ID], [UB_UNIT_CODE], [UB_FINYEAR_ID])
+    );
+    PRINT '+ SP_UNIT_BUDGET table created';
+END
+ELSE
+    PRINT '+ SP_UNIT_BUDGET table already exists';
+GO
+
+-- SP_DEPT_APPROVER
+IF OBJECT_ID(N'[dbo].[SP_DEPT_APPROVER]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[SP_DEPT_APPROVER] (
+        [DA_LOCATION_ID] BIGINT NOT NULL,
+        [DA_UNIT_CODE] CHAR(3) NOT NULL,
+        [DA_DEPT_ID] BIGINT NOT NULL,
+        [DA_EMP_SYSID] BIGINT NOT NULL,
+        [DA_TYPE] CHAR(1) NOT NULL,
+        [DA_EFFECTIVE_DATE] DATETIME2(3) NOT NULL,
+        [DA_CLOSURE_DATE] DATETIME2(3) NULL,
+        [DA_UPDATED_BY] BIGINT NOT NULL,
+        [DA_UPDATED_ON] DATETIME2(3) NOT NULL,
+        CONSTRAINT [PK_SP_DEPT_APPROVER] PRIMARY KEY ([DA_LOCATION_ID], [DA_DEPT_ID], [DA_EMP_SYSID], [DA_TYPE])
+    );
+    PRINT '+ SP_DEPT_APPROVER table created';
+END
+ELSE
+    PRINT '+ SP_DEPT_APPROVER table already exists';
+GO
+
+-- SP_UNIT_APPROVER
+IF OBJECT_ID(N'[dbo].[SP_UNIT_APPROVER]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[SP_UNIT_APPROVER] (
+        [UA_LOCATION_ID] BIGINT NOT NULL,
+        [UA_UNIT_CODE] CHAR(3) NOT NULL,
+        [UA_EMP_SYSID] BIGINT NOT NULL,
+        [UA_TYPE] CHAR(1) NOT NULL,
+        [UA_EFFECTIVE_DATE] DATETIME2(3) NOT NULL,
+        [UA_CLOSURE_DATE] VARCHAR(255) NULL,
+        [UA_UPDATED_BY] BIGINT NOT NULL,
+        [UA_UPDATED_ON] DATETIME2(3) NOT NULL,
+        CONSTRAINT [PK_SP_UNIT_APPROVER] PRIMARY KEY ([UA_LOCATION_ID], [UA_UNIT_CODE], [UA_EMP_SYSID], [UA_TYPE])
+    );
+    PRINT '+ SP_UNIT_APPROVER table created';
+END
+ELSE
+    PRINT '+ SP_UNIT_APPROVER table already exists';
+GO
+
+-- SP_CATEGORY_DEFAULT
+IF OBJECT_ID(N'[dbo].[SP_CATEGORY_DEFAULT]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[SP_CATEGORY_DEFAULT] (
+        [CD_STATIONERYID] BIGINT NOT NULL,
+        [CD_CATEGORYID] BIGINT NOT NULL,
+        [CD_LOCATIONID] BIGINT NOT NULL,
+        [CD_MODIFIEDBY] BIGINT NOT NULL,
+        [CD_MODIFIEDON] DATETIME2(3) NOT NULL
+    );
+    PRINT '+ SP_CATEGORY_DEFAULT table created';
+END
+ELSE
+    PRINT '+ SP_CATEGORY_DEFAULT table already exists';
+GO
+
+-- ITEMDATA
+IF OBJECT_ID(N'[dbo].[ITEMDATA]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[ITEMDATA] (
+        [ID] INT IDENTITY(1,1) NOT NULL,
+        [CATNAME] VARCHAR(40) NULL,
+        [ITEMNAME] VARCHAR(60) NULL,
+        [MAKE] VARCHAR(30) NULL,
+        [UOM] VARCHAR(20) NULL,
+        [PRICE] INT NULL,
+        CONSTRAINT [PK_ITEMDATA] PRIMARY KEY ([ID])
+    );
+    PRINT '+ ITEMDATA table created';
+END
+ELSE
+    PRINT '+ ITEMDATA table already exists';
+GO
+
+-- ====================================================
+-- 3. Seed Data
+-- ====================================================
+
+-- Seed STATIONARY_MASTER
+IF NOT EXISTS (SELECT 1 FROM [dbo].[STATIONARY_MASTER])
+BEGIN
+    INSERT INTO [dbo].[STATIONARY_MASTER] 
+    ([SM_STATIONARYID], [SM_CATID], [SM_LOC_ID], [SM_DESC], [SM_UOMID], [SM_MAKE], [SM_PRICE_PERUNIT], 
+     [SM_REORDER_LEVEL], [SM_UPDATED_BY], [SM_UPDATED_ON], [SM_VMID], [SM_CLOSED], [SM_OPENINGSTOCK])
+    VALUES
+    (1, 1, 1, 'A4 Paper (500 sheets)', 1, 'Generic', 250, 100, 1, GETUTCDATE(), 1, 'N', 1000),
+    (2, 1, 1, 'Blue Ballpoint Pen', 2, 'Pilot', 15, 50, 1, GETUTCDATE(), 1, 'N', 500),
+    (3, 1, 1, 'Black Ballpoint Pen', 2, 'Pilot', 15, 50, 1, GETUTCDATE(), 1, 'N', 450),
+    (4, 2, 1, 'Stapler', 3, 'Kangaro', 180, 10, 1, GETUTCDATE(), 2, 'N', 30),
+    (5, 2, 1, 'Stapler Pins (100 pcs)', 1, 'Kangaro', 20, 20, 1, GETUTCDATE(), 2, 'N', 80),
+    (6, 3, 1, 'Sticky Notes (100 sheets)', 1, '3M', 60, 15, 1, GETUTCDATE(), 3, 'N', 75),
+    (7, 3, 1, 'Highlighter Pen', 2, 'Camlin', 30, 20, 1, GETUTCDATE(), 3, 'N', 150),
+    (8, 4, 1, 'Printer Ink Cartridge (Black)', 3, 'HP', 1200, 5, 1, GETUTCDATE(), 4, 'N', 12);
+    PRINT '+ STATIONARY_MASTER seeded with 8 items';
+END
+ELSE
+    PRINT '+ STATIONARY_MASTER already has data';
+GO
+
+-- Seed SP_DEPT_BUDGET
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SP_DEPT_BUDGET])
+BEGIN
+    INSERT INTO [dbo].[SP_DEPT_BUDGET] 
+    ([DB_LOCATION_ID], [DB_UNIT_CODE], [DB_DEPT_ID], [DB_FINYEAR_ID], [DB_BUDGETAMOUNT], [DB_UPDATED_BY], [DB_UPDATED_ON])
+    VALUES
+    (1, 'HO ', 100, 2026, 50000, 1, GETUTCDATE()),
+    (1, 'HO ', 101, 2026, 30000, 1, GETUTCDATE()),
+    (1, 'HO ', 102, 2026, 25000, 1, GETUTCDATE());
+    PRINT '+ SP_DEPT_BUDGET seeded with 3 budgets';
+END
+ELSE
+    PRINT '+ SP_DEPT_BUDGET already has data';
+GO
+
+-- Seed SP_UNIT_BUDGET
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SP_UNIT_BUDGET])
+BEGIN
+    INSERT INTO [dbo].[SP_UNIT_BUDGET] 
+    ([UB_LOCATION_ID], [UB_UNIT_CODE], [UB_FINYEAR_ID], [UB_BUDGETAMOUNT], [UB_UPDATED_BY], [UB_UPDATED_ON])
+    VALUES
+    (1, 'HO ', 2026, 200000, 1, GETUTCDATE());
+    PRINT '+ SP_UNIT_BUDGET seeded with 1 budget';
+END
+ELSE
+    PRINT '+ SP_UNIT_BUDGET already has data';
+GO
+
+-- Seed SP_DEPT_APPROVER
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SP_DEPT_APPROVER])
+BEGIN
+    INSERT INTO [dbo].[SP_DEPT_APPROVER] 
+    ([DA_LOCATION_ID], [DA_UNIT_CODE], [DA_DEPT_ID], [DA_EMP_SYSID], [DA_TYPE], [DA_EFFECTIVE_DATE], 
+     [DA_CLOSURE_DATE], [DA_UPDATED_BY], [DA_UPDATED_ON])
+    VALUES
+    (1, 'HO ', 100, 201, 'A', '2026-01-01', NULL, 1, GETUTCDATE()),
+    (1, 'HO ', 100, 202, 'I', '2026-01-01', NULL, 1, GETUTCDATE()),
+    (1, 'HO ', 101, 203, 'A', '2026-01-01', NULL, 1, GETUTCDATE());
+    PRINT '+ SP_DEPT_APPROVER seeded with 3 approvers';
+END
+ELSE
+    PRINT '+ SP_DEPT_APPROVER already has data';
+GO
+
+-- Seed SP_UNIT_APPROVER
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SP_UNIT_APPROVER])
+BEGIN
+    INSERT INTO [dbo].[SP_UNIT_APPROVER] 
+    ([UA_LOCATION_ID], [UA_UNIT_CODE], [UA_EMP_SYSID], [UA_TYPE], [UA_EFFECTIVE_DATE], 
+     [UA_CLOSURE_DATE], [UA_UPDATED_BY], [UA_UPDATED_ON])
+    VALUES
+    (1, 'HO ', 300, 'A', '2026-01-01', NULL, 1, GETUTCDATE()),
+    (1, 'HO ', 301, 'I', '2026-01-01', NULL, 1, GETUTCDATE());
+    PRINT '+ SP_UNIT_APPROVER seeded with 2 approvers';
+END
+ELSE
+    PRINT '+ SP_UNIT_APPROVER already has data';
+GO
+
+-- Seed ITEMDATA
+IF NOT EXISTS (SELECT 1 FROM [dbo].[ITEMDATA])
+BEGIN
+    INSERT INTO [dbo].[ITEMDATA] ([CATNAME], [ITEMNAME], [MAKE], [UOM], [PRICE])
+    VALUES
+    ('Writing', 'Ballpoint Pen', 'Pilot', 'Pieces', 15),
+    ('Paper', 'A4 Paper', 'Generic', 'Reams', 250),
+    ('Office Tools', 'Stapler', 'Kangaro', 'Pieces', 180),
+    ('Printing', 'Ink Cartridge', 'HP', 'Cartridges', 1200),
+    ('Writing', 'Pencil', 'Faber-Castell', 'Pieces', 10),
+    ('Paper', 'Notebook', 'Generic', 'Pieces', 50);
+    PRINT '+ ITEMDATA seeded with 6 items';
+END
+ELSE
+    PRINT '+ ITEMDATA already has data';
+GO
+
+-- ====================================================
+-- Verification
+-- ====================================================
+PRINT '';
+PRINT '====================================================';
+PRINT 'STATIONERYDB initialization complete';
+PRINT '====================================================';
+
+SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES 
+WHERE TABLE_TYPE = 'BASE TABLE' 
+ORDER BY TABLE_NAME;

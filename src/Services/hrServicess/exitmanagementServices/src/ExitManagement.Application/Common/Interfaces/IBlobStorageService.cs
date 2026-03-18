@@ -1,0 +1,8 @@
+namespace ExitManagement.Application.Common.Interfaces;
+
+public interface IBlobStorageService
+{
+    Task<string> UploadAsync(Stream content, string fileName, string contentType, CancellationToken ct = default);
+    Task<Stream> DownloadAsync(string blobName, CancellationToken ct = default);
+    Task DeleteAsync(string blobName, CancellationToken ct = default);
+}

@@ -1,0 +1,65 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stationery-service
+  labels:
+    name: stationery-service
+    environment: production
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: stationery-service
+  namespace: stationery-service
+  labels:
+    app: stationery-service
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: stationery-service-role
+  namespace: stationery-service
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+  resourceNames: ["stationery-service-config"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+  resourceNames: ["stationery-service-secrets"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: stationery-service-rolebinding
+  namespace: stationery-service
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: stationery-service-role
+subjects:
+- kind: ServiceAccount
+  name: stationery-service
+  namespace: stationery-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: stationery-service-pdb
+  namespace: stationery-service
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: stationery-service

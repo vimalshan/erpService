@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-provider
+  namespace: auth-provider
+  labels:
+    app: auth-provider
+spec:
+  type: LoadBalancer
+  selector:
+    app: auth-provider
+  ports:
+  - name: http
+    port: 80
+    targetPort: 7136
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-provider-internal
+  namespace: auth-provider
+  labels:
+    app: auth-provider
+spec:
+  type: ClusterIP
+  selector:
+    app: auth-provider
+  ports:
+  - name: http
+    port: 7136
+    targetPort: 7136
+    protocol: TCP

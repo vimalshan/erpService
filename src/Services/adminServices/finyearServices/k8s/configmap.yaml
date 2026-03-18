@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: finyear-api
+  labels:
+    name: finyear-api
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: finyear-api-config
+  namespace: finyear-api
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:5000"
+  Jwt__Issuer: "FinyearAPI"
+  Jwt__Audience: "FinyearAPI"
+  Jwt__ExpirationMinutes: "60"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft: "Warning"

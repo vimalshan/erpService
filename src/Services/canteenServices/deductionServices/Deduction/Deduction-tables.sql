@@ -1,0 +1,57 @@
+-- ==========================================
+-- Module: Deduction
+-- Table Scripts
+-- ==========================================
+
+-- Table: ADHOC_PAY_DED
+CREATE TABLE [ADHOC_PAY_DED] (
+    [PY_SYS_ID] BIGINT NULL,
+    [PY_CAN_UNT] BIGINT NULL,
+    [PY_SRL_NUM] BIGINT NULL,
+    [PY_BAT_NUM] BIGINT NULL,
+    [PY_TRN_DAT] DATETIME2(3) NULL,
+    [PY_ED_COD] CHAR(6) NULL,
+    [PY_REF_NUM] FLOAT NULL,
+    [PY_PAY_AMT] DECIMAL(38) NULL,
+    [PY_OPP_AMT] BIGINT NULL,
+    [PY_ENT_DAT] DATETIME2(3) NULL,
+    [PY_ENT_USR] BIGINT NULL,
+    [PY_CAN_FLG] CHAR(1) NULL,
+    [PY_ATT_NUM] BIGINT NULL,
+    [PY_COM_COD] CHAR(3) NULL,
+    [PY_EMP_NUM] BIGINT NULL,
+    [PY_UPD_FLG] CHAR(1) NULL,
+    [PY_SEQ_NUM] BIGINT NULL,
+    [PY_GRD_TYP] CHAR(3) NULL
+);
+
+-- Table: ADHOC_PAY_DED_HIS
+CREATE TABLE [ADHOC_PAY_DED_HIS] (
+    [PY_SYS_ID] BIGINT NOT NULL,
+    [PY_CAN_UNT] BIGINT NOT NULL,
+    [PY_SRL_NUM] BIGINT NULL,
+    [PY_BAT_NUM] BIGINT NULL,
+    [PY_TRN_DAT] DATETIME2(3) NULL,
+    [PY_ED_COD] CHAR(6) NULL,
+    [PY_REF_NUM] FLOAT NULL,
+    [PY_PAY_AMT] DECIMAL(38) NULL,
+    [PY_OPP_AMT] BIGINT NULL,
+    [PY_ENT_DAT] DATETIME2(3) NULL,
+    [PY_ENT_USR] BIGINT NULL,
+    [PY_CAN_FLG] CHAR(1) NULL,
+    [PY_ATT_NUM] BIGINT NULL,
+    [PY_COM_COD] CHAR(3) NULL,
+    [PY_EMP_NUM] BIGINT NULL,
+    [PY_UPD_FLG] CHAR(1) NULL
+);
+
+-- Table: DEDUCTION_ACCESS
+CREATE TABLE [DEDUCTION_ACCESS] (
+    [DE_UNT_ACC] BIGINT NULL  -- Access number,
+    [DE_COM_COD] BIGINT NULL  -- Unit Code,
+    [DE_DED_TYP] CHAR(3) NULL  -- Deduciton type (ED Code),
+    [DE_SYS_ID] DECIMAL(38) NULL  -- Access Person Name,
+    [DE_ENT_USR] DECIMAL(38) NULL  -- Entered By,
+    [DE_ENT_ON] DATETIME2(3) NULL  -- Entered On,
+    [DE_CLS_DAT] DATETIME2(3) NULL  -- Access closed on
+);

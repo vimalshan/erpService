@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mssql-server:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql-finyear-db
+    environment:
+      ACCEPT_EULA: 'Y'
+      SA_PASSWORD: 'YourPassword123!'
+      MSSQL_PID: 'Express'
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      - finyear-network
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourPassword123!", "-No", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  finyear-api:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile
+    container_name: finyear-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5000;https://+:5001'
+      ConnectionStrings__AdminDbConnection: 'Data Source=mssql-server,1433;Initial Catalog=ADMINDB;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+    networks:
+      - finyear-network
+
+networks:
+  finyear-network:
+    driver: bridge
+
+volumes:
+  mssql_data:

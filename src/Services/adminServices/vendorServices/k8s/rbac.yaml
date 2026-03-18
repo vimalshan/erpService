@@ -1,0 +1,65 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vendor-service
+  labels:
+    name: vendor-service
+    environment: production
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vendor-service
+  namespace: vendor-service
+  labels:
+    app: vendor-service
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: vendor-service-role
+  namespace: vendor-service
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+  resourceNames: ["vendor-service-config"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+  resourceNames: ["vendor-service-secrets"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: vendor-service-rolebinding
+  namespace: vendor-service
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: vendor-service-role
+subjects:
+- kind: ServiceAccount
+  name: lov-service
+  namespace: lov-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: lov-service-pdb
+  namespace: lov-service
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: lov-service

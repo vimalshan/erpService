@@ -1,0 +1,23 @@
+using MediatR;
+using Microsoft.Extensions.Logging;
+
+namespace CSA.Service.Application.Behaviours;
+
+public class LoggingBehaviour<TRequest, TResponse>(ILogger<LoggingBehaviour<TRequest, TResponse>> logger)
+    : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : notnull
+{
+    public async Task<TResponse> Handle(
+        TRequest request,
+        RequestHandlerDelegate<TResponse> next,
+        CancellationToken cancellationToken)
+    {
+        var requestName = typeof(TRequest).Name;
+        logger.LogInformation("CSA Request: {Name} {@Request}", requestName, request);
+
+        var response = await next(cancellationToken);
+
+        logger.LogInformation("CSA Response: {Name} {@Response}", requestName, response);
+        return response;
+    }
+}

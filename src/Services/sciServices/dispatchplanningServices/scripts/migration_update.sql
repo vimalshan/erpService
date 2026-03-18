@@ -1,0 +1,157 @@
+﻿IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317214824_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [DISPATCH_PLAN_BREAKUP_ITEM] (
+        [BREAKUP_ITEM_ID] int NOT NULL IDENTITY,
+        [SUB_GROUP_ID] int NOT NULL,
+        [PRODUCT_ID] int NOT NULL,
+        [BREAKUP_ITEM_DESC] nvarchar(4000) NOT NULL,
+        [UNIT_ID] int NOT NULL,
+        [MAIN_PRODUCT_UNITS_CONFACTOR] int NOT NULL,
+        [BI_DISPLAY_ORDER] int NOT NULL,
+        [EFFECTIVE_DATE] datetime2 NOT NULL,
+        [CLOSURE_DATE] nvarchar(255) NULL,
+        [SCI_USER_ID_CREATED] int NOT NULL,
+        [CREATION_DATE] datetime2 NOT NULL,
+        [SCI_USER_ID_MODIFIED] int NULL,
+        [MODIFIED_DATE] nvarchar(255) NULL,
+        [PACKAGE_ID] decimal(38,0) NULL,
+        CONSTRAINT [PK_DISPATCH_PLAN_BREAKUP_ITEM] PRIMARY KEY ([BREAKUP_ITEM_ID])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317214824_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [DISPATCH_PLAN_HEADER] (
+        [DISPATCH_PLAN_HEADER_ID] int NOT NULL IDENTITY,
+        [DISPATCH_PLAN_TYPE] nvarchar(1) NOT NULL,
+        [DISPATCH_PLAN_MONTH] datetime2 NOT NULL,
+        [DISPATCH_PLAN_MPLUS1] nvarchar(255) NULL,
+        [DISPATCH_PLAN_MPLUS2] nvarchar(255) NULL,
+        [DISPATCH_PLAN_MPLUS3] nvarchar(255) NULL,
+        [DISPATCH_PLAN_MPLUS4] nvarchar(255) NULL,
+        [DISPATCH_PLAN_ENTRYDATE] datetime2 NOT NULL,
+        [COMPANY_UNIT_ID] int NOT NULL,
+        [SCI_USER_ID_MODIFIED] int NOT NULL,
+        [MODIFIED_DATE] datetime2 NOT NULL,
+        CONSTRAINT [PK_DISPATCH_PLAN_HEADER] PRIMARY KEY ([DISPATCH_PLAN_HEADER_ID])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317214824_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [DISPATCH_PLAN_MAINGROUP] (
+        [MAIN_GROUP_ID] int NOT NULL IDENTITY,
+        [MAIN_GROUP_NAME] nvarchar(20) NOT NULL,
+        [GROUP_TYPE] nvarchar(1) NOT NULL,
+        [PRODUCT_SUMMARY] nvarchar(1) NOT NULL,
+        [TOTAL_DISPLAY_NAME] nvarchar(20) NOT NULL,
+        [MG_DISPLAY_ORDER] int NOT NULL,
+        [COMPANY_UNIT_ID] int NOT NULL,
+        [SCI_USER_ID_CREATED] int NOT NULL,
+        [CREATION_DATE] datetime2 NOT NULL,
+        [SCI_USER_ID_MODIFIED] int NULL,
+        [MODIFIED_DATE] datetime2 NULL,
+        CONSTRAINT [PK_DISPATCH_PLAN_MAINGROUP] PRIMARY KEY ([MAIN_GROUP_ID])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317214824_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [DISPATCH_PLAN_SUBGROUP] (
+        [SUB_GROUP_ID] int NOT NULL IDENTITY,
+        [MAIN_GROUP_ID] int NOT NULL,
+        [SUB_GROUP_NAME] nvarchar(20) NOT NULL,
+        [PRODUCT_ID] int NULL,
+        [SG_DISPLAY_ORDER] int NULL,
+        [CAPTURE_TOTAL_DIRECTLY] nvarchar(1) NOT NULL,
+        [SCI_USER_ID_CREATED] int NOT NULL,
+        [CREATION_DATE] datetime2 NOT NULL,
+        [SCI_USER_ID_MODIFIED] int NULL,
+        [MODIFIED_DATE] datetime2 NULL,
+        CONSTRAINT [PK_DISPATCH_PLAN_SUBGROUP] PRIMARY KEY ([SUB_GROUP_ID])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317214824_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [DISPATCH_PLAN_ITEMWISE] (
+        [DISPATCH_PLAN_HEADER_ID] int NOT NULL,
+        [BREAKUP_ITEM_ID] int NOT NULL,
+        [TARGET_WEEK1] bigint NULL,
+        [TARGET_WEEK2] bigint NULL,
+        [TARGET_WEEK3] bigint NULL,
+        [TARGET_WEEK4] bigint NULL,
+        [TARGET_WEEK5] bigint NULL,
+        [TARGET_MPLUS1] bigint NULL,
+        [TARGET_MPLUS2] bigint NULL,
+        [TARGET_MPLUS3] bigint NULL,
+        [TARGET_MPLUS4] bigint NULL,
+        [SCI_USER_ID_MODIFIED] int NOT NULL,
+        [MODIFIED_DATE] datetime2 NOT NULL,
+        CONSTRAINT [PK_DISPATCH_PLAN_ITEMWISE] PRIMARY KEY ([DISPATCH_PLAN_HEADER_ID], [BREAKUP_ITEM_ID]),
+        CONSTRAINT [FK_DISPATCH_PLAN_ITEMWISE_DISPATCH_PLAN_HEADER_DISPATCH_PLAN_HEADER_ID] FOREIGN KEY ([DISPATCH_PLAN_HEADER_ID]) REFERENCES [DISPATCH_PLAN_HEADER] ([DISPATCH_PLAN_HEADER_ID]) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317214824_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [DISPATCH_PLAN_SUBGROUPWISE] (
+        [DISPATCH_PLAN_HEADER_ID] int NOT NULL,
+        [SUB_GROUP_ID] int NOT NULL,
+        [TARGET_WEEK1] bigint NULL,
+        [TARGET_WEEK2] bigint NULL,
+        [TARGET_WEEK3] bigint NULL,
+        [TARGET_WEEK4] bigint NULL,
+        [TARGET_WEEK5] bigint NULL,
+        [TARGET_MPLUS1] bigint NULL,
+        [TARGET_MPLUS2] bigint NULL,
+        [TARGET_MPLUS3] bigint NULL,
+        [TARGET_MPLUS4] bigint NULL,
+        [SCI_USER_ID_MODIFIED] int NOT NULL,
+        [MODIFIED_DATE] datetime2 NOT NULL,
+        CONSTRAINT [PK_DISPATCH_PLAN_SUBGROUPWISE] PRIMARY KEY ([DISPATCH_PLAN_HEADER_ID], [SUB_GROUP_ID]),
+        CONSTRAINT [FK_DISPATCH_PLAN_SUBGROUPWISE_DISPATCH_PLAN_HEADER_DISPATCH_PLAN_HEADER_ID] FOREIGN KEY ([DISPATCH_PLAN_HEADER_ID]) REFERENCES [DISPATCH_PLAN_HEADER] ([DISPATCH_PLAN_HEADER_ID]) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317214824_InitialCreate'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260317214824_InitialCreate', N'10.0.5');
+END;
+
+COMMIT;
+GO
+

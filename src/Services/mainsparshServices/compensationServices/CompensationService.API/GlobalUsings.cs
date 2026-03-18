@@ -1,0 +1,10 @@
+global using CompensationService.Application.Commands;
+global using CompensationService.Application.Queries;
+global using CompensationService.Application.DTOs;
+global using CompensationService.Domain.Repositories;
+global using CompensationService.Domain.Common;
+global using AutoMapper;
+global using MediatR;
+global using FluentValidation;
+global using HotChocolate;
+global using HotChocolate.Execution.Configuration;

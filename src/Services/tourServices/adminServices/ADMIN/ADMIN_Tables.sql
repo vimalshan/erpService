@@ -1,0 +1,76 @@
+-- ==========================================
+-- Module: ADMIN
+-- Description: Admin Management Module
+-- Database: TOURDB
+-- Created: March 9, 2026
+-- ==========================================
+
+USE TOURDB;
+GO
+
+-- Table: ADMIN_MASTER - Admin Master
+CREATE TABLE [ADMIN_MASTER] (
+    [ADMIN_ID] VARCHAR(255) NOT NULL  -- Admin ID,
+    [ADMIN_NAME] VARCHAR(255) NOT NULL  -- Admin Location,
+    [ADMIN_PIC] VARCHAR(255) NOT NULL  -- Admin Picture,
+    [ADMIN_UNITID] VARCHAR(255) NOT NULL  -- Unit ID,
+    [ADMIN_UNITHEADSYSID] VARCHAR(255) NOT NULL  -- Unit Head Emp Sysid,
+    [ADMIN_LOCSTATUS] CHAR(1) NULL,
+    CONSTRAINT [PK_ADMIN_MASTER] PRIMARY KEY ([ADMIN_ID])
+);
+
+-- Table: ADMIN_USERMAP - Admin Process Map
+CREATE TABLE [ADMIN_USERMAP] (
+    [ADMIN_MAPID] VARCHAR(255) NOT NULL  -- Admin Map ID,
+    [ADMIN_BOOKTYPE] VARCHAR(255) NOT NULL  -- Book Type - TKT/STY/CAB/FRX,
+    [ADMIN_MODE] VARCHAR(255) NOT NULL  -- Mode of Travel/ Accomodation type,
+    [ADMIN_EMPSYSID] VARCHAR(255) NOT NULL  -- Employee System ID,
+    [ADMIN_ID] VARCHAR(255) NOT NULL  -- Admin ID,
+    [ADMIN_LASTMODIFIEDBY] VARCHAR(255) NOT NULL  -- Last modified by,
+    [ADMIN_LASTMODIFIEDON] DATETIME2(3) NOT NULL  -- Last modified on,
+    CONSTRAINT [PK_ADMIN_USERMAP] PRIMARY KEY ([ADMIN_MAPID])
+);
+
+-- Table: ADMIN_FINUSERMAP - Admin Finance User Map
+CREATE TABLE [ADMIN_FINUSERMAP] (
+    [FINANCE_MAPID] VARCHAR(255) NOT NULL  -- Finance Map ID,
+    [FINANCE_PAYUNITID] VARCHAR(255) NOT NULL  -- Payroll Unit,
+    [FINANCE_EMPSYSID] VARCHAR(255) NOT NULL  -- Finance Employee System ID,
+    [FINANCE_LASTMODIFIEDBY] VARCHAR(255) NULL  -- Last modified by,
+    [FINANCE_LASTMODIFIEDON] DATETIME2(3) NULL  -- Last modified on,
+    CONSTRAINT [PK_ADMIN_FINUSERMAP] PRIMARY KEY ([FINANCE_MAPID])
+);
+
+-- Table: ADMIN_ACCESSRIGHTS - Admin Access Rights
+CREATE TABLE [ADMIN_ACCESSRIGHTS] (
+    [ADMIN_RIGHTSID] VARCHAR(255) NULL  -- Access Sequence ID,
+    [ADMIN_LOCATIONID] VARCHAR(255) NULL  -- Admin Location ID,
+    [ADMIN_RIGHTSFOR] VARCHAR(255) NULL  -- Admin/Finance,
+    [ADMIN_RIGHTSTYPE] VARCHAR(255) NULL  -- Type of Booking CAB/TKT-TICKET/STY- Stay,
+    [ADMIN_USERID] VARCHAR(255) NULL  -- User ID,
+    [ADMIN_ALERTID] VARCHAR(255) NULL  -- Aleart ID,
+    [ADMIN_CONTACTNO] VARCHAR(255) NULL  -- Contact Number,
+    [ADMIN_CONTACTDES] VARCHAR(255) NULL  -- Contact Description,
+    [ADMIN_ENTON] DATETIME2(3) NULL  -- Access given on,
+    [ADMIN_ENTBY] VARCHAR(255) NULL  -- Access given by,
+    CONSTRAINT [PK_ADMIN_ACCESSRIGHTS] PRIMARY KEY ([ADMIN_RIGHTSID])
+);
+
+-- Table: ADMIN_ACCESSRIGHTSLOG - Admin Access Rights LOG
+CREATE TABLE [ADMIN_ACCESSRIGHTSLOG] (
+    [ADMIN_LOGID] VARCHAR(255) NULL  -- Access log Sequence ID,
+    [ADMIN_RIGHTSID] VARCHAR(255) NULL  -- Access Sequence ID,
+    [ADMIN_LOCATIONID] VARCHAR(255) NULL  -- Admin Location ID,
+    [ADMIN_RIGHTSFOR] VARCHAR(255) NULL  -- Admin/Finance,
+    [ADMIN_RIGHTSTYPE] VARCHAR(255) NULL  -- Type of Booking CAB/TKT-TICKET/STY- Stay,
+    [ADMIN_USERID] VARCHAR(255) NULL  -- User ID,
+    [ADMIN_ALERTID] VARCHAR(255) NULL  -- Aleart ID,
+    [ADMIN_CONTACTNO] VARCHAR(255) NULL  -- Contact Number,
+    [ADMIN_CONTACTDES] VARCHAR(255) NULL  -- Contact Description,
+    [ADMIN_ENTON] DATETIME2(3) NULL  -- Access given on,
+    [ADMIN_ENTBY] VARCHAR(255) NULL  -- Access given by,
+    CONSTRAINT [PK_ADMIN_ACCESSRIGHTSLOG] PRIMARY KEY ([ADMIN_RIGHTSID], [ADMIN_LOGID])
+);
+
+PRINT 'ADMIN Module - Tables created successfully.';
+GO

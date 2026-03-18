@@ -1,0 +1,88 @@
+-- ==========================================
+-- MeetingModule
+-- Database: SRFSPARSHDB
+-- Module Purpose: Meeting Type and Schedule Management
+-- Created: March 09, 2026
+-- ==========================================
+
+USE SRFSPARSHDB;
+GO
+
+-- Drop tables if they exist (reverse order for dependencies)
+IF OBJECT_ID('[SRF_POLL_DETAIL]', 'U') IS NOT NULL DROP TABLE [SRF_POLL_DETAIL];
+GO
+IF OBJECT_ID('[SRF_MEETINGSCH]', 'U') IS NOT NULL DROP TABLE [SRF_MEETINGSCH];
+GO
+IF OBJECT_ID('[MEETTYPE_MAST]', 'U') IS NOT NULL DROP TABLE [MEETTYPE_MAST];
+GO
+
+-- ==========================================
+-- Table: MEETTYPE_MAST - Meeting Type Master
+-- Description: Master table for meeting types with serial number references
+-- ==========================================
+CREATE TABLE [MEETTYPE_MAST] (
+    [MEETTYPE_ID] BIGINT PRIMARY KEY IDENTITY(1,1),
+    [MEETTYPE_CODE] VARCHAR(50) NOT NULL UNIQUE,
+    [MEETTYPE_NAME] VARCHAR(255) NOT NULL,
+    [MEETTYPE_DESC] NVARCHAR(MAX),
+    [MEETTYPE_STATUS] CHAR(1) DEFAULT 'A', -- A=Active, I=Inactive
+    [CREATED_BY] BIGINT NOT NULL,
+    [CREATED_ON] DATETIME2(3) NOT NULL DEFAULT GETDATE(),
+    [UPDATED_BY] BIGINT,
+    [UPDATED_ON] DATETIME2(3)
+);
+GO
+
+-- ==========================================
+-- Table: SRF_MEETINGSCH - SRF Meeting Schedule
+-- Description: Schedule for SRF meetings with meeting type reference
+-- Relationship: References MEETTYPE_MAST
+-- ==========================================
+CREATE TABLE [SRF_MEETINGSCH] (
+    [MEETING_ID] BIGINT PRIMARY KEY IDENTITY(1,1),
+    [MEETTYPE_ID] BIGINT NOT NULL,
+    [MEETING_TITLE] VARCHAR(255) NOT NULL,
+    [MEETING_DATE] DATETIME2(3) NOT NULL,
+    [MEETING_LOCATION] VARCHAR(255),
+    [MEETING_DURATION] INT, -- Duration in minutes
+    [ORGANIZER_ID] BIGINT NOT NULL,
+    [MEETING_STATUS] VARCHAR(20) DEFAULT 'SCHEDULED', -- SCHEDULED, ONGOING, COMPLETED, CANCELLED
+    [NOTES] NVARCHAR(MAX),
+    [CREATED_BY] BIGINT NOT NULL,
+    [CREATED_ON] DATETIME2(3) NOT NULL DEFAULT GETDATE(),
+    [UPDATED_BY] BIGINT,
+    [UPDATED_ON] DATETIME2(3),
+    CONSTRAINT [FK_SRF_MEETINGSCH_MEETTYPE] FOREIGN KEY ([MEETTYPE_ID]) REFERENCES [MEETTYPE_MAST]([MEETTYPE_ID])
+);
+GO
+
+-- ==========================================
+-- Table: SRF_POLL_DETAIL - Meeting Polls
+-- Description: Polls conducted during meetings
+-- Relationship: References SRF_MEETINGSCH
+-- ==========================================
+CREATE TABLE [SRF_POLL_DETAIL] (
+    [POLL_ID] BIGINT PRIMARY KEY IDENTITY(1,1),
+    [MEETING_ID] BIGINT NOT NULL,
+    [POLL_QUESTION] VARCHAR(500) NOT NULL,
+    [POLL_TYPE] VARCHAR(20), -- MULTIPLE_CHOICE, YES_NO, RATING, TEXT
+    [POLL_STATUS] VARCHAR(20) DEFAULT 'ACTIVE', -- ACTIVE, CLOSED, ARCHIVED
+    [CREATED_BY] BIGINT,
+    [CREATED_ON] DATETIME2(3),
+    [UPDATED_BY] BIGINT,
+    [UPDATED_ON] DATETIME2(3),
+    CONSTRAINT [FK_SRF_POLL_DETAIL_MEETINGSCH] FOREIGN KEY ([MEETING_ID]) REFERENCES [SRF_MEETINGSCH]([MEETING_ID])
+);
+GO
+
+-- Create Indexes
+CREATE INDEX [IX_MEETTYPE_MAST_STATUS] ON [MEETTYPE_MAST]([MEETTYPE_STATUS]);
+CREATE INDEX [IX_SRF_MEETINGSCH_MEETTYPE_ID] ON [SRF_MEETINGSCH]([MEETTYPE_ID]);
+CREATE INDEX [IX_SRF_MEETINGSCH_DATE] ON [SRF_MEETINGSCH]([MEETING_DATE]);
+CREATE INDEX [IX_SRF_MEETINGSCH_STATUS] ON [SRF_MEETINGSCH]([MEETING_STATUS]);
+CREATE INDEX [IX_SRF_POLL_DETAIL_MEETING_ID] ON [SRF_POLL_DETAIL]([MEETING_ID]);
+CREATE INDEX [IX_SRF_POLL_DETAIL_STATUS] ON [SRF_POLL_DETAIL]([POLL_STATUS]);
+GO
+
+PRINT 'MeetingModule_Schema created successfully.';
+GO

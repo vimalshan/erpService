@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vendor-service
+  labels:
+    name: vendor-service
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vendor-service-config
+  namespace: vendor-service
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:5181"
+  Jwt__Issuer: "VendorService"
+  Jwt__Audience: "VendorServiceClients"
+  Jwt__ExpiresInMinutes: "60"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft: "Warning"

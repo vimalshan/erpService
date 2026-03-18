@@ -1,0 +1,77 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vendor-service-ingress
+  namespace: vendor-service
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - vendor-service.example.com
+    secretName: vendor-service-tls
+  rules:
+  - host: vendor-service.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: vendor-service
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vendor-service-network-policy
+  namespace: vendor-service
+spec:
+  podSelector:
+    matchLabels:
+      app: vendor-service
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: vendor-service
+    - podSelector:
+        matchLabels:
+          app: vendor-service-client
+    ports:
+    - protocol: TCP
+      port: 5181
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 5181
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: vendor-service
+    ports:
+    - protocol: TCP
+      port: 1433
+  - to:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  - to:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443

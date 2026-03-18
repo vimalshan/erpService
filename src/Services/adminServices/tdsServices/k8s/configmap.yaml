@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tds-service
+  labels:
+    name: tds-service
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tds-service-config
+  namespace: tds-service
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:5181"
+  Jwt__Issuer: "TdsService"
+  Jwt__Audience: "TdsServiceClients"
+  Jwt__ExpiresInMinutes: "60"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft: "Warning"

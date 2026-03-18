@@ -1,0 +1,233 @@
+﻿IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [TRUST_MASTER] (
+        [TRUST_CODE] nchar(3) NOT NULL,
+        [TRUST_SHORT_NAME] nvarchar(65) NOT NULL,
+        [TRUST_TYPE] nchar(3) NOT NULL,
+        [TRUST_START_DATE] datetime2(3) NOT NULL,
+        [TRUST_CLOSURE_DATE] datetime2(3) NULL,
+        [TRUST_ID] nvarchar(65) NULL,
+        [ADDRESS_LINE1] nvarchar(200) NOT NULL,
+        [ADDRESS_LINE2] nvarchar(200) NULL,
+        [ADDRESS_LINE3] nvarchar(200) NULL,
+        [CITY] nvarchar(50) NULL,
+        [STATE] nvarchar(50) NULL,
+        [PIN_CODE] nvarchar(10) NULL,
+        [COUNTRY] nvarchar(50) NULL,
+        [PHONE_NO] nvarchar(20) NULL,
+        [FAX_NO] nvarchar(20) NULL,
+        [EMAIL] nvarchar(100) NULL,
+        [TRUST_STATUS] nchar(1) NOT NULL DEFAULT N'A',
+        [CREATED_DATE] datetime2(3) NOT NULL,
+        [UPDATED_DATE] datetime2(3) NULL,
+        [REGISTRAR_NAME] nvarchar(65) NULL,
+        [REGISTRAR_PHONE] nvarchar(20) NULL,
+        CONSTRAINT [PK_TRUST_MASTER] PRIMARY KEY ([TRUST_CODE])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [TRUST_APPROVERS] (
+        [APPROVER_ID] bigint NOT NULL IDENTITY,
+        [TRUST_CODE] nchar(3) NOT NULL,
+        [APPROVER_SYSID] bigint NOT NULL,
+        [APPROVER_LEVEL] int NOT NULL,
+        [APPROVER_TYPE] nvarchar(50) NOT NULL,
+        [EFF_DATE] datetime2(3) NOT NULL,
+        [CLS_DATE] datetime2(3) NULL,
+        [APPROVER_STATUS] nchar(1) NOT NULL DEFAULT N'A',
+        CONSTRAINT [PK_TRUST_APPROVERS] PRIMARY KEY ([APPROVER_ID]),
+        CONSTRAINT [FK_TRUST_APPROVERS_TRUST_MASTER_TRUST_CODE] FOREIGN KEY ([TRUST_CODE]) REFERENCES [TRUST_MASTER] ([TRUST_CODE]) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [TRUST_AUDIT_LOG] (
+        [AUDIT_ID] bigint NOT NULL IDENTITY,
+        [TRUST_CODE] nchar(3) NOT NULL,
+        [AUDIT_ACTION] nvarchar(50) NOT NULL,
+        [AUDIT_TABLE] nvarchar(100) NOT NULL,
+        [AUDIT_TIMESTAMP] datetime2(3) NOT NULL,
+        [AUDIT_USER_ID] bigint NOT NULL,
+        [OLD_VALUES] nvarchar(max) NULL,
+        [NEW_VALUES] nvarchar(max) NULL,
+        CONSTRAINT [PK_TRUST_AUDIT_LOG] PRIMARY KEY ([AUDIT_ID]),
+        CONSTRAINT [FK_TRUST_AUDIT_LOG_TRUST_MASTER_TRUST_CODE] FOREIGN KEY ([TRUST_CODE]) REFERENCES [TRUST_MASTER] ([TRUST_CODE]) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [TRUST_CONFIGURATION] (
+        [CONFIG_ID] bigint NOT NULL IDENTITY,
+        [TRUST_CODE] nchar(3) NOT NULL,
+        [CONFIG_NAME] nvarchar(100) NOT NULL,
+        [CONFIG_VALUE] nvarchar(500) NOT NULL,
+        [CONFIG_CATEGORY] nvarchar(50) NOT NULL,
+        [EFF_DATE] datetime2(3) NOT NULL,
+        [CLS_DATE] datetime2(3) NULL,
+        CONSTRAINT [PK_TRUST_CONFIGURATION] PRIMARY KEY ([CONFIG_ID]),
+        CONSTRAINT [FK_TRUST_CONFIGURATION_TRUST_MASTER_TRUST_CODE] FOREIGN KEY ([TRUST_CODE]) REFERENCES [TRUST_MASTER] ([TRUST_CODE]) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [TRUST_FUND_TYPE] (
+        [FUND_TRUST_CODE] nchar(3) NOT NULL,
+        [FUND_TYPE] nchar(3) NOT NULL,
+        [FUND_NAME] nvarchar(65) NOT NULL,
+        [FUND_PREFIX] nvarchar(65) NOT NULL,
+        [FUND_STATUS] nchar(1) NOT NULL DEFAULT N'A',
+        CONSTRAINT [PK_TRUST_FUND_TYPE] PRIMARY KEY ([FUND_TRUST_CODE], [FUND_TYPE]),
+        CONSTRAINT [FK_TRUST_FUND_TYPE_TRUST_MASTER_FUND_TRUST_CODE] FOREIGN KEY ([FUND_TRUST_CODE]) REFERENCES [TRUST_MASTER] ([TRUST_CODE]) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [TRUST_ROLE] (
+        [TR_TRUST_CODE] nchar(3) NOT NULL,
+        [TR_ROLE_ID] int NOT NULL,
+        [TR_USER_ID] nvarchar(25) NOT NULL,
+        [TR_ROLE_CODE] nchar(3) NOT NULL,
+        [TR_USER_NO] bigint NOT NULL,
+        [TR_EFF_DATE] datetime2(3) NOT NULL,
+        [TR_CLS_DATE] datetime2(3) NULL,
+        [TR_STATUS] nchar(1) NOT NULL DEFAULT N'A',
+        CONSTRAINT [PK_TRUST_ROLE] PRIMARY KEY ([TR_TRUST_CODE], [TR_ROLE_ID], [TR_USER_ID]),
+        CONSTRAINT [FK_TRUST_ROLE_TRUST_MASTER_TR_TRUST_CODE] FOREIGN KEY ([TR_TRUST_CODE]) REFERENCES [TRUST_MASTER] ([TRUST_CODE]) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE TABLE [TRUST_UNITS] (
+        [UNIT_ID] bigint NOT NULL IDENTITY,
+        [TRUST_CODE] nchar(3) NOT NULL,
+        [UNIT_CODE] nchar(3) NOT NULL,
+        [UNIT_NAME] nvarchar(100) NOT NULL,
+        [UNIT_TYPE] nvarchar(50) NOT NULL,
+        [ADDRESS_LINE1] nvarchar(200) NOT NULL,
+        [ADDRESS_LINE2] nvarchar(200) NULL,
+        [CITY] nvarchar(50) NOT NULL,
+        [STATE] nvarchar(50) NOT NULL,
+        [UNIT_HEAD_SYSID] bigint NULL,
+        [EFF_DATE] datetime2(3) NOT NULL,
+        [CLS_DATE] datetime2(3) NULL,
+        [UNIT_STATUS] nchar(1) NOT NULL DEFAULT N'A',
+        CONSTRAINT [PK_TRUST_UNITS] PRIMARY KEY ([UNIT_ID]),
+        CONSTRAINT [FK_TRUST_UNITS_TRUST_MASTER_TRUST_CODE] FOREIGN KEY ([TRUST_CODE]) REFERENCES [TRUST_MASTER] ([TRUST_CODE]) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IDX_TRUST_APPROVERS_LEVEL] ON [TRUST_APPROVERS] ([TRUST_CODE], [APPROVER_LEVEL], [APPROVER_STATUS]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IX_TRUST_AUDIT_LOG_TRUST_CODE] ON [TRUST_AUDIT_LOG] ([TRUST_CODE]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IX_TRUST_CONFIGURATION_TRUST_CODE] ON [TRUST_CONFIGURATION] ([TRUST_CODE]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IDX_TRUST_FUND_TYPE_TRUST] ON [TRUST_FUND_TYPE] ([FUND_TRUST_CODE], [FUND_STATUS]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IDX_TRUST_MASTER_STATUS] ON [TRUST_MASTER] ([TRUST_STATUS]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IDX_TRUST_ROLE_USER] ON [TRUST_ROLE] ([TR_TRUST_CODE], [TR_USER_ID], [TR_STATUS]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE INDEX [IDX_TRUST_UNITS_CODE] ON [TRUST_UNITS] ([TRUST_CODE], [UNIT_CODE], [UNIT_STATUS]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    CREATE UNIQUE INDEX [IX_TRUST_UNITS_UNIT_CODE] ON [TRUST_UNITS] ([UNIT_CODE]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260317210937_InitialCreate'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260317210937_InitialCreate', N'10.0.5');
+END;
+
+COMMIT;
+GO
+

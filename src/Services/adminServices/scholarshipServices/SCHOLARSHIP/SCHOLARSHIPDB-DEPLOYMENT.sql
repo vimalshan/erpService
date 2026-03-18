@@ -1,0 +1,434 @@
+-- ==========================================
+-- SCHOLARSHIP MODULE - STANDALONE DATABASE
+-- Complete Deployment Script
+-- Version: 1.0
+-- Generated: 2026-03-09
+-- ==========================================
+
+/*
+DEPLOYMENT INSTRUCTIONS:
+
+This script creates a standalone SCHOLARSHIPDB database with all 
+scholarship-related tables, procedures, and triggers.
+
+Prerequisites:
+- SQL Server 2016 or later
+- Sufficient disk space for database
+- Administrative permissions
+
+Execution Time: 1-2 minutes
+*/
+
+-- ==========================================
+-- PHASE 1: DATABASE CREATION
+-- ==========================================
+
+PRINT '=== PHASE 1: Creating SCHOLARSHIPDB ===';
+GO
+
+-- Drop database if exists (optional - comment out for production)
+-- IF EXISTS (SELECT * FROM sys.databases WHERE name = 'SCHOLARSHIPDB')
+-- BEGIN
+--     ALTER DATABASE SCHOLARSHIPDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+--     DROP DATABASE SCHOLARSHIPDB;
+-- END
+-- GO
+
+-- Create database
+IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'SCHOLARSHIPDB')
+BEGIN
+    CREATE DATABASE SCHOLARSHIPDB
+    ON PRIMARY (
+        NAME = 'SCHOLARSHIPDB_data',
+        FILENAME = 'C:\Program Files\Microsoft SQL Server\MSSQL15\MSSQL\DATA\SCHOLARSHIPDB.mdf',
+        SIZE = 100MB,
+        MAXSIZE = 1GB,
+        FILEGROWTH = 10%
+    )
+    LOG ON (
+        NAME = 'SCHOLARSHIPDB_log',
+        FILENAME = 'C:\Program Files\Microsoft SQL Server\MSSQL15\MSSQL\DATA\SCHOLARSHIPDB.ldf',
+        SIZE = 50MB,
+        MAXSIZE = 500MB,
+        FILEGROWTH = 10%
+    );
+    PRINT '✓ SCHOLARSHIPDB created successfully';
+END
+ELSE
+BEGIN
+    PRINT '✓ SCHOLARSHIPDB already exists';
+END
+GO
+
+-- ==========================================
+-- PHASE 2: DEPLOY TABLES
+-- ==========================================
+
+USE [SCHOLARSHIPDB];
+GO
+
+PRINT '';
+PRINT '=== PHASE 2: Deploying SCHOLARSHIP Tables ===';
+GO
+
+-- Table: SCHOLARSHIP_AMOUNT
+CREATE TABLE [SCHOLARSHIP_AMOUNT] (
+    [SCH_AMTID] BIGINT NOT NULL,
+    [SCH_ORGID] BIGINT NOT NULL,
+    [SCH_GRADECAT] CHAR(3) NOT NULL,
+    [SCH_ELGIBLEEXAM] VARCHAR(2) NOT NULL,
+    [SCH_APPLICABLEALLGRADE] CHAR(1) NOT NULL,
+    [SCH_GRADEID] DECIMAL(38) NOT NULL,
+    [SCH_FROMYEAR] DECIMAL(38) NOT NULL,
+    [SCH_CLOSEYEAR] DECIMAL(38) NULL,
+    [SCH_ELGIBLEAMOUNT] BIGINT NOT NULL,
+    [SCH_ELGIBLEYEAR] INT NOT NULL,
+    [SCH_CUTOFFMARKS] INT NOT NULL,
+    [SCH_CREATEDON] BIGINT NULL,
+    [SCH_CREATEDBY] DATETIME2(3) NULL,
+    [SCH_UPDATEDON] DATETIME2(3) NULL,
+    [SCH_UPDATEDBY] BIGINT NULL,
+    CONSTRAINT [PK_SCHOLARSHIP_AMOUNT] PRIMARY KEY ([SCH_AMTID])
+);
+PRINT '✓ SCHOLARSHIP_AMOUNT table created';
+GO
+
+-- Table: SCHOLARSHIP_DETAIL
+CREATE TABLE [SCHOLARSHIP_DETAIL] (
+    [SCHDET_ID] BIGINT NOT NULL,
+    [SCHDET_MAINID] BIGINT NOT NULL,
+    [SCHDET_YEAR] INT NOT NULL,
+    [SCHDET_MARKSFILE] VARCHAR(100) NOT NULL,
+    [SCHDET_MARKSTATUS] CHAR(1) NOT NULL,
+    [SCHDET_PAYSTATUS] CHAR(1) NOT NULL,
+    [SCHDET_CREATEDON] DATETIME2(3) NOT NULL,
+    [SCHDET_CREATEDBY] BIGINT NOT NULL,
+    [SCHDET_UPDATEDON] DATETIME2(3) NULL,
+    [SCHDET_UPDATEDBY] BIGINT NULL,
+    [SCHDET_APPROVEDON] DATETIME2(3) NULL,
+    [SCHDET_APPROVEDBY] BIGINT NULL,
+    [SCHDET_PAYAPPROVEDON] DATETIME2(3) NULL,
+    [SCHDET_PAYAPPROVEDBY] BIGINT NULL,
+    [SCHDET_PAYDATE] DATETIME2(3) NULL,
+    [SCHDET_PAYAMOUNT] BIGINT NULL,
+    [SCHDET_PAYUPDATEDON] DATETIME2(3) NULL,
+    [SCHDET_PAYUPDATEDBY] BIGINT NULL,
+    CONSTRAINT [PK_SCHOLARSHIP_DETAIL] PRIMARY KEY ([SCHDET_ID]),
+    CONSTRAINT [FK_SCHOLARSHIP_DETAIL_MAIN] FOREIGN KEY ([SCHDET_MAINID]) REFERENCES [SCHOLARSHIP_MAIN]([SCH_ID])
+);
+PRINT '✓ SCHOLARSHIP_DETAIL table created';
+GO
+
+-- Table: SCHOLARSHIP_MAIN
+CREATE TABLE [SCHOLARSHIP_MAIN] (
+    [SCH_ID] INT NOT NULL,
+    [SCH_EMPSYSID] INT NOT NULL,
+    [SCH_GRADEID] INT NOT NULL,
+    [SCH_DEPENDID] INT NOT NULL,
+    [SCH_CHILDNAME] VARCHAR(100) NOT NULL,
+    [SCH_LASTSCHOOL] VARCHAR(100) NOT NULL,
+    [SCH_LASTYEAROFSCHOOL] DECIMAL(38) NOT NULL,
+    [SCH_LASTEXAM] CHAR(2) NOT NULL,
+    [SCH_CGPAFLAG] CHAR(1) NOT NULL,
+    [SCH_MARKSPER] DECIMAL(19,0) NOT NULL,
+    [SCH_MARKSGPA] DECIMAL(19,0) NOT NULL,
+    [SCH_MARKSFILE] VARCHAR(100) NOT NULL,
+    [SCH_COURSENAME] VARCHAR(100) NOT NULL,
+    [SCH_COURSEJOINYEAR] INT NOT NULL,
+    [SCH_COURSEJOINMONTH] DECIMAL(20,0) NOT NULL,
+    [SCH_COURSEDURATION] BIGINT NOT NULL,
+    [SCH_ADMRECPTFILE] VARCHAR(100) NULL,
+    [SCH_PAYMODE] CHAR(3) NULL,
+    [SCH_CHILDACCNO] VARCHAR(20) NULL,
+    [SCH_CHILLDBANKIFSC] VARCHAR(12) NULL,
+    [SCH_CHILLDBANKMICR] VARCHAR(12) NULL,
+    [SCH_ENTRYSTATUS] CHAR(1) NULL,
+    [SCH_SOURCE] CHAR(1) NOT NULL,
+    [SCH_DISBAMOUNT] DECIMAL(19,0) NOT NULL,
+    [SCH_DISBFREQ] CHAR(1) NOT NULL,
+    [SCH_LIVESTATUS] CHAR(1) NOT NULL,
+    [SCH_CREATEDON] DATETIME2(3) NOT NULL,
+    [SCH_CREATEDBY] INT NOT NULL,
+    [SCH_UPDATEDON] DATETIME2(3) NOT NULL,
+    [SCH_UPDATEDBY] BIGINT NOT NULL,
+    [SCH_APPROVALBY] INT NOT NULL,
+    [SCH_APPROVALON] DATETIME2(3) NOT NULL,
+    [SCH_APPREMARKS] VARCHAR(200) NOT NULL,
+    [SCH_STOPREASON] VARCHAR(200) NOT NULL,
+    [SCH_STOPDATE] DATETIME2(3) NOT NULL,
+    [SCH_STOPENTEREDON] DATETIME2(3) NOT NULL,
+    [SCH_STOPENTEREDBY] INT NOT NULL,
+    [SCH_OFFLINE] CHAR(1) NOT NULL,
+    [SCH_OFFLINEYEAR] INT NULL,
+    CONSTRAINT [PK_SCHOLARSHIP_MAIN] PRIMARY KEY ([SCH_ID])
+);
+PRINT '✓ SCHOLARSHIP_MAIN table created';
+GO
+
+-- Create indexes
+CREATE INDEX [IDX_SCHOLARSHIP_AMOUNT_GRADECAT] ON [SCHOLARSHIP_AMOUNT]([SCH_GRADECAT], [SCH_ELGIBLEEXAM]);
+CREATE INDEX [IDX_SCHOLARSHIP_MAIN_EMPSYSID] ON [SCHOLARSHIP_MAIN]([SCH_EMPSYSID]);
+CREATE INDEX [IDX_SCHOLARSHIP_DETAIL_MAINID] ON [SCHOLARSHIP_DETAIL]([SCHDET_MAINID]);
+PRINT '✓ Indexes created';
+GO
+
+PRINT '✓ Phase 2 Complete: All tables deployed';
+GO
+
+-- ==========================================
+-- PHASE 3: DEPLOY PROCEDURES AND FUNCTIONS
+-- ==========================================
+
+PRINT '';
+PRINT '=== PHASE 3: Deploying Procedures and Functions ===';
+GO
+
+-- Function: fn_GetScholarshipEligibleAmount
+CREATE OR ALTER FUNCTION dbo.fn_GetScholarshipEligibleAmount
+(
+    @p_GradeCat CHAR(3),
+    @p_EligibleExam VARCHAR(2),
+    @p_Year INT
+)
+RETURNS BIGINT
+AS
+BEGIN
+    DECLARE @Amount BIGINT;
+
+    SELECT TOP 1 @Amount = SCH_ELGIBLEAMOUNT
+    FROM SCHOLARSHIP_AMOUNT
+    WHERE SCH_GRADECAT = @p_GradeCat
+      AND SCH_ELGIBLEEXAM = @p_EligibleExam
+      AND @p_Year BETWEEN SCH_FROMYEAR AND ISNULL(SCH_CLOSEYEAR, @p_Year)
+    ORDER BY SCH_FROMYEAR DESC;
+
+    RETURN ISNULL(@Amount, 0);
+END;
+GO
+PRINT '✓ fn_GetScholarshipEligibleAmount function created';
+GO
+
+-- Procedure: usp_ScholarshipApplication
+CREATE OR ALTER PROCEDURE dbo.usp_ScholarshipApplication
+(
+    @p_SCH_EMPSYSID INT,
+    @p_SCH_GRADEID INT,
+    @p_SCH_DEPENDID INT,
+    @p_SCH_CHILDNAME VARCHAR(100),
+    @p_SCH_LASTSCHOOL VARCHAR(100),
+    @p_SCH_LASTYEAROFSCHOOL DECIMAL(38,0),
+    @p_SCH_LASTEXAM CHAR(2),
+    @p_SCH_CGPAFLAG CHAR(1),
+    @p_SCH_MARKSPER DECIMAL(19,0),
+    @p_SCH_MARKSGPA DECIMAL(19,0),
+    @p_SCH_MARKSFILE VARCHAR(100),
+    @p_SCH_COURSENAME VARCHAR(100),
+    @p_SCH_COURSEJOINYEAR INT,
+    @p_SCH_COURSEJOINMONTH DECIMAL(20,0),
+    @p_SCH_COURSEDURATION BIGINT,
+    @p_SCH_ADMRECPTFILE VARCHAR(100) = NULL,
+    @p_SCH_PAYMODE CHAR(3) = NULL,
+    @p_SCH_CHILDACCNO VARCHAR(20) = NULL,
+    @p_SCH_CHILLDBANKIFSC VARCHAR(12) = NULL,
+    @p_SCH_CHILLDBANKMICR VARCHAR(12) = NULL,
+    @p_SCH_ENTRYSTATUS CHAR(1) = 'E',
+    @p_SCH_SOURCE CHAR(1),
+    @p_SCH_DISBAMOUNT DECIMAL(19,0),
+    @p_SCH_DISBFREQ CHAR(1),
+    @p_SCH_LIVESTATUS CHAR(1) = 'A',
+    @p_CreatedBy INT,
+    @p_SCH_OFFLINE CHAR(1) = 'N',
+    @p_SCH_OFFLINEYEAR INT = NULL,
+    @p_NewSchID INT OUTPUT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        SELECT @p_NewSchID = ISNULL(MAX(SCH_ID), 0) + 1 FROM SCHOLARSHIP_MAIN;
+
+        INSERT INTO SCHOLARSHIP_MAIN
+        (
+            SCH_ID, SCH_EMPSYSID, SCH_GRADEID, SCH_DEPENDID, SCH_CHILDNAME,
+            SCH_LASTSCHOOL, SCH_LASTYEAROFSCHOOL, SCH_LASTEXAM, SCH_CGPAFLAG,
+            SCH_MARKSPER, SCH_MARKSGPA, SCH_MARKSFILE, SCH_COURSENAME,
+            SCH_COURSEJOINYEAR, SCH_COURSEJOINMONTH, SCH_COURSEDURATION,
+            SCH_ADMRECPTFILE, SCH_PAYMODE, SCH_CHILDACCNO, SCH_CHILLDBANKIFSC,
+            SCH_CHILLDBANKMICR, SCH_ENTRYSTATUS, SCH_SOURCE, SCH_DISBAMOUNT,
+            SCH_DISBFREQ, SCH_LIVESTATUS, SCH_CREATEDON, SCH_CREATEDBY,
+            SCH_UPDATEDON, SCH_UPDATEDBY, SCH_APPROVALBY, SCH_APPROVALON,
+            SCH_APPREMARKS, SCH_STOPREASON, SCH_STOPDATE, SCH_STOPENTEREDON,
+            SCH_STOPENTEREDBY, SCH_OFFLINE, SCH_OFFLINEYEAR
+        )
+        VALUES
+        (
+            @p_NewSchID, @p_SCH_EMPSYSID, @p_SCH_GRADEID, @p_SCH_DEPENDID, @p_SCH_CHILDNAME,
+            @p_SCH_LASTSCHOOL, @p_SCH_LASTYEAROFSCHOOL, @p_SCH_LASTEXAM, @p_SCH_CGPAFLAG,
+            @p_SCH_MARKSPER, @p_SCH_MARKSGPA, @p_SCH_MARKSFILE, @p_SCH_COURSENAME,
+            @p_SCH_COURSEJOINYEAR, @p_SCH_COURSEJOINMONTH, @p_SCH_COURSEDURATION,
+            @p_SCH_ADMRECPTFILE, @p_SCH_PAYMODE, @p_SCH_CHILDACCNO, @p_SCH_CHILLDBANKIFSC,
+            @p_SCH_CHILLDBANKMICR, @p_SCH_ENTRYSTATUS, @p_SCH_SOURCE, @p_SCH_DISBAMOUNT,
+            @p_SCH_DISBFREQ, @p_SCH_LIVESTATUS, GETDATE(), @p_CreatedBy,
+            GETDATE(), @p_CreatedBy, 0, GETDATE(),
+            '', '', GETDATE(), GETDATE(), 0,
+            @p_SCH_OFFLINE, @p_SCH_OFFLINEYEAR
+        );
+
+        DECLARE @NewDetID BIGINT;
+        SELECT @NewDetID = ISNULL(MAX(SCHDET_ID), 0) + 1 FROM SCHOLARSHIP_DETAIL;
+
+        INSERT INTO SCHOLARSHIP_DETAIL
+        (
+            SCHDET_ID, SCHDET_MAINID, SCHDET_YEAR, SCHDET_MARKSFILE,
+            SCHDET_MARKSTATUS, SCHDET_PAYSTATUS, SCHDET_CREATEDON, SCHDET_CREATEDBY,
+            SCHDET_UPDATEDON, SCHDET_UPDATEDBY, SCHDET_APPROVEDON, SCHDET_APPROVEDBY,
+            SCHDET_PAYAPPROVEDON, SCHDET_PAYAPPROVEDBY, SCHDET_PAYDATE,
+            SCHDET_PAYAMOUNT, SCHDET_PAYUPDATEDON, SCHDET_PAYUPDATEDBY
+        )
+        VALUES
+        (
+            @NewDetID, @p_NewSchID, @p_SCH_COURSEJOINYEAR, @p_SCH_MARKSFILE,
+            'P', 'S', GETDATE(), @p_CreatedBy,
+            GETDATE(), @p_CreatedBy,
+            NULL, NULL,
+            NULL, NULL, NULL,
+            NULL, NULL, NULL
+        );
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+PRINT '✓ usp_ScholarshipApplication procedure created';
+GO
+
+-- Procedure: usp_ScholarshipApprove
+CREATE OR ALTER PROCEDURE dbo.usp_ScholarshipApprove
+(
+    @p_SCH_ID INT,
+    @p_ApprovedBy INT,
+    @p_AppRemarks VARCHAR(200) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        UPDATE SCHOLARSHIP_MAIN
+        SET SCH_ENTRYSTATUS = 'A',
+            SCH_APPROVALBY = @p_ApprovedBy,
+            SCH_APPROVALON = GETDATE(),
+            SCH_APPREMARKS = ISNULL(@p_AppRemarks, ''),
+            SCH_UPDATEDON = GETDATE(),
+            SCH_UPDATEDBY = @p_ApprovedBy
+        WHERE SCH_ID = @p_SCH_ID;
+
+        UPDATE SCHOLARSHIP_DETAIL
+        SET SCHDET_MARKSTATUS = 'A',
+            SCHDET_APPROVEDON = GETDATE(),
+            SCHDET_APPROVEDBY = @p_ApprovedBy,
+            SCHDET_UPDATEDON = GETDATE(),
+            SCHDET_UPDATEDBY = @p_ApprovedBy
+        WHERE SCHDET_MAINID = @p_SCH_ID
+          AND SCHDET_MARKSTATUS = 'P';
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+PRINT '✓ usp_ScholarshipApprove procedure created';
+GO
+
+PRINT '✓ Phase 3 Complete: All procedures deployed';
+GO
+
+-- ==========================================
+-- PHASE 4: DEPLOY TRIGGERS
+-- ==========================================
+
+PRINT '';
+PRINT '=== PHASE 4: Deploying Triggers ===';
+GO
+
+CREATE OR ALTER TRIGGER dbo.trg_ScholarshipDetail_UpdateAudit
+ON dbo.SCHOLARSHIP_DETAIL
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE SD
+    SET SCHDET_UPDATEDON = GETDATE()
+    FROM dbo.SCHOLARSHIP_DETAIL SD
+    INNER JOIN inserted I ON SD.SCHDET_ID = I.SCHDET_ID;
+END;
+GO
+PRINT '✓ trg_ScholarshipDetail_UpdateAudit trigger created';
+GO
+
+PRINT '✓ Phase 4 Complete: All triggers deployed';
+GO
+
+-- ==========================================
+-- PHASE 5: VERIFICATION
+-- ==========================================
+
+PRINT '';
+PRINT '=== PHASE 5: Verification ===';
+GO
+
+PRINT 'Tables:';
+SELECT COUNT(*) as TableCount FROM sys.tables WHERE schema_id = SCHEMA_ID('dbo');
+
+PRINT 'Procedures and Functions:';
+SELECT COUNT(*) as RoutineCount FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = 'dbo';
+
+PRINT 'Triggers:';
+SELECT COUNT(*) as TriggerCount FROM sys.triggers WHERE parent_class = 0;
+
+PRINT 'Indexes:';
+SELECT COUNT(*) as IndexCount FROM sys.indexes WHERE object_id > 100 AND name IS NOT NULL;
+
+GO
+
+-- ==========================================
+-- DEPLOYMENT SUMMARY
+-- ==========================================
+
+PRINT '';
+PRINT '========================================';
+PRINT 'SCHOLARSHIPDB DEPLOYMENT COMPLETE';
+PRINT '========================================';
+PRINT '';
+PRINT 'Database: SCHOLARSHIPDB';
+PRINT 'Module: SCHOLARSHIP';
+PRINT 'Status: ✓ Successfully Deployed';
+PRINT '';
+PRINT 'Objects Created:';
+PRINT '  ✓ 3 Tables (SCHOLARSHIP_AMOUNT, SCHOLARSHIP_DETAIL, SCHOLARSHIP_MAIN)';
+PRINT '  ✓ 3 Indexes (Performance optimization)';
+PRINT '  ✓ 2 Procedures (usp_ScholarshipApplication, usp_ScholarshipApprove)';
+PRINT '  ✓ 1 Function (fn_GetScholarshipEligibleAmount)';
+PRINT '  ✓ 1 Trigger (trg_ScholarshipDetail_UpdateAudit)';
+PRINT '';
+PRINT 'Quick Start:';
+PRINT '  1. Verify tables in SSMS Object Explorer';
+PRINT '  2. Test procedure: EXEC usp_ScholarshipApplication ...';
+PRINT '  3. Query data: SELECT * FROM SCHOLARSHIP_MAIN;';
+PRINT '';
+PRINT '========================================';
+GO
+
+-- ==========================================
+-- END OF SCHOLARSHIPDB DEPLOYMENT
+-- ==========================================

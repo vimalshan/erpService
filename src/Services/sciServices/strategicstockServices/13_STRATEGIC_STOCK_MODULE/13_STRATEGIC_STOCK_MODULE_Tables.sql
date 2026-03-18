@@ -1,0 +1,29 @@
+-- ==========================================
+-- STRATEGIC STOCK MODULE - Table Definitions
+-- Database: SCIDB
+-- Module: Strategic Stock Management
+-- Created: March 9, 2026
+-- ==========================================
+
+USE SCIDB;
+GO
+
+-- Table: STRATEGIC_STOCK
+CREATE TABLE [STRATEGIC_STOCK] (
+    [STRATEGIC_STOCK_ID] INT NULL,
+    [COMPANY_UNIT_ID] INT NULL,
+    [SCI_ITEM_ID] INT NOT NULL,
+    [STRATEGIC_STOCK_TYPE] VARCHAR(2) NULL,
+    [MAX_QTY] BIGINT NULL,
+    [EFFECTIVE_DATE] VARCHAR(255) NULL,
+    [CLOSURE_DATE] VARCHAR(255) NULL,
+    [SCI_USER_ID_CREATED] INT NULL,
+    [CREATION_DATE] DATETIME2(3) NOT NULL,
+    [SCI_USER_ID_MODIFIED] INT NULL,
+    [MODIFIED_DATE] VARCHAR(255) NULL,
+    [FILLED_QTY] BIGINT NULL,
+    CONSTRAINT [PK_STRATEGIC_STOCK] PRIMARY KEY ([STRATEGIC_STOCK_ID])
+);
+
+PRINT 'STRATEGIC_STOCK_MODULE Tables created successfully.';
+GO

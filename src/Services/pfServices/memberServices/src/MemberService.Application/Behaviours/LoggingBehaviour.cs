@@ -1,0 +1,29 @@
+using MediatR;
+using Microsoft.Extensions.Logging;
+
+namespace MemberService.Application.Behaviours;
+
+public class LoggingBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest<TResponse>
+{
+    private readonly ILogger<LoggingBehaviour<TRequest, TResponse>> _logger;
+
+    public LoggingBehaviour(ILogger<LoggingBehaviour<TRequest, TResponse>> logger) => _logger = logger;
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
+    {
+        var requestName = typeof(TRequest).Name;
+        _logger.LogInformation("[MediatR] Handling {RequestName}", requestName);
+        try
+        {
+            var response = await next();
+            _logger.LogInformation("[MediatR] Handled {RequestName} successfully", requestName);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[MediatR] Error handling {RequestName}", requestName);
+            throw;
+        }
+    }
+}

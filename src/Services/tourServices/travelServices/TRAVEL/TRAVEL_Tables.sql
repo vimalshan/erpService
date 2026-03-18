@@ -1,0 +1,206 @@
+-- ==========================================
+-- Module: TRAVEL
+-- Description: Travel Finance & Batch Management Module
+-- Database: TOURDB
+-- Created: March 9, 2026
+-- ==========================================
+
+USE TOURDB;
+GO
+
+-- Table: TRAVEL_BATCHMAIN - Batch Main
+CREATE TABLE [TRAVEL_BATCHMAIN] (
+    [BATCH_ID] VARCHAR(255) NULL  -- Batch ID,
+    [BATCH_ADMINID] VARCHAR(255) NULL  -- Admin ID,
+    [BATCH_PAYUNITID] VARCHAR(255) NULL  -- Payroll Unit ID,
+    [BATCH_BATCHDATE] DATETIME2(3) NULL  -- Batch Created date,
+    [BATCH_INVNUM] VARCHAR(255) NULL  -- Invoice No,
+    [BATCH_INVDATE] DATETIME2(3) NULL  -- Invoice Date,
+    [BATCH_INVAMOUNT] VARCHAR(255) NULL  -- Invoice Amount,
+    [BATCH_STATUS] VARCHAR(255) NULL  -- Batch Status,
+    [BATCH_ADMREMARK] VARCHAR(255) NULL  -- Admin Remakrs,
+    [BATCH_FINREMARK] VARCHAR(255) NULL  -- Finance Remarks,
+    [BATCH_VENDORID] VARCHAR(255) NULL  -- Vendor ID,
+    [BATCH_APPAMT] VARCHAR(255) NULL  -- Approved Amount,
+    [BATCH_BILAMT] VARCHAR(255) NULL  -- Total Amount,
+    [BATCH_SERTAX] VARCHAR(255) NULL  -- Service Tax,
+    [BATCH_CESTAX] VARCHAR(255) NULL  -- Cess,
+    [BATCH_ADLTAX] VARCHAR(255) NULL  -- Additional Tax,
+    [BATCH_TOTPAY] VARCHAR(255) NULL  -- Total Payable,
+    [BATCH_JVID] VARCHAR(255) NULL  -- JV ID,
+    [BATCH_TERM] VARCHAR(255) NULL  -- R12 Payment Terms,
+    [BATCH_BILLDATE] DATETIME2(3) NULL  -- Bill Date,
+    [BATCH_TYPE] VARCHAR(255) NULL  -- Batch Type,
+    [BATCH_CREATEDBY] VARCHAR(255) NULL  -- Created by,
+    [BATCH_CREATEDON] DATETIME2(3) NULL  -- Created on,
+    [BATCH_APPROVEDBY] VARCHAR(255) NULL  -- Admin Approved by,
+    [BATCH_APPROVEDON] DATETIME2(3) NULL  -- Admin Approved on,
+    [BATCH_FINAPPROVEDBY] VARCHAR(255) NULL  -- Finance Approved by,
+    [BATCH_FINAPPROVEDON] DATETIME2(3) NULL  -- Finance Approved on,
+    [BATCH_HIGCES] VARCHAR(255) NULL  -- Higher Education Cess,
+    [BATCH_RNDOFF] VARCHAR(255) NULL  -- Rounding Off,
+    [BATCH_CABTYPE] VARCHAR(255) NULL  -- Cab Type,
+    [BATCH_SURTAX] DECIMAL(38) NULL  -- SurCharge,
+    [BATCH_chrTAX] DECIMAL(38) NULL  -- Booking Charges,
+    [BATCH_CENVATAPPLICABLE] VARCHAR(255) NULL  -- Cenvat Credit applicable,
+    [BATCH_DOCREFNO] VARCHAR(255) NULL  -- Document Key Ref No,
+    [BATCH_SOURCEUID] VARCHAR(255) NULL  -- Original Batch ID,
+    CONSTRAINT [PK_TRAVEL_BATCHMAIN] PRIMARY KEY ([BATCH_ID])
+);
+
+-- Table: TRAVEL_BATCHSUB - Batch Sub
+CREATE TABLE [TRAVEL_BATCHSUB] (
+    [BATCHSUB_ID] VARCHAR(255) NULL  -- Batch Sub ID,
+    [BATCHSUB_BATCHID] VARCHAR(255) NULL  -- Batch ID,
+    [BATCHSUB_BOOKCNFID] VARCHAR(255) NULL  -- Booking confirmation ID,
+    [BATCHSUB_BOOKNO] VARCHAR(255) NULL  -- Booking Request ID,
+    [BATCHSUB_BASAMT] VARCHAR(255) NULL  -- Base Amount,
+    [BATCHSUB_ADJAMT] VARCHAR(255) NULL  -- Adjusted amount,
+    [BATCHSUB_TOTAMT] VARCHAR(255) NULL  -- Total amount,
+    [BATCHSUB_APPAMT] VARCHAR(255) NULL  -- Approved amount,
+    [BATCHSUB_SERTAX] VARCHAR(255) NULL  -- Service Tax,
+    [BATCHSUB_CESTAX] VARCHAR(255) NULL  -- Cess,
+    [BATCHSUB_ADLTAX] VARCHAR(255) NULL  -- Additional Tax,
+    [BATCHSUB_TOTPAY] VARCHAR(255) NULL  -- Net Payable,
+    [BATCHSUB_REFDET] VARCHAR(255) NULL  -- Details,
+    [BATCHSUB_VENREMARKS] VARCHAR(255) NULL  -- Vendor Remarks,
+    [BATCHSUB_CREDITTYPE] VARCHAR(255) NOT NULL  -- Booking Payment / Cancellation Refund,
+    [BATCHSUB_ADMREMARKS] VARCHAR(255) NULL  -- Admin Remarks,
+    [BATCHSUB_TKTREFERENCE] VARCHAR(255) NULL  -- Ticket Reference,
+    [BATCHSUB_TPID] VARCHAR(255) NULL  -- Tour Plan ID,
+    [BATCHSUB_FORREQID] VARCHAR(255) NULL  -- Forex Request ID,
+    [BATCHSUB_HIGCES] VARCHAR(255) NULL  -- Higher Edu Cess,
+    [BATCHSUB_RNDOFF] VARCHAR(255) NULL  -- Rounding Off,
+    [BATCHSUB_SURTAX] VARCHAR(255) NULL  -- Surcharge,
+    [BATCHSUB_CHRTAX] VARCHAR(255) NULL  -- CES,
+    [BATCHSUB_INVNUM] VARCHAR(255) NULL  -- Invoice No,
+    [BATCHSUB_INVDATE] DATETIME2(3) NULL  -- Invoice Date,
+    [BATCHSUB_R12LOCID] VARCHAR(255) NULL  -- Employee Attendance Location,
+    [BATCHSUB_CGSTBAS] VARCHAR(255) NULL  -- CGST on Basic,
+    [BATCHSUB_SGSTBAS] VARCHAR(255) NULL  -- SGST on Basic,
+    [BATCHSUB_TRVELCLASS] VARCHAR(255) NULL  -- Ticket Class ID,
+    [BATCHSUB_IGSTBAS] VARCHAR(255) NULL  -- IGST on Basic,
+    [BATCHSUB_CGSTMGT] VARCHAR(255) NULL  -- CGST on Management Charges,
+    [BATCHSUB_SGSTMGT] VARCHAR(255) NULL  -- SGST on Management Charges,
+    [BATCHSUB_IGSTMGT] VARCHAR(255) NULL  -- IGST on Management Charges,
+    [BATCHSUB_R12BU] VARCHAR(255) NULL  -- Invoice R12 BU,
+    [BATCHSUB_TAXBASIC] VARCHAR(255) NULL  -- Stay Basic slab,
+    [BATCHSUB_VENDORID] VARCHAR(255) NULL  -- Airline tikcet Vendor ID,
+    CONSTRAINT [PK_TRAVEL_BATCHSUB] PRIMARY KEY ([BATCHSUB_ID])
+);
+
+-- Table: TRAVEL_APPRDETAILS - Travel Approver Details
+CREATE TABLE [TRAVEL_APPRDETAILS] (
+    [TRAVEL_APRDETID] VARCHAR(255) NOT NULL  -- Approver Detail ID,
+    [TRAVEL_TPID] VARCHAR(255) NOT NULL  -- Tour Plan ID,
+    [TRAVEL_SOURCE] VARCHAR(255) NOT NULL  -- Application Reference,
+    [TRAVEL_SOURCEID] VARCHAR(255) NOT NULL  -- Application Reference ID,
+    [TRAVEL_APPROVEDSTATUS] VARCHAR(255) NOT NULL  -- A - Approve / C - Cancel / R - Reject,
+    [TRAVEL_APPROVERSYSID] VARCHAR(255) NOT NULL  -- Employee System ID,
+    [TRAVEL_APPROVEDON] DATETIME2(3) NOT NULL  -- Approved On,
+    [TRAVEL_REMARKS] VARCHAR(255) NOT NULL  -- Approver Remarks,
+    [TRAVEL_APPROVERTYPE] VARCHAR(255) NOT NULL  -- Type of Approver,
+    CONSTRAINT [PK_TRAVEL_APPRDETAILS] PRIMARY KEY ([TRAVEL_APRDETID])
+);
+
+-- Table: JVEMP_MAIN - INV/CRD/PJV
+CREATE TABLE [JVEMP_MAIN] (
+    [JV_BATCHID] BIGINT NOT NULL  -- Batch ID,
+    [JV_TPID] BIGINT NOT NULL  -- TP ID,
+    [JV_TYPE] CHAR(3) NOT NULL  -- Integration Type,
+    [JV_DATE] DATETIME2(3) NOT NULL  -- Transaction Date,
+    [JV_EMPSYSID] BIGINT NOT NULL  -- Employee System ID,
+    [JV_STATUS] CHAR(1) NOT NULL  -- Posting Status,
+    [JV_CREATEDBY] BIGINT NOT NULL  -- Created By,
+    [JV_CREATEDON] DATETIME2(3) NOT NULL  -- Created On,
+    [JV_TRNTYPE] CHAR(3) NOT NULL  -- Transaction Type,
+    [JV_ORAREFNO] VARCHAR(50) NULL  -- Oracle Ref No,
+    [JV_NETAMT] DECIMAL(19,0) NOT NULL  -- JV Net Amount,
+    [JV_PAYUNITID] BIGINT NOT NULL  -- Payroll Unit ID,
+    [JV_TRNREFNO] BIGINT NULL  -- Transaction Reference No,
+    CONSTRAINT [PK_JVEMP_MAIN] PRIMARY KEY ([JV_BATCHID])
+);
+
+-- Table: JVEMP_SUB - Debit/Credit (D/C)
+CREATE TABLE [JVEMP_SUB] (
+    [JV_SUBID] BIGINT NOT NULL  -- JV Sub ID,
+    [JV_BATCHID] BIGINT NOT NULL  -- JV Batch ID,
+    [JV_BU] VARCHAR(25) NOT NULL  -- Business Unit,
+    [JV_ACCODE] VARCHAR(25) NOT NULL  -- Account Code,
+    [JV_SUBACC] VARCHAR(25) NOT NULL  -- Sub Account Code,
+    [JV_CCCODE] VARCHAR(25) NOT NULL  -- CC Code,
+    [JV_PRODUCT] VARCHAR(25) NOT NULL  -- Product Code,
+    [JV_DCFLAG] VARCHAR(25) NOT NULL  -- DC Flag,
+    [JV_TRNAMT] VARCHAR(25) NOT NULL  -- Transaction Amount,
+    [JV_IUTABU] VARCHAR(25) NOT NULL  -- IUTA BU,
+    [JV_LOC] VARCHAR(25) NOT NULL  -- LOC Code,
+    [JV_REMARKS] VARCHAR(100) NOT NULL  -- Remarks,
+    [JV_LINEFLAG] CHAR(1) NOT NULL  -- Line Item Flag,
+    [JV_COMBINATIONID] VARCHAR(200) NULL  -- Accounting Combination ID,
+    [JV_SUBTYPE] CHAR(3) NOT NULL  -- Sub Type,
+    [JV_COMBINATIONCODE] VARCHAR(207) NULL  -- Accounting Combination Code,
+    CONSTRAINT [PK_JVEMP_SUB] PRIMARY KEY ([JV_SUBID])
+);
+
+-- Table: JVSUP_MAIN - INV/CRD/JV
+CREATE TABLE [JVSUP_MAIN] (
+    [JV_ID] BIGINT NOT NULL  -- JV ID,
+    [JV_TYPE] VARCHAR(10) NOT NULL  -- Integration Type,
+    [JV_DATE] DATETIME2(3) NOT NULL  -- Transaction Date,
+    [JV_VENDORID] BIGINT NOT NULL  -- Vendor ID,
+    [JV_ORAREFNO] VARCHAR(50) NULL  -- Oracle Ref No,
+    [JV_STATUS] CHAR(1) NOT NULL  -- Posting Status,
+    [JV_CREATEDBY] BIGINT NOT NULL  -- Created By,
+    [JV_CREATEDON] DATETIME2(3) NOT NULL  -- Created On,
+    [JV_PAYUNITID] BIGINT NOT NULL  -- Source Payroll Unit ID,
+    [JV_REFINVNO] VARCHAR(25) NOT NULL  -- Invoice Reference No,
+    [JV_NETAMT] DECIMAL(19,0) NOT NULL  -- Net Amount Payable,
+    [JV_TRNTYPE] CHAR(3) NOT NULL  -- Vendor Type,
+    [JV_ORAVENDORID] BIGINT NOT NULL  -- Oracle Vendor ID,
+    [JV_ADMINID] BIGINT NOT NULL  -- Admin ID,
+    [JV_INVBATCHID] BIGINT NOT NULL  -- Invoice Batch ID,
+    [JV_ORASITEID] BIGINT NOT NULL  -- Oracle Site ID,
+    [JV_CENVATAPPLICABLE] CHAR(1) NOT NULL,
+    [JV_DOCKEYNO] VARCHAR(100) NOT NULL,
+    CONSTRAINT [PK_JVSUP_MAIN] PRIMARY KEY ([JV_ID])
+);
+
+-- Table: JVSUP_SUB - Debit/Credit (D/C)
+CREATE TABLE [JVSUP_SUB] (
+    [JV_SUBID] BIGINT NOT NULL  -- JV Sub ID,
+    [JV_ID] BIGINT NOT NULL  -- JV ID,
+    [JV_BU] VARCHAR(25) NOT NULL  -- Business Unit,
+    [JV_ACCODE] VARCHAR(25) NOT NULL  -- Account Code,
+    [JV_SUBACC] VARCHAR(25) NOT NULL  -- Sub Account Code,
+    [JV_CCCODE] VARCHAR(25) NOT NULL  -- CC Code,
+    [JV_PRODUCT] VARCHAR(25) NOT NULL  -- Product Code,
+    [JV_DCFLAG] CHAR(1) NOT NULL  -- DC Flag,
+    [JV_TRNAMT] DECIMAL(19,0) NOT NULL  -- Transaction Amount,
+    [JV_LOC] VARCHAR(25) NOT NULL  -- LOC Code,
+    [JV_REMARKS] VARCHAR(25) NOT NULL  -- Remarks,
+    [JV_LINEFLAG] CHAR(1) NOT NULL  -- Line Item Flag,
+    [JV_COMBINATIONID] VARCHAR(200) NOT NULL  -- Accounting Combination ID,
+    [JV_SUBTYPE] CHAR(3) NOT NULL  -- Sub Type,
+    [JV_COMBINATIONCODE] VARCHAR(207) NULL  -- Accounting Combination Code,
+    [JV_IUTABU] VARCHAR(25) NOT NULL  -- IUTA BU,
+    [JV_TPID] BIGINT NOT NULL  -- TP ID,
+    [JV_BATCHSUBID] BIGINT NOT NULL  -- Travel Batch Sub ID,
+    [JV_GSTBU] VARCHAR(25) NULL  -- GST Business Unit,
+    [JV_GSTACCODE] VARCHAR(255) NULL  -- GST Account Code,
+    [JV_GSTSUBACC] VARCHAR(255) NULL  -- GST Sub Account Code,
+    [JV_GSTCCCODE] VARCHAR(255) NULL  -- GST CC Code,
+    [JV_GSTPRODUCT] VARCHAR(255) NULL  -- GST Product Code,
+    [JV_GSTLOC] VARCHAR(255) NULL  -- GST LOC Code,
+    [JV_GSTCOMBINATIONID] VARCHAR(255) NULL  -- GST Combination ID,
+    [JV_GSTCOMBINATIONCODE] VARCHAR(255) NULL  -- GST Combination Code,
+    [JV_INVNO] VARCHAR(255) NULL  -- Invoice No,
+    [JV_INVDATE] DATETIME2(3) NULL  -- Invoice Date,
+    [JV_PAYTYPE] CHAR(3) NULL,
+    [JV_TPCAT] CHAR(3) NULL,
+    [JV_CLASS] INT NULL,
+    [JV_BASRATEAMT] DECIMAL(19,0) NULL,
+    CONSTRAINT [PK_JVSUP_SUB] PRIMARY KEY ([JV_SUBID])
+);
+
+PRINT 'TRAVEL Module - Tables created successfully.';
+GO

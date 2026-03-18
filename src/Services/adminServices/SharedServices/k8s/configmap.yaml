@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lov-service
+  labels:
+    name: lov-service
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lov-service-config
+  namespace: lov-service
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:5181"
+  Jwt__Issuer: "LovService"
+  Jwt__Audience: "LovServiceClients"
+  Jwt__ExpiresInMinutes: "60"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft: "Warning"

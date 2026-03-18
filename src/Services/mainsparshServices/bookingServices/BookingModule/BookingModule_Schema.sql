@@ -1,0 +1,86 @@
+-- ==========================================
+-- BookingModule
+-- Database: SRFSPARSHDB
+-- Module Purpose: Booking and Event Management
+-- Created: March 09, 2026
+-- ==========================================
+
+USE SRFSPARSHDB;
+GO
+
+-- Drop tables if they exist (reverse order for dependencies)
+IF OBJECT_ID('[BOOK_ATTENDEES]', 'U') IS NOT NULL DROP TABLE [BOOK_ATTENDEES];
+GO
+IF OBJECT_ID('[BOOK_REC]', 'U') IS NOT NULL DROP TABLE [BOOK_REC];
+GO
+IF OBJECT_ID('[BOOK_MAIN]', 'U') IS NOT NULL DROP TABLE [BOOK_MAIN];
+GO
+
+-- ==========================================
+-- Table: BOOK_MAIN - Booking Master
+-- Description: Main booking application with location and booking details
+-- ==========================================
+CREATE TABLE [BOOK_MAIN] (
+    [BOOKING_ID] BIGINT PRIMARY KEY IDENTITY(1,1),
+    [BOOKING_APPNO] VARCHAR(50) NOT NULL UNIQUE,
+    [BOOKING_TITLE] VARCHAR(255) NOT NULL,
+    [LOCATION_CODE] VARCHAR(50),
+    [BOOKING_DATE] DATETIME2(3),
+    [BOOKING_STATUS] VARCHAR(20) DEFAULT 'DRAFT', -- DRAFT, SUBMITTED, APPROVED, REJECTED, CANCELLED
+    [CREATED_BY] BIGINT NOT NULL,
+    [CREATED_ON] DATETIME2(3) NOT NULL DEFAULT GETDATE(),
+    [UPDATED_BY] BIGINT,
+    [UPDATED_ON] DATETIME2(3)
+);
+GO
+
+-- ==========================================
+-- Table: BOOK_REC - Booking Records by Location
+-- Description: Booking records linked to location codes
+-- Relationship: References BOOK_MAIN
+-- ==========================================
+CREATE TABLE [BOOK_REC] (
+    [BOOK_REC_ID] BIGINT PRIMARY KEY IDENTITY(1,1),
+    [BOOKING_ID] BIGINT NOT NULL,
+    [LOCATION_CODE] VARCHAR(50) NOT NULL,
+    [REC_DETAILS] NVARCHAR(MAX),
+    [REC_STATUS] VARCHAR(20) DEFAULT 'ACTIVE',
+    [CREATED_BY] BIGINT NOT NULL,
+    [CREATED_ON] DATETIME2(3) NOT NULL DEFAULT GETDATE(),
+    [UPDATED_BY] BIGINT,
+    [UPDATED_ON] DATETIME2(3),
+    CONSTRAINT [FK_BOOK_REC_BOOK_MAIN] FOREIGN KEY ([BOOKING_ID]) REFERENCES [BOOK_MAIN]([BOOKING_ID])
+);
+GO
+
+-- ==========================================
+-- Table: BOOK_ATTENDEES - Booking Attendees
+-- Description: Attendees for each booking with serial number tracking
+-- Relationship: References BOOK_MAIN
+-- ==========================================
+CREATE TABLE [BOOK_ATTENDEES] (
+    [ATTENDEE_ID] BIGINT PRIMARY KEY IDENTITY(1,1),
+    [BOOKING_ID] BIGINT NOT NULL,
+    [ATTENDEE_SYSID] BIGINT NOT NULL,
+    [ATTENDEE_SERIAL] INT NOT NULL,
+    [ATTENDANCE_STATUS] VARCHAR(20) DEFAULT 'REGISTERED', -- REGISTERED, ATTENDED, CANCELLED
+    [CREATED_BY] BIGINT NOT NULL,
+    [CREATED_ON] DATETIME2(3) NOT NULL DEFAULT GETDATE(),
+    [UPDATED_BY] BIGINT,
+    [UPDATED_ON] DATETIME2(3),
+    CONSTRAINT [FK_BOOK_ATTENDEES_BOOK_MAIN] FOREIGN KEY ([BOOKING_ID]) REFERENCES [BOOK_MAIN]([BOOKING_ID]),
+    CONSTRAINT [UC_BOOKING_ATTENDEE] UNIQUE ([BOOKING_ID], [ATTENDEE_SYSID])
+);
+GO
+
+-- Create Indexes
+CREATE INDEX [IX_BOOK_MAIN_STATUS] ON [BOOK_MAIN]([BOOKING_STATUS]);
+CREATE INDEX [IX_BOOK_MAIN_DATE] ON [BOOK_MAIN]([BOOKING_DATE]);
+CREATE INDEX [IX_BOOK_REC_BOOKING_ID] ON [BOOK_REC]([BOOKING_ID]);
+CREATE INDEX [IX_BOOK_REC_LOCATION] ON [BOOK_REC]([LOCATION_CODE]);
+CREATE INDEX [IX_BOOK_ATTENDEES_BOOKING_ID] ON [BOOK_ATTENDEES]([BOOKING_ID]);
+CREATE INDEX [IX_BOOK_ATTENDEES_EMPLOYEE] ON [BOOK_ATTENDEES]([ATTENDEE_SYSID]);
+GO
+
+PRINT 'BookingModule_Schema created successfully.';
+GO

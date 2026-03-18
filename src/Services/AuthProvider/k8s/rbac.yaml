@@ -1,0 +1,65 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: auth-provider
+  labels:
+    name: auth-provider
+    environment: production
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: auth-provider
+  namespace: auth-provider
+  labels:
+    app: auth-provider
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: auth-provider-role
+  namespace: auth-provider
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+  resourceNames: ["auth-provider-config"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+  resourceNames: ["auth-provider-secrets"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: auth-provider-rolebinding
+  namespace: auth-provider
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: auth-provider-role
+subjects:
+- kind: ServiceAccount
+  name: auth-provider
+  namespace: auth-provider
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: auth-provider-pdb
+  namespace: auth-provider
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: auth-provider

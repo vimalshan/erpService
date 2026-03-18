@@ -1,0 +1,32 @@
+using MediatR;
+using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+
+namespace MasterDataService.Application.Behaviours;
+
+public class LoggingBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : notnull
+{
+    private readonly ILogger<LoggingBehaviour<TRequest, TResponse>> _logger;
+
+    public LoggingBehaviour(ILogger<LoggingBehaviour<TRequest, TResponse>> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    {
+        var requestName = typeof(TRequest).Name;
+        _logger.LogInformation("MasterDataService Request: {Name} {@Request}", requestName, request);
+
+        var sw = Stopwatch.StartNew();
+        var response = await next();
+        sw.Stop();
+
+        if (sw.ElapsedMilliseconds > 500)
+            _logger.LogWarning("MasterDataService Long Running Request: {Name} ({Elapsed} ms) {@Request}", requestName, sw.ElapsedMilliseconds, request);
+
+        _logger.LogInformation("MasterDataService Request Completed: {Name} in {Elapsed}ms", requestName, sw.ElapsedMilliseconds);
+        return response;
+    }
+}
