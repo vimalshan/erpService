@@ -1,0 +1,29 @@
+
+
+findingservice-dev
+Payload
+------------
+{"operationName":"getLatestFindingResponse","variables":{"findingNumber":"CLAY-0006-2887291"},"query":"query getLatestFindingResponse($findingNumber: String!) {\n  getLatestFindingResponse(findingNumber: $findingNumber) {\n    isSuccess\n    data {\n      rootCause\n      correctiveAction\n      correction\n      isSubmitToDnv\n      updatedOn\n      isDraft\n      respondId\n      __typename\n    }\n    errorCode\n    message\n    __typename\n  }\n}"}
+
+Response
+--------
+{
+    "data": {
+        "getLatestFindingResponse": {
+            "isSuccess": true,
+            "data": {
+                "rootCause": null,
+                "correctiveAction": null,
+                "correction": null,
+                "isSubmitToDnv": false,
+                "updatedOn": null,
+                "isDraft": false,
+                "respondId": null,
+                "__typename": "FindingLatestRespondResponse"
+            },
+            "errorCode": "",
+            "message": "Latest finding response retrived successfully.",
+            "__typename": "BaseGraphResponseOfFindingLatestRespondResponse"
+        }
+    }
+}

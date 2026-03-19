@@ -1,0 +1,363 @@
+@baseUrl = http://localhost:5154
+@authToken = 
+@employeeSysId = 1001
+@userId = USR001
+@userSysId = 1
+@deviceId = DEVICE001
+@imeiNo = 123456789012345
+@deviceType = MOBILE
+@registrationId = 1
+@loginId = 1
+
+### ============================================
+### 1. AUTHENTICATION ENDPOINTS
+### ============================================
+
+### 1.1 POST - Generate JWT Token (No Auth Required)
+POST {{baseUrl}}/api/auth/token
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "testpassword"
+}
+
+### ============================================
+### 2. CONTROLLER ENDPOINTS (REST)
+### ============================================
+
+### 2.1 AuthController - POST /api/auth/token (Token Generation)
+POST {{baseUrl}}/api/auth/token
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "Admin@123"
+}
+
+### 2.2 DevicesController - POST /api/devices/register (Register Device)
+POST {{baseUrl}}/api/devices/register
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "employeeSysId": {{employeeSysId}},
+  "deviceId": "{{deviceId}}",
+  "deviceType": "{{deviceType}}",
+  "imeiNo": "{{imeiNo}}",
+  "updatedBy": "ADMIN"
+}
+
+### 2.3 DevicesController - GET /api/devices/employee/{employeeSysId} (Get Devices by Employee)
+GET {{baseUrl}}/api/devices/employee/{{employeeSysId}}
+Authorization: Bearer {{authToken}}
+
+### 2.4 DevicesController - GET /api/devices/{employeeSysId}/{deviceId} (Get Device by Key)
+GET {{baseUrl}}/api/devices/{{employeeSysId}}/{{deviceId}}
+Authorization: Bearer {{authToken}}
+
+### 2.5 DevicesController - POST /api/devices/deactivate (Deactivate Device)
+POST {{baseUrl}}/api/devices/deactivate
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "employeeSysId": {{employeeSysId}},
+  "deviceId": "{{deviceId}}",
+  "updatedBy": "ADMIN"
+}
+
+### 2.6 LoginsController - POST /api/logins (Log User Login - No Auth Required)
+POST {{baseUrl}}/api/logins
+Content-Type: application/json
+
+{
+  "userSysId": {{userSysId}},
+  "deviceId": "{{deviceId}}",
+  "imeiNo": "{{imeiNo}}",
+  "deviceType": "{{deviceType}}"
+}
+
+### 2.7 LoginsController - GET /api/logins/user/{userSysId} (Get Logins by User)
+GET {{baseUrl}}/api/logins/user/{{userSysId}}
+Authorization: Bearer {{authToken}}
+
+### 2.8 LoginsController - GET /api/logins/{loginId} (Get Login by ID)
+GET {{baseUrl}}/api/logins/{{loginId}}
+Authorization: Bearer {{authToken}}
+
+### 2.9 RegistrationsController - POST /api/registrations (Create Registration)
+POST {{baseUrl}}/api/registrations
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "registrationId": 0,
+  "employeeSysId": {{employeeSysId}},
+  "userId": "{{userId}}",
+  "userSysId": {{userSysId}},
+  "userType": "EMPLOYEE",
+  "mobileNo": "9876543210",
+  "imeiNo": "{{imeiNo}}",
+  "deviceId": "{{deviceId}}",
+  "deviceType": "{{deviceType}}"
+}
+
+### 2.10 RegistrationsController - GET /api/registrations/{registrationId} (Get Registration by ID)
+GET {{baseUrl}}/api/registrations/{{registrationId}}
+Authorization: Bearer {{authToken}}
+
+### 2.11 RegistrationsController - GET /api/registrations/user/{userId} (Get Registrations by User)
+GET {{baseUrl}}/api/registrations/user/{{userId}}
+Authorization: Bearer {{authToken}}
+
+### 2.12 RegistrationsController - GET /api/registrations/status/{status} (Get Registrations by Status)
+GET {{baseUrl}}/api/registrations/status/P
+Authorization: Bearer {{authToken}}
+
+### 2.13 RegistrationsController - PUT /api/registrations/{registrationId}/status (Update Registration Status)
+PUT {{baseUrl}}/api/registrations/{{registrationId}}/status
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "newStatus": "A"
+}
+
+### 2.14 RegistrationsController - POST /api/registrations/{registrationId}/generate-pin (Generate PIN)
+POST {{baseUrl}}/api/registrations/{{registrationId}}/generate-pin
+Authorization: Bearer {{authToken}}
+
+### 2.15 BlobStorageController - POST /api/blobstorage/upload (Upload Image)
+POST {{baseUrl}}/api/blobstorage/upload
+Authorization: Bearer {{authToken}}
+
+< ./test-image.jpg
+
+### 2.16 BlobStorageController - GET /api/blobstorage/{blobName} (Download Blob)
+GET {{baseUrl}}/api/blobstorage/test-blob.jpg
+Authorization: Bearer {{authToken}}
+
+### 2.17 BlobStorageController - DELETE /api/blobstorage/{blobName} (Delete Blob)
+DELETE {{baseUrl}}/api/blobstorage/test-blob.jpg
+Authorization: Bearer {{authToken}}
+
+### ============================================
+### 3. MINIMAL API ENDPOINTS
+### ============================================
+
+### 3.1 DeviceEndpoints - POST /api/minimal/devices/register
+POST {{baseUrl}}/api/minimal/devices/register
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "employeeSysId": {{employeeSysId}},
+  "deviceId": "MINIMAL_DEVICE_001",
+  "deviceType": "{{deviceType}}",
+  "imeiNo": "{{imeiNo}}",
+  "updatedBy": "ADMIN"
+}
+
+### 3.2 DeviceEndpoints - GET /api/minimal/devices/employee/{employeeSysId}
+GET {{baseUrl}}/api/minimal/devices/employee/{{employeeSysId}}
+Authorization: Bearer {{authToken}}
+
+### 3.3 DeviceEndpoints - GET /api/minimal/devices/{employeeSysId}/{deviceId}
+GET {{baseUrl}}/api/minimal/devices/{{employeeSysId}}/{{deviceId}}
+Authorization: Bearer {{authToken}}
+
+### 3.4 DeviceEndpoints - POST /api/minimal/devices/deactivate (Close/Deactivate Device)
+POST {{baseUrl}}/api/minimal/devices/deactivate
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "employeeSysId": {{employeeSysId}},
+  "deviceId": "{{deviceId}}",
+  "updatedBy": "ADMIN"
+}
+
+### 3.5 LoginEndpoints - POST /api/minimal/logins (No Auth Required)
+POST {{baseUrl}}/api/minimal/logins
+Content-Type: application/json
+
+{
+  "userSysId": {{userSysId}},
+  "deviceId": "{{deviceId}}",
+  "imeiNo": "{{imeiNo}}",
+  "deviceType": "{{deviceType}}"
+}
+
+### 3.6 LoginEndpoints - GET /api/minimal/logins/user/{userSysId}
+GET {{baseUrl}}/api/minimal/logins/user/{{userSysId}}
+Authorization: Bearer {{authToken}}
+
+### 3.7 LoginEndpoints - GET /api/minimal/logins/{loginId}
+GET {{baseUrl}}/api/minimal/logins/{{loginId}}
+Authorization: Bearer {{authToken}}
+
+### 3.8 RegistrationEndpoints - POST /api/minimal/registrations
+POST {{baseUrl}}/api/minimal/registrations
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "registrationId": 0,
+  "employeeSysId": {{employeeSysId}},
+  "userId": "{{userId}}",
+  "userSysId": {{userSysId}},
+  "userType": "EMPLOYEE",
+  "mobileNo": "9876543210",
+  "imeiNo": "{{imeiNo}}",
+  "deviceId": "{{deviceId}}",
+  "deviceType": "{{deviceType}}"
+}
+
+### 3.9 RegistrationEndpoints - GET /api/minimal/registrations/{registrationId}
+GET {{baseUrl}}/api/minimal/registrations/{{registrationId}}
+Authorization: Bearer {{authToken}}
+
+### 3.10 RegistrationEndpoints - GET /api/minimal/registrations/user/{userId}
+GET {{baseUrl}}/api/minimal/registrations/user/{{userId}}
+Authorization: Bearer {{authToken}}
+
+### 3.11 RegistrationEndpoints - GET /api/minimal/registrations/status/{status}
+GET {{baseUrl}}/api/minimal/registrations/status/P
+Authorization: Bearer {{authToken}}
+
+### 3.12 RegistrationEndpoints - PUT /api/minimal/registrations/{registrationId}/status
+PUT {{baseUrl}}/api/minimal/registrations/{{registrationId}}/status
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "newStatus": "A"
+}
+
+### 3.13 RegistrationEndpoints - POST /api/minimal/registrations/{registrationId}/generate-pin
+POST {{baseUrl}}/api/minimal/registrations/{{registrationId}}/generate-pin
+Authorization: Bearer {{authToken}}
+
+### ============================================
+### 4. GRAPHQL ENDPOINTS
+### ============================================
+
+### 4.1 GraphQL - Query: GetDevicesByEmployee
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getDevicesByEmployee(employeeSysId: {{employeeSysId}}) { employeeSysId deviceId deviceType imeiNo } }"
+}
+
+### 4.2 GraphQL - Query: GetDevice
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getDevice(employeeSysId: {{employeeSysId}}, deviceId: \"{{deviceId}}\") { employeeSysId deviceId deviceType } }"
+}
+
+### 4.3 GraphQL - Query: GetLoginsByUser
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getLoginsByUser(userSysId: {{userSysId}}) { loginId userSysId deviceId } }"
+}
+
+### 4.4 GraphQL - Query: GetLogin
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getLogin(loginId: {{loginId}}) { loginId userSysId deviceId imeiNo } }"
+}
+
+### 4.5 GraphQL - Query: GetRegistration
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getRegistration(registrationId: {{registrationId}}) { registrationId employeeSysId userId userSysId status } }"
+}
+
+### 4.6 GraphQL - Query: GetRegistrationsByUserId
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getRegistrationsByUserId(userId: \"{{userId}}\") { registrationId employeeSysId userId status } }"
+}
+
+### 4.7 GraphQL - Query: GetRegistrationsByStatus
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getRegistrationsByStatus(status: \"P\") { registrationId userId status } }"
+}
+
+### 4.8 GraphQL - Mutation: RegisterDevice
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { registerDevice(employeeSysId: {{employeeSysId}}, deviceId: \"GRAPHQL_DEVICE\", deviceType: \"{{deviceType}}\", imeiNo: \"{{imeiNo}}\", updatedBy: \"ADMIN\") { employeeSysId deviceId } }"
+}
+
+### 4.9 GraphQL - Mutation: DeactivateDevice
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { deactivateDevice(employeeSysId: {{employeeSysId}}, deviceId: \"{{deviceId}}\", updatedBy: \"ADMIN\") { employeeSysId deviceId } }"
+}
+
+### 4.10 GraphQL - Mutation: LogUserLogin
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { logUserLogin(userSysId: {{userSysId}}, deviceId: \"{{deviceId}}\", imeiNo: \"{{imeiNo}}\", deviceType: \"{{deviceType}}\") { loginId userSysId deviceId } }"
+}
+
+### 4.11 GraphQL - Mutation: CreateRegistration
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { createRegistration(registrationId: 0, employeeSysId: {{employeeSysId}}, userId: \"{{userId}}\", userSysId: {{userSysId}}, userType: \"EMPLOYEE\", mobileNo: \"9876543210\", imeiNo: \"{{imeiNo}}\", deviceId: \"{{deviceId}}\", deviceType: \"{{deviceType}}\") { registrationId employeeSysId userId } }"
+}
+
+### 4.12 GraphQL - Mutation: UpdateRegistrationStatus
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { updateRegistrationStatus(registrationId: {{registrationId}}, newStatus: \"A\") { registrationId status } }"
+}
+
+### 4.13 GraphQL - Mutation: GenerateRegistrationPin
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { generateRegistrationPin(registrationId: {{registrationId}}) { registrationId pin } }"
+}
+
+### ============================================
+### 5. HEALTH CHECK ENDPOINTS
+### ============================================
+
+### 5.1 Health Check - Basic Health Status
+GET {{baseUrl}}/health
+
+### ============================================
+### 6. SWAGGER DOCUMENTATION
+### ============================================
+
+### 6.1 Swagger UI
+GET {{baseUrl}}/swagger/index.html
+

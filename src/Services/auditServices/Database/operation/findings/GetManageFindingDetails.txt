@@ -1,0 +1,41 @@
+
+
+findingservice-dev
+
+Payload
+------------
+{"operationName":"GetManageFindingDetails","variables":{"findingNumber":"CLAY-0006-2887291"},"query":"query GetManageFindingDetails($findingNumber: String!) {\n  viewManageFinding(findingNumber: $findingNumber) {\n    isSuccess\n    data {\n      category\n      clauses\n      descriptionInPrimaryLanguage\n      descriptionInSecondaryLanguage\n      focusAreas {\n        focusAreaInPrimaryLanguage\n        focusAreaInSecondaryLanguage\n        __typename\n      }\n      primaryLanguage\n      secondaryLanguage\n      titleInPrimaryLanguage\n      titleInSecondaryLanguage\n      __typename\n    }\n    errorCode\n    message\n    __typename\n  }\n}"}
+
+Response
+-------------
+{
+    "data": {
+        "viewManageFinding": {
+            "isSuccess": true,
+            "data": {
+                "category": "CAT2 (Minor)",
+                "clauses": [
+                    "7.1.3 Infrastructure",
+                    "8.1 Operational planning and control"
+                ],
+                "descriptionInPrimaryLanguage": "Requirement: The organisation shall define and implement processes needed to meet environmental management system requirements by establishing and implementing operating criteria.  The necessary infrastructure for the effective delivery of operations shall be provided and maintained.\n\nNonconformity: Portable hose management operational control processes are not fully effective.\n\nEvidence: Portable hoses are periodically inspected, tested and tagged with a colour tag to indicate their inspection status.  Inconsistent coloured tagging of portable hoses in the ODP operational area was observed; some hoses did not have tags, some had more than one coloured tag, some had green tags, some had purple tags.",
+                "descriptionInSecondaryLanguage": null,
+                "focusAreas": [
+                    {
+                        "focusAreaInPrimaryLanguage": "Effective ODP operations",
+                        "focusAreaInSecondaryLanguage": null,
+                        "__typename": "FocusAreaData"
+                    }
+                ],
+                "primaryLanguage": "English",
+                "secondaryLanguage": null,
+                "titleInPrimaryLanguage": "Operational control and infrastructure - portable hoses",
+                "titleInSecondaryLanguage": null,
+                "__typename": "ManageFindingDetailsResponse"
+            },
+            "errorCode": "",
+            "message": "",
+            "__typename": "BaseGraphResponseOfManageFindingDetailsResponse"
+        }
+    }
+}

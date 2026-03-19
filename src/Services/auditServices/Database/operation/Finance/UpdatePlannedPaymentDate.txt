@@ -1,0 +1,207 @@
+
+# REST API JSON Payload Documentation
+
+## PUT /api/invoices/planned-payment-date - Update Planned Payment Date
+
+### Request Payload
+```json
+{
+  "invoiceNumbers": ["509010017719", "462010001745"],
+  "plannedPaymentDate": "2025-09-18T00:00:00.000Z",
+  "reason": "Updated payment schedule per customer request",
+  "notifyClient": true,
+  "modifiedBy": 15
+}
+```
+
+### Success Response Payload
+```json
+{
+  "data": {
+    "updatedInvoices": [
+      {
+        "invoiceNumber": "509010017719",
+        "previousPlannedDate": "2025-09-11T00:00:00.000Z",
+        "newPlannedDate": "2025-09-18T00:00:00.000Z",
+        "status": "Updated"
+      },
+      {
+        "invoiceNumber": "462010001745",
+        "previousPlannedDate": null,
+        "newPlannedDate": "2025-09-18T00:00:00.000Z",
+        "status": "Updated"
+      }
+    ],
+    "totalUpdated": 2,
+    "updateDate": "2025-09-19T10:30:00Z"
+  },
+  "isSuccess": true,
+  "message": "Planned payment dates updated successfully",
+  "errorCode": null
+}
+```
+
+### Error Response Payload
+```json
+{
+  "data": null,
+  "isSuccess": false,
+  "message": "Invoice not found: 509010017719",
+  "errorCode": "INVOICE_NOT_FOUND"
+}
+```
+
+## PUT /api/invoices/{invoiceId}/status - Update Invoice Status
+
+### Request Payload
+```json
+{
+  "invoiceId": 123456,
+  "newStatus": "Paid",
+  "paymentDate": "2025-09-19T00:00:00.000Z",
+  "paymentAmount": 102380000.37,
+  "paymentMethod": "Bank Transfer",
+  "paymentReference": "PAY-2025-001",
+  "currency": "USD",
+  "notes": "Payment received via wire transfer",
+  "modifiedBy": 15
+}
+```
+
+## GET /api/invoices/{invoiceId}/payment-history - Get Invoice Payment History
+
+### Success Response Payload
+```json
+{
+  "data": {
+    "invoiceId": 123456,
+    "invoiceNumber": "509010017719",
+    "totalAmount": 102380000.37,
+    "currency": "USD",
+    "payments": [
+      {
+        "paymentId": 5001,
+        "paymentDate": "2020-01-15T00:00:00Z",
+        "paymentAmount": 50000000.00,
+        "paymentMethod": "Bank Transfer",
+        "paymentReference": "PAY-001",
+        "notes": "Partial payment",
+        "processedBy": "Finance Team"
+      },
+      {
+        "paymentId": 5002,
+        "paymentDate": "2025-09-19T00:00:00Z",
+        "paymentAmount": 52380000.37,
+        "paymentMethod": "Bank Transfer",
+        "paymentReference": "PAY-2025-001",
+        "notes": "Final payment",
+        "processedBy": "Finance Manager"
+      }
+    ],
+    "totalPaid": 102380000.37,
+    "remainingBalance": 0.00,
+    "paymentStatus": "Fully Paid"
+  },
+  "isSuccess": true,
+  "message": "Payment history retrieved successfully",
+  "errorCode": null
+}
+```
+
+# Original GraphQL Documentation
+
+# REST API JSON Payload Documentation
+
+## PUT /api/invoices/planned-payment-date - Update Planned Payment Date
+
+### Request Payload
+```json
+{
+  "invoiceNumbers": ["509010017719", "462010001745"],
+  "plannedPaymentDate": "2025-09-18T00:00:00.000Z",
+  "reason": "Client requested payment schedule adjustment",
+  "notifyClient": true,
+  "updatedBy": 15
+}
+```
+
+### Success Response Payload
+```json
+{
+  "data": {
+    "updatedInvoices": [
+      {
+        "invoiceNumber": "509010017719",
+        "previousPlannedDate": "2025-09-11T00:00:00.000Z",
+        "newPlannedDate": "2025-09-18T00:00:00.000Z",
+        "updated": true
+      },
+      {
+        "invoiceNumber": "462010001745",
+        "previousPlannedDate": null,
+        "newPlannedDate": "2025-09-18T00:00:00.000Z",
+        "updated": true
+      }
+    ],
+    "totalUpdated": 2,
+    "updateDate": "2025-09-19T10:00:00Z"
+  },
+  "isSuccess": true,
+  "message": "Planned payment dates updated successfully",
+  "errorCode": null
+}
+```
+
+### Error Response Payload
+```json
+{
+  "data": null,
+  "isSuccess": false,
+  "message": "One or more invoice numbers not found",
+  "errorCode": "INVOICE_NOT_FOUND"
+}
+```
+
+## PUT /api/invoices/{invoiceId}/payment - Record Payment
+
+### Request Payload
+```json
+{
+  "invoiceId": 123456,
+  "paymentAmount": 50000000.00,
+  "paymentDate": "2025-09-19T00:00:00.000Z",
+  "paymentMethod": "Bank Transfer",
+  "paymentReference": "TXN-2025-001",
+  "currency": "USD",
+  "exchangeRate": 1.0,
+  "bankDetails": {
+    "bankName": "Chase Bank",
+    "accountNumber": "****1234",
+    "routingNumber": "021000021"
+  },
+  "notes": "Partial payment received",
+  "recordedBy": 15
+}
+```
+
+# Original GraphQL Documentation
+
+financialservice-dev
+---------------------
+payload
+------
+{"operationName":"UpdatePlannedPaymentDate","variables":{"invoiceNumber":["509010017719"],"plannedDates":"2025-09-18T00:00:00.000Z"},"query":"mutation UpdatePlannedPaymentDate($invoiceNumber: [String!]!, $plannedDates: DateTime!) {\n  UpdatePlannedPaymentDate(\n    invoiceNumber: $invoiceNumber\n    planpaymentDate: $plannedDates\n  ) {\n    data\n    errorCode\n    isSuccess\n    message\n    __typename\n  }\n}"}
+
+Response
+--------
+{
+    "data": {
+        "UpdatePlannedPaymentDate": {
+            "data": true,
+            "errorCode": "",
+            "isSuccess": true,
+            "message": "Planned payment dates updated successfully.",
+            "__typename": "BaseGraphResponseOfBoolean"
+        }
+    }
+}

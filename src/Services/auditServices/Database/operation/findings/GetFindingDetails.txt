@@ -1,0 +1,46 @@
+
+findingservice-dev
+
+Payload
+-------
+{"operationName":"GetFindingDetails","variables":{"findingNumber":"CLAY-0006-2887291"},"query":"query GetFindingDetails($findingNumber: String!) {\n  viewFindingDetails(findingNumber: $findingNumber) {\n    isSuccess\n    data {\n      acceptedDate\n      auditId\n      auditors\n      auditType\n      closedDate\n      dueDate\n      findingNumber\n      openedDate\n      services\n      sites {\n        siteAddress\n        siteName\n        __typename\n      }\n      status\n      __typename\n    }\n    errorCode\n    message\n    __typename\n  }\n}"}
+
+Response
+-----------
+{
+    "data": {
+        "viewFindingDetails": {
+            "isSuccess": true,
+            "data": {
+                "acceptedDate": null,
+                "auditId": 2887291,
+                "auditors": [
+                    "Douglas Milne",
+                    "James Clayton",
+                    "Peter Potter"
+                ],
+                "auditType": "Periodic Audit; P1",
+                "closedDate": null,
+                "dueDate": null,
+                "findingNumber": "CLAY-0006-2887291",
+                "openedDate": "2025-07-02",
+                "services": [
+                    "ISO 14001:2015",
+                    "ISO 9001:2015"
+                ],
+                "sites": [
+                    {
+                        "siteAddress": "5th Floor, the Administration Building, Stanlow Manufacturing Complex, Ellesmere Port, Cheshire, CH65 4HB, United Kingdom",
+                        "siteName": "Essar Oil (UK) Limited trading as EET Fuels",
+                        "__typename": "SiteDataInFindingDetails"
+                    }
+                ],
+                "status": "Open",
+                "__typename": "FindingDetailsResponse"
+            },
+            "errorCode": "",
+            "message": "",
+            "__typename": "BaseGraphResponseOfFindingDetailsResponse"
+        }
+    }
+}

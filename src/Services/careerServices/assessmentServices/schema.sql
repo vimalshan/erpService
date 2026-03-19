@@ -1,0 +1,148 @@
+-- ASSESSMENT MODULE - SCHEMA DEFINITION
+-- Performance evaluations, assessments, interview management
+
+USE [Careers]
+GO
+
+/****** EDU_EVALUATE ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[EDU_EVALUATE](
+	[ID] [bigint] IDENTITY(1,1) NOT NULL,
+	[EDU_PARAMETER] [varchar](100) NULL,
+	[EDU_CRITICALAREA] [varchar](10) NULL,
+	[EDU_RATING] [varchar](50) NULL,
+	[EDU_OBSURVATION] [varchar](200) NULL,
+	[ENTERED_ON] [varchar](50) NULL,
+	[ENTERED_BY] [datetime] NULL,
+	[ISVALID] [bit] NULL,
+	[CHANGED_ON] [datetime] NULL,
+	[CHANGED_BY] [varchar](50) NULL,
+	[LOGIN_ID] [bigint] NULL,
+	[OVERALL_CMT] [varchar](1000) NULL,
+	[EDU_CMT] [varchar](500) NULL,
+	[Wrk_CMT] [varchar](500) NULL,
+	[PER_CMT] [varchar](500) NULL,
+	[TM_CMT] [varchar](500) NULL,
+	[LED_CMT] [varchar](500) NULL,
+	[GRW_CMT] [varchar](500) NULL,
+	[SCIO_CMT] [varchar](500) NULL
+) ON [PRIMARY]
+GO
+SET ANSI_PADDING OFF
+GO
+
+/****** PERSON_EVALUATE ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[PERSON_EVALUATE](
+	[ID] [bigint] IDENTITY(1,1) NOT NULL,
+	[PERSON_PARAMETER] [varchar](100) NULL,
+	[PERSON_CRITICALaREA] [varchar](10) NULL,
+	[PERSON_RATING] [varchar](50) NULL,
+	[PERSON_OBSURVATION] [varchar](200) NULL,
+	[ENTERED_ON] [varchar](50) NULL,
+	[ENTERED_BY] [datetime] NULL,
+	[ISVALID] [bit] NULL,
+	[CHANGED_ON] [datetime] NULL,
+	[CHANGED_BY] [varchar](50) NULL
+) ON [PRIMARY]
+GO
+SET ANSI_PADDING OFF
+GO
+
+/****** LEADER_EVALUATE ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[LEADER_EVALUATE](
+	[ID] [bigint] IDENTITY(1,1) NOT NULL,
+	[LEADER_PARAMETER] [varchar](100) NULL,
+	[LEADER_CRITICALaREA] [varchar](10) NULL,
+	[LEADER_RATING] [varchar](50) NULL,
+	[LEADER_OBSURVATION] [varchar](200) NULL,
+	[ENTERED_ON] [varchar](50) NULL,
+	[ENTERED_BY] [datetime] NULL,
+	[ISVALID] [bit] NULL,
+	[CHANGED_ON] [datetime] NULL,
+	[CHANGED_BY] [varchar](50) NULL
+) ON [PRIMARY]
+GO
+SET ANSI_PADDING OFF
+GO
+
+/****** AssignInterview ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[AssignInterview](
+	[Login_id] [varchar](20) NULL,
+	[Name] [varchar](50) NULL,
+	[Flag] [varchar](3) NULL,
+	[InterviewDate] [datetime] NULL,
+	[Enterby] [varchar](50) NULL,
+	[Isvalid] [int] NULL
+) ON [PRIMARY]
+GO
+SET ANSI_PADDING OFF
+GO
+
+/****** AssessmentMaster ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[AssessmentMaster](
+	[Sno] [bigint] IDENTITY(1,1) NOT NULL,
+	[ParametersDet] [varchar](250) NULL,
+	[Parcode] [varchar](10) NULL
+) ON [PRIMARY]
+GO
+SET ANSI_PADDING OFF
+GO
+
+/****** ASSMENT_TYPE ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[ASSMENT_TYPE](
+	[ParmeterCode] [bigint] NULL,
+	[ParmeterDesc] [varchar](100) NULL
+) ON [PRIMARY]
+GO
+SET ANSI_PADDING OFF
+GO
+
+/****** VIEW: EDU_PARAMETERVIEW ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW [dbo].[EDU_PARAMETERVIEW]
+AS
+SELECT     EDU_PARAMETER, EDU_CRITICALAREA, 
+                      CASE WHEN EDU_CRITICALAREA = 'TRUE' THEN 1 WHEN EDU_CRITICALAREA = 'FALSE' THEN 0 END AS EDU_CRITICALAREA1, EDU_RATING, 
+                      CASE WHEN [EDU_RATING] = 'E' THEN 5 WHEN [EDU_RATING] = 'M' THEN 3 WHEN [EDU_RATING] = 'P' THEN 1 WHEN [EDU_RATING] = 'F' THEN 0 WHEN
+                       [EDU_RATING] = 'U' THEN 0 END AS EDU_RATING1, EDU_OBSURVATION, ENTERED_ON, ENTERED_BY, ISVALID, CHANGED_ON, CHANGED_BY, 
+                      LOGIN_ID
+FROM         dbo.EDU_EVALUATE
+GO
