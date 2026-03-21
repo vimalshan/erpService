@@ -167,6 +167,14 @@ public class SecurityHeadersMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        // Skip strict CSP for Swagger UI (it uses inline scripts/styles)
+        var path = context.Request.Path.Value?.ToLowerInvariant() ?? "";
+        if (path.StartsWith("/swagger"))
+        {
+            await _next(context);
+            return;
+        }
+
         // Security headers
         context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
         context.Response.Headers.Append("X-Frame-Options", "DENY");

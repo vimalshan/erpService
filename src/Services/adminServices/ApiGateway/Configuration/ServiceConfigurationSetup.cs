@@ -10,9 +10,9 @@ public static class ServiceConfigurationSetup
     /// <summary>
     /// Configure all downstream services with their specific settings
     /// </summary>
-    public static GatewayConfiguration GetServiceConfigurations()
+    public static GatewayConfiguration GetServiceConfigurations(IConfiguration? configuration = null)
     {
-        return new GatewayConfiguration
+        var config = new GatewayConfiguration
         {
             ServiceName = "ERP-API-Gateway",
             Version = "1.0.0",
@@ -156,9 +156,60 @@ public static class ServiceConfigurationSetup
                     CacheDurationSeconds = 300,
                     Scopes = new[] { "shared-api", "read", "write" },
                     RequiresAuthentication = true
+                },
+                new()
+                {
+                    Name = "Transaction",
+                    BaseUrl = "http://transaction-service",
+                    Port = 5185,
+                    HealthCheckPath = "/health",
+                    TimeoutSeconds = 10,
+                    MaxRetries = 3,
+                    CircuitBreakerThreshold = 5,
+                    CircuitBreakerTimeoutSeconds = 30,
+                    BulkheadMaxParallelization = 10,
+                    BulkheadMaxQueueLength = 20,
+                    CachingEnabled = false,
+                    Scopes = new[] { "transaction-api", "read", "write" },
+                    RequiresAuthentication = true
                 }
             }
         };
+
+        // Override URLs from configuration (e.g., appsettings.Development.json)
+        if (configuration != null)
+        {
+            var serviceMap = new Dictionary<string, string>
+            {
+                ["Finyear"] = "FinyearService",
+                ["Location"] = "LocationService",
+                ["Vendor"] = "VendorService",
+                ["Scholarship"] = "ScholarshipService",
+                ["Stationery"] = "StationeryService",
+                ["TDS"] = "TDSService",
+                ["LOV"] = "LOVService",
+                ["Shared"] = "SharedService",
+                ["Transaction"] = "TransactionService"
+            };
+
+            foreach (var service in config.Services)
+            {
+                if (serviceMap.TryGetValue(service.Name, out var configKey))
+                {
+                    var url = configuration[$"Services:{configKey}:Url"];
+                    if (!string.IsNullOrEmpty(url))
+                    {
+                        // Parse URL into BaseUrl and Port  
+                        var uri = new Uri(url);
+                        service.BaseUrl = $"{uri.Scheme}://{uri.Host}";
+                        if (!uri.IsDefaultPort)
+                            service.Port = uri.Port;
+                    }
+                }
+            }
+        }
+
+        return config;
     }
 
     /// <summary>

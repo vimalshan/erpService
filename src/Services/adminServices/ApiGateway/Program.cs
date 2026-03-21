@@ -29,7 +29,7 @@ try
     Log.Information("Starting ERP API Gateway application...");
 
     // ==================== Configuration ====================
-    var gatewayConfig = ServiceConfigurationSetup.GetServiceConfigurations();
+    var gatewayConfig = ServiceConfigurationSetup.GetServiceConfigurations(builder.Configuration);
     builder.Services.AddSingleton(gatewayConfig);
 
     // ==================== Add Services ====================
@@ -65,9 +65,9 @@ try
     {
         options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
         {
-            Title = "ERP API Gateway",
+            Title = "ADMIN API Gateway",
             Version = "v1.0",
-            Description = "Central API Gateway for ERP Microservices"
+            Description = "Central API Gateway for ADMIN Microservices"
         });
     });
 

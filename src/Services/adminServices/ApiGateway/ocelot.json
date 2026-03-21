@@ -257,6 +257,38 @@
       }
     },
     {
+      "DownstreamPathTemplate": "/api/{version}/{controller}/{action?}/{id?}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "transaction-service",
+          "Port": 5185
+        }
+      ],
+      "UpstreamPathTemplate": "/transaction/{version}/{controller}/{action?}/{id?}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "Key": "TransactionService",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": [ "transaction-api" ]
+      },
+      "RateLimitOptions": {
+        "ClientWhitelist": [],
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 5000
+      },
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      }
+    },
+    {
       "DownstreamPathTemplate": "/health",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -291,6 +323,10 @@
         {
           "Host": "shared-service",
           "Port": 5008
+        },
+        {
+          "Host": "transaction-service",
+          "Port": 5185
         }
       ],
       "UpstreamPathTemplate": "/health/{service}",
