@@ -1,0 +1,92 @@
+@LookupService.API_HostAddress = http://localhost:5188
+
+### Login (get JWT token)
+POST {{LookupService.API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### Get all LOV Types (REST v1)
+GET {{LookupService.API_HostAddress}}/api/lovtypes
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Get LOV Type by code
+GET {{LookupService.API_HostAddress}}/api/lovtypes/CAT
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Create LOV Type
+POST {{LookupService.API_HostAddress}}/api/lovtypes
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "lovTypeCode": "TST",
+  "lovTypeName": "Test Type"
+}
+
+### Get all LOVs
+GET {{LookupService.API_HostAddress}}/api/lovs
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Get LOV by ID
+GET {{LookupService.API_HostAddress}}/api/lovs/1
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Get LOVs by type
+GET {{LookupService.API_HostAddress}}/api/lovs/type/CAT
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Create LOV
+POST {{LookupService.API_HostAddress}}/api/lovs
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "lovType": "CAT",
+  "lovName": "Test LOV"
+}
+
+### Get all processes
+GET {{LookupService.API_HostAddress}}/api/processes
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Create process
+POST {{LookupService.API_HostAddress}}/api/processes
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "processId": 10,
+  "processName": "Quality Check",
+  "liveFlag": "Y"
+}
+
+### Get all panels
+GET {{LookupService.API_HostAddress}}/api/panels
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Minimal API - Get all LOV types (v2)
+GET {{LookupService.API_HostAddress}}/api/v2/lookup/lov-types
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Minimal API - Get all LOVs (v2)
+GET {{LookupService.API_HostAddress}}/api/v2/lookup/lovs
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Health check
+GET {{LookupService.API_HostAddress}}/health
+Accept: application/json
+
+###
