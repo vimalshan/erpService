@@ -59,43 +59,43 @@ public static class HealthCheckConfiguration
         var healthChecks = services.AddHealthChecks()
             .AddCheck("self", () => HealthCheckResult.Healthy("Gateway is running"))
             .AddUrlGroup(
-                new Uri("http://finyear-service:5001/health"),
+                new Uri("http://localhost:5186/health"),
                 name: "FinyearService",
                 timeout: TimeSpan.FromSeconds(5),
                 failureStatus: HealthStatus.Degraded)
             .AddUrlGroup(
-                new Uri("http://location-service:5002/health"),
+                new Uri("http://localhost:7136/health"),
                 name: "LocationService",
                 timeout: TimeSpan.FromSeconds(5),
                 failureStatus: HealthStatus.Degraded)
             .AddUrlGroup(
-                new Uri("http://vendor-service:5003/health"),
+                new Uri("http://localhost:5181/health"),
                 name: "VendorService",
                 timeout: TimeSpan.FromSeconds(5),
                 failureStatus: HealthStatus.Degraded)
             .AddUrlGroup(
-                new Uri("http://scholarship-service:5004/health"),
+                new Uri("http://localhost:5166/health"),
                 name: "ScholarshipService",
                 timeout: TimeSpan.FromSeconds(5),
                 failureStatus: HealthStatus.Degraded)
             .AddUrlGroup(
-                new Uri("http://stationery-service:5005/health"),
+                new Uri("http://localhost:5273/health"),
                 name: "StationeryService",
                 timeout: TimeSpan.FromSeconds(5),
                 failureStatus: HealthStatus.Degraded)
             .AddUrlGroup(
-                new Uri("http://tds-service:5006/health"),
+                new Uri("http://localhost:5116/health"),
                 name: "TDSService",
                 timeout: TimeSpan.FromSeconds(5),
                 failureStatus: HealthStatus.Degraded)
             .AddUrlGroup(
-                new Uri("http://lov-service:5007/health"),
+                new Uri("http://localhost:5184/health"),
                 name: "LOVService",
                 timeout: TimeSpan.FromSeconds(5),
                 failureStatus: HealthStatus.Degraded)
             .AddUrlGroup(
-                new Uri("http://shared-service:5008/health"),
-                name: "SharedService",
+                new Uri("http://localhost:5185/health"),
+                name: "TransactionService",
                 timeout: TimeSpan.FromSeconds(5),
                 failureStatus: HealthStatus.Degraded);
 

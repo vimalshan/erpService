@@ -27,8 +27,8 @@ public static class ServiceConfigurationSetup
                 new()
                 {
                     Name = "Finyear",
-                    BaseUrl = "http://finyear-service",
-                    Port = 5001,
+                    BaseUrl = "http://localhost",
+                    Port = 5186,
                     HealthCheckPath = "/health",
                     TimeoutSeconds = 10,
                     MaxRetries = 3,
@@ -44,8 +44,8 @@ public static class ServiceConfigurationSetup
                 new()
                 {
                     Name = "Location",
-                    BaseUrl = "http://location-service",
-                    Port = 5002,
+                    BaseUrl = "http://localhost",
+                    Port = 7136,
                     HealthCheckPath = "/health",
                     TimeoutSeconds = 10,
                     MaxRetries = 3,
@@ -61,8 +61,8 @@ public static class ServiceConfigurationSetup
                 new()
                 {
                     Name = "Vendor",
-                    BaseUrl = "http://vendor-service",
-                    Port = 5003,
+                    BaseUrl = "http://localhost",
+                    Port = 5181,
                     HealthCheckPath = "/health",
                     TimeoutSeconds = 10,
                     MaxRetries = 3,
@@ -77,8 +77,8 @@ public static class ServiceConfigurationSetup
                 new()
                 {
                     Name = "Scholarship",
-                    BaseUrl = "http://scholarship-service",
-                    Port = 5004,
+                    BaseUrl = "http://localhost",
+                    Port = 5166,
                     HealthCheckPath = "/health",
                     TimeoutSeconds = 10,
                     MaxRetries = 3,
@@ -93,8 +93,8 @@ public static class ServiceConfigurationSetup
                 new()
                 {
                     Name = "Stationery",
-                    BaseUrl = "http://stationery-service",
-                    Port = 5005,
+                    BaseUrl = "http://localhost",
+                    Port = 5273,
                     HealthCheckPath = "/health",
                     TimeoutSeconds = 10,
                     MaxRetries = 3,
@@ -110,8 +110,8 @@ public static class ServiceConfigurationSetup
                 new()
                 {
                     Name = "TDS",
-                    BaseUrl = "http://tds-service",
-                    Port = 5006,
+                    BaseUrl = "http://localhost",
+                    Port = 5116,
                     HealthCheckPath = "/health",
                     TimeoutSeconds = 10,
                     MaxRetries = 3,
@@ -126,8 +126,8 @@ public static class ServiceConfigurationSetup
                 new()
                 {
                     Name = "LOV",
-                    BaseUrl = "http://lov-service",
-                    Port = 5007,
+                    BaseUrl = "http://localhost",
+                    Port = 5184,
                     HealthCheckPath = "/health",
                     TimeoutSeconds = 10,
                     MaxRetries = 3,
@@ -143,7 +143,7 @@ public static class ServiceConfigurationSetup
                 new()
                 {
                     Name = "Shared",
-                    BaseUrl = "http://shared-service",
+                    BaseUrl = "http://localhost",
                     Port = 5008,
                     HealthCheckPath = "/health",
                     TimeoutSeconds = 10,
@@ -160,7 +160,7 @@ public static class ServiceConfigurationSetup
                 new()
                 {
                     Name = "Transaction",
-                    BaseUrl = "http://transaction-service",
+                    BaseUrl = "http://localhost",
                     Port = 5185,
                     HealthCheckPath = "/health",
                     TimeoutSeconds = 10,

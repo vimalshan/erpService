@@ -128,7 +128,7 @@ public class ErrorHandlingMiddleware
 
         var response = new ErrorResponse
         {
-            Message = exception.Message,
+            Message = "An internal server error occurred",
             StatusCode = context.Response.StatusCode = StatusCodes.Status500InternalServerError,
             Timestamp = DateTime.UtcNow,
             Path = context.Request.Path

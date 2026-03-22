@@ -79,6 +79,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+// ===== HEALTH CHECKS =====
+builder.Services.AddHealthChecks();
+
 // ===== GRAPHQL =====
 builder.Services
     .AddGraphQLServer()
@@ -108,6 +111,9 @@ app.MapControllers();
 
 // ===== GRAPHQL ENDPOINT =====
 app.MapGraphQL("/graphql");
+
+// ===== HEALTH CHECK =====
+app.MapHealthChecks("/health");
 
 // ===== DATABASE INITIALIZATION =====
 using (var scope = app.Services.CreateScope())

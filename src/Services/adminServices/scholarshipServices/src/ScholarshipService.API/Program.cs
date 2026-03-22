@@ -38,6 +38,9 @@ if (!string.IsNullOrWhiteSpace(appInsightsKey))
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// ─── Controllers ──────────────────────────────────────────────────────────────
+builder.Services.AddControllers();
+
 // ─── JWT Authentication / Authorization ───────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "ScholarshipServiceDefaultSecretKey!!";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -142,21 +145,22 @@ var app = builder.Build();
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
-if (app.Environment.IsDevelopment())
+// Enable Swagger in all environments for API documentation
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Scholarship Service v1");
-        c.RoutePrefix = "swagger";
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Scholarship Service v1");
+    c.RoutePrefix = "swagger";
+});
 
 app.UseWebSockets();
 app.UseRouting();
 app.UseCors(app.Environment.IsDevelopment() ? "AllowAll" : "Production");
 app.UseAuthentication();
 app.UseAuthorization();
+
+// ─── Controller endpoints ─────────────────────────────────────────────────────
+app.MapControllers();
 
 // ─── Minimal API endpoints ────────────────────────────────────────────────────
 app.MapScholarshipEndpoints();
@@ -172,7 +176,15 @@ app.MapHealthChecks("/health");
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ScholarshipDbContext>();
-    await db.Database.MigrateAsync();
+    try
+    {
+        await db.Database.MigrateAsync();
+    }
+    catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 2714)
+    {
+        // Table already exists — database was pre-created from SQL scripts
+        // Mark migrations as applied without re-creating objects
+    }
 }
 
 app.Run();

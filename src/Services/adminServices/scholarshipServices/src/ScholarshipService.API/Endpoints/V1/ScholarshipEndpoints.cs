@@ -8,6 +8,7 @@ using ScholarshipService.Application.Common;
 using ScholarshipService.Application.DTOs;
 using ScholarshipService.Application.Queries.GetScholarshipById;
 using ScholarshipService.Application.Queries.GetScholarships;
+using ScholarshipService.API.Controllers;
 
 namespace ScholarshipService.API.Endpoints.V1;
 
@@ -98,5 +99,3 @@ public static class ScholarshipEndpoints
     }
 }
 
-public record ApproveScholarshipRequest(int ApprovedBy, string? Remarks = null);
-public record StopScholarshipRequest(string Reason, int StoppedBy);

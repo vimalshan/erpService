@@ -1,0 +1,291 @@
+
+# Shared infrastructure + all admin services
+# Uses a single SQL Server and RabbitMQ to save memory (~3.75GB Docker limit)
+
+services:
+  # ─── Shared SQL Server ─────────────────────────────
+  mssql-server:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: admin-shared-sqlserver
+    environment:
+      ACCEPT_EULA: 'Y'
+      SA_PASSWORD: 'YourPassword123!'
+      MSSQL_PID: 'Express'
+      MSSQL_MEMORY_LIMIT_MB: '512'
+    ports:
+      - "1433:1433"
+    volumes:
+      - shared_mssql_data:/var/opt/mssql
+      - ./init-all-databases.sql:/init-all-databases.sql
+      - ./shared-entrypoint.sh:/shared-entrypoint.sh
+    entrypoint: ["/bin/bash", "/shared-entrypoint.sh"]
+    networks:
+      - admin-network
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourPassword123!", "-No", "-Q", "SELECT 1"]
+      interval: 15s
+      timeout: 10s
+      start_period: 120s
+      retries: 20
+
+  # ─── Shared RabbitMQ ────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: admin-shared-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: 'guest'
+      RABBITMQ_DEFAULT_PASS: 'guest'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - admin-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─── Azurite (for Transaction service blob storage) ──
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: admin-shared-azurite
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - shared_azurite_data:/data
+    networks:
+      - admin-network
+
+  # ─── Finyear Service ────────────────────────────────
+  finyear-api:
+    build:
+      context: ./finyearServices
+      dockerfile: Docker/Dockerfile
+    container_name: finyear-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5000'
+      ConnectionStrings__AdminDbConnection: 'Data Source=mssql-server,1433;Initial Catalog=ADMINDB;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+    ports:
+      - "5186:5000"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+    networks:
+      - admin-network
+
+  # ─── Location Service ──────────────────────────────
+  location-services:
+    build:
+      context: ./locationServices
+      dockerfile: Docker/Dockerfile
+    container_name: location-services
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:7136'
+      ConnectionStrings__LocationDb: 'Data Source=mssql-server,1433;Initial Catalog=LOCATIONDB;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+    ports:
+      - "7136:7136"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+    networks:
+      - admin-network
+
+  # ─── Vendor Service ────────────────────────────────
+  vendor-service:
+    build:
+      context: ./vendorServices
+      dockerfile: Docker/Dockerfile
+    container_name: vendor-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5181'
+      ConnectionStrings__VendorDb: 'Data Source=mssql-server,1433;Initial Catalog=VENDORDB;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__Enabled: 'true'
+    ports:
+      - "5181:5181"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - admin-network
+
+  # ─── LOV Service ───────────────────────────────────
+  lov-service:
+    build:
+      context: ./lovServices
+      dockerfile: Docker/Dockerfile
+    container_name: lov-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5181'
+      ConnectionStrings__LovDb: 'Data Source=mssql-server,1433;Initial Catalog=LOVDB;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__Enabled: 'true'
+    ports:
+      - "5184:5181"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - admin-network
+
+  # ─── Scholarship Service ───────────────────────────
+  scholarship-service:
+    build:
+      context: ./scholarshipServices
+      dockerfile: Docker/Dockerfile
+    container_name: scholarship-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Development'
+      ASPNETCORE_URLS: 'http://+:5166'
+      ConnectionStrings__ScholarshipDb: 'Data Source=mssql-server,1433;Initial Catalog=ADMINDB;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__VirtualHost: '/'
+      RabbitMQ__ExchangeName: 'scholarship.events'
+    ports:
+      - "5166:5166"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - admin-network
+
+  # ─── Stationery Service ────────────────────────────
+  stationery-service:
+    build:
+      context: ./stationeryServices
+      dockerfile: Docker/Dockerfile
+    container_name: stationery-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5181'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=STATIONERYDB;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__Enabled: 'true'
+    ports:
+      - "5182:5181"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - admin-network
+
+  # ─── TDS Service ───────────────────────────────────
+  tds-service:
+    build:
+      context: ./tdsServices
+      dockerfile: Docker/Dockerfile
+    container_name: tds-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5181'
+      ConnectionStrings__TdsDb: 'Data Source=mssql-server,1433;Initial Catalog=TDSDB;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__Enabled: 'true'
+    ports:
+      - "5183:5181"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - admin-network
+
+  # ─── Transaction Service ───────────────────────────
+  transaction-service:
+    build:
+      context: ./transactionServices
+      dockerfile: Docker/Dockerfile
+    container_name: transaction-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5185'
+      ConnectionStrings__TransactionDb: 'Data Source=mssql-server,1433;Initial Catalog=ADMINDB;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__Enabled: 'true'
+      BlobStorage__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;'
+      BlobStorage__ContainerName: 'stationery-images'
+      ExternalServices__VendorService: 'http://vendor-service:5181'
+      ExternalServices__LocationService: 'http://location-services:7136'
+      ExternalServices__FinyearService: 'http://finyear-api:5000'
+      ExternalServices__StationeryService: 'http://stationery-service:5181'
+      ExternalServices__LovService: 'http://lov-service:5181'
+    ports:
+      - "5185:5185"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - admin-network
+
+  # ─── API Gateway ───────────────────────────────────
+  api-gateway:
+    build:
+      context: ./ApiGateway
+      dockerfile: Docker/Dockerfile
+    container_name: erp-api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5000'
+    ports:
+      - "5000:5000"
+    depends_on:
+      - finyear-api
+      - location-services
+      - vendor-service
+      - lov-service
+      - scholarship-service
+      - stationery-service
+      - tds-service
+      - transaction-service
+    networks:
+      - admin-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+
+networks:
+  admin-network:
+    driver: bridge
+
+volumes:
+  shared_mssql_data:
+  shared_azurite_data:
