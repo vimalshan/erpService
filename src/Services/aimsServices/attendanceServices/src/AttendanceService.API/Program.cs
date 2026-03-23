@@ -122,8 +122,11 @@ try
     app.UseAuthorization();
 
     // ─── Swagger ──────────────────────────────────────────────────────────────
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Attendance Service v1"));
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Attendance Service v1"));
+    }
 
     // ─── Endpoints ────────────────────────────────────────────────────────────
     app.MapControllers();

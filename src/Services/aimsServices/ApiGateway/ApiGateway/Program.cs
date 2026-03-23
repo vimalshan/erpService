@@ -88,8 +88,11 @@ var app = builder.Build();
 // ── Middleware Pipeline ──
 app.UseSerilogRequestLogging();
 
-app.UseSwagger();
-app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ERP API Gateway v1"));
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ERP API Gateway v1"));
+}
 
 app.UseCors("AllowAll");
 app.UseIpRateLimiting();
