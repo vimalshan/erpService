@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using VisitorServices.Application.Common.Interfaces;
 using VisitorServices.Domain.Aggregates;
+using VisitorServices.Domain.Enums;
 using VisitorServices.Infrastructure.Data;
 
 namespace VisitorServices.Infrastructure.Repositories;
@@ -13,7 +14,7 @@ public class VisitorRepository(VisitorDbContext context) : IVisitorRepository
 
     public async Task<IEnumerable<VisitorAggregate>> GetActiveVisitorsAsync(CancellationToken cancellationToken = default)
         => await context.Visitors
-            .Where(v => (char)(int)v.Status == 'I')
+            .Where(v => v.Status == VisitorStatus.Inside)
             .OrderByDescending(v => v.CheckInTime)
             .ToListAsync(cancellationToken);
 

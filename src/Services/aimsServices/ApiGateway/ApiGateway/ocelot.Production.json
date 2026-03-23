@@ -1,0 +1,306 @@
+{
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/api/access/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "access-service", "Port": 80 }
+      ],
+      "Key": "access-service",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100,
+        "ClientWhitelist": []
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/access/graphql",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "access-service", "Port": 80 }
+      ],
+      "Key": "access-graphql"
+    },
+    {
+      "UpstreamPathTemplate": "/api/attendance/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "attendance-service", "Port": 80 }
+      ],
+      "Key": "attendance-service",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100,
+        "ClientWhitelist": []
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/attendance/graphql",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "attendance-service", "Port": 80 }
+      ],
+      "Key": "attendance-graphql"
+    },
+    {
+      "UpstreamPathTemplate": "/api/bus/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "bus-service", "Port": 80 }
+      ],
+      "Key": "bus-service",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100,
+        "ClientWhitelist": []
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/bus/graphql",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "bus-service", "Port": 80 }
+      ],
+      "Key": "bus-graphql"
+    },
+    {
+      "UpstreamPathTemplate": "/api/calendar/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "calendar-service", "Port": 80 }
+      ],
+      "Key": "calendar-service",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100,
+        "ClientWhitelist": []
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/calendar/graphql",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "calendar-service", "Port": 80 }
+      ],
+      "Key": "calendar-graphql"
+    },
+    {
+      "UpstreamPathTemplate": "/api/employee/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "employee-service", "Port": 80 }
+      ],
+      "Key": "employee-service",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100,
+        "ClientWhitelist": []
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/employee/graphql",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "employee-service", "Port": 80 }
+      ],
+      "Key": "employee-graphql"
+    },
+    {
+      "UpstreamPathTemplate": "/api/groupincentive/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "groupincentive-service", "Port": 80 }
+      ],
+      "Key": "groupincentive-service",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100,
+        "ClientWhitelist": []
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/groupincentive/graphql",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "groupincentive-service", "Port": 80 }
+      ],
+      "Key": "groupincentive-graphql"
+    },
+    {
+      "UpstreamPathTemplate": "/api/leave/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "leave-service", "Port": 80 }
+      ],
+      "Key": "leave-service",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100,
+        "ClientWhitelist": []
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/leave/graphql",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "leave-service", "Port": 80 }
+      ],
+      "Key": "leave-graphql"
+    },
+    {
+      "UpstreamPathTemplate": "/api/reference/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "reference-service", "Port": 80 }
+      ],
+      "Key": "reference-service",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100,
+        "ClientWhitelist": []
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/reference/graphql",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "reference-service", "Port": 80 }
+      ],
+      "Key": "reference-graphql"
+    },
+    {
+      "UpstreamPathTemplate": "/api/visitor/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "visitor-service", "Port": 80 }
+      ],
+      "Key": "visitor-service",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100,
+        "ClientWhitelist": []
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/visitor/graphql",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "visitor-service", "Port": 80 }
+      ],
+      "Key": "visitor-graphql"
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://api-gateway:80",
+    "RateLimitOptions": {
+      "DisableRateLimitHeaders": false,
+      "QuotaExceededMessage": "Too many requests. Please try again later.",
+      "HttpStatusCode": 429,
+      "ClientIdHeader": "X-ClientId"
+    },
+    "QoSOptions": {
+      "ExceptionsAllowedBeforeBreaking": 3,
+      "DurationOfBreak": 30000,
+      "TimeoutValue": 15000
+    }
+  }
+}

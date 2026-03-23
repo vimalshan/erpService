@@ -15,7 +15,7 @@ public class Mutation
         CancellationToken cancellationToken)
     {
         var command = new RegisterVisitorCommand(
-            input.VisitorName, input.IdType, input.IdNumber,
+            input.VisitorName, input.IdType[0], input.IdNumber,
             input.PhoneNumber, input.Email, input.Company,
             input.Purpose, input.WhomToVisit, input.EnteredBy);
 
@@ -48,7 +48,7 @@ public class Mutation
 
 public sealed record RegisterVisitorInput(
     string VisitorName,
-    char IdType,
+    string IdType,
     string? IdNumber,
     string? PhoneNumber,
     string? Email,

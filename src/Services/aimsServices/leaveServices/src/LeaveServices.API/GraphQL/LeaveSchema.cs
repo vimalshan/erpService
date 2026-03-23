@@ -65,8 +65,13 @@ public sealed class Mutation
         CreateLeaveMasterInput input,
         [Service] IMediator mediator, CancellationToken ct) =>
         await mediator.Send(new CreateLeaveMasterCommand(
-            input.Description, input.GenderSpecific, input.ApplicableForAll,
-            input.MaxDaysPL, input.Encashable, input.CarryForward, input.CreatedBy), ct);
+            input.Description,
+            input.GenderSpecific.Length > 0 ? input.GenderSpecific[0] : 'A',
+            input.ApplicableForAll.Length > 0 ? input.ApplicableForAll[0] : 'Y',
+            input.MaxDaysPL,
+            input.Encashable.Length > 0 ? input.Encashable[0] : 'N',
+            input.CarryForward.Length > 0 ? input.CarryForward[0] : 'N',
+            input.CreatedBy), ct);
 }
 
 // ── Input types ─────────────────────────────────────────────────────────────
@@ -83,9 +88,9 @@ public record ApplyLeaveInput(
 
 public record CreateLeaveMasterInput(
     string Description,
-    char   GenderSpecific,
-    char   ApplicableForAll,
+    string GenderSpecific,
+    string ApplicableForAll,
     int    MaxDaysPL,
-    char   Encashable,
-    char   CarryForward,
+    string Encashable,
+    string CarryForward,
     long   CreatedBy);

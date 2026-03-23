@@ -28,6 +28,6 @@ public sealed class ProcessApprovalCommandHandler(
 
     private static ApprovalRequestDto MapToDto(VisitorApprovalRequest a) => new(
         a.Id, a.VisitorId, a.RequiredApproverId,
-        (char)(int)a.ApprovalStatus, a.ApprovalDate, a.ApprovalRemarks,
+        ((char)(int)a.ApprovalStatus).ToString(), a.ApprovalDate, a.ApprovalRemarks,
         a.RequestedOn, a.RequestedBy);
 }

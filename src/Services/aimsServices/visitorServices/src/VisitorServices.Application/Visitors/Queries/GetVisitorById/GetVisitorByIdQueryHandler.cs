@@ -15,8 +15,8 @@ public sealed class GetVisitorByIdQueryHandler(IVisitorRepository visitorReposit
     }
 
     private static VisitorDto MapToDto(VisitorAggregate v) => new(
-        v.Id, v.Name, v.IdDocument.ToChar(), v.IdDocument.IdNumber,
+        v.Id, v.Name, v.IdDocument.ToChar().ToString(), v.IdDocument.IdNumber,
         v.ContactInfo.PhoneNumber, v.ContactInfo.Email, v.Company, v.Purpose,
-        v.CheckInTime, v.CheckOutTime, (char)(int)v.Status,
+        v.CheckInTime, v.CheckOutTime, ((char)(int)v.Status).ToString(),
         v.WhomToVisit, v.EnteredOn, v.EnteredBy);
 }

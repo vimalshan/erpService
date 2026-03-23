@@ -4,7 +4,7 @@ public sealed record ApprovalRequestDto(
     long RequestId,
     long VisitorId,
     long RequiredApproverId,
-    char ApprovalStatus,
+    string ApprovalStatus,
     DateTime? ApprovalDate,
     string? ApprovalRemarks,
     DateTime RequestedOn,

@@ -116,7 +116,10 @@ app.MapApprovalEndpoints();
 app.MapGraphQL("/graphql");
 
 // ─── Health Checks ────────────────────────────────────────────────────────────
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("db")
+});
 app.MapHealthChecks("/health/db", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("db")

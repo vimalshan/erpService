@@ -23,9 +23,9 @@ public class CreateLovValueCommandHandlerImpl : IRequestHandler<CreateLovValueCo
     {
         try
         {
-            // Check if value already exists
+            // Check if value already exists for the same type
             var existing = await _repository.GetByCodeAsync(request.Code, cancellationToken);
-            if (existing != null)
+            if (existing != null && existing.TypeId == request.TypeId)
                 return new CreateLovValueResponse(0, request.Code, false, "LOV Value already exists for this type");
             
             var lovValue = Domain.Entities.LovValue.Create(

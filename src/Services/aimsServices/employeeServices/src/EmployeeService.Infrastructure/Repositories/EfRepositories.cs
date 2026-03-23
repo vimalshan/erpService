@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using EmployeeService.Domain.Entities;
 using EmployeeService.Domain.Interfaces;
+using EmployeeService.Domain.ValueObjects;
 using EmployeeService.Infrastructure.Persistence;
 
 namespace EmployeeService.Infrastructure.Repositories;
@@ -15,7 +16,7 @@ public sealed class EmployeeTimeInfoRepository : IEmployeeTimeInfoRepository
 
     public async Task<IEnumerable<EmployeeTimeInfo>> GetByEmployeeIdAsync(long empSysId, CancellationToken ct) =>
         await _ctx.EmpTimeInfos
-            .Where(x => x.EmpSysId.Value == empSysId)
+            .Where(x => x.EmpSysId == EmployeeId.Of(empSysId))
             .ToListAsync(ct);
 
     public async Task<long> GetNextIdAsync(CancellationToken ct)
@@ -47,7 +48,7 @@ public sealed class EmployeeApproverRepository : IEmployeeApproverRepository
 
     public async Task<IEnumerable<EmployeeApprover>> GetByEmployeeIdAsync(long empSysId, CancellationToken ct) =>
         await _ctx.EmployeeApprovers
-            .Where(x => x.EmpSysId.Value == empSysId)
+            .Where(x => x.EmpSysId == EmployeeId.Of(empSysId))
             .ToListAsync(ct);
 
     public async Task<int> GetNextIdAsync(CancellationToken ct)
@@ -73,7 +74,7 @@ public sealed class EmployeeCalendarRepository : IEmployeeCalendarRepository
 
     public async Task<IEnumerable<EmployeeCalendar>> GetByEmployeeIdAsync(long empSysId, CancellationToken ct) =>
         await _ctx.EmployeeCalendars
-            .Where(x => x.EmpSysId.Value == empSysId)
+            .Where(x => x.EmpSysId == EmployeeId.Of(empSysId))
             .ToListAsync(ct);
 
     public async Task<long> GetNextIdAsync(CancellationToken ct)
@@ -105,7 +106,7 @@ public sealed class EmployeePatternRepository : IEmployeePatternRepository
 
     public async Task<IEnumerable<EmployeePattern>> GetByEmployeeIdAsync(long empSysId, CancellationToken ct) =>
         await _ctx.EmployeePatterns
-            .Where(x => x.EmpSysId.Value == empSysId)
+            .Where(x => x.EmpSysId == EmployeeId.Of(empSysId))
             .ToListAsync(ct);
 
     public async Task<long> GetNextIdAsync(CancellationToken ct)
@@ -131,7 +132,7 @@ public sealed class EmployeeShiftRepository : IEmployeeShiftRepository
 
     public async Task<IEnumerable<EmployeeShift>> GetByEmployeeIdAsync(long empSysId, CancellationToken ct) =>
         await _ctx.EmployeeShifts
-            .Where(x => x.EmpSysId.Value == empSysId)
+            .Where(x => x.EmpSysId == EmployeeId.Of(empSysId))
             .ToListAsync(ct);
 
     public async Task<long> GetNextIdAsync(CancellationToken ct)

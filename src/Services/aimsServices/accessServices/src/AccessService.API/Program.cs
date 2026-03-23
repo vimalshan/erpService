@@ -17,6 +17,7 @@ using AccessService.Domain.Entities;
 using AccessService.Application.CQRS.Commands;
 using AccessService.Infrastructure.Repositories;
 using AccessService.API.Authentication;
+using AccessService.API.GraphQL;
 using AccessService.API.HealthChecks;
 using AccessService.API.Resilience;
 using AccessService.API.Services;
@@ -201,6 +202,12 @@ builder.Services.AddSwaggerGen(options =>
 // Controllers
 builder.Services.AddControllers();
 
+// GraphQL (Hot Chocolate)
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType<Query>()
+    .AddMutationType<Mutation>();
+
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -265,6 +272,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// GraphQL endpoint — requires valid JWT (same policy as REST controllers)
+app.MapGraphQL("/graphql").RequireAuthorization();
 
 // Database migration and domain event handler initialization on startup
 using (var scope = app.Services.CreateScope())

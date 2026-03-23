@@ -1,0 +1,820 @@
+##################################################
+# API Gateway
+##################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: erp-system
+  labels:
+    app: api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: erp/api-gateway:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: erp-config
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: JWT_KEY_GATEWAY
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: RABBITMQ_PASSWORD
+            - name: Services__AccessService
+              value: "http://access-service:80"
+            - name: Services__AttendanceService
+              value: "http://attendance-service:80"
+            - name: Services__BusService
+              value: "http://bus-service:80"
+            - name: Services__CalendarService
+              value: "http://calendar-service:80"
+            - name: Services__EmployeeService
+              value: "http://employee-service:80"
+            - name: Services__GroupIncentiveService
+              value: "http://groupincentive-service:80"
+            - name: Services__LeaveService
+              value: "http://leave-service:80"
+            - name: Services__ReferenceService
+              value: "http://reference-service:80"
+            - name: Services__VisitorService
+              value: "http://visitor-service:80"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 40
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: erp-system
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer
+---
+##################################################
+# Access Service
+##################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: access-service
+  namespace: erp-system
+  labels:
+    app: access-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: access-service
+  template:
+    metadata:
+      labels:
+        app: access-service
+    spec:
+      containers:
+        - name: access-service
+          image: erp/access-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: ACCESS_DB_CONN
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: RABBITMQ_PASSWORD
+            - name: Jwt__Issuer
+              value: "AccessService"
+            - name: Jwt__Audience
+              value: "AccessService"
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: JWT_KEY_ACCESS
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: access-service
+  namespace: erp-system
+spec:
+  selector:
+    app: access-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+##################################################
+# Attendance Service
+##################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: attendance-service
+  namespace: erp-system
+  labels:
+    app: attendance-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: attendance-service
+  template:
+    metadata:
+      labels:
+        app: attendance-service
+    spec:
+      containers:
+        - name: attendance-service
+          image: erp/attendance-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: erp-config
+          env:
+            - name: ConnectionStrings__AttendanceDb
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: ATTENDANCE_DB_CONN
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: RABBITMQ_PASSWORD
+            - name: Jwt__Issuer
+              value: "AttendanceService"
+            - name: Jwt__Audience
+              value: "AttendanceService"
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: JWT_KEY_ATTENDANCE
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: attendance-service
+  namespace: erp-system
+spec:
+  selector:
+    app: attendance-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+##################################################
+# Bus Service
+##################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bus-service
+  namespace: erp-system
+  labels:
+    app: bus-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: bus-service
+  template:
+    metadata:
+      labels:
+        app: bus-service
+    spec:
+      containers:
+        - name: bus-service
+          image: erp/bus-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: erp-config
+          env:
+            - name: ConnectionStrings__BusDb
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: BUS_DB_CONN
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: RABBITMQ_PASSWORD
+            - name: Jwt__Issuer
+              value: "BusServices.API"
+            - name: Jwt__Audience
+              value: "BusServices.API"
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: JWT_KEY_BUS
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bus-service
+  namespace: erp-system
+spec:
+  selector:
+    app: bus-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+##################################################
+# Calendar Service
+##################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendar-service
+  namespace: erp-system
+  labels:
+    app: calendar-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: calendar-service
+  template:
+    metadata:
+      labels:
+        app: calendar-service
+    spec:
+      containers:
+        - name: calendar-service
+          image: erp/calendar-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: erp-config
+          env:
+            - name: ConnectionStrings__CalendarDb
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: CALENDAR_DB_CONN
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: RABBITMQ_PASSWORD
+            - name: Jwt__Issuer
+              value: "CalendarService"
+            - name: Jwt__Audience
+              value: "CalendarService"
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: JWT_KEY_CALENDAR
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: calendar-service
+  namespace: erp-system
+spec:
+  selector:
+    app: calendar-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+##################################################
+# Employee Service
+##################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: employee-service
+  namespace: erp-system
+  labels:
+    app: employee-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: employee-service
+  template:
+    metadata:
+      labels:
+        app: employee-service
+    spec:
+      containers:
+        - name: employee-service
+          image: erp/employee-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: erp-config
+          env:
+            - name: ConnectionStrings__EmployeeDb
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: EMPLOYEE_DB_CONN
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: RABBITMQ_PASSWORD
+            - name: Jwt__Issuer
+              value: "EmployeeService"
+            - name: Jwt__Audience
+              value: "EmployeeService"
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: JWT_KEY_EMPLOYEE
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: employee-service
+  namespace: erp-system
+spec:
+  selector:
+    app: employee-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+##################################################
+# Group Incentive Service
+##################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: groupincentive-service
+  namespace: erp-system
+  labels:
+    app: groupincentive-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: groupincentive-service
+  template:
+    metadata:
+      labels:
+        app: groupincentive-service
+    spec:
+      containers:
+        - name: groupincentive-service
+          image: erp/groupincentive-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: GROUPINCENTIVE_DB_CONN
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: RABBITMQ_PASSWORD
+            - name: Jwt__Issuer
+              value: "GroupIncentiveService"
+            - name: Jwt__Audience
+              value: "GroupIncentiveService"
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: JWT_KEY_GROUPINCENTIVE
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: groupincentive-service
+  namespace: erp-system
+spec:
+  selector:
+    app: groupincentive-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+##################################################
+# Leave Service
+##################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leave-service
+  namespace: erp-system
+  labels:
+    app: leave-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: leave-service
+  template:
+    metadata:
+      labels:
+        app: leave-service
+    spec:
+      containers:
+        - name: leave-service
+          image: erp/leave-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: erp-config
+          env:
+            - name: ConnectionStrings__LeaveDb
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: LEAVE_DB_CONN
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: RABBITMQ_PASSWORD
+            - name: Jwt__Issuer
+              value: "LeaveServices.API"
+            - name: Jwt__Audience
+              value: "LeaveServices.API"
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: JWT_KEY_LEAVE
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: leave-service
+  namespace: erp-system
+spec:
+  selector:
+    app: leave-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+##################################################
+# Reference Service
+##################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reference-service
+  namespace: erp-system
+  labels:
+    app: reference-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reference-service
+  template:
+    metadata:
+      labels:
+        app: reference-service
+    spec:
+      containers:
+        - name: reference-service
+          image: erp/reference-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: REFERENCE_DB_CONN
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: RABBITMQ_PASSWORD
+            - name: Jwt__Issuer
+              value: "reference-service"
+            - name: Jwt__Audience
+              value: "reference-service"
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: JWT_KEY_REFERENCE
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reference-service
+  namespace: erp-system
+spec:
+  selector:
+    app: reference-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+##################################################
+# Visitor Service
+##################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: visitor-service
+  namespace: erp-system
+  labels:
+    app: visitor-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: visitor-service
+  template:
+    metadata:
+      labels:
+        app: visitor-service
+    spec:
+      containers:
+        - name: visitor-service
+          image: erp/visitor-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: erp-config
+          env:
+            - name: ConnectionStrings__VisitorDb
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: VISITOR_DB_CONN
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: RABBITMQ_PASSWORD
+            - name: Jwt__Issuer
+              value: "VisitorServices"
+            - name: Jwt__Audience
+              value: "VisitorServices"
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: JWT_KEY_VISITOR
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: visitor-service
+  namespace: erp-system
+spec:
+  selector:
+    app: visitor-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP

@@ -46,11 +46,11 @@ public class VisitorReadService(IConfiguration configuration)
 
         return rows.Select(r => new VisitorDto(
             (long)r.VisitorId, (string)r.VisitorName,
-            ((string)r.IdType)[0], (string?)r.IdNumber,
+            (string)r.IdType, (string?)r.IdNumber,
             (string?)r.PhoneNumber, (string?)r.Email,
             (string?)r.Company, (string?)r.Purpose,
             (DateTime)r.CheckInTime, (DateTime?)r.CheckOutTime,
-            ((string)r.Status)[0], (long)r.WhomToVisit,
+            (string)r.Status, (long)r.WhomToVisit,
             (DateTime)r.EnteredOn, (long)r.EnteredBy));
     }
 

@@ -20,6 +20,9 @@ public class ReferenceDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         
+        // Ignore domain events - they are in-memory only
+        modelBuilder.Ignore<DomainEvent>();
+        
         // Apply configurations
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ReferenceDbContext).Assembly);
     }

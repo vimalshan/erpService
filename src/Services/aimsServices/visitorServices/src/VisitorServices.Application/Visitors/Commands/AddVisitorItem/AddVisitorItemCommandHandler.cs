@@ -23,7 +23,7 @@ public sealed class AddVisitorItemCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new VisitorItemDto(item.Id, item.VisitorId, item.Description,
-            item.Quantity, item.MaterialType, item.Notes, item.Status,
+            item.Quantity, item.MaterialType, item.Notes, item.Status.ToString(),
             item.EnteredOn, item.EnteredBy);
     }
 }

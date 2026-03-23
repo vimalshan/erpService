@@ -21,9 +21,15 @@ public sealed class LeaveAppliedEventHandler : INotificationHandler<LeaveApplied
     {
         _logger.LogInformation("Domain event: LeaveApplied – DetailId={Id}, Emp={Emp}",
             notification.LeaveDetailId, notification.EmpSysId);
-
-        await using var publisher = await RabbitMqPublisher.CreateAsync(_settings);
-        await publisher.PublishAsync("", "leave.applied", notification);
+        try
+        {
+            await using var publisher = await RabbitMqPublisher.CreateAsync(_settings);
+            await publisher.PublishAsync("", "leave.applied", notification);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "RabbitMQ unavailable — skipping LeaveApplied event publish.");
+        }
     }
 }
 
@@ -41,9 +47,15 @@ public sealed class LeaveApprovedEventHandler : INotificationHandler<LeaveApprov
     public async Task Handle(LeaveApprovedEvent notification, CancellationToken ct)
     {
         _logger.LogInformation("Domain event: LeaveApproved – DetailId={Id}", notification.LeaveDetailId);
-
-        await using var publisher = await RabbitMqPublisher.CreateAsync(_settings);
-        await publisher.PublishAsync("", "leave.approved", notification);
+        try
+        {
+            await using var publisher = await RabbitMqPublisher.CreateAsync(_settings);
+            await publisher.PublishAsync("", "leave.approved", notification);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "RabbitMQ unavailable — skipping LeaveApproved event publish.");
+        }
     }
 }
 

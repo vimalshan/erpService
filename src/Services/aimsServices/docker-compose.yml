@@ -1,0 +1,335 @@
+version: "3.8"
+
+# ERP Microservices - Full Stack
+# Usage: docker-compose -f docker-compose.shared.yml -f docker-compose.yml up -d
+# Build:  docker-compose -f docker-compose.shared.yml -f docker-compose.yml build
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  networks:
+    - erp-network
+  depends_on:
+    sqlserver:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+
+services:
+  # ──────────────────────────────────────────────
+  # API Gateway (net10.0) - Port 5020
+  # ──────────────────────────────────────────────
+  api-gateway:
+    restart: unless-stopped
+    networks:
+      - erp-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      access-service:
+        condition: service_healthy
+      attendance-service:
+        condition: service_healthy
+      bus-service:
+        condition: service_healthy
+      calendar-service:
+        condition: service_healthy
+      employee-service:
+        condition: service_healthy
+      groupincentive-service:
+        condition: service_healthy
+      leave-service:
+        condition: service_healthy
+      reference-service:
+        condition: service_healthy
+      visitor-service:
+        condition: service_healthy
+    build:
+      context: ./ApiGateway
+      dockerfile: Dockerfile
+    container_name: erp-api-gateway
+    ports:
+      - "5020:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - Jwt__Key=${JWT_KEY_GATEWAY:-ApiGateway_SuperSecretSigningKey_2026_MinLength32Chars!!}
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+      # Downstream service URLs (Docker container names)
+      - Services__AccessService=http://access-service:80
+      - Services__AttendanceService=http://attendance-service:80
+      - Services__BusService=http://bus-service:80
+      - Services__CalendarService=http://calendar-service:80
+      - Services__EmployeeService=http://employee-service:80
+      - Services__GroupIncentiveService=http://groupincentive-service:80
+      - Services__LeaveService=http://leave-service:80
+      - Services__ReferenceService=http://reference-service:80
+      - Services__VisitorService=http://visitor-service:80
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ──────────────────────────────────────────────
+  # Access Service (net8.0) - Port 5010
+  # ──────────────────────────────────────────────
+  access-service:
+    <<: *service-defaults
+    build:
+      context: ./accessServices
+      dockerfile: Dockerfile
+    container_name: erp-access-service
+    ports:
+      - "5010:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=ACCESSDB;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=true;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+      - Jwt__Issuer=AccessService
+      - Jwt__Audience=AccessService
+      - Jwt__Key=${JWT_KEY_ACCESS:-your-very-long-secret-key-here-min-32-characters}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ──────────────────────────────────────────────
+  # Attendance Service (net10.0) - Port 5011
+  # ──────────────────────────────────────────────
+  attendance-service:
+    <<: *service-defaults
+    build:
+      context: ./attendanceServices
+      dockerfile: Dockerfile
+    container_name: erp-attendance-service
+    ports:
+      - "5011:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__AttendanceDb=Server=sqlserver;Database=ATTENDANCEDB;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=true;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+      - Jwt__Issuer=AttendanceService
+      - Jwt__Audience=AttendanceService
+      - Jwt__Key=${JWT_KEY_ATTENDANCE:-AttendanceSuperSecretKey_Change_In_Production_2026!}
+      - AzureStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ──────────────────────────────────────────────
+  # Bus Service (net10.0) - Port 5012
+  # ──────────────────────────────────────────────
+  bus-service:
+    <<: *service-defaults
+    build:
+      context: ./busServices
+      dockerfile: Dockerfile
+    container_name: erp-bus-service
+    ports:
+      - "5012:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__BusDb=Server=sqlserver;Database=BUSDB;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=true;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+      - Jwt__Issuer=BusServices.API
+      - Jwt__Audience=BusServices.API
+      - Jwt__Key=${JWT_KEY_BUS:-BusServices-SuperSecretKey-Min32Chars!!}
+      - AzureStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ──────────────────────────────────────────────
+  # Calendar Service (net10.0) - Port 5013
+  # ──────────────────────────────────────────────
+  calendar-service:
+    <<: *service-defaults
+    build:
+      context: ./calendarServices
+      dockerfile: Dockerfile
+    container_name: erp-calendar-service
+    ports:
+      - "5013:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__CalendarDb=Server=sqlserver;Database=CALENDARDB;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=true;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+      - Jwt__Issuer=CalendarService
+      - Jwt__Audience=CalendarService
+      - Jwt__Key=${JWT_KEY_CALENDAR:-CalendarServiceSuperSecretKey_ChangeInProd_256bit!}
+      - AzureStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ──────────────────────────────────────────────
+  # Employee Service (net10.0) - Port 5014
+  # ──────────────────────────────────────────────
+  employee-service:
+    <<: *service-defaults
+    build:
+      context: ./employeeServices
+      dockerfile: Dockerfile
+    container_name: erp-employee-service
+    ports:
+      - "5014:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__EmployeeDb=Server=sqlserver;Database=EMPLOYEEDB;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=true;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+      - Jwt__Issuer=EmployeeService
+      - Jwt__Audience=EmployeeService
+      - Jwt__Key=${JWT_KEY_EMPLOYEE:-EmployeeServiceSuperSecretSigningKey2026!!}
+      - AzureStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ──────────────────────────────────────────────
+  # Group Incentive Service (net10.0) - Port 5015
+  # ──────────────────────────────────────────────
+  groupincentive-service:
+    <<: *service-defaults
+    build:
+      context: ./groupincentiveServices
+      dockerfile: Dockerfile
+    container_name: erp-groupincentive-service
+    ports:
+      - "5015:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=GROUPINCENTIVEDB;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=true;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+      - Jwt__Issuer=GroupIncentiveService
+      - Jwt__Audience=GroupIncentiveService
+      - Jwt__Key=${JWT_KEY_GROUPINCENTIVE:-GroupIncentiveService_Super_Secret_Key_2026_MinLength32Chars!}
+      - AzureStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ──────────────────────────────────────────────
+  # Leave Service (net10.0) - Port 5016
+  # ──────────────────────────────────────────────
+  leave-service:
+    <<: *service-defaults
+    build:
+      context: ./leaveServices
+      dockerfile: Dockerfile
+    container_name: erp-leave-service
+    ports:
+      - "5016:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__LeaveDb=Server=sqlserver;Database=LEAVEDB;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=true;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+      - Jwt__Issuer=LeaveServices.API
+      - Jwt__Audience=LeaveServices.API
+      - Jwt__Key=${JWT_KEY_LEAVE:-CHANGE_ME_TO_A_STRONG_256BIT_SECRET_KEY_IN_PRODUCTION}
+      - AzureStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ──────────────────────────────────────────────
+  # Reference Service (net8.0) - Port 5017
+  # ──────────────────────────────────────────────
+  reference-service:
+    <<: *service-defaults
+    build:
+      context: ./referenceServies
+      dockerfile: Dockerfile
+    container_name: erp-reference-service
+    ports:
+      - "5017:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=REFERENCEDB;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=true;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+      - Jwt__Issuer=reference-service
+      - Jwt__Audience=reference-service
+      - Jwt__Key=${JWT_KEY_REFERENCE:-your-secret-key-must-be-at-least-32-characters-long!}
+      - AzureStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ──────────────────────────────────────────────
+  # Visitor Service (net10.0) - Port 5018
+  # ──────────────────────────────────────────────
+  visitor-service:
+    <<: *service-defaults
+    build:
+      context: ./visitorServices
+      dockerfile: Dockerfile
+    container_name: erp-visitor-service
+    ports:
+      - "5018:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__VisitorDb=Server=sqlserver;Database=VISITORDB;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=true;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+      - Jwt__Issuer=VisitorServices
+      - Jwt__Audience=VisitorServices
+      - Jwt__Key=${JWT_KEY_VISITOR:-VisitorServices_SuperSecretKey_32chars!}
+      - AzureStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

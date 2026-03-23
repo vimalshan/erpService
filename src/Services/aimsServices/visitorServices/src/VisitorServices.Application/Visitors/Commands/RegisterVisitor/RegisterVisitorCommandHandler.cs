@@ -35,7 +35,7 @@ public sealed class RegisterVisitorCommandHandler(
     private static VisitorDto MapToDto(VisitorAggregate v) => new(
         v.Id,
         v.Name,
-        v.IdDocument.ToChar(),
+        v.IdDocument.ToChar().ToString(),
         v.IdDocument.IdNumber,
         v.ContactInfo.PhoneNumber,
         v.ContactInfo.Email,
@@ -43,7 +43,7 @@ public sealed class RegisterVisitorCommandHandler(
         v.Purpose,
         v.CheckInTime,
         v.CheckOutTime,
-        (char)(int)v.Status,
+        ((char)(int)v.Status).ToString(),
         v.WhomToVisit,
         v.EnteredOn,
         v.EnteredBy);

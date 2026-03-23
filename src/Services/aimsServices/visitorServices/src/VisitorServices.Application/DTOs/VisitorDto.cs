@@ -3,7 +3,7 @@ namespace VisitorServices.Application.DTOs;
 public sealed record VisitorDto(
     long VisitorId,
     string VisitorName,
-    char IdType,
+    string IdType,
     string? IdNumber,
     string? PhoneNumber,
     string? Email,
@@ -11,7 +11,7 @@ public sealed record VisitorDto(
     string? Purpose,
     DateTime CheckInTime,
     DateTime? CheckOutTime,
-    char Status,
+    string Status,
     long WhomToVisit,
     DateTime EnteredOn,
     long EnteredBy);

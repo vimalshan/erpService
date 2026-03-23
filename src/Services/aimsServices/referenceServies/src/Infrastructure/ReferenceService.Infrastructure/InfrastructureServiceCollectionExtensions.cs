@@ -31,10 +31,10 @@ public static class InfrastructureServiceCollectionExtensions
         });
         
         // Register repositories
-        services.AddScoped<LovTypeRepository>();
-        services.AddScoped<LovValueRepository>();
-        services.AddScoped<PermissionRuleRepository>();
-        services.AddScoped<LeaveFlagRepository>();
+        services.AddScoped<ILovTypeRepository, LovTypeRepository>();
+        services.AddScoped<ILovValueRepository, LovValueRepository>();
+        services.AddScoped<IPermissionRuleRepository, PermissionRuleRepository>();
+        services.AddScoped<ILeaveFlagRepository, LeaveFlagRepository>();
         
         // Register Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();

@@ -14,7 +14,7 @@ public sealed class GetPendingApprovalsQueryHandler(IApprovalRequestRepository a
         var approvals = await approvalRepository.GetPendingByApproverAsync(request.ApproverId, cancellationToken);
         return approvals.Select(a => new ApprovalRequestDto(
             a.Id, a.VisitorId, a.RequiredApproverId,
-            (char)(int)a.ApprovalStatus, a.ApprovalDate, a.ApprovalRemarks,
+            ((char)(int)a.ApprovalStatus).ToString(), a.ApprovalDate, a.ApprovalRemarks,
             a.RequestedOn, a.RequestedBy));
     }
 }

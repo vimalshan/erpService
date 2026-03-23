@@ -9,20 +9,36 @@ namespace EmployeeService.Infrastructure.Messaging;
 /// <summary>Publishes domain events to RabbitMQ exchanges.</summary>
 public sealed class RabbitMqPublisher : IDisposable
 {
-    private readonly IConnection _connection;
-    private readonly IChannel _channel;
+    private readonly IConnection? _connection;
+    private readonly IChannel? _channel;
     private readonly ILogger<RabbitMqPublisher> _logger;
+    private readonly bool _isAvailable;
 
     public RabbitMqPublisher(IConnectionFactory factory, ILogger<RabbitMqPublisher> logger)
     {
         _logger = logger;
-        _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
-        _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
+        try
+        {
+            _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
+            _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
+            _isAvailable = true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "RabbitMQ unavailable — event publishing will be skipped.");
+            _isAvailable = false;
+        }
     }
 
     public async Task PublishAsync<T>(T message, string exchangeName, string routingKey = "", CancellationToken ct = default)
     {
-        await _channel.ExchangeDeclareAsync(exchangeName, ExchangeType.Topic, durable: true, cancellationToken: ct);
+        if (!_isAvailable)
+        {
+            _logger.LogDebug("RabbitMQ unavailable — skipping publish to {Exchange}/{RoutingKey}", exchangeName, routingKey);
+            return;
+        }
+
+        await _channel!.ExchangeDeclareAsync(exchangeName, ExchangeType.Topic, durable: true, cancellationToken: ct);
 
         var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
         var props = new BasicProperties { ContentType = "application/json", DeliveryMode = DeliveryModes.Persistent };
@@ -41,22 +57,38 @@ public sealed class RabbitMqPublisher : IDisposable
 /// <summary>Base consumer for RabbitMQ messages.</summary>
 public abstract class RabbitMqConsumerBase : IDisposable
 {
-    private readonly IConnection _connection;
-    protected readonly IChannel Channel;
+    private readonly IConnection? _connection;
+    protected readonly IChannel? Channel;
     protected readonly ILogger Logger;
+    protected readonly bool IsAvailable;
 
     protected RabbitMqConsumerBase(IConnectionFactory factory, ILogger logger)
     {
         Logger = logger;
-        _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
-        Channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
+        try
+        {
+            _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
+            Channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
+            IsAvailable = true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "RabbitMQ unavailable — consumer will not start.");
+            IsAvailable = false;
+        }
     }
 
     protected abstract Task HandleMessageAsync(string message, CancellationToken ct);
 
     protected async Task StartConsumingAsync(string queueName, CancellationToken ct = default)
     {
-        await Channel.QueueDeclareAsync(queueName, durable: true, exclusive: false, autoDelete: false, cancellationToken: ct);
+        if (!IsAvailable)
+        {
+            Logger.LogDebug("RabbitMQ unavailable — skipping consumer start for {Queue}", queueName);
+            return;
+        }
+
+        await Channel!.QueueDeclareAsync(queueName, durable: true, exclusive: false, autoDelete: false, cancellationToken: ct);
         var consumer = new AsyncEventingBasicConsumer(Channel);
 
         consumer.ReceivedAsync += async (_, ea) =>

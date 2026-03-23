@@ -56,10 +56,13 @@ public class LovTypeConfiguration : IEntityTypeConfiguration<LovType>
             .HasDatabaseName("IX_LOV_TYPEMAST_STATUS");
         
         // Navigation
-        builder.HasMany<LovValue>()
+        builder.HasMany(x => x.Values)
             .WithOne()
             .HasForeignKey(x => x.TypeId)
             .HasConstraintName("FK_LOV_TYPEID");
+        
+        builder.Navigation(x => x.Values)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
 

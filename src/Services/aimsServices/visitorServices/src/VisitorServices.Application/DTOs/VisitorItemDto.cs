@@ -7,6 +7,6 @@ public sealed record VisitorItemDto(
     int Quantity,
     string? MaterialType,
     string? Notes,
-    char Status,
+    string Status,
     DateTime EnteredOn,
     long EnteredBy);

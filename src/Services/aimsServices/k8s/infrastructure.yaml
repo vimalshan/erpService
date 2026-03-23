@@ -1,0 +1,213 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sqlserver
+  namespace: erp-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sqlserver
+  template:
+    metadata:
+      labels:
+        app: sqlserver
+    spec:
+      containers:
+        - name: sqlserver
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          ports:
+            - containerPort: 1433
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_PID
+              value: "Developer"
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: SQL_SA_PASSWORD
+          volumeMounts:
+            - name: sqlserver-data
+              mountPath: /var/opt/mssql
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+          readinessProbe:
+            exec:
+              command:
+                - /opt/mssql-tools18/bin/sqlcmd
+                - -S
+                - localhost
+                - -U
+                - sa
+                - -P
+                - $(SA_PASSWORD)
+                - -C
+                - -Q
+                - "SELECT 1"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: sqlserver-data
+          persistentVolumeClaim:
+            claimName: sqlserver-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sqlserver-service
+  namespace: erp-system
+spec:
+  selector:
+    app: sqlserver
+  ports:
+    - port: 1433
+      targetPort: 1433
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sqlserver-pvc
+  namespace: erp-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: erp-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-management
+          ports:
+            - containerPort: 5672
+            - containerPort: 15672
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              value: "guest"
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: RABBITMQ_PASSWORD
+          volumeMounts:
+            - name: rabbitmq-data
+              mountPath: /var/lib/rabbitmq
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "-q", "ping"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+      volumes:
+        - name: rabbitmq-data
+          persistentVolumeClaim:
+            claimName: rabbitmq-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-service
+  namespace: erp-system
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: 5672
+    - name: management
+      port: 15672
+      targetPort: 15672
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rabbitmq-pvc
+  namespace: erp-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azurite
+  namespace: erp-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: azurite
+  template:
+    metadata:
+      labels:
+        app: azurite
+    spec:
+      containers:
+        - name: azurite
+          image: mcr.microsoft.com/azure-storage/azurite
+          command: ["azurite", "--blobHost", "0.0.0.0", "--queueHost", "0.0.0.0", "--tableHost", "0.0.0.0"]
+          ports:
+            - containerPort: 10000
+            - containerPort: 10001
+            - containerPort: 10002
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: azurite-service
+  namespace: erp-system
+spec:
+  selector:
+    app: azurite
+  ports:
+    - name: blob
+      port: 10000
+      targetPort: 10000
+    - name: queue
+      port: 10001
+      targetPort: 10001
+    - name: table
+      port: 10002
+      targetPort: 10002
+  type: ClusterIP

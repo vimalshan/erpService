@@ -34,6 +34,8 @@ public class RabbitMQPublisher : IMessagePublisher, IAsyncDisposable
         _logger = logger;
     }
 
+    private bool _isAvailable = true;
+
     private async Task EnsureConnectedAsync()
     {
         if (_connection?.IsOpen == true) return;
@@ -59,6 +61,12 @@ public class RabbitMQPublisher : IMessagePublisher, IAsyncDisposable
 
     public async Task PublishAsync<T>(string routingKey, T message, CancellationToken ct = default)
     {
+        if (!_isAvailable)
+        {
+            _logger.LogDebug("RabbitMQ unavailable — skipping publish to {RoutingKey}", routingKey);
+            return;
+        }
+
         try
         {
             await EnsureConnectedAsync();
@@ -85,8 +93,8 @@ public class RabbitMQPublisher : IMessagePublisher, IAsyncDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to publish message to {RoutingKey}", routingKey);
-            throw;
+            _logger.LogWarning(ex, "RabbitMQ unavailable — skipping publish to {RoutingKey}", routingKey);
+            _isAvailable = false;
         }
     }
 

@@ -75,5 +75,5 @@ public sealed class BusDapperQueries
 }
 
 public record BusSummaryResult(int BusId, string RegistrationNumber, string? Description, int Capacity, int AssignedEmployees, int TotalRoutes);
-public record ArrivalReportResult(long ArrivalId, string RegistrationNumber, DateTime ArrivalDate, TimeOnly ArrivalTime, string Status, string? Remarks);
+public record ArrivalReportResult(long ArrivalId, string RegistrationNumber, DateTime ArrivalDate, TimeSpan ArrivalTime, string Status, string? Remarks);
 public record EmployeeBusReportResult(long EmpBusId, long EmpSysId, string RegistrationNumber, string RouteName, DateTime EffectiveDate, DateTime? ClosingDate);

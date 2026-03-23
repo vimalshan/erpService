@@ -1,5 +1,6 @@
 using BusServices.Domain.Entities;
 using BusServices.Domain.Interfaces;
+using BusServices.Domain.ValueObjects;
 using BusServices.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +20,10 @@ public sealed class BusRepository : IBusRepository
             .FirstOrDefaultAsync(b => b.BusId == busId, ct);
 
     public Task<Bus?> GetByRegistrationNumberAsync(string regNumber, CancellationToken ct = default)
-        => _ctx.Buses.FirstOrDefaultAsync(b => b.RegistrationNumber.Value == regNumber, ct);
+    {
+        var rn = RegistrationNumber.Create(regNumber);
+        return _ctx.Buses.FirstOrDefaultAsync(b => b.RegistrationNumber == rn, ct);
+    }
 
     public async Task<IEnumerable<Bus>> GetAllAsync(CancellationToken ct = default)
         => await _ctx.Buses.ToListAsync(ct);
@@ -28,7 +32,10 @@ public sealed class BusRepository : IBusRepository
         => _ctx.Buses.AnyAsync(b => b.BusId == busId, ct);
 
     public Task<bool> RegistrationExistsAsync(string regNumber, CancellationToken ct = default)
-        => _ctx.Buses.AnyAsync(b => b.RegistrationNumber.Value == regNumber, ct);
+    {
+        var rn = RegistrationNumber.Create(regNumber);
+        return _ctx.Buses.AnyAsync(b => b.RegistrationNumber == rn, ct);
+    }
 
     public async Task<int> GetNextIdAsync(CancellationToken ct = default)
         => (await _ctx.Buses.MaxAsync(b => (int?)b.BusId, ct) ?? 0) + 1;

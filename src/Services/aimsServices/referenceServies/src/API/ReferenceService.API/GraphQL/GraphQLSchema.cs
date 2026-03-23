@@ -1,31 +1,32 @@
 using HotChocolate;
 using HotChocolate.Execution.Configuration;
+using MediatR;
 using ReferenceService.Application.DTOs;
+using ReferenceService.Application.Queries.LovType;
+using ReferenceService.Application.Commands.LovType;
 
 namespace ReferenceService.API.GraphQL;
 
 /// <summary>
 /// GraphQL Query type.
 /// </summary>
-[QueryType]
 public class Query
 {
-    public async Task<List<LovTypeDto>> GetLovTypes([Service] IHttpClientFactory httpClientFactory)
+    public async Task<List<LovTypeDto>> GetLovTypes([Service] IMediator mediator)
     {
-        // Implementation would call the REST API or database directly
-        return await Task.FromResult(new List<LovTypeDto>());
+        var result = await mediator.Send(new GetAllLovTypesQuery(1, 100));
+        return result.Items;
     }
     
-    public async Task<LovTypeDto?> GetLovType(int id, [Service] IHttpClientFactory httpClientFactory)
+    public async Task<LovTypeDto?> GetLovType(int id, [Service] IMediator mediator)
     {
-        return null;
+        return await mediator.Send(new GetLovTypeByIdQuery(id));
     }
 }
 
 /// <summary>
 /// GraphQL Mutation type.
 /// </summary>
-[MutationType]
 public class Mutation
 {
     public async Task<LovTypeDto?> CreateLovType(
@@ -33,10 +34,11 @@ public class Mutation
         string? description,
         int sequence,
         long modifiedBy,
-        [Service] IHttpClientFactory httpClientFactory)
+        [Service] IMediator mediator)
     {
-        // Implementation would call application layer
-        return null;
+        var result = await mediator.Send(new CreateLovTypeCommand(typeName, description, sequence, modifiedBy));
+        if (!result.Success) return null;
+        return await mediator.Send(new GetLovTypeByIdQuery(result.Id));
     }
 }
 

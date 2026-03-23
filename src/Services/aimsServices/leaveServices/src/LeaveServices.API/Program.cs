@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using HotChocolate.Types;
 
 // ── Serilog bootstrap ─────────────────────────────────────────────────────────
 Log.Logger = new LoggerConfiguration()
@@ -81,7 +82,9 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<LeaveServices.API.GraphQL.Query>()
-    .AddMutationType<LeaveServices.API.GraphQL.Mutation>();
+    .AddMutationType<LeaveServices.API.GraphQL.Mutation>()
+    .BindRuntimeType<char, StringType>()
+    .BindRuntimeType<char?, StringType>();
 
 // ── Health Checks ─────────────────────────────────────────────────────────────
 builder.Services

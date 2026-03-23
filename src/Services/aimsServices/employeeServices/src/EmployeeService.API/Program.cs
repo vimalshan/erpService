@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using EmployeeService.Application;
 using EmployeeService.Infrastructure;
 using EmployeeService.Infrastructure.Persistence;
+using HotChocolate.Types;
 using EmployeeService.API.GraphQL;
 using EmployeeService.API.Middleware;
 
@@ -87,7 +88,9 @@ builder.Services
     .AddFiltering()
     .AddSorting()
     .AddProjections()
-    .AddAuthorization();
+    .AddAuthorization()
+    .BindRuntimeType<char, StringType>()
+    .BindRuntimeType<char?, StringType>();
 
 // ─────────────────────────────────────────────
 // 5. Polly Circuit-Breaker for HttpClient
