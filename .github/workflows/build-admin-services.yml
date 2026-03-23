@@ -1,0 +1,172 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Build & Push Admin Service Docker Images to GitHub Container Registry (GHCR)
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# Triggers:
+#   - Push to main (only when relevant service files change)
+#   - Manual dispatch (workflow_dispatch) to build all or specific services
+#
+# Prerequisites (GitHub repo settings):
+#   No secrets needed — uses the built-in GITHUB_TOKEN for GHCR authentication.
+#   Ensure "Read and write permissions" is enabled under:
+#     Settings → Actions → General → Workflow permissions
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Build & Push Admin Services
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/Services/adminServices/**'
+
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to build (or "all")'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - finyear-api
+          - location-services
+          - lov-service
+          - scholarship-service
+          - stationery-service
+          - tds-service
+          - vendor-service
+          - transaction-service
+          - api-gateway
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/erp
+
+jobs:
+  # ── Detect which services changed ────────────────────────────────────────
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine changed services
+        id: set-matrix
+        run: |
+          # Service registry: name → context + dockerfile
+          declare -A SVC_CONTEXT SVC_DOCKERFILE
+          SVC_CONTEXT[finyear-api]="src/Services/adminServices/finyearServices";           SVC_DOCKERFILE[finyear-api]="Docker/Dockerfile"
+          SVC_CONTEXT[location-services]="src/Services/adminServices/locationServices";    SVC_DOCKERFILE[location-services]="Docker/Dockerfile"
+          SVC_CONTEXT[lov-service]="src/Services/adminServices/lovServices";               SVC_DOCKERFILE[lov-service]="Docker/Dockerfile"
+          SVC_CONTEXT[scholarship-service]="src/Services/adminServices/scholarshipServices"; SVC_DOCKERFILE[scholarship-service]="Docker/Dockerfile"
+          SVC_CONTEXT[stationery-service]="src/Services/adminServices/stationeryServices";  SVC_DOCKERFILE[stationery-service]="Docker/Dockerfile"
+          SVC_CONTEXT[tds-service]="src/Services/adminServices/tdsServices";                SVC_DOCKERFILE[tds-service]="Docker/Dockerfile"
+          SVC_CONTEXT[vendor-service]="src/Services/adminServices/vendorServices";          SVC_DOCKERFILE[vendor-service]="Docker/Dockerfile"
+          SVC_CONTEXT[transaction-service]="src/Services/adminServices/transactionServices"; SVC_DOCKERFILE[transaction-service]="Docker/Dockerfile"
+          SVC_CONTEXT[api-gateway]="src/Services/adminServices/ApiGateway";                 SVC_DOCKERFILE[api-gateway]="Dockerfile"
+
+          # Ordered list matching the paths for change detection
+          SVC_NAMES=(finyear-api location-services lov-service scholarship-service stationery-service tds-service vendor-service transaction-service api-gateway)
+          SVC_PATHS=(
+            "src/Services/adminServices/finyearServices/"
+            "src/Services/adminServices/locationServices/"
+            "src/Services/adminServices/lovServices/"
+            "src/Services/adminServices/scholarshipServices/"
+            "src/Services/adminServices/stationeryServices/"
+            "src/Services/adminServices/tdsServices/"
+            "src/Services/adminServices/vendorServices/"
+            "src/Services/adminServices/transactionServices/"
+            "src/Services/adminServices/ApiGateway/"
+          )
+
+          make_entry() {
+            local n="$1"
+            echo "{\"name\":\"${n}\",\"context\":\"${SVC_CONTEXT[$n]}\",\"dockerfile\":\"${SVC_DOCKERFILE[$n]}\"}"
+          }
+
+          # If manual dispatch with a specific service, build only that
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            INPUT="${{ github.event.inputs.service }}"
+            if [[ "$INPUT" != "all" ]]; then
+              ENTRY=$(make_entry "$INPUT")
+              echo "matrix={\"include\":[${ENTRY}]}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          # For push events or "all", detect changes
+          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "src/Services/adminServices/")
+          BUILD_ALL=$([[ "${{ github.event.inputs.service }}" == "all" ]] && echo "true" || echo "false")
+
+          SERVICES=()
+          for i in "${!SVC_NAMES[@]}"; do
+            NAME="${SVC_NAMES[$i]}"
+            PATH_PREFIX="${SVC_PATHS[$i]}"
+            if [[ "$BUILD_ALL" == "true" ]] || echo "$CHANGED" | grep -q "^${PATH_PREFIX}"; then
+              SERVICES+=("$(make_entry "$NAME")")
+            fi
+          done
+
+          if [[ ${#SERVICES[@]} -eq 0 ]]; then
+            echo "matrix={\"include\":[]}" >> "$GITHUB_OUTPUT"
+          else
+            JSON=$(printf '%s,' "${SERVICES[@]}")
+            JSON="[${JSON%,}]"
+            echo "matrix={\"include\":${JSON}}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Print matrix
+        run: echo '${{ steps.set-matrix.outputs.matrix }}'
+
+  # ── Build & Push ─────────────────────────────────────────────────────────
+  build-and-push:
+    name: Build ${{ matrix.name }}
+    needs: changes
+    if: ${{ fromJson(needs.changes.outputs.matrix).include[0] != null }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
