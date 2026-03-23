@@ -142,8 +142,12 @@ try
         .AddQueryType<UserQueryType>()
         .AddMutationType<AuthMutationType>()
         .AddSubscriptionType<AuthSubscriptionType>()
-        .AddAuthorizationCore()
-        .AddInMemorySubscriptions();
+        .AddAuthorization()
+        .AddInMemorySubscriptions()
+        .ModifyRequestOptions(o =>
+        {
+            o.IncludeExceptionDetails = builder.Environment.IsDevelopment();
+        });
 
     // ── Health checks ─────────────────────────────────────────────────────────
     builder.Services.AddHealthChecks();
@@ -214,7 +218,7 @@ try
     // ── Health check endpoint ─────────────────────────────────────────────────
     app.MapHealthChecks("/health");
 
-    Log.Information("AuthProvider API ready → http://localhost:7136 | Swagger → http://localhost:7136/swagger | GraphQL → http://localhost:7136/graphql");
+    Log.Information("AuthProvider API ready → http://localhost:5200 | Swagger → http://localhost:5200/swagger | GraphQL → http://localhost:5200/graphql");
 
     await app.RunAsync();
 }

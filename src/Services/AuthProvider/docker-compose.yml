@@ -30,17 +30,17 @@ services:
     container_name: auth-provider
     environment:
       ASPNETCORE_ENVIRONMENT: 'Production'
-      ASPNETCORE_URLS: 'http://+:7136'
+      ASPNETCORE_URLS: 'http://+:5200'
       ConnectionStrings__AuthProviderDB: 'Data Source=mssql-server,1433;Initial Catalog=AuthProviderDB;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
     ports:
-      - "7136:7136"
+      - "5200:5200"
     depends_on:
       mssql-server:
         condition: service_healthy
     networks:
       - auth-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7136/api/v1/minimal/auth/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5200/api/v1/minimal/auth/health"]
       interval: 30s
       timeout: 10s
       start_period: 15s

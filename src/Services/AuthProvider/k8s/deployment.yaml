@@ -23,7 +23,7 @@ spec:
         version: v1
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "7136"
+        prometheus.io/port: "5200"
     spec:
       serviceAccountName: auth-provider
       securityContext:
@@ -35,7 +35,7 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
-          containerPort: 7136
+          containerPort: 5200
           protocol: TCP
         
         # Environment variables from ConfigMap
