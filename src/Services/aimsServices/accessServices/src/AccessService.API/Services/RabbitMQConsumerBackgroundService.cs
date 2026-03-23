@@ -53,13 +53,17 @@ namespace AccessService.API.Services
         {
             try
             {
-                // Create consumer instances using the service provider
+                // Create a scope so scoped services (consumers) can be resolved correctly
+                using var scope = _serviceProvider.CreateScope();
+                var sp = scope.ServiceProvider;
+
+                // Create consumer instances using the scoped service provider
                 var consumers = new RabbitMQConsumer[]
                 {
-                    (RabbitMQConsumer)_serviceProvider.GetService(typeof(UserMapCreatedEventConsumer)),
-                    (RabbitMQConsumer)_serviceProvider.GetService(typeof(UserMapActivatedEventConsumer)),
-                    (RabbitMQConsumer)_serviceProvider.GetService(typeof(UserRoleAssignedEventConsumer)),
-                    (RabbitMQConsumer)_serviceProvider.GetService(typeof(UserRoleRevokedEventConsumer))
+                    (RabbitMQConsumer)sp.GetService(typeof(UserMapCreatedEventConsumer)),
+                    (RabbitMQConsumer)sp.GetService(typeof(UserMapActivatedEventConsumer)),
+                    (RabbitMQConsumer)sp.GetService(typeof(UserRoleAssignedEventConsumer)),
+                    (RabbitMQConsumer)sp.GetService(typeof(UserRoleRevokedEventConsumer))
                 };
 
                 // Start all non-null consumers

@@ -1,9 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using ReferenceService.Infrastructure.Persistence;
 using ReferenceService.Infrastructure.Repositories;
-// using ReferenceService.Infrastructure.RabbitMQ;
-// using ReferenceService.Infrastructure.DomainEventPublisher;
+using ReferenceService.Infrastructure.RabbitMQ;
 using ReferenceService.Domain.Interfaces;
 
 namespace ReferenceService.Infrastructure;
@@ -15,7 +15,8 @@ public static class InfrastructureServiceCollectionExtensions
 {
     public static IServiceCollection AddInfrastructureServices(
         this IServiceCollection services,
-        string connectionString)
+        string connectionString,
+        IConfiguration configuration)
     {
         // Register DbContext
         services.AddDbContext<ReferenceDbContext>((provider, options) =>
@@ -38,19 +39,14 @@ public static class InfrastructureServiceCollectionExtensions
         
         // Register Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        
-        // Register RabbitMQ
-        // NOTE: RabbitMQ configuration is currently disabled due to API compatibility issues with RabbitMQ.Client 7.1.0
-        // if (rabbitMqConfig != null)
-        // {
-        //     services.AddSingleton(rabbitMqConfig);
-        //     services.AddSingleton<RabbitMQConnectionFactory>();
-        //     services.AddScoped<IDomainEventPublisher, RabbitMQDomainEventPublisher>(sp =>
-        //         new RabbitMQDomainEventPublisher(
-        //             sp.GetRequiredService<RabbitMQConnectionFactory>().GetConnection()
-        //         )
-        //     );
-        // }
+
+        // Register RabbitMQ (async API — RabbitMQ.Client 7.x compatible)
+        var rabbitCfg = configuration.GetSection("RabbitMQ").Get<RabbitMQConfiguration>()
+                        ?? new RabbitMQConfiguration();
+        services.AddSingleton(rabbitCfg);
+        services.AddSingleton<RabbitMQConnectionFactory>();
+        services.AddSingleton<RabbitMQPublisher>();
+        services.AddHostedService<RabbitMQConsumerHostedService>();
         
         return services;
     }

@@ -50,6 +50,7 @@ public static class DependencyInjection
         services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
         services.AddSingleton<AttendanceFlagConsumer>();
         services.AddSingleton<ApproverAssignmentConsumer>();
+        services.AddHostedService<RabbitMqConsumerHostedService>();
 
         // Blob Storage
         services.AddSingleton<BlobStorageService>();

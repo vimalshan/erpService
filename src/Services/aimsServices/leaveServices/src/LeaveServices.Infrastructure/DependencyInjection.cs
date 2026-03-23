@@ -38,6 +38,7 @@ public static class DependencyInjection
 
         // RabbitMQ configuration
         services.Configure<RabbitMqSettings>(configuration.GetSection("RabbitMQ"));
+        services.AddHostedService<LeaveRabbitMqHostedService>();
 
         return services;
     }
