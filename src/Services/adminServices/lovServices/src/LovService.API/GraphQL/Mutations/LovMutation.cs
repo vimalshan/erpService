@@ -6,7 +6,6 @@ using MediatR;
 
 namespace LovService.API.GraphQL.Mutations;
 
-[MutationType]
 public class LovMutation
 {
     // LovType mutations

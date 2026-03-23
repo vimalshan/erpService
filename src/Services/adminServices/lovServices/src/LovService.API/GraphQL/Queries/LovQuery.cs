@@ -6,7 +6,6 @@ using MediatR;
 
 namespace LovService.API.GraphQL.Queries;
 
-[QueryType]
 public class LovQuery
 {
     public async Task<IEnumerable<LovTypeDto>> GetLovTypesAsync(

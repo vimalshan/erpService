@@ -2,7 +2,6 @@ using LovService.Application.DTOs;
 
 namespace LovService.API.GraphQL.Subscriptions;
 
-[SubscriptionType]
 public class LovSubscription
 {
     [Subscribe]

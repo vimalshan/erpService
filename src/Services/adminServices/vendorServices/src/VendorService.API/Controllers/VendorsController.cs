@@ -24,7 +24,7 @@ public sealed class VendorsController : ControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<VendorDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
-        [FromQuery] char? status,
+        [FromQuery] string? status,
         CancellationToken cancellationToken)
     {
         var vendors = await _mediator.Send(new GetAllVendorsQuery(status), cancellationToken);

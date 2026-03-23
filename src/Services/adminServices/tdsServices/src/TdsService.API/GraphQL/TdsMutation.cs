@@ -7,7 +7,6 @@ using MediatR;
 
 namespace TdsService.API.GraphQL;
 
-[MutationType]
 public sealed class TdsMutation
 {
     public async Task<long> CreateVendor(

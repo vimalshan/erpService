@@ -37,7 +37,19 @@ public sealed class DapperLocationAppMapReadRepository : ILocationAppMapReadRepo
     public async Task<IEnumerable<LocationAppMapReadModel>> GetActiveMappingsAsync(CancellationToken ct = default)
     {
         const string sql = """
-            EXEC dbo.sp_GetActiveLocationAppMaps
+            SELECT LOCATION_ID           AS LocationId,
+                   APP_NAME              AS AppName,
+                   SITE_CATEGORY_CODE    AS SiteCategoryCode,
+                   SELF_ACCESS           AS SelfAccess,
+                   DEEMED_APPROVAL       AS DeemedApproval,
+                   IS_ACTIVE            AS IsActive,
+                   CREATED_DATE         AS CreatedDate,
+                   CREATED_BY           AS CreatedBy,
+                   MODIFIED_DATE        AS ModifiedDate,
+                   MODIFIED_BY          AS ModifiedBy
+            FROM   dbo.LOCATION_APP_MAP
+            WHERE  IS_ACTIVE = 1
+            ORDER BY LOCATION_ID, APP_NAME
             """;
         await using var conn = CreateConnection();
         return await conn.QueryAsync<LocationAppMapReadModel>(sql);
@@ -46,7 +58,19 @@ public sealed class DapperLocationAppMapReadRepository : ILocationAppMapReadRepo
     public async Task<IEnumerable<LocationAppMapReadModel>> GetByLocationIdAsync(decimal locationId, CancellationToken ct = default)
     {
         const string sql = """
-            EXEC dbo.sp_GetLocationAppMapsByLocation @LocationId
+            SELECT LOCATION_ID           AS LocationId,
+                   APP_NAME              AS AppName,
+                   SITE_CATEGORY_CODE    AS SiteCategoryCode,
+                   SELF_ACCESS           AS SelfAccess,
+                   DEEMED_APPROVAL       AS DeemedApproval,
+                   IS_ACTIVE            AS IsActive,
+                   CREATED_DATE         AS CreatedDate,
+                   CREATED_BY           AS CreatedBy,
+                   MODIFIED_DATE        AS ModifiedDate,
+                   MODIFIED_BY          AS ModifiedBy
+            FROM   dbo.LOCATION_APP_MAP
+            WHERE  LOCATION_ID = @LocationId
+            ORDER BY APP_NAME
             """;
         await using var conn = CreateConnection();
         return await conn.QueryAsync<LocationAppMapReadModel>(sql, new { LocationId = locationId });
@@ -55,7 +79,18 @@ public sealed class DapperLocationAppMapReadRepository : ILocationAppMapReadRepo
     public async Task<LocationAppMapReadModel?> GetMappingAsync(decimal locationId, string appName, CancellationToken ct = default)
     {
         const string sql = """
-            EXEC dbo.sp_GetLocationAppMap @LocationId, @AppName
+            SELECT LOCATION_ID           AS LocationId,
+                   APP_NAME              AS AppName,
+                   SITE_CATEGORY_CODE    AS SiteCategoryCode,
+                   SELF_ACCESS           AS SelfAccess,
+                   DEEMED_APPROVAL       AS DeemedApproval,
+                   IS_ACTIVE            AS IsActive,
+                   CREATED_DATE         AS CreatedDate,
+                   CREATED_BY           AS CreatedBy,
+                   MODIFIED_DATE        AS ModifiedDate,
+                   MODIFIED_BY          AS ModifiedBy
+            FROM   dbo.LOCATION_APP_MAP
+            WHERE  LOCATION_ID = @LocationId AND APP_NAME = @AppName
             """;
         await using var conn = CreateConnection();
         return await conn.QuerySingleOrDefaultAsync<LocationAppMapReadModel>(sql,

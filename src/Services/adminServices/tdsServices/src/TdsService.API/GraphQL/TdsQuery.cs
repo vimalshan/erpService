@@ -7,7 +7,6 @@ using MediatR;
 
 namespace TdsService.API.GraphQL;
 
-[QueryType]
 public sealed class TdsQuery
 {
     public async Task<PagedResult<TdsVendorDto>> GetVendors(

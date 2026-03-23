@@ -130,6 +130,7 @@ try
         .AddFiltering()
         .AddSorting()
         .AddProjections()
+        .AddMutationConventions()
         .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment());
 
     // ── Health Checks ─────────────────────────────────────────────────

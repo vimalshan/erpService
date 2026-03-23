@@ -18,7 +18,7 @@ public sealed class VendorMappingProfile : Profile
                 src.Address.Value,
                 src.UpdatedBy,
                 src.UpdatedOn,
-                src.LiveStatus.Value));
+                src.LiveStatus.Value.ToString()));
 
         CreateMap<TdsVendor, TdsVendorDto>()
             .ConstructUsing(src => new TdsVendorDto(

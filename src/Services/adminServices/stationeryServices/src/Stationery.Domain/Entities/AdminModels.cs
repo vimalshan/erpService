@@ -44,5 +44,5 @@ public class StationeryReorderAlert
     public DateTime AlertDate { get; set; } = DateTime.UtcNow;
     public long CurrentStock { get; set; }
     public long ReorderLevel { get; set; }
-    public char Resolved { get; set; } = 'N';
+    public string Resolved { get; set; } = "N";
 }

@@ -12,7 +12,7 @@ public class StationaryMaster : AuditableEntity
     public long? PricePerUnit { get; set; }
     public long? ReorderLevel { get; set; }
     public long VmId { get; set; }
-    public char Closed { get; set; }
+    public string Closed { get; set; } = "N";
     public long OpeningStock { get; set; }
 }
 

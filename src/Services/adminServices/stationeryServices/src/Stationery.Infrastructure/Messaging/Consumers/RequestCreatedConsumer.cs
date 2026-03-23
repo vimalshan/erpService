@@ -17,11 +17,11 @@ public class RequestCreatedConsumer : IConsumer<RequestCreatedEvent>
     {
         var message = context.Message;
         _logger.LogInformation("Asynchronously processing new request: {RequestId} from User: {UserId}", 
-            message.Request.Id, message.Request.RequestedBy);
+            message.RequestId, message.RequestedBy);
         
         // Simulating some background work like sending an email or notifying a warehouse
         await Task.Delay(100); 
         
-        _logger.LogInformation("Background processing completed for Request: {RequestId}", message.Request.Id);
+        _logger.LogInformation("Background processing completed for Request: {RequestId}", message.RequestId);
     }
 }

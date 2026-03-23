@@ -12,7 +12,7 @@ public sealed class VendorMutation
         string address,
         long updatedBy,
         string? email,
-        char liveStatus,
+        string liveStatus,
         [Service] IMediator mediator,
         CancellationToken cancellationToken = default)
     {
@@ -28,7 +28,7 @@ public sealed class VendorMutation
         string name,
         string address,
         long updatedBy,
-        char liveStatus,
+        string liveStatus,
         string? email,
         [Service] IMediator mediator,
         CancellationToken cancellationToken = default)

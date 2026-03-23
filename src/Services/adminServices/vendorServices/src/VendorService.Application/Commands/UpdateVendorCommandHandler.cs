@@ -24,7 +24,7 @@ public sealed class UpdateVendorCommandHandler : IRequestHandler<UpdateVendorCom
             email: request.Email,
             address: request.Address,
             updatedBy: request.UpdatedBy,
-            liveStatus: request.LiveStatus);
+            liveStatus: request.LiveStatus[0]);
 
         _repository.Update(vendor);
         await _repository.SaveChangesAsync(cancellationToken);

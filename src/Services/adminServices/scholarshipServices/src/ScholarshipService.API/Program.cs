@@ -176,14 +176,34 @@ app.MapHealthChecks("/health");
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ScholarshipDbContext>();
-    try
+    var pendingMigrations = (await db.Database.GetPendingMigrationsAsync()).ToList();
+    if (pendingMigrations.Count > 0)
     {
-        await db.Database.MigrateAsync();
-    }
-    catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 2714)
-    {
-        // Table already exists — database was pre-created from SQL scripts
-        // Mark migrations as applied without re-creating objects
+        try
+        {
+            await db.Database.MigrateAsync();
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 2714)
+        {
+            // Tables already exist — database was pre-created from SQL scripts.
+            // Mark each pending migration as applied so they won't run again.
+            var conn = db.Database.GetDbConnection();
+            await conn.OpenAsync();
+            foreach (var migrationId in pendingMigrations)
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText =
+                    "IF NOT EXISTS (SELECT 1 FROM [__EFMigrationsHistory] WHERE [MigrationId] = @id) " +
+                    "INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion]) VALUES (@id, @ver)";
+                var pId = cmd.CreateParameter(); pId.ParameterName = "@id"; pId.Value = migrationId;
+                var pVer = cmd.CreateParameter(); pVer.ParameterName = "@ver"; pVer.Value = "10.0.3";
+                cmd.Parameters.Add(pId);
+                cmd.Parameters.Add(pVer);
+                await cmd.ExecuteNonQueryAsync();
+            }
+            await conn.CloseAsync();
+            Log.Warning("Database tables already exist. Marked {Count} migration(s) as applied.", pendingMigrations.Count);
+        }
     }
 }
 

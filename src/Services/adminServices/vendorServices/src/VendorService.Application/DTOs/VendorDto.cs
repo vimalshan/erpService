@@ -9,4 +9,4 @@ public sealed record VendorDto(
     string Address,
     long UpdatedBy,
     DateTime UpdatedOn,
-    char LiveStatus);
+    string LiveStatus);

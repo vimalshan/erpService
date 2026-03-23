@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using VendorService.Domain.Entities;
 using VendorService.Domain.Interfaces;
+using VendorService.Domain.ValueObjects;
 using VendorService.Infrastructure.Data;
 
 namespace VendorService.Infrastructure.Repositories;
@@ -26,10 +27,13 @@ public sealed class VendorRepository : IVendorRepository
     public async Task<IEnumerable<VendorMaster>> GetAllAsync(CancellationToken ct = default) =>
         await _context.VendorMasters.ToListAsync(ct);
 
-    public async Task<IEnumerable<VendorMaster>> GetByStatusAsync(char status, CancellationToken ct = default) =>
-        await _context.VendorMasters
-            .Where(v => EF.Property<string>(v, "VM_LIVESTATUS") == status.ToString())
+    public async Task<IEnumerable<VendorMaster>> GetByStatusAsync(char status, CancellationToken ct = default)
+    {
+        var ls = new LiveStatus(status);
+        return await _context.VendorMasters
+            .Where(v => v.LiveStatus == ls)
             .ToListAsync(ct);
+    }
 
     public async Task<IEnumerable<VendorMaster>> GetByLocationAsync(long locationId, CancellationToken ct = default) =>
         await _context.VendorMasters

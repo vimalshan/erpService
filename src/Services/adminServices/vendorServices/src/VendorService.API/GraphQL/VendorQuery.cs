@@ -9,7 +9,7 @@ public sealed class VendorQuery
 {
     public async Task<IEnumerable<VendorDto>> GetVendors(
         [Service] IMediator mediator,
-        char? status = null,
+        string? status = null,
         CancellationToken cancellationToken = default)
     {
         return await mediator.Send(new GetAllVendorsQuery(status), cancellationToken);

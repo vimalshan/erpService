@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using Stationery.Domain.Entities;
 using Stationery.Domain.Interfaces;
+using Stationery.Infrastructure.Persistence;
 using HotChocolate.Types;
 using HotChocolate.Data;
 
@@ -11,24 +13,29 @@ public class Query
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public async Task<IEnumerable<StationaryMaster>> GetStationaryItems([Service] IUnitOfWork unitOfWork)
-        => await unitOfWork.Repository<StationaryMaster>().GetAllAsync();
+    public IQueryable<StationaryMaster> GetStationaryItems([Service] StationeryDbContext db)
+        => db.Set<StationaryMaster>();
 
     public async Task<StationaryMaster?> GetStationaryItem(long id, [Service] IUnitOfWork unitOfWork)
         => await unitOfWork.Repository<StationaryMaster>().GetByIdAsync(id);
 
-    public async Task<RequestMain?> GetRequest(long id, [Service] IUnitOfWork unitOfWork)
-        => await unitOfWork.Repository<RequestMain>().GetByIdAsync(id);
+    [UseFirstOrDefault]
+    [UseProjection]
+    public IQueryable<RequestMain> GetRequest(long id, [Service] StationeryDbContext db)
+        => db.Set<RequestMain>().Where(r => r.Id == id);
 
     [UsePaging]
+    [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public async Task<IEnumerable<RequestMain>> GetRequests([Service] IUnitOfWork unitOfWork)
-        => await unitOfWork.Repository<RequestMain>().GetAllAsync();
+    public IQueryable<RequestMain> GetRequests([Service] StationeryDbContext db)
+        => db.Set<RequestMain>();
 
-    public async Task<OrderMain?> GetOrder(long id, [Service] IUnitOfWork unitOfWork)
-        => await unitOfWork.Repository<OrderMain>().GetByIdAsync(id);
+    [UseFirstOrDefault]
+    [UseProjection]
+    public IQueryable<OrderMain> GetOrder(long id, [Service] StationeryDbContext db)
+        => db.Set<OrderMain>().Where(o => o.Id == id);
 
     public async Task<IEnumerable<StationeryReorderAlert>> GetReorderAlerts([Service] IUnitOfWork unitOfWork)
-        => await unitOfWork.Repository<StationeryReorderAlert>().FindAsync(a => a.Resolved == 'N');
+        => await unitOfWork.Repository<StationeryReorderAlert>().FindAsync(a => a.Resolved == "N");
 }

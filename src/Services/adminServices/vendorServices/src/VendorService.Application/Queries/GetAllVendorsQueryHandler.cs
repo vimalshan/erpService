@@ -18,8 +18,8 @@ public sealed class GetAllVendorsQueryHandler : IRequestHandler<GetAllVendorsQue
 
     public async Task<IEnumerable<VendorDto>> Handle(GetAllVendorsQuery request, CancellationToken cancellationToken)
     {
-        var vendors = request.Status.HasValue
-            ? await _repository.GetByStatusAsync(request.Status.Value, cancellationToken)
+        var vendors = !string.IsNullOrEmpty(request.Status)
+            ? await _repository.GetByStatusAsync(request.Status[0], cancellationToken)
             : await _repository.GetAllAsync(cancellationToken);
 
         return _mapper.Map<IEnumerable<VendorDto>>(vendors);

@@ -1,8 +1,9 @@
-using MediatR;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VendorService.Application.Commands;
-using VendorService.Application.Queries;
+using Microsoft.IdentityModel.Tokens;
 
 namespace VendorService.API.Controllers;
 
@@ -12,15 +13,33 @@ namespace VendorService.API.Controllers;
 [Produces("application/json")]
 public sealed class AuthController : ControllerBase
 {
-    // Placeholder: In production, integrate with Identity or external IdP
+    private readonly IConfiguration _config;
+
+    public AuthController(IConfiguration config) => _config = config;
+
     [AllowAnonymous]
     [HttpPost("token")]
     public IActionResult Token([FromBody] LoginRequest request)
     {
-        // For demo only — replace with real auth logic
         if (request.Username == "admin" && request.Password == "admin")
         {
-            return Ok(new { token = "replace-with-real-jwt" });
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(_config["JwtSettings:SecretKey"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _config["JwtSettings:Issuer"],
+                audience: _config["JwtSettings:Audience"],
+                claims: new[]
+                {
+                    new Claim(ClaimTypes.Name, request.Username),
+                    new Claim(ClaimTypes.Role, "Admin")
+                },
+                expires: DateTime.UtcNow.AddMinutes(
+                    int.Parse(_config["JwtSettings:ExpiryMinutes"] ?? "60")),
+                signingCredentials: creds);
+
+            return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
         }
         return Unauthorized();
     }

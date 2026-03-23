@@ -18,14 +18,14 @@ public static class DbInitializer
 
         var items = new List<StationaryMaster>
         {
-            new() { CatId = 1, LocId = 1, Description = "A4 Paper (500 sheets)", UomId = 1, Make = "Generic", PricePerUnit = 250, ReorderLevel = 100, VmId = 1, Closed = 'N', OpeningStock = 1000, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
-            new() { CatId = 1, LocId = 1, Description = "Blue Ballpoint Pen", UomId = 2, Make = "Pilot", PricePerUnit = 15, ReorderLevel = 50, VmId = 1, Closed = 'N', OpeningStock = 500, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
-            new() { CatId = 1, LocId = 1, Description = "Black Ballpoint Pen", UomId = 2, Make = "Pilot", PricePerUnit = 15, ReorderLevel = 50, VmId = 1, Closed = 'N', OpeningStock = 45, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
-            new() { CatId = 2, LocId = 1, Description = "Stapler", UomId = 3, Make = "Kangaro", PricePerUnit = 180, ReorderLevel = 10, VmId = 2, Closed = 'N', OpeningStock = 30, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
-            new() { CatId = 2, LocId = 1, Description = "Stapler Pins (100 pcs)", UomId = 1, Make = "Kangaro", PricePerUnit = 20, ReorderLevel = 20, VmId = 2, Closed = 'N', OpeningStock = 8, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
-            new() { CatId = 3, LocId = 1, Description = "Sticky Notes (100 sheets)", UomId = 1, Make = "3M", PricePerUnit = 60, ReorderLevel = 15, VmId = 3, Closed = 'N', OpeningStock = 75, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
-            new() { CatId = 3, LocId = 1, Description = "Highlighter Pen", UomId = 2, Make = "Camlin", PricePerUnit = 30, ReorderLevel = 20, VmId = 3, Closed = 'N', OpeningStock = 150, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
-            new() { CatId = 4, LocId = 1, Description = "Printer Ink Cartridge (Black)", UomId = 3, Make = "HP", PricePerUnit = 1200, ReorderLevel = 5, VmId = 4, Closed = 'N', OpeningStock = 12, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
+            new() { CatId = 1, LocId = 1, Description = "A4 Paper (500 sheets)", UomId = 1, Make = "Generic", PricePerUnit = 250, ReorderLevel = 100, VmId = 1, Closed = "N", OpeningStock = 1000, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
+            new() { CatId = 1, LocId = 1, Description = "Blue Ballpoint Pen", UomId = 2, Make = "Pilot", PricePerUnit = 15, ReorderLevel = 50, VmId = 1, Closed = "N", OpeningStock = 500, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
+            new() { CatId = 1, LocId = 1, Description = "Black Ballpoint Pen", UomId = 2, Make = "Pilot", PricePerUnit = 15, ReorderLevel = 50, VmId = 1, Closed = "N", OpeningStock = 45, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
+            new() { CatId = 2, LocId = 1, Description = "Stapler", UomId = 3, Make = "Kangaro", PricePerUnit = 180, ReorderLevel = 10, VmId = 2, Closed = "N", OpeningStock = 30, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
+            new() { CatId = 2, LocId = 1, Description = "Stapler Pins (100 pcs)", UomId = 1, Make = "Kangaro", PricePerUnit = 20, ReorderLevel = 20, VmId = 2, Closed = "N", OpeningStock = 8, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
+            new() { CatId = 3, LocId = 1, Description = "Sticky Notes (100 sheets)", UomId = 1, Make = "3M", PricePerUnit = 60, ReorderLevel = 15, VmId = 3, Closed = "N", OpeningStock = 75, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
+            new() { CatId = 3, LocId = 1, Description = "Highlighter Pen", UomId = 2, Make = "Camlin", PricePerUnit = 30, ReorderLevel = 20, VmId = 3, Closed = "N", OpeningStock = 150, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
+            new() { CatId = 4, LocId = 1, Description = "Printer Ink Cartridge (Black)", UomId = 3, Make = "HP", PricePerUnit = 1200, ReorderLevel = 5, VmId = 4, Closed = "N", OpeningStock = 12, UpdatedBy = 1, UpdatedOn = DateTime.UtcNow },
         };
 
         context.StationaryMasters.AddRange(items);

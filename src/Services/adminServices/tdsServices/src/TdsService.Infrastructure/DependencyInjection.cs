@@ -2,6 +2,7 @@ using Azure.Storage.Blobs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.CircuitBreaker;
 using TdsService.Application.Common.Interfaces;
@@ -61,34 +62,60 @@ public static class DependencyInjection
         var rabbitUser = configuration["RabbitMQ:Username"] ?? "guest";
         var rabbitPass = configuration["RabbitMQ:Password"] ?? "guest";
 
-        services.AddScoped<IMessagePublisher>(_ =>
+        // Try to connect to RabbitMQ; fall back to no-op publisher if unavailable
+        bool rabbitAvailable = false;
+        try
         {
-            var pipeline = new ResiliencePipelineBuilder()
-                .AddCircuitBreaker(new CircuitBreakerStrategyOptions
-                {
-                    FailureRatio = 0.5,
-                    SamplingDuration = TimeSpan.FromSeconds(30),
-                    MinimumThroughput = 5,
-                    BreakDuration = TimeSpan.FromSeconds(30)
-                })
-                .AddRetry(new Polly.Retry.RetryStrategyOptions
-                {
-                    MaxRetryAttempts = 3,
-                    Delay = TimeSpan.FromSeconds(2)
-                })
-                .Build();
+            var testFactory = new RabbitMQ.Client.ConnectionFactory
+            {
+                HostName = rabbitHost,
+                UserName = rabbitUser,
+                Password = rabbitPass
+            };
+            using var testConn = testFactory.CreateConnectionAsync().GetAwaiter().GetResult();
+            rabbitAvailable = true;
+        }
+        catch
+        {
+            // RabbitMQ not reachable
+        }
 
-            return new PollyWrappedMessagePublisher(
-                RabbitMqMessagePublisher.CreateAsync(rabbitHost, rabbitUser, rabbitPass)
-                    .GetAwaiter().GetResult(),
-                pipeline);
-        });
+        if (rabbitAvailable)
+        {
+            services.AddScoped<IMessagePublisher>(_ =>
+            {
+                var pipeline = new ResiliencePipelineBuilder()
+                    .AddCircuitBreaker(new CircuitBreakerStrategyOptions
+                    {
+                        FailureRatio = 0.5,
+                        SamplingDuration = TimeSpan.FromSeconds(30),
+                        MinimumThroughput = 5,
+                        BreakDuration = TimeSpan.FromSeconds(30)
+                    })
+                    .AddRetry(new Polly.Retry.RetryStrategyOptions
+                    {
+                        MaxRetryAttempts = 3,
+                        Delay = TimeSpan.FromSeconds(2)
+                    })
+                    .Build();
 
-        // ── RabbitMQ consumer (background service) ───────────────────
-        services.AddHostedService(sp => new TdsEmailConfirmationConsumer(
-            sp.GetRequiredService<IServiceScopeFactory>(),
-            sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<TdsEmailConfirmationConsumer>>(),
-            rabbitHost, rabbitUser, rabbitPass));
+                return new PollyWrappedMessagePublisher(
+                    RabbitMqMessagePublisher.CreateAsync(rabbitHost, rabbitUser, rabbitPass)
+                        .GetAwaiter().GetResult(),
+                    pipeline);
+            });
+
+            // ── RabbitMQ consumer (background service) ───────────────────
+            services.AddHostedService(sp => new TdsEmailConfirmationConsumer(
+                sp.GetRequiredService<IServiceScopeFactory>(),
+                sp.GetRequiredService<ILogger<TdsEmailConfirmationConsumer>>(),
+                rabbitHost, rabbitUser, rabbitPass));
+        }
+        else
+        {
+            services.AddScoped<IMessagePublisher>(sp =>
+                new NullMessagePublisher(sp.GetRequiredService<ILogger<NullMessagePublisher>>()));
+        }
 
         return services;
     }

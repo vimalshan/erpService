@@ -14,6 +14,6 @@ public sealed class UpdateVendorCommandValidator : AbstractValidator<UpdateVendo
         RuleFor(x => x.Email).MaximumLength(50).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email));
         RuleFor(x => x.Address).NotEmpty().MaximumLength(200);
         RuleFor(x => x.UpdatedBy).GreaterThan(0).WithMessage("UpdatedBy must be a valid user ID.");
-        RuleFor(x => x.LiveStatus).Must(s => s == 'A' || s == 'I').WithMessage("LiveStatus must be 'A' or 'I'.");
+        RuleFor(x => x.LiveStatus).Must(s => s == "A" || s == "I").WithMessage("LiveStatus must be 'A' or 'I'.");
     }
 }

@@ -5,13 +5,20 @@ namespace Stationery.Domain.Events;
 
 public class RequestCreatedEvent : DomainEvent
 {
-    public RequestMain Request { get; init; } = null!;
+    public long RequestId { get; init; }
+    public long RequestedBy { get; init; }
+    public long? LocationId { get; init; }
+    public string? UnitCode { get; init; }
+    public int DetailCount { get; init; }
 
-    // For MassTransit
     private RequestCreatedEvent() { }
 
     public RequestCreatedEvent(RequestMain request)
     {
-        Request = request;
+        RequestId = request.Id;
+        RequestedBy = request.RequestedBy;
+        LocationId = request.LocationId;
+        UnitCode = request.UnitCode;
+        DetailCount = request.Details.Count;
     }
 }

@@ -9,4 +9,4 @@ public sealed record CreateVendorCommand(
     string? Email,
     string Address,
     long UpdatedBy,
-    char LiveStatus = 'A') : IRequest<long>;
+    string LiveStatus = "A") : IRequest<long>;

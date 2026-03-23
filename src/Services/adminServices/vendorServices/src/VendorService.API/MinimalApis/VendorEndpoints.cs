@@ -14,7 +14,7 @@ public static class VendorEndpoints
             .RequireAuthorization()
             .WithTags("Vendors (Minimal API)");
 
-        group.MapGet("/", async (IMediator mediator, char? status, CancellationToken ct) =>
+        group.MapGet("/", async (IMediator mediator, string? status, CancellationToken ct) =>
         {
             var vendors = await mediator.Send(new GetAllVendorsQuery(status), ct);
             return Results.Ok(vendors);

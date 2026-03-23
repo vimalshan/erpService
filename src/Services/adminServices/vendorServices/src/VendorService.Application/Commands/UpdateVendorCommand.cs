@@ -10,4 +10,4 @@ public sealed record UpdateVendorCommand(
     string? Email,
     string Address,
     long UpdatedBy,
-    char LiveStatus) : IRequest<bool>;
+    string LiveStatus) : IRequest<bool>;

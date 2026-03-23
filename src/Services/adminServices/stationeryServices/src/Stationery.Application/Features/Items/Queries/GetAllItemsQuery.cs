@@ -25,10 +25,10 @@ public class GetAllItemsQueryHandler : IRequestHandler<GetAllItemsQuery, IEnumer
 
         if (request.LocationId.HasValue)
             items = await _unitOfWork.Repository<StationaryMaster>()
-                .FindAsync(i => i.LocId == request.LocationId.Value && i.Closed == 'N');
+                .FindAsync(i => i.LocId == request.LocationId.Value && i.Closed == "N");
         else
             items = await _unitOfWork.Repository<StationaryMaster>()
-                .FindAsync(i => i.Closed == 'N');
+                .FindAsync(i => i.Closed == "N");
 
         return _mapper.Map<IEnumerable<ItemDto>>(items);
     }

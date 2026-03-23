@@ -24,7 +24,7 @@ public sealed class CreateVendorCommandHandler : IRequestHandler<CreateVendorCom
             email: request.Email,
             address: request.Address,
             updatedBy: request.UpdatedBy,
-            liveStatus: request.LiveStatus,
+            liveStatus: request.LiveStatus[0],
             ct: cancellationToken);
 
         return vendorId;
