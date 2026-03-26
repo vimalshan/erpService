@@ -22,9 +22,6 @@ public class IncentiveApprovalConsumer : BackgroundService
     private IConnection? _connection;
     private IChannel? _channel;
 
-    private const string QueueName = "groupincentive.approval.requests";
-    private const string RoutingKey = "incentive.approve";
-
     public IncentiveApprovalConsumer(IServiceProvider serviceProvider,
         IOptions<RabbitMQ.RabbitMQSettings> settings,
         ILogger<IncentiveApprovalConsumer> logger)
@@ -70,8 +67,8 @@ public class IncentiveApprovalConsumer : BackgroundService
         _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
         await _channel.ExchangeDeclareAsync(_settings.ExchangeName, ExchangeType.Topic, durable: true, cancellationToken: stoppingToken);
-        await _channel.QueueDeclareAsync(QueueName, durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
-        await _channel.QueueBindAsync(QueueName, _settings.ExchangeName, RoutingKey, cancellationToken: stoppingToken);
+        await _channel.QueueDeclareAsync(_settings.ApprovalQueue, durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
+        await _channel.QueueBindAsync(_settings.ApprovalQueue, _settings.ExchangeName, _settings.ApprovalRoutingKey, cancellationToken: stoppingToken);
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
         consumer.ReceivedAsync += async (_, ea) =>
@@ -95,7 +92,7 @@ public class IncentiveApprovalConsumer : BackgroundService
             }
         };
 
-        await _channel.BasicConsumeAsync(QueueName, autoAck: false, consumer, stoppingToken);
+        await _channel.BasicConsumeAsync(_settings.ApprovalQueue, autoAck: false, consumer, stoppingToken);
         await Task.Delay(Timeout.Infinite, stoppingToken);
     } // end ConnectAndConsumeAsync
 

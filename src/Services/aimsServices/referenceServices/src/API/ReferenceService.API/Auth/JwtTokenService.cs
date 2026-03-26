@@ -10,7 +10,7 @@ namespace ReferenceService.API.Auth;
 /// </summary>
 public class JwtConfiguration
 {
-    public string SecretKey { get; set; } = "your-secret-key-must-be-at-least-32-characters-long";
+    public string Key { get; set; } = "your-secret-key-must-be-at-least-32-characters-long";
     public string Issuer { get; set; } = "reference-service";
     public string Audience { get; set; } = "reference-service-api";
     public int ExpirationMinutes { get; set; } = 60;
@@ -39,7 +39,7 @@ public class JwtTokenService : IJwtTokenService
     
     public string GenerateToken(string userId, string email, string[] roles)
     {
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.SecretKey));
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.Key));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         
         var claims = new List<Claim>
@@ -68,7 +68,7 @@ public class JwtTokenService : IJwtTokenService
     {
         try
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.SecretKey));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.Key));
             var handler = new JwtSecurityTokenHandler();
             
             var principal = handler.ValidateToken(token, new TokenValidationParameters

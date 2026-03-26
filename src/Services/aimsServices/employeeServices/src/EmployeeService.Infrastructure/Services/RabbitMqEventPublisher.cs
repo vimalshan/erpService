@@ -1,5 +1,6 @@
 using EmployeeService.Application.Interfaces;
 using EmployeeService.Infrastructure.Messaging;
+using Microsoft.Extensions.Configuration;
 
 namespace EmployeeService.Infrastructure.Services;
 
@@ -7,9 +8,14 @@ namespace EmployeeService.Infrastructure.Services;
 public sealed class RabbitMqEventPublisher : IEventPublisher
 {
     private readonly RabbitMqPublisher _publisher;
+    private readonly string _exchangeName;
 
-    public RabbitMqEventPublisher(RabbitMqPublisher publisher) => _publisher = publisher;
+    public RabbitMqEventPublisher(RabbitMqPublisher publisher, IConfiguration config)
+    {
+        _publisher = publisher;
+        _exchangeName = config["RabbitMQ:ExchangeName"] ?? "employee.events";
+    }
 
     public Task PublishAsync<T>(T message, string topic, CancellationToken ct = default) =>
-        _publisher.PublishAsync(message, "employee.events", topic, ct);
+        _publisher.PublishAsync(message, _exchangeName, topic, ct);
 }

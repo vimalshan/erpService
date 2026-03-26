@@ -9,8 +9,6 @@ public static class DbInitializer
 {
     public static async Task SeedAsync(VisitorDbContext context, ILogger logger)
     {
-        await context.Database.MigrateAsync();
-
         if (await context.Visitors.AnyAsync())
         {
             logger.LogInformation("Database already seeded.");

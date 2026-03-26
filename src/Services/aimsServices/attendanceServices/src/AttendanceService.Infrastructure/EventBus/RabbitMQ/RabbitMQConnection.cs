@@ -54,4 +54,7 @@ public class RabbitMQSettings
     public string Username { get; init; } = "guest";
     public string Password { get; init; } = "guest";
     public string VirtualHost { get; init; } = "/";
+    public string ExchangeName { get; init; } = "attendance.exchange";
+    public string QueueName { get; init; } = "attendance.swipe.processed";
+    public string RoutingKey { get; init; } = "attendance.swipe.*";
 }

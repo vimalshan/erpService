@@ -7,11 +7,13 @@ namespace ReferenceService.Infrastructure.RabbitMQ;
 /// </summary>
 public class RabbitMQConfiguration
 {
-    public string HostName    { get; set; } = "localhost";
+    public string Host        { get; set; } = "localhost";
     public int    Port        { get; set; } = 5672;
-    public string UserName    { get; set; } = "guest";
+    public string Username    { get; set; } = "guest";
     public string Password    { get; set; } = "guest";
     public string VirtualHost { get; set; } = "/";
+    public string ExchangeName { get; set; } = "reference.events";
+    public string LovTypeQueue { get; set; } = "reference.lovtype.updates";
 }
 
 /// <summary>
@@ -37,9 +39,9 @@ public sealed class RabbitMQConnectionFactory : IAsyncDisposable
             {
                 var factory = new ConnectionFactory
                 {
-                    HostName               = _config.HostName,
+                    HostName               = _config.Host,
                     Port                   = _config.Port,
-                    UserName               = _config.UserName,
+                    UserName               = _config.Username,
                     Password               = _config.Password,
                     VirtualHost            = _config.VirtualHost,
                     AutomaticRecoveryEnabled = true

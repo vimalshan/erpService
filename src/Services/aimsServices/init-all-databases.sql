@@ -14,6 +14,7 @@
 --   7. Leave Service           (LEAVEDB)
 --   8. Reference Service       (REFERENCEDB)
 --   9. Visitor Service         (VISITORDB)
+--  10. AIMS Transaction Service (AIMSDB)
 --
 -- Note: Table creation is handled by EF Core migrations at startup.
 --       This script only ensures the databases exist.
@@ -156,6 +157,21 @@ ELSE
 GO
 
 ALTER DATABASE [VISITORDB] SET READ_COMMITTED_SNAPSHOT ON;
+GO
+
+-- ============================================================
+-- 10. AIMS Transaction Service  (AIMSDB)
+-- ============================================================
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'AIMSDB')
+BEGIN
+    CREATE DATABASE [AIMSDB];
+    PRINT '+ AIMSDB created';
+END
+ELSE
+    PRINT '= AIMSDB already exists';
+GO
+
+ALTER DATABASE [AIMSDB] SET READ_COMMITTED_SNAPSHOT ON;
 GO
 
 PRINT '';

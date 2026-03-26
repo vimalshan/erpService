@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ReferenceService.Infrastructure.Persistence;
 using ReferenceService.Infrastructure.Repositories;
-using ReferenceService.Infrastructure.RabbitMQ;
 using ReferenceService.Domain.Interfaces;
 
 namespace ReferenceService.Infrastructure;
@@ -40,13 +39,8 @@ public static class InfrastructureServiceCollectionExtensions
         // Register Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        // Register RabbitMQ (async API — RabbitMQ.Client 7.x compatible)
-        var rabbitCfg = configuration.GetSection("RabbitMQ").Get<RabbitMQConfiguration>()
-                        ?? new RabbitMQConfiguration();
-        services.AddSingleton(rabbitCfg);
-        services.AddSingleton<RabbitMQConnectionFactory>();
-        services.AddSingleton<RabbitMQPublisher>();
-        services.AddHostedService<RabbitMQConsumerHostedService>();
+        // Note: RabbitMQ is currently disabled (RabbitMQ.disabled/ excluded from compilation in .csproj).
+        // When re-enabled, register RabbitMQConfiguration, RabbitMQConnectionFactory, RabbitMQPublisher, and RabbitMQConsumerHostedService here.
         
         return services;
     }

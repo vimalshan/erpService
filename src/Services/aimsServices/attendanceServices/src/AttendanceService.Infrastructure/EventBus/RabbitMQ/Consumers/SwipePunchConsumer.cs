@@ -2,28 +2,31 @@ using System.Text.Json;
 using AttendanceService.Infrastructure.EventBus.RabbitMQ;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client.Exceptions;
 
 namespace AttendanceService.Infrastructure.EventBus.RabbitMQ.Consumers;
 
 public class SwipePunchConsumer(EventBusRabbitMQ eventBus,
+    IOptions<RabbitMQSettings> settings,
     ILogger<SwipePunchConsumer> logger) : BackgroundService
 {
-    private const string Exchange = "attendance.exchange";
-    private const string Queue = "attendance.swipe.processed";
-    private const string RoutingKey = "attendance.swipe.*";
     private static readonly TimeSpan[] RetryDelays =
         [TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(1)];
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var exchange = settings.Value.ExchangeName;
+        var queue = settings.Value.QueueName;
+        var routingKey = settings.Value.RoutingKey;
+
         logger.LogInformation("SwipePunchConsumer starting...");
         var attempt = 0;
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                await eventBus.SubscribeAsync(Queue, Exchange, RoutingKey, HandleMessageAsync);
+                await eventBus.SubscribeAsync(queue, exchange, routingKey, HandleMessageAsync);
                 logger.LogInformation("SwipePunchConsumer connected to RabbitMQ.");
                 await Task.Delay(Timeout.Infinite, stoppingToken);
             }

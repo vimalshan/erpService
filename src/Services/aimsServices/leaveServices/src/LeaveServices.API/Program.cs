@@ -29,8 +29,8 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(configuration);
 
 // ── JWT Authentication ────────────────────────────────────────────────────────
-var jwtSection  = configuration.GetSection("JwtSettings");
-var secretKey   = jwtSection["SecretKey"] ?? throw new InvalidOperationException("JwtSettings:SecretKey is required.");
+var jwtSection  = configuration.GetSection("Jwt");
+var secretKey   = jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key is required.");
 var signingKey  = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

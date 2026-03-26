@@ -56,6 +56,8 @@ var rabbitMqPort = int.Parse(rabbitMqSettings["Port"] ?? "5672");
 var rabbitMqUsername = rabbitMqSettings["UserName"] ?? "guest";
 var rabbitMqPassword = rabbitMqSettings["Password"] ?? "guest";
 var rabbitMqVirtualHost = rabbitMqSettings["VirtualHost"] ?? "/";
+var rabbitMqExchangeName = rabbitMqSettings["ExchangeName"] ?? "access-service-exchange";
+var rabbitMqQueueName = rabbitMqSettings["QueueName"] ?? "access-service-queue";
 
 builder.Services.AddSingleton(new RabbitMQSettings
 {
@@ -63,7 +65,9 @@ builder.Services.AddSingleton(new RabbitMQSettings
     Port = rabbitMqPort,
     Username = rabbitMqUsername,
     Password = rabbitMqPassword,
-    VirtualHost = rabbitMqVirtualHost
+    VirtualHost = rabbitMqVirtualHost,
+    ExchangeName = rabbitMqExchangeName,
+    QueueName = rabbitMqQueueName
 });
 
 builder.Services.AddSingleton<IRabbitMQConnection, RabbitMQConnection>();
@@ -82,8 +86,8 @@ builder.Services.AddHostedService<RabbitMQConsumerBackgroundService>();
 
 // Azure Blob Storage Configuration
 var azureBlobSettings = builder.Configuration.GetSection("AzureBlob");
-var blobConnectionString = azureBlobSettings["ConnectionString"] ?? "DefaultEndpointsProtocol=https;AccountName=your-account;AccountKey=your-key;EndpointSuffix=core.windows.net";
-var blobContainerName = azureBlobSettings["ContainerName"] ?? "stationery-images";
+var blobConnectionString = azureBlobSettings["ConnectionString"] ?? "";
+var blobContainerName = azureBlobSettings["ContainerName"] ?? "access-images";
 
 builder.Services.AddSingleton(new AzureBlobStorageSettings
 {
@@ -95,9 +99,9 @@ builder.Services.AddScoped<IAzureBlobStorageService, AzureBlobStorageService>();
 
 // Azure Functions Configuration
 var azureFunctionsSettings = builder.Configuration.GetSection("AzureFunctions");
-var functionsConnectionString = azureFunctionsSettings["ConnectionString"] ?? "DefaultEndpointsProtocol=https;AccountName=your-account;AccountKey=your-key;EndpointSuffix=core.windows.net";
+var functionsConnectionString = azureFunctionsSettings["ConnectionString"] ?? "";
 var functionsQueueName = azureFunctionsSettings["QueueName"] ?? "access-service-queue";
-var functionAppBaseUrl = azureFunctionsSettings["FunctionAppBaseUrl"] ?? "https://your-function-app.azurewebsites.net";
+var functionAppBaseUrl = azureFunctionsSettings["FunctionAppBaseUrl"] ?? "";
 
 builder.Services.AddSingleton(new AzureFunctionsSettings
 {
@@ -235,15 +239,13 @@ builder.Logging.AddDebug();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+// Swagger always enabled for local dev/testing
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Access Service API v1");
-        options.RoutePrefix = "swagger";
-    });
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Access Service API v1");
+    options.RoutePrefix = "swagger";
+});
 
 app.UseHttpsRedirection();
 

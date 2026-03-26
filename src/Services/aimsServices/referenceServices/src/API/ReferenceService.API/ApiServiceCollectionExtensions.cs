@@ -4,6 +4,8 @@ using System.Text;
 using ReferenceService.API.Auth;
 using ReferenceService.API.Middleware;
 using ReferenceService.API.HealthChecks;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using HealthChecks.UI.Client;
 using HotChocolate.Execution.Configuration;
 using ReferenceService.API.GraphQL;
 
@@ -24,7 +26,7 @@ public static class ApiServiceCollectionExtensions
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.SecretKey));
+                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Key));
                 
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -124,9 +126,20 @@ public static class ApiServiceCollectionExtensions
         app.MapGraphQL("/graphql");
         
         // Health checks
-        app.MapHealthChecks("/health");
-        app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions { Predicate = r => r.Name == "readiness" });
-        app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions { Predicate = r => r.Name == "liveness" });
+        app.MapHealthChecks("/health", new HealthCheckOptions
+        {
+            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+        });
+        app.MapHealthChecks("/health/ready", new HealthCheckOptions
+        {
+            Predicate = r => r.Name == "readiness",
+            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+        });
+        app.MapHealthChecks("/health/live", new HealthCheckOptions
+        {
+            Predicate = r => r.Name == "liveness",
+            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+        });
         
         return app;
     }

@@ -14,6 +14,8 @@ public class RabbitMQSettings
     public string Password { get; set; } = "guest";
     public string VirtualHost { get; set; } = "/";
     public string ExchangeName { get; set; } = "groupincentive.events";
+    public string ApprovalQueue { get; set; } = "groupincentive.approval.requests";
+    public string ApprovalRoutingKey { get; set; } = "incentive.approve";
 }
 
 public interface IMessagePublisher

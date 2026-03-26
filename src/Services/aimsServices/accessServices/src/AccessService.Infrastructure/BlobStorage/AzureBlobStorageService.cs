@@ -25,18 +25,25 @@ namespace AccessService.Infrastructure.BlobStorage
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
+            if (string.IsNullOrWhiteSpace(_settings.ConnectionString))
+            {
+                _logger.LogWarning("Azure Blob Storage connection string is not configured. Blob storage will be unavailable.");
+                return;
+            }
+
             try
             {
                 // Initialize connection to Azure Blob Storage
                 var blobServiceClient = new BlobServiceClient(_settings.ConnectionString);
                 _containerClient = blobServiceClient.GetBlobContainerClient(_settings.ContainerName);
-                
+
                 _logger.LogInformation($"Azure Blob Storage Service initialized for container: {_settings.ContainerName}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to initialize Azure Blob Storage Service");
-                throw;
+                // Log and degrade gracefully — do not throw, or every DI scope will fail
+                _logger.LogError(ex, "Failed to initialize Azure Blob Storage Service. Blob storage will be unavailable.");
+                _containerClient = null;
             }
         }
 

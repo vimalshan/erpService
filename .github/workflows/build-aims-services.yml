@@ -35,6 +35,7 @@ on:
           - bus-services
           - calendar-service
           - employee-service
+          - aims-transaction-service
           - groupincentive-service
           - leave-services
           - reference-service
@@ -61,6 +62,7 @@ jobs:
         run: |
           # Service registry: name → context + dockerfile
           declare -A SVC_CONTEXT SVC_DOCKERFILE
+          SVC_CONTEXT[aims-transaction-service]="src/Services/aimsServices/aimsTransactionServices"; SVC_DOCKERFILE[aims-transaction-service]="Dockerfile"
           SVC_CONTEXT[access-service]="src/Services/aimsServices/accessServices";             SVC_DOCKERFILE[access-service]="Dockerfile"
           SVC_CONTEXT[api-gateway]="src/Services/aimsServices/ApiGateway";                    SVC_DOCKERFILE[api-gateway]="Dockerfile"
           SVC_CONTEXT[attendance-service]="src/Services/aimsServices/attendanceServices";     SVC_DOCKERFILE[attendance-service]="Dockerfile"
@@ -73,8 +75,9 @@ jobs:
           SVC_CONTEXT[visitor-services]="src/Services/aimsServices/visitorServices";          SVC_DOCKERFILE[visitor-services]="Dockerfile"
 
           # Ordered list matching the paths for change detection
-          SVC_NAMES=(access-service api-gateway attendance-service bus-services calendar-service employee-service groupincentive-service leave-services reference-service visitor-services)
+          SVC_NAMES=(aims-transaction-service access-service api-gateway attendance-service bus-services calendar-service employee-service groupincentive-service leave-services reference-service visitor-services)
           SVC_PATHS=(
+            "src/Services/aimsServices/aimsTransactionServices/"
             "src/Services/aimsServices/accessServices/"
             "src/Services/aimsServices/ApiGateway/"
             "src/Services/aimsServices/attendanceServices/"

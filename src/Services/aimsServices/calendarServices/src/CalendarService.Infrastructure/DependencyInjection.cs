@@ -48,9 +48,9 @@ public static class DependencyInjection
                     h.Password(rmq["Password"] ?? "guest");
                 });
 
-                cfg.ReceiveEndpoint("calendar-created", e => e.ConfigureConsumer<CalendarCreatedConsumer>(ctx));
-                cfg.ReceiveEndpoint("holiday-created", e => e.ConfigureConsumer<HolidayCreatedConsumer>(ctx));
-                cfg.ReceiveEndpoint("shift-created", e => e.ConfigureConsumer<ShiftCreatedConsumer>(ctx));
+                cfg.ReceiveEndpoint(rmq["CalendarCreatedQueue"] ?? "calendar-created", e => e.ConfigureConsumer<CalendarCreatedConsumer>(ctx));
+                cfg.ReceiveEndpoint(rmq["HolidayCreatedQueue"] ?? "holiday-created", e => e.ConfigureConsumer<HolidayCreatedConsumer>(ctx));
+                cfg.ReceiveEndpoint(rmq["ShiftCreatedQueue"] ?? "shift-created", e => e.ConfigureConsumer<ShiftCreatedConsumer>(ctx));
             });
         });
 

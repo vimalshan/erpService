@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using HealthChecks.UI.Client;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -95,11 +96,25 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // ── Auto-migrate & seed on startup ──────────────────────────────────────────
-if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<GroupIncentiveDbContext>();
     var dbLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    await DatabaseSeeder.SeedAsync(app.Services, dbLogger);
+
+    try
+    {
+        await dbContext.Database.MigrateAsync();
+        dbLogger.LogInformation("Database migration completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        dbLogger.LogError(ex, "Database migration failed. Service will continue without database.");
+    }
+
+    if (app.Environment.IsDevelopment())
+    {
+        await DatabaseSeeder.SeedAsync(app.Services, dbLogger);
+    }
 }
 
 // ── Middleware pipeline ──────────────────────────────────────────

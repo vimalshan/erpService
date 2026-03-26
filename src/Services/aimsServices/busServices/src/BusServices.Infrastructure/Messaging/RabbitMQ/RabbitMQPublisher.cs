@@ -13,6 +13,8 @@ public sealed class RabbitMQSettings
     public string Username { get; init; } = "guest";
     public string Password { get; init; } = "guest";
     public string VirtualHost { get; init; } = "/";
+    public string BusRegisteredQueue { get; init; } = "bus.registered";
+    public string EmployeeAssignedQueue { get; init; } = "bus.employee.assigned";
 }
 
 public interface IMessagePublisher

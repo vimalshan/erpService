@@ -1,5 +1,6 @@
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
@@ -119,11 +120,16 @@ public abstract class RabbitMqConsumerBase : IDisposable
 /// <summary>Specific consumer for attendance flag change events.</summary>
 public sealed class AttendanceFlagConsumer : RabbitMqConsumerBase
 {
-    public AttendanceFlagConsumer(IConnectionFactory factory, ILogger<AttendanceFlagConsumer> logger)
-        : base(factory, logger) { }
+    private readonly string _queueName;
+
+    public AttendanceFlagConsumer(IConnectionFactory factory, IConfiguration config, ILogger<AttendanceFlagConsumer> logger)
+        : base(factory, logger)
+    {
+        _queueName = config["RabbitMQ:AttendanceFlagQueue"] ?? "employee.attendance.updates";
+    }
 
     public Task StartAsync(CancellationToken ct) =>
-        StartConsumingAsync("employee.attendance.updates", ct);
+        StartConsumingAsync(_queueName, ct);
 
     protected override Task HandleMessageAsync(string message, CancellationToken ct)
     {
@@ -136,11 +142,16 @@ public sealed class AttendanceFlagConsumer : RabbitMqConsumerBase
 /// <summary>Consumer for approver assignment events.</summary>
 public sealed class ApproverAssignmentConsumer : RabbitMqConsumerBase
 {
-    public ApproverAssignmentConsumer(IConnectionFactory factory, ILogger<ApproverAssignmentConsumer> logger)
-        : base(factory, logger) { }
+    private readonly string _queueName;
+
+    public ApproverAssignmentConsumer(IConnectionFactory factory, IConfiguration config, ILogger<ApproverAssignmentConsumer> logger)
+        : base(factory, logger)
+    {
+        _queueName = config["RabbitMQ:ApproverAssignmentQueue"] ?? "employee.approver.assignments";
+    }
 
     public Task StartAsync(CancellationToken ct) =>
-        StartConsumingAsync("employee.approver.assignments", ct);
+        StartConsumingAsync(_queueName, ct);
 
     protected override Task HandleMessageAsync(string message, CancellationToken ct)
     {

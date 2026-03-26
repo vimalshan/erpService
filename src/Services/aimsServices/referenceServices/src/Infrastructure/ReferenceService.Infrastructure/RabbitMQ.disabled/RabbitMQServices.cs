@@ -65,18 +65,18 @@ public sealed class RabbitMQPublisher : IAsyncDisposable
 public sealed class RabbitMQConsumerHostedService : BackgroundService
 {
     private readonly RabbitMQConnectionFactory _factory;
+    private readonly RabbitMQConfiguration _config;
     private readonly ILogger<RabbitMQConsumerHostedService> _logger;
 
     private static readonly int[] RetryDelaysSeconds = [5, 10, 20, 30, 60];
 
-    // Exchange name for reference data events
-    private const string Exchange = "reference.events";
-
     public RabbitMQConsumerHostedService(
         RabbitMQConnectionFactory factory,
+        RabbitMQConfiguration config,
         ILogger<RabbitMQConsumerHostedService> logger)
     {
         _factory = factory;
+        _config  = config;
         _logger  = logger;
     }
 
@@ -94,11 +94,11 @@ public sealed class RabbitMQConsumerHostedService : BackgroundService
                 var conn = await _factory.GetConnectionAsync(stoppingToken);
                 channel = await conn.CreateChannelAsync(cancellationToken: stoppingToken);
 
-                await channel.ExchangeDeclareAsync(Exchange, ExchangeType.Topic, durable: true, cancellationToken: stoppingToken);
+                await channel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Topic, durable: true, cancellationToken: stoppingToken);
 
-                // ── Queue: reference.lovtype.updates ─────────────────────────
-                await channel.QueueDeclareAsync("reference.lovtype.updates", durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
-                await channel.QueueBindAsync("reference.lovtype.updates", Exchange, "reference.lovtype.*", cancellationToken: stoppingToken);
+                // ── Queue: lovtype updates ────────────────────────────────────
+                await channel.QueueDeclareAsync(_config.LovTypeQueue, durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
+                await channel.QueueBindAsync(_config.LovTypeQueue, _config.ExchangeName, "reference.lovtype.*", cancellationToken: stoppingToken);
 
                 var consumer = new AsyncEventingBasicConsumer(channel);
                 consumer.ReceivedAsync += async (_, ea) =>
@@ -111,7 +111,7 @@ public sealed class RabbitMQConsumerHostedService : BackgroundService
                     catch (Exception ex) { _logger.LogError(ex, "Failed to ACK message {Tag}", ea.DeliveryTag); }
                 };
 
-                await channel.BasicConsumeAsync("reference.lovtype.updates", autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
+                await channel.BasicConsumeAsync(_config.LovTypeQueue, autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
 
                 attempt = 0;
                 _logger.LogInformation("Reference RabbitMQ consumers ready");

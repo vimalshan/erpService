@@ -40,8 +40,10 @@ public sealed class RabbitMQConsumerHostedService : BackgroundService
             };
 
             var busRegisteredConsumer = new BusRegisteredConsumer(
+                _settings.BusRegisteredQueue,
                 _loggerFactory.CreateLogger<BusRegisteredConsumer>());
             var employeeAssignedConsumer = new EmployeeAssignedConsumer(
+                _settings.EmployeeAssignedQueue,
                 _loggerFactory.CreateLogger<EmployeeAssignedConsumer>());
 
             await Task.WhenAll(

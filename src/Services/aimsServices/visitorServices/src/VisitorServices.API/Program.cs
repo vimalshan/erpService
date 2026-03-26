@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using VisitorServices.Application;
@@ -10,6 +11,7 @@ using VisitorServices.API.MinimalApis;
 using VisitorServices.API.HealthChecks;
 using VisitorServices.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using HealthChecks.UI.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,9 +49,9 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // ─── JWT Authentication ───────────────────────────────────────────────────────
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["SecretKey"]
-    ?? throw new InvalidOperationException("JWT SecretKey is not configured.");
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var secretKey = jwtSettings["Key"]
+    ?? throw new InvalidOperationException("JWT Key is not configured.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -119,27 +121,37 @@ app.MapApprovalEndpoints();
 app.MapGraphQL("/graphql");
 
 // ─── Health Checks ────────────────────────────────────────────────────────────
-app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+app.MapHealthChecks("/health", new HealthCheckOptions
 {
-    Predicate = check => check.Tags.Contains("db")
+    Predicate = check => check.Tags.Contains("db"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
-app.MapHealthChecks("/health/db", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+app.MapHealthChecks("/health/db", new HealthCheckOptions
 {
-    Predicate = check => check.Tags.Contains("db")
+    Predicate = check => check.Tags.Contains("db"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
 // ─── Auto-migrate and seed on startup ────────────────────────────────────────
-using (var scope = app.Services.CreateScope())
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<VisitorDbContext>();
     var seedLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    await VisitorServices.Infrastructure.Data.DbInitializer.SeedAsync(db, seedLogger);
+
+    try
+    {
+        await db.Database.MigrateAsync();
+        seedLogger.LogInformation("Database migration completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        seedLogger.LogError(ex, "Database migration failed. Service will continue without database.");
+    }
+
+    if (app.Environment.IsDevelopment())
+    {
+        await DbInitializer.SeedAsync(db, seedLogger);
+    }
 }
 
-app.Run();
-
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+await app.RunAsync();

@@ -31,8 +31,11 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Blob Storage
-        services.AddSingleton(new BlobServiceClient(
-            configuration.GetConnectionString("AzureStorage") ?? "UseDevelopmentStorage=true"));
+        var azureStorageConn = configuration.GetConnectionString("AzureStorage");
+        if (!string.IsNullOrWhiteSpace(azureStorageConn))
+        {
+            services.AddSingleton(new BlobServiceClient(azureStorageConn));
+        }
         services.AddScoped<IBlobStorageService, BlobStorageService>();
 
         // MassTransit / RabbitMQ

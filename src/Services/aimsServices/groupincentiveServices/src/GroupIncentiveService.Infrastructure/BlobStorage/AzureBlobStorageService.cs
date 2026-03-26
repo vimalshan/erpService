@@ -15,21 +15,26 @@ public interface IBlobStorageService
 
 public class AzureBlobStorageService : IBlobStorageService
 {
-    private readonly BlobServiceClient _blobServiceClient;
+    private readonly BlobServiceClient? _blobServiceClient;
     private readonly ILogger<AzureBlobStorageService> _logger;
 
     public AzureBlobStorageService(IConfiguration configuration, ILogger<AzureBlobStorageService> logger)
     {
-        var connectionString = configuration.GetConnectionString("AzureBlobStorage")
-            ?? throw new InvalidOperationException("AzureBlobStorage connection string not configured.");
-        _blobServiceClient = new BlobServiceClient(connectionString);
         _logger = logger;
+        var connectionString = configuration.GetConnectionString("AzureBlobStorage");
+        if (!string.IsNullOrWhiteSpace(connectionString))
+            _blobServiceClient = new BlobServiceClient(connectionString);
+        else
+            _logger.LogWarning("AzureBlobStorage connection string is not configured. Blob operations will be unavailable.");
     }
+
+    private BlobServiceClient GetClient() =>
+        _blobServiceClient ?? throw new InvalidOperationException("AzureBlobStorage is not configured.");
 
     public async Task<string> UploadAsync(string containerName, string blobName, Stream content,
         string contentType, CancellationToken ct = default)
     {
-        var container = _blobServiceClient.GetBlobContainerClient(containerName);
+        var container = GetClient().GetBlobContainerClient(containerName);
         await container.CreateIfNotExistsAsync(PublicAccessType.None, cancellationToken: ct);
 
         var blobClient = container.GetBlobClient(blobName);
@@ -41,7 +46,7 @@ public class AzureBlobStorageService : IBlobStorageService
 
     public async Task<Stream?> DownloadAsync(string containerName, string blobName, CancellationToken ct = default)
     {
-        var blobClient = _blobServiceClient.GetBlobContainerClient(containerName).GetBlobClient(blobName);
+        var blobClient = GetClient().GetBlobContainerClient(containerName).GetBlobClient(blobName);
         if (!await blobClient.ExistsAsync(ct)) return null;
 
         var response = await blobClient.DownloadStreamingAsync(cancellationToken: ct);
@@ -50,14 +55,14 @@ public class AzureBlobStorageService : IBlobStorageService
 
     public async Task DeleteAsync(string containerName, string blobName, CancellationToken ct = default)
     {
-        var blobClient = _blobServiceClient.GetBlobContainerClient(containerName).GetBlobClient(blobName);
+        var blobClient = GetClient().GetBlobContainerClient(containerName).GetBlobClient(blobName);
         await blobClient.DeleteIfExistsAsync(cancellationToken: ct);
         _logger.LogInformation("Deleted blob {BlobName} from container {Container}", blobName, containerName);
     }
 
     public async Task<bool> ExistsAsync(string containerName, string blobName, CancellationToken ct = default)
     {
-        var blobClient = _blobServiceClient.GetBlobContainerClient(containerName).GetBlobClient(blobName);
+        var blobClient = GetClient().GetBlobContainerClient(containerName).GetBlobClient(blobName);
         return await blobClient.ExistsAsync(ct);
     }
 }

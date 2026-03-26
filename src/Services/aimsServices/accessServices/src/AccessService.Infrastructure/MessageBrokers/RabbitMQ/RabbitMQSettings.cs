@@ -10,5 +10,7 @@ namespace AccessService.Infrastructure.MessageBrokers.RabbitMQ
         public string Username { get; set; }
         public string Password { get; set; }
         public string VirtualHost { get; set; }
+        public string ExchangeName { get; set; } = "access-service-exchange";
+        public string QueueName { get; set; } = "access-service-queue";
     }
 }

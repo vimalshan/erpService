@@ -50,10 +50,15 @@ public abstract class BaseConsumer<T> : IDisposable
 
 public sealed class BusRegisteredConsumer : BaseConsumer<BusRegisteredEvent>
 {
-    public BusRegisteredConsumer(ILogger<BusRegisteredConsumer> logger) : base(logger) { }
+    private readonly string _queueName;
+
+    public BusRegisteredConsumer(string queueName, ILogger<BusRegisteredConsumer> logger) : base(logger)
+    {
+        _queueName = queueName;
+    }
 
     public Task StartAsync(ConnectionFactory factory, CancellationToken ct)
-        => StartConsuming("bus.registered", HandleAsync, factory, ct);
+        => StartConsuming(_queueName, HandleAsync, factory, ct);
 
     private Task HandleAsync(BusRegisteredEvent evt)
     {
@@ -64,10 +69,15 @@ public sealed class BusRegisteredConsumer : BaseConsumer<BusRegisteredEvent>
 
 public sealed class EmployeeAssignedConsumer : BaseConsumer<EmployeeAssignedToBusEvent>
 {
-    public EmployeeAssignedConsumer(ILogger<EmployeeAssignedConsumer> logger) : base(logger) { }
+    private readonly string _queueName;
+
+    public EmployeeAssignedConsumer(string queueName, ILogger<EmployeeAssignedConsumer> logger) : base(logger)
+    {
+        _queueName = queueName;
+    }
 
     public Task StartAsync(ConnectionFactory factory, CancellationToken ct)
-        => StartConsuming("bus.employee.assigned", HandleAsync, factory, ct);
+        => StartConsuming(_queueName, HandleAsync, factory, ct);
 
     private Task HandleAsync(EmployeeAssignedToBusEvent evt)
     {

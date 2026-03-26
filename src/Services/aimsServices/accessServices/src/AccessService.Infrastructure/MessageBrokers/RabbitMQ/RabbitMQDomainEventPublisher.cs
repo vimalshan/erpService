@@ -17,12 +17,13 @@ namespace AccessService.Infrastructure.MessageBrokers.RabbitMQ
     {
         private readonly IRabbitMQPublisher _publisher;
         private readonly ILogger<RabbitMQDomainEventPublisher> _logger;
-        private const string ExchangeName = "access-service-exchange";
+        private readonly string _exchangeName;
 
-        public RabbitMQDomainEventPublisher(IRabbitMQPublisher publisher, ILogger<RabbitMQDomainEventPublisher> logger)
+        public RabbitMQDomainEventPublisher(IRabbitMQPublisher publisher, RabbitMQSettings settings, ILogger<RabbitMQDomainEventPublisher> logger)
         {
             _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _exchangeName = settings?.ExchangeName ?? "access-service-exchange";
         }
 
         public async Task PublishAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default) where TEvent : IDomainEvent
@@ -41,7 +42,7 @@ namespace AccessService.Infrastructure.MessageBrokers.RabbitMQ
                     { "Timestamp", DateTime.UtcNow }
                 };
 
-                await _publisher.PublishAsync(ExchangeName, routingKey, message, headers);
+                await _publisher.PublishAsync(_exchangeName, routingKey, message, headers);
                 _logger.LogInformation($"Domain event published: {eventType} (MessageId: {messageId})");
             }
             catch (Exception ex)

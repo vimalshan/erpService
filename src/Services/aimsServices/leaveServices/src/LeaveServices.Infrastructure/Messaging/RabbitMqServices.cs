@@ -9,11 +9,13 @@ namespace LeaveServices.Infrastructure.Messaging;
 
 public sealed class RabbitMqSettings
 {
-    public string Host     { get; set; } = "localhost";
-    public int    Port     { get; set; } = 5672;
-    public string UserName { get; set; } = "guest";
-    public string Password { get; set; } = "guest";
-    public string VHost    { get; set; } = "/";
+    public string Host              { get; set; } = "localhost";
+    public int    Port              { get; set; } = 5672;
+    public string UserName          { get; set; } = "guest";
+    public string Password          { get; set; } = "guest";
+    public string VHost             { get; set; } = "/";
+    public string LeaveAppliedQueue  { get; set; } = "leave.applied";
+    public string LeaveApprovedQueue { get; set; } = "leave.approved";
 }
 
 public sealed class RabbitMqPublisher : IAsyncDisposable
@@ -77,7 +79,7 @@ public sealed class LeaveAppliedConsumer : IAsyncDisposable
         _connection = await factory.CreateConnectionAsync(ct);
         _channel    = await _connection.CreateChannelAsync(cancellationToken: ct);
 
-        await _channel.QueueDeclareAsync("leave.applied", durable: true, exclusive: false, autoDelete: false, cancellationToken: ct);
+        await _channel.QueueDeclareAsync(settings.LeaveAppliedQueue, durable: true, exclusive: false, autoDelete: false, cancellationToken: ct);
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
         consumer.ReceivedAsync += async (_, ea) =>
@@ -88,7 +90,7 @@ public sealed class LeaveAppliedConsumer : IAsyncDisposable
             await _channel.BasicAckAsync(ea.DeliveryTag, false);
         };
 
-        await _channel.BasicConsumeAsync("leave.applied", autoAck: false, consumer: consumer, cancellationToken: ct);
+        await _channel.BasicConsumeAsync(settings.LeaveAppliedQueue, autoAck: false, consumer: consumer, cancellationToken: ct);
     }
 
     public async ValueTask DisposeAsync()
@@ -119,7 +121,7 @@ public sealed class LeaveApprovedConsumer : IAsyncDisposable
         _connection = await factory.CreateConnectionAsync(ct);
         _channel    = await _connection.CreateChannelAsync(cancellationToken: ct);
 
-        await _channel.QueueDeclareAsync("leave.approved", durable: true, exclusive: false, autoDelete: false, cancellationToken: ct);
+        await _channel.QueueDeclareAsync(settings.LeaveApprovedQueue, durable: true, exclusive: false, autoDelete: false, cancellationToken: ct);
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
         consumer.ReceivedAsync += async (_, ea) =>
@@ -130,7 +132,7 @@ public sealed class LeaveApprovedConsumer : IAsyncDisposable
             await _channel.BasicAckAsync(ea.DeliveryTag, false);
         };
 
-        await _channel.BasicConsumeAsync("leave.approved", autoAck: false, consumer: consumer, cancellationToken: ct);
+        await _channel.BasicConsumeAsync(settings.LeaveApprovedQueue, autoAck: false, consumer: consumer, cancellationToken: ct);
     }
 
     public async ValueTask DisposeAsync()
