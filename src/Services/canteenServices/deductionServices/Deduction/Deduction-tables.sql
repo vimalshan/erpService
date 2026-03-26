@@ -47,11 +47,11 @@ CREATE TABLE [ADHOC_PAY_DED_HIS] (
 
 -- Table: DEDUCTION_ACCESS
 CREATE TABLE [DEDUCTION_ACCESS] (
-    [DE_UNT_ACC] BIGINT NULL  -- Access number,
-    [DE_COM_COD] BIGINT NULL  -- Unit Code,
-    [DE_DED_TYP] CHAR(3) NULL  -- Deduciton type (ED Code),
-    [DE_SYS_ID] DECIMAL(38) NULL  -- Access Person Name,
-    [DE_ENT_USR] DECIMAL(38) NULL  -- Entered By,
-    [DE_ENT_ON] DATETIME2(3) NULL  -- Entered On,
+    [DE_UNT_ACC] BIGINT NULL,  -- Access number
+    [DE_COM_COD] BIGINT NULL,  -- Unit Code
+    [DE_DED_TYP] CHAR(3) NULL,  -- Deduciton type (ED Code)
+    [DE_SYS_ID] DECIMAL(38) NULL,  -- Access Person Name
+    [DE_ENT_USR] DECIMAL(38) NULL,  -- Entered By
+    [DE_ENT_ON] DATETIME2(3) NULL,  -- Entered On
     [DE_CLS_DAT] DATETIME2(3) NULL  -- Access closed on
 );

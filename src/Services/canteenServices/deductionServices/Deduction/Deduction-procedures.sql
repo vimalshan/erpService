@@ -20,7 +20,7 @@ RETURN
     SELECT 
         ISNULL(CN_EMP_CON, 0) AS [EmployeeShare],
         ISNULL(CN_EPR_CON, 0) AS [EmployerShare]
-    FROM CANTEEN_ITEM_PRICE_MASTER
+    FROM ItemMasterDb.dbo.CANTEEN_ITEM_PRICE_MASTER
     WHERE CN_ITM_COD = @p_ItemCode
       AND CN_EFF_DAT <= @p_DateTaken
       AND (CN_CLS_DAT IS NULL OR CN_CLS_DAT >= @p_DateTaken)
@@ -86,7 +86,8 @@ BEGIN
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-        RAISERROR('Canteen deduction processing failed: %s', 16, 1, ERROR_MESSAGE());
+        DECLARE @ErrMsg1 NVARCHAR(4000) = ERROR_MESSAGE();
+        RAISERROR('Canteen deduction processing failed: %s', 16, 1, @ErrMsg1);
     END CATCH
 END;
 GO

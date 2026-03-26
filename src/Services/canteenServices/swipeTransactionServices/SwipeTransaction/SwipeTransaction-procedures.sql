@@ -77,7 +77,8 @@ BEGIN
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-        RAISERROR('Canteen punch recording failed: %s', 16, 1, ERROR_MESSAGE());
+        DECLARE @ErrMsg1 NVARCHAR(4000) = ERROR_MESSAGE();
+        RAISERROR('Canteen punch recording failed: %s', 16, 1, @ErrMsg1);
     END CATCH
 END;
 GO
@@ -135,7 +136,8 @@ BEGIN
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-        RAISERROR('Canteen transaction failed: %s', 16, 1, ERROR_MESSAGE());
+        DECLARE @ErrMsg2 NVARCHAR(4000) = ERROR_MESSAGE();
+        RAISERROR('Canteen transaction failed: %s', 16, 1, @ErrMsg2);
     END CATCH
 END;
 GO
@@ -155,9 +157,10 @@ BEGIN
     SELECT TOP 1 @ItemCode = CN_ITM_COD FROM inserted;
     
     -- Validate item exists
-    IF NOT EXISTS (SELECT 1 FROM CANTEEN_ITEM_MASTER WHERE CN_ITM_COD = @ItemCode)
+    IF NOT EXISTS (SELECT 1 FROM ItemMasterDb.dbo.CANTEEN_ITEM_MASTER WHERE CN_ITM_COD = @ItemCode)
     BEGIN
-        RAISERROR('Invalid canteen item code: %s', 16, 1, CAST(@ItemCode AS VARCHAR));
+        DECLARE @ItemStr VARCHAR(20) = CAST(@ItemCode AS VARCHAR(20));
+        RAISERROR('Invalid canteen item code: %s', 16, 1, @ItemStr);
         RETURN;
     END
     

@@ -5,11 +5,11 @@
 
 -- Table: CANTEEN_UNIT_MASTER
 CREATE TABLE [CANTEEN_UNIT_MASTER] (
-    [UN_COM_COD] DECIMAL(38) NOT NULL  -- Canteen Unit,
-    [UN_UNT_NAME] VARCHAR(100) NULL  -- Unit Name,
-    [UNT_UNT_REF] VARCHAR(100) NULL  -- Unit Reference,
-    [UN_MAX_VAL] DECIMAL(38) NULL  -- Maximum Limit for concession,
-    [IN_MIN_VAL] DECIMAL(38) NULL  -- Minimum Limit for concession,
+    [UN_COM_COD] DECIMAL(38) NOT NULL,  -- Canteen Unit
+    [UN_UNT_NAME] VARCHAR(100) NULL,  -- Unit Name
+    [UNT_UNT_REF] VARCHAR(100) NULL,  -- Unit Reference
+    [UN_MAX_VAL] DECIMAL(38) NULL,  -- Maximum Limit for concession
+    [IN_MIN_VAL] DECIMAL(38) NULL,  -- Minimum Limit for concession
     [UN_SIT_ID] BIGINT NULL,
     [UN_HRMS_ID] BIGINT NULL,
     CONSTRAINT [PK_CANTEEN_UNIT_MASTER] PRIMARY KEY ([UN_COM_COD])
@@ -37,30 +37,30 @@ CREATE TABLE [CANTEEN_MASTER_CAT] (
 
 -- Table: CANTEEN_MASTER_GRADECAT
 CREATE TABLE [CANTEEN_MASTER_GRADECAT] (
-    [CN_CAN_SEQ  NUMBER(10),] BIGINT NULL,
-    [CN_COM_COD  NUMBER,] DECIMAL(38) NULL,
-    [CN_CAN_NUM  NUMBER(10),] BIGINT NULL,
-    [CN_CAN_FRO  DATE,] DATETIME2(3) NULL,
-    [CN_CAN_TO   DATE,] DATETIME2(3) NULL,
-    [CN_LIV_FLG  CHAR(1 BYTE),] CHAR(1) NULL,
-    [CN_GRD_CAT  CHAR(3 BYTE)] CHAR(3) NULL
+    [CN_CAN_SEQ] BIGINT NULL,
+    [CN_COM_COD] DECIMAL(38) NULL,
+    [CN_CAN_NUM] BIGINT NULL,
+    [CN_CAN_FRO] DATETIME2(3) NULL,
+    [CN_CAN_TO] DATETIME2(3) NULL,
+    [CN_LIV_FLG] CHAR(1) NULL,
+    [CN_GRD_CAT] CHAR(3) NULL
 );
 
 -- Table: CANTEEN_UNIT_ACCESS
 CREATE TABLE [CANTEEN_UNIT_ACCESS] (
-    [UN_UNT_ACC] BIGINT NULL  -- Access number,
-    [UN_COM_COD] BIGINT NULL  -- Canteen Unit,
-    [UN_USR_ID] BIGINT NULL  -- Access Person Name,
-    [UN_ENT_USR] BIGINT NULL  -- Entered By,
-    [UN_ENT_ON] DATETIME2(3) NULL  -- Entered On,
+    [UN_UNT_ACC] BIGINT NULL,  -- Access number
+    [UN_COM_COD] BIGINT NULL,  -- Canteen Unit
+    [UN_USR_ID] BIGINT NULL,  -- Access Person Name
+    [UN_ENT_USR] BIGINT NULL,  -- Entered By
+    [UN_ENT_ON] DATETIME2(3) NULL,  -- Entered On
     [UN_CLS_DAT] DATETIME2(3) NULL  -- Access closed on
 );
 
 -- Table: GEN_COUNTER
 CREATE TABLE [GEN_COUNTER] (
-    [GN_TRN_TYP] CHAR(3) NOT NULL  -- Transaction Type,
-    [GN_TRN_NUM] BIGINT NULL  -- Transaction NAME,
-    [GN_TRN_DES] VARCHAR(200) NULL  -- Transaction DESCRIPTION,
+    [GN_TRN_TYP] CHAR(3) NOT NULL,  -- Transaction Type
+    [GN_TRN_NUM] BIGINT NULL,  -- Transaction NAME
+    [GN_TRN_DES] VARCHAR(200) NULL,  -- Transaction DESCRIPTION
     CONSTRAINT [PK_GEN_COUNTER] PRIMARY KEY ([GN_TRN_TYP])
 );
 
