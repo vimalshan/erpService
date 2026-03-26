@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: canteentransaction-service
+  labels:
+    name: canteentransaction-service
+    environment: production
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: canteentransaction-service
+  namespace: canteentransaction-service
+  labels:
+    app: canteentransaction-service
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: canteentransaction-service-role
+  namespace: canteentransaction-service
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+  resourceNames: ["canteentransaction-service-config"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+  resourceNames: ["canteentransaction-service-secrets"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: canteentransaction-service-rolebinding
+  namespace: canteentransaction-service
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: canteentransaction-service-role
+subjects:
+- kind: ServiceAccount
+  name: canteentransaction-service
+  namespace: canteentransaction-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: canteentransaction-service-pdb
+  namespace: canteentransaction-service
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: canteentransaction-service

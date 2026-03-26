@@ -1,0 +1,64 @@
+-- ==========================================
+-- Module: CanteenTransaction
+-- Table Scripts
+-- ==========================================
+
+-- Table: CANTEEDN_DACON (Canteen Daily Consumption/Contribution)
+CREATE TABLE [CANTEEDN_DACON] (
+    [CN_SRL_NUM] BIGINT NULL,
+    [CN_COM_COD] BIGINT NULL,
+    [CN_SYS_ID] BIGINT NOT NULL,
+    [CN_EMP_TYP] CHAR(1) NULL,
+    [CN_SWP_DAT] VARCHAR(255) NULL,
+    [CN_ITM_COD] BIGINT NULL,
+    [CN_ITM_TYP] CHAR(1) NULL,
+    [CN_EE_CON] DECIMAL(38) NULL,
+    [CN_ER_CON] DECIMAL(38) NULL,
+    [CN_CAN_NUM] VARCHAR(255) NULL,
+    [CN_ITM_QTY] BIGINT NULL,
+    [CN_ENT_USR] BIGINT NULL,
+    [CN_ENT_DAT] VARCHAR(255) NULL,
+    [CN_FLEX1] VARCHAR(20) NULL,
+    [CN_GRD_CAT] CHAR(3) NULL
+);
+
+-- Table: CANTEEN_DAYWISE_AVAILED
+CREATE TABLE [CANTEEN_DAYWISE_AVAILED] (
+    [CN_SRL_NUM] BIGINT NOT NULL  -- Serial Number,
+    [CN_COM_COD] BIGINT NOT NULL  -- Company Code,
+    [CN_SYS_ID] BIGINT NOT NULL  -- Employee Number,
+    [CN_EMP_TYP] CHAR(1) NULL  -- Employee Type,
+    [CN_SWP_DAT] VARCHAR(255) NULL  -- Canteen Swipe Date,
+    [CN_ITM_COD] BIGINT NULL  -- Item Code,
+    [CN_ITM_TYP] CHAR(1) NULL  -- Item Type,
+    [CN_EE_CON] DECIMAL(38) NULL  -- Employee Contribution,
+    [CN_ER_CON] DECIMAL(38) NULL  -- Employer Contribution,
+    [CN_CAN_NUM] VARCHAR(255) NULL  -- Canteen Number,
+    [CN_ITM_QTY] BIGINT NULL  -- Item Quantity,
+    [CN_ENT_USR] BIGINT NULL  -- Entry User,
+    [CN_ENT_DAT] VARCHAR(255) NULL  -- Entry Date,
+    [CN_FLEX1] VARCHAR(20) NULL  -- Flex Field,
+    [CN_GRD_CAT] CHAR(3) NULL,
+    CONSTRAINT [PK_CANTEEN_DAYWISE_AVAILED] PRIMARY KEY ([CN_SRL_NUM])
+);
+
+-- Table: CANTEEN_MIS_SBT (MIS Batch Submission)
+CREATE TABLE [CANTEEN_MIS_SBT] (
+    [CN_COM_COD] BIGINT NOT NULL,
+    [CN_EMP_NUM] VARCHAR(20) NOT NULL,
+    [CN_SWP_TIM] DATETIME2(3) NOT NULL,
+    [CN_ITM_COD] BIGINT NOT NULL,
+    [CN_ITM_QTN] BIGINT NOT NULL,
+    [CN_BAT_DAT] DATETIME2(3) NOT NULL,
+    [CN_BAT_NUM] BIGINT NOT NULL,
+    [CN_SRL_NUM] BIGINT NOT NULL,
+    [CN_ENT_DAT] DATETIME2(3) NOT NULL,
+    [CN_CAN_NUM] CHAR(1) NOT NULL,
+    [CN_GAT_NUM] CHAR(3) NOT NULL,
+    [CN_UPD_STS] CHAR(1) NOT NULL,
+    [CN_FLX_FLD1] CHAR(5) NULL,
+    [CN_FLX_FLD2] VARCHAR(20) NULL,
+    [CN_FLX_FLD3] DECIMAL(38) NULL,
+    [CN_FLX_FLD4] DATETIME2(3) NULL,
+    [CN_FLX_FLD5] VARCHAR(100) NULL
+);

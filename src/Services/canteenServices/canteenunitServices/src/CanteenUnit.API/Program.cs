@@ -76,7 +76,9 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<CanteenUnitQuery>()
-    .AddMutationType<CanteenUnitMutation>();
+    .AddMutationType<CanteenUnitMutation>()
+    .BindRuntimeType<char, HotChocolate.Types.StringType>()
+    .BindRuntimeType<char?, HotChocolate.Types.StringType>();
 
 // ─── Health Checks ────────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()

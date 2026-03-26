@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  mssql-server:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql-swipe-transaction-db
+    environment:
+      ACCEPT_EULA: 'Y'
+      SA_PASSWORD: 'YourPassword123!'
+      MSSQL_PID: 'Express'
+      MSSQL_MEMORY_LIMIT_MB: '512'
+    ports:
+      - "1446:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+      - ./SwipeTransaction:/sql
+      - ./Docker/init-database.sql:/init-database.sql
+      - ./Docker/entrypoint.sh:/entrypoint.sh
+    entrypoint: ["/bin/bash", "/entrypoint.sh"]
+    networks:
+      - swipe-transaction-network
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourPassword123!", "-No", "-Q", "SELECT 1"]
+      interval: 15s
+      timeout: 10s
+      start_period: 120s
+      retries: 15
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: swipe-transaction-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: 'guest'
+      RABBITMQ_DEFAULT_PASS: 'guest'
+    ports:
+      - "5682:5672"
+      - "15682:15672"
+    networks:
+      - swipe-transaction-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  swipe-transaction-service:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile
+    container_name: swipe-transaction-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5196'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=SwipeTransactionDb;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      Jwt__Secret: 'SwipeTransactionService-SuperSecretKey-ChangeInProduction-Min32Characters!'
+      Jwt__Issuer: 'SwipeTransactionService'
+      Jwt__Audience: 'SwipeTransactionServiceClients'
+      Jwt__ExpiryMinutes: '60'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__VirtualHost: '/'
+    ports:
+      - "5196:5196"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - swipe-transaction-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5196/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+
+networks:
+  swipe-transaction-network:
+    driver: bridge
+
+volumes:
+  mssql_data:

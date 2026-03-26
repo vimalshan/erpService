@@ -1,0 +1,320 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  DeductionService API – REST + GraphQL Tests
+#  Requires: VS Code REST Client extension (humao.rest-client)
+#  API Base : http://localhost:5043
+#
+#  STEP 1: Run tests/generate-token.ps1 to generate a fresh JWT token
+#  STEP 2: Paste the token in @token below, then run any request
+#
+#  JWT Config: Key=CHANGE_THIS_TO_A_SECURE_256BIT_SECRET_KEY_AT_LEAST_32CHARS
+#              Issuer=DeductionService  Audience=DeductionServiceClients
+#  NOTE: The PayrollAdmin role is required for POST /api/Deduction/process-monthly
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@baseUrl    = http://localhost:5043
+@token      = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwibmFtZSI6ImFkbWluIiwicm9sZSI6IlBheXJvbGxBZG1pbiIsImp0aSI6Ijk0YTJiOGJmLTEyZGUtNDQxMC05YjMzLWNkZTNlNmNlMGViMyIsImV4cCI6MTc3NDUzMjc0NiwiaXNzIjoiRGVkdWN0aW9uU2VydmljZSIsImF1ZCI6IkRlZHVjdGlvblNlcnZpY2VDbGllbnRzIn0.GXayd8kZ2XxbS9CPVqUVRX5VVweLquYPmjbshd4hOrw
+@authHeader = Bearer {{token}}
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 1  HEALTH CHECKS
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 1.1 Full health check
+GET {{baseUrl}}/health
+Accept: application/json
+
+###
+
+### 1.2 Liveness probe (always Healthy)
+GET {{baseUrl}}/health/live
+Accept: application/json
+
+###
+
+### 1.3 Readiness probe (db tag)
+GET {{baseUrl}}/health/ready
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 2  SWAGGER
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 2.1 OpenAPI JSON spec
+GET {{baseUrl}}/swagger/v1/swagger.json
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 3  REST – Deductions  /api/Deduction
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 3.1 GET deduction by systemId (seeded via POST §4.1)
+GET {{baseUrl}}/api/Deduction/1001
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 3.2 GET deductions by employee
+GET {{baseUrl}}/api/Deduction/employee/1001
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 3.3 GET deduction history for employee
+GET {{baseUrl}}/api/Deduction/employee/1001/history
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 3.4 GET deduction amount (from pricing function)
+GET {{baseUrl}}/api/Deduction/amount?empSysId=1001&itemCode=5001&dateTaken=2026-03-26
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 3.5 POST – create ad-hoc deduction ← run this first to seed data
+POST {{baseUrl}}/api/Deduction
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "systemId": 1001,
+  "canteenUnit": 1001,
+  "payAmount": 150.00,
+  "earningDeductionCode": "EDC001",
+  "employeeNumber": 1001,
+  "enteredByUserId": 1,
+  "companyCode": "HQ",
+  "gradeType": "A"
+}
+
+###
+
+### 3.6 POST – create second deduction
+POST {{baseUrl}}/api/Deduction
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "systemId": 1002,
+  "canteenUnit": 1001,
+  "payAmount": 250.00,
+  "earningDeductionCode": "EDC002",
+  "employeeNumber": 1001,
+  "enteredByUserId": 1,
+  "companyCode": "BR1",
+  "gradeType": "B"
+}
+
+###
+
+### 3.7 POST – create third deduction (different employee)
+POST {{baseUrl}}/api/Deduction
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "systemId": 2001,
+  "canteenUnit": 1002,
+  "payAmount": 99.50,
+  "earningDeductionCode": "EDC001",
+  "employeeNumber": 2001,
+  "enteredByUserId": 1,
+  "companyCode": "HQ",
+  "gradeType": "A"
+}
+
+###
+
+### 3.8 DELETE – cancel deduction 1002 by userId 1
+DELETE {{baseUrl}}/api/Deduction/1002?cancelledByUserId=1
+Authorization: {{authHeader}}
+
+###
+
+### 3.9 POST – process monthly deductions (requires PayrollAdmin role)
+POST {{baseUrl}}/api/Deduction/process-monthly
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "monthYear": "2026-03",
+  "processedByUserId": 1
+}
+
+###
+
+### 3.10 GET – 404 for non-existent systemId
+GET {{baseUrl}}/api/Deduction/99999
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 3.11 GET – 401 Unauthorized (no token)
+GET {{baseUrl}}/api/Deduction/1001
+Accept: application/json
+
+###
+
+### 3.12 POST – validation error (payAmount = 0)
+POST {{baseUrl}}/api/Deduction
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "systemId": 9999,
+  "canteenUnit": 1001,
+  "payAmount": 0,
+  "earningDeductionCode": "EDC001",
+  "employeeNumber": 1001,
+  "enteredByUserId": 1
+}
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 4  MINIMAL API v2  /api/v2/deductions
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 4.1 GET deductions for employee (v2)
+GET {{baseUrl}}/api/v2/deductions/employee/1001
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.2 POST – create deduction via minimal API (v2)
+POST {{baseUrl}}/api/v2/deductions/
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "systemId": 3001,
+  "canteenUnit": 1003,
+  "payAmount": 75.00,
+  "earningDeductionCode": "EDC003",
+  "employeeNumber": 3001,
+  "enteredByUserId": 1,
+  "companyCode": "WH",
+  "gradeType": "C"
+}
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 5  GRAPHQL  /graphql
+#   Banana Cake Pop UI: GET http://localhost:5043/graphql
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 5.1 Query – get deduction by id
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "query GetById($id: Long!) { deductionById(systemId: $id) { systemId canteenUnit employeeNumber payAmount earningDeductionCode entryDate cancelFlag companyCode gradeType } }",
+  "variables": { "id": 1001 }
+}
+
+###
+
+### 5.2 Query – get deductions by employee
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "query GetByEmp($empNum: Long!) { deductionsByEmployee(employeeNumber: $empNum) { systemId canteenUnit employeeNumber payAmount earningDeductionCode cancelFlag } }",
+  "variables": { "empNum": 1001 }
+}
+
+###
+
+### 5.3 Query – get deduction history for employee
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "query GetHistory($empNum: Long!) { deductionHistory(employeeNumber: $empNum) { systemId canteenUnit employeeNumber payAmount earningDeductionCode entryDate cancelFlag } }",
+  "variables": { "empNum": 1001 }
+}
+
+###
+
+### 5.4 Query – get deduction amount
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "query GetAmount($empId: Long!, $item: Long!, $date: DateTime!) { deductionAmount(empSysId: $empId, itemCode: $item, dateTaken: $date) { employeeShare employerShare total } }",
+  "variables": { "empId": 1001, "item": 5001, "date": "2026-03-26T00:00:00Z" }
+}
+
+###
+
+### 5.5 Mutation – create deduction
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "mutation Create($input: CreateAdhocDeductionDtoInput!) { createDeduction(input: $input) { systemId canteenUnit employeeNumber payAmount earningDeductionCode cancelFlag } }",
+  "variables": {
+    "input": {
+      "systemId": 4001,
+      "canteenUnit": 1001,
+      "payAmount": 200.00,
+      "earningDeductionCode": "EDC004",
+      "employeeNumber": 4001,
+      "enteredByUserId": 1,
+      "companyCode": "HQ",
+      "gradeType": "A"
+    }
+  }
+}
+
+###
+
+### 5.6 Mutation – cancel deduction
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "mutation Cancel($id: Long!, $userId: Long!) { cancelDeduction(systemId: $id, cancelledByUserId: $userId) }",
+  "variables": { "id": 4001, "userId": 1 }
+}
+
+###
+
+### 5.7 Mutation – process monthly deductions (PayrollAdmin role required)
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "mutation ProcessMonthly($month: String!, $userId: Long!) { processMonthlyDeduction(monthYear: $month, processedByUserId: $userId) { monthYear processedCount totalAmount success errorMessage } }",
+  "variables": { "month": "2026-03", "userId": 1 }
+}
+
+###
+
+### 5.8 GraphQL introspection – list all queries and mutations
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "{ __schema { queryType { fields { name description args { name type { name kind ofType { name kind } } } } } mutationType { fields { name description args { name type { name kind ofType { name kind } } } } } } }"
+}
+
+###

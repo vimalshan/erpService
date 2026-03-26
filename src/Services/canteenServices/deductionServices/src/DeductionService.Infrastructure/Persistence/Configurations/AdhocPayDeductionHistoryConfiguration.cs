@@ -9,9 +9,9 @@ public class AdhocPayDeductionHistoryConfiguration : IEntityTypeConfiguration<Ad
     public void Configure(EntityTypeBuilder<AdhocPayDeductionHistory> builder)
     {
         builder.ToTable("ADHOC_PAY_DED_HIS");
-        builder.HasNoKey();
+        builder.HasKey(x => x.SystemId);
 
-        builder.Property(x => x.SystemId).HasColumnName("PY_SYS_ID").IsRequired();
+        builder.Property(x => x.SystemId).HasColumnName("PY_SYS_ID").IsRequired().ValueGeneratedNever();
         builder.Property(x => x.CanteenUnit).HasColumnName("PY_CAN_UNT").IsRequired();
         builder.Property(x => x.SerialNumber).HasColumnName("PY_SRL_NUM");
         builder.Property(x => x.BatchNumber).HasColumnName("PY_BAT_NUM");

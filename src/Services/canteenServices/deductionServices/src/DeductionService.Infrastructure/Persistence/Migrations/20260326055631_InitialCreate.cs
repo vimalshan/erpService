@@ -36,6 +36,7 @@ namespace DeductionService.Infrastructure.Persistence.Migrations
                 },
                 constraints: table =>
                 {
+                    table.PrimaryKey("PK_ADHOC_PAY_DED", x => x.PY_SYS_ID);
                 });
 
             migrationBuilder.CreateTable(
@@ -61,6 +62,7 @@ namespace DeductionService.Infrastructure.Persistence.Migrations
                 },
                 constraints: table =>
                 {
+                    table.PrimaryKey("PK_ADHOC_PAY_DED_HIS", x => x.PY_SYS_ID);
                 });
 
             migrationBuilder.CreateTable(

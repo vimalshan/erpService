@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: referencedata-service
+  labels:
+    name: referencedata-service
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: referencedata-service-config
+  namespace: referencedata-service
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:5195"
+  Jwt__Issuer: "ReferenceDataService"
+  Jwt__Audience: "ReferenceDataService.Clients"
+  Jwt__ExpireMinutes: "60"
+  RabbitMQ__HostName: "rabbitmq.referencedata-service.svc.cluster.local"
+  RabbitMQ__Port: "5672"
+  RabbitMQ__UserName: "guest"
+  AzureBlobStorage__ContainerName: "stationery-images"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft: "Warning"

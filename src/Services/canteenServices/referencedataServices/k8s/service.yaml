@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: referencedata-service
+  namespace: referencedata-service
+  labels:
+    app: referencedata-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: referencedata-service
+  ports:
+  - name: http
+    port: 80
+    targetPort: 5195
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: referencedata-service-internal
+  namespace: referencedata-service
+  labels:
+    app: referencedata-service
+spec:
+  type: ClusterIP
+  selector:
+    app: referencedata-service
+  ports:
+  - name: http
+    port: 5195
+    targetPort: 5195
+    protocol: TCP

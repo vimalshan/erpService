@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: swipe-transaction-service
+  labels:
+    name: swipe-transaction-service
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swipe-transaction-service-config
+  namespace: swipe-transaction-service
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:5196"
+  Jwt__Issuer: "SwipeTransactionService"
+  Jwt__Audience: "SwipeTransactionServiceClients"
+  Jwt__ExpiryMinutes: "60"
+  RabbitMQ__Host: "rabbitmq.swipe-transaction-service.svc.cluster.local"
+  RabbitMQ__Port: "5672"
+  RabbitMQ__Username: "guest"
+  RabbitMQ__VirtualHost: "/"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft: "Warning"

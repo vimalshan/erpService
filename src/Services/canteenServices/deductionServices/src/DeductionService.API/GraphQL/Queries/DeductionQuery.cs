@@ -7,7 +7,6 @@ using MediatR;
 
 namespace DeductionService.API.GraphQL.Queries;
 
-[QueryType]
 public class DeductionQuery
 {
     public async Task<AdhocPayDeductionDto> GetDeductionByIdAsync(

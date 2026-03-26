@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: card-management-service
+  labels:
+    name: card-management-service
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: card-management-service-config
+  namespace: card-management-service
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:5191"
+  Jwt__Issuer: "CardManagementAPI"
+  Jwt__Audience: "CardManagementClients"
+  RabbitMQ__Host: "rabbitmq.card-management-service.svc.cluster.local"
+  RabbitMQ__Port: "5672"
+  RabbitMQ__Username: "guest"
+  RabbitMQ__VirtualHost: "/"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft: "Warning"

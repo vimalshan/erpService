@@ -47,6 +47,7 @@ public class CanteenItemCreatedConsumer : BackgroundService
             _connection = await factory.CreateConnectionAsync(ct);
             _channel = await _connection.CreateChannelAsync(cancellationToken: ct);
 
+            await _channel.ExchangeDeclareAsync(_settings.ExchangeName, "topic", durable: true, autoDelete: false, cancellationToken: ct);
             await _channel.QueueDeclareAsync(QueueName, durable: true, exclusive: false, autoDelete: false, cancellationToken: ct);
             await _channel.QueueBindAsync(QueueName, _settings.ExchangeName, "canteen.item.created", cancellationToken: ct);
             _logger.LogInformation("[Consumer] CanteenItemCreatedConsumer connected and listening.");
@@ -54,6 +55,8 @@ public class CanteenItemCreatedConsumer : BackgroundService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "[Consumer] CanteenItemCreatedConsumer could not connect to RabbitMQ. Consumer will be inactive.");
+            if (_channel is not null) { await _channel.DisposeAsync(); _channel = null; }
+            if (_connection is not null) { await _connection.DisposeAsync(); _connection = null; }
         }
 
         await base.StartAsync(ct);
@@ -129,6 +132,7 @@ public class CanteenItemPriceUpdatedConsumer : BackgroundService
             _connection = await factory.CreateConnectionAsync(ct);
             _channel = await _connection.CreateChannelAsync(cancellationToken: ct);
 
+            await _channel.ExchangeDeclareAsync(_settings.ExchangeName, "topic", durable: true, autoDelete: false, cancellationToken: ct);
             await _channel.QueueDeclareAsync(QueueName, durable: true, exclusive: false, autoDelete: false, cancellationToken: ct);
             await _channel.QueueBindAsync(QueueName, _settings.ExchangeName, "canteen.item.price.updated", cancellationToken: ct);
             _logger.LogInformation("[Consumer] CanteenItemPriceUpdatedConsumer connected and listening.");
@@ -136,6 +140,8 @@ public class CanteenItemPriceUpdatedConsumer : BackgroundService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "[Consumer] CanteenItemPriceUpdatedConsumer could not connect to RabbitMQ. Consumer will be inactive.");
+            if (_channel is not null) { await _channel.DisposeAsync(); _channel = null; }
+            if (_connection is not null) { await _connection.DisposeAsync(); _connection = null; }
         }
 
         await base.StartAsync(ct);

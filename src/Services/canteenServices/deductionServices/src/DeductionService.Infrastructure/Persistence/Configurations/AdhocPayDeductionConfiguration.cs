@@ -9,9 +9,9 @@ public class AdhocPayDeductionConfiguration : IEntityTypeConfiguration<AdhocPayD
     public void Configure(EntityTypeBuilder<AdhocPayDeduction> builder)
     {
         builder.ToTable("ADHOC_PAY_DED");
-        builder.HasNoKey();
+        builder.HasKey(x => x.SystemId);
 
-        builder.Property(x => x.SystemId).HasColumnName("PY_SYS_ID");
+        builder.Property(x => x.SystemId).HasColumnName("PY_SYS_ID").ValueGeneratedNever();
         builder.Property(x => x.CanteenUnit).HasColumnName("PY_CAN_UNT");
         builder.Property(x => x.SerialNumber).HasColumnName("PY_SRL_NUM");
         builder.Property(x => x.BatchNumber).HasColumnName("PY_BAT_NUM");

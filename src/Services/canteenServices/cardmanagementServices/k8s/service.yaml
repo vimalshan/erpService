@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: card-management-service
+  namespace: card-management-service
+  labels:
+    app: card-management-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: card-management-service
+  ports:
+  - name: http
+    port: 80
+    targetPort: 5191
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: card-management-service-internal
+  namespace: card-management-service
+  labels:
+    app: card-management-service
+spec:
+  type: ClusterIP
+  selector:
+    app: card-management-service
+  ports:
+  - name: http
+    port: 5191
+    targetPort: 5191
+    protocol: TCP

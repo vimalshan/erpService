@@ -1,0 +1,446 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  EligibilityService API – REST + GraphQL Tests
+#  Requires: VS Code REST Client extension (humao.rest-client)
+#  API Base : http://localhost:5174
+#
+#  STEP 1: Run request §1.1 (POST /api/auth/token) → copy token from response
+#  STEP 2: Paste it in @token below, then run any other request
+#
+#  Auth: POST /api/auth/token  credentials: admin / Admin@123
+#  JWT : Issuer=EligibilityService  Audience=EligibilityServiceClients
+#
+#  SEEDED DATA (canteenUnit=10001):
+#    ShiftA + itemCode=1001  eligibleLimit=2  timeOfficeUnit=T01
+#    ShiftB + itemCode=1001  eligibleLimit=2  timeOfficeUnit=T01
+#    ShiftC + itemCode=1002  eligibleLimit=1  timeOfficeUnit=T01
+#    ShiftG + itemCode=1002  eligibleLimit=1  timeOfficeUnit=T01
+#  ShiftMappings: CompanyCode=10001 ShiftCode A/B/C/G
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@baseUrl    = http://localhost:5174
+@token      = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImp0aSI6IjMwYTVkMmE4LWMwN2ItNGE0Ni1hMWMwLWVhODBhODcyMDg4MCIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJhZG1pbiIsImV4cCI6MTc3NDUwODczNSwiaXNzIjoiRWxpZ2liaWxpdHlTZXJ2aWNlIiwiYXVkIjoiRWxpZ2liaWxpdHlTZXJ2aWNlQ2xpZW50cyJ9._pnRDtButGP5GH1LxnNmfHPlr72COGrSpt1AAFcda3k
+@authHeader = Bearer {{token}}
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 1  AUTHENTICATION
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 1.1 POST – Get JWT token  ← run this first, paste token above
+POST {{baseUrl}}/api/auth/token
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "Admin@123"
+}
+
+###
+
+### 1.2 Invalid credentials (expect 401)
+POST {{baseUrl}}/api/auth/token
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "wrong"
+}
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 2  HEALTH CHECKS
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 2.1 Full health
+GET {{baseUrl}}/health
+Accept: application/json
+
+###
+
+### 2.2 DB readiness probe
+GET {{baseUrl}}/health/db
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 3  SWAGGER
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 3.1 OpenAPI JSON spec
+GET {{baseUrl}}/swagger/v1/swagger.json
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 4  REST – EligibilityMaster  /api/eligibilitymaster
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 4.1 GET all eligibility masters
+GET {{baseUrl}}/api/eligibilitymaster
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.2 GET filtered by canteenUnit
+GET {{baseUrl}}/api/eligibilitymaster?canteenUnit=10001
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.3 GET by composite key (seeded: 10001/A/1001)
+GET {{baseUrl}}/api/eligibilitymaster/10001/A/1001
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.4 GET by composite key (seeded: 10001/C/1002)
+GET {{baseUrl}}/api/eligibilitymaster/10001/C/1002
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.5 GET check eligibility
+GET {{baseUrl}}/api/eligibilitymaster/check?canteenUnit=10001&shiftCode=A&itemCode=1001&requestedQty=1
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.6 GET check eligibility – over limit (expect isEligible=false)
+GET {{baseUrl}}/api/eligibilitymaster/check?canteenUnit=10001&shiftCode=C&itemCode=1002&requestedQty=5
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.7 GET audit history for a record
+GET {{baseUrl}}/api/eligibilitymaster/10001/A/1001/history
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.8 POST – create new eligibility master
+POST {{baseUrl}}/api/eligibilitymaster
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "canteenUnit": 20001,
+  "shiftCode": "A",
+  "itemCode": 2001,
+  "eligibleLimit": 3,
+  "enteredUser": 1,
+  "timeOfficeUnit": "T02"
+}
+
+###
+
+### 4.9 PUT – update eligibility master
+PUT {{baseUrl}}/api/eligibilitymaster/20001/A/2001
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "canteenUnit": 20001,
+  "shiftCode": "A",
+  "itemCode": 2001,
+  "eligibleLimit": 5,
+  "timeOfficeUnit": "T03",
+  "modifiedUser": 1
+}
+
+###
+
+### 4.10 DELETE – delete eligibility master
+DELETE {{baseUrl}}/api/eligibilitymaster/20001/A/2001
+Authorization: {{authHeader}}
+
+###
+
+### 4.11 GET – 404 for non-existent record
+GET {{baseUrl}}/api/eligibilitymaster/99999/Z/9999
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.12 POST – duplicate entry (expect 409)
+POST {{baseUrl}}/api/eligibilitymaster
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "canteenUnit": 10001,
+  "shiftCode": "A",
+  "itemCode": 1001,
+  "eligibleLimit": 2,
+  "enteredUser": 1
+}
+
+###
+
+### 4.13 POST – validation error: shiftCode too long (expect 400)
+POST {{baseUrl}}/api/eligibilitymaster
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "canteenUnit": 10001,
+  "shiftCode": "TOOLONG",
+  "itemCode": 1001,
+  "eligibleLimit": 2,
+  "enteredUser": 1
+}
+
+###
+
+### 4.14 GET – 401 Unauthorized (no token)
+GET {{baseUrl}}/api/eligibilitymaster
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 5  REST – DaywiseEligibility  /api/daywiseeligibility
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 5.1 POST – create daywise eligibility record
+POST {{baseUrl}}/api/daywiseeligibility
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "serialNumber": 10001,
+  "companyCode": 10001,
+  "employeeSysId": 5001,
+  "attendanceDate": "2026-03-26T00:00:00Z",
+  "processNumber": 1,
+  "shiftCode": "A",
+  "itemCode": 1001,
+  "shiftQuantity": 1,
+  "beforeShiftQty": 0,
+  "afterShiftQty": 0,
+  "enteredUser": 1,
+  "flexField1": null,
+  "gradeType": "A"
+}
+
+###
+
+### 5.2 GET by serial number
+GET {{baseUrl}}/api/daywiseeligibility/10001
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 5.3 GET by employee
+GET {{baseUrl}}/api/daywiseeligibility/employee/10001/5001
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 5.4 GET by attendance date
+GET {{baseUrl}}/api/daywiseeligibility/date/10001?date=2026-03-26
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 5.5 DELETE daywise eligibility record
+DELETE {{baseUrl}}/api/daywiseeligibility/10001
+Authorization: {{authHeader}}
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 6  MINIMAL API v2  /eligibility/v2
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 6.1 GET all eligibility (v2)
+GET {{baseUrl}}/eligibility/v2
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 6.2 GET by composite key (v2)
+GET {{baseUrl}}/eligibility/v2/10001/A/1001
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 6.3 POST create eligibility (v2)
+POST {{baseUrl}}/eligibility/v2
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "canteenUnit": 30001,
+  "shiftCode": "B",
+  "itemCode": 3001,
+  "eligibleLimit": 2,
+  "enteredUser": 1,
+  "timeOfficeUnit": "T04"
+}
+
+###
+
+### 6.4 PUT update eligibility (v2)
+PUT {{baseUrl}}/eligibility/v2/30001/B/3001
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "canteenUnit": 30001,
+  "shiftCode": "B",
+  "itemCode": 3001,
+  "eligibleLimit": 4,
+  "timeOfficeUnit": "T05",
+  "modifiedUser": 1
+}
+
+###
+
+### 6.5 DELETE eligibility (v2)
+DELETE {{baseUrl}}/eligibility/v2/30001/B/3001
+Authorization: {{authHeader}}
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 7  GRAPHQL  /graphql
+#   Banana Cake Pop UI: GET http://localhost:5174/graphql
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 7.1 Query – get all eligibility masters
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "{ eligibilityMasters { canteenUnit shiftCode itemCode eligibleLimit enteredUser enteredOn timeOfficeUnit } }"
+}
+
+###
+
+### 7.2 Query – get eligibility masters filtered by canteenUnit
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "query GetByUnit($unit: Long!) { eligibilityMasters(canteenUnit: $unit) { canteenUnit shiftCode itemCode eligibleLimit timeOfficeUnit } }",
+  "variables": { "unit": 10001 }
+}
+
+###
+
+### 7.3 Query – get single eligibility master
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "query GetOne($unit: Long!, $shift: String!, $item: Decimal!) { eligibilityMaster(canteenUnit: $unit, shiftCode: $shift, itemCode: $item) { canteenUnit shiftCode itemCode eligibleLimit timeOfficeUnit } }",
+  "variables": { "unit": 10001, "shift": "A", "item": 1001 }
+}
+
+###
+
+### 7.4 Query – check eligibility
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "query Check($unit: Long!, $shift: String!, $item: Decimal!, $qty: Int!) { checkEligibility(canteenUnit: $unit, shiftCode: $shift, itemCode: $item, requestedQty: $qty) { isEligible eligibleLimit } }",
+  "variables": { "unit": 10001, "shift": "A", "item": 1001, "qty": 1 }
+}
+
+###
+
+### 7.5 Query – get eligibility history
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "query GetHistory($unit: Long!, $shift: String!, $item: Decimal!) { eligibilityHistory(canteenUnit: $unit, shiftCode: $shift, itemCode: $item) { canteenUnit shiftCode itemCode eligibleLimit modifiedUser modifiedOn } }",
+  "variables": { "unit": 10001, "shift": "A", "item": 1001 }
+}
+
+###
+
+### 7.6 Mutation – create eligibility master
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "mutation Create($input: CreateEligibilityMasterCommandInput!) { createEligibility(input: $input) { canteenUnit shiftCode itemCode eligibleLimit timeOfficeUnit } }",
+  "variables": {
+    "input": {
+      "canteenUnit": 40001,
+      "shiftCode": "A",
+      "itemCode": 4001,
+      "eligibleLimit": 3,
+      "enteredUser": 1,
+      "timeOfficeUnit": "T06"
+    }
+  }
+}
+
+###
+
+### 7.7 Mutation – update eligibility master
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "mutation Update($input: UpdateEligibilityMasterCommandInput!) { updateEligibility(input: $input) { canteenUnit shiftCode itemCode eligibleLimit timeOfficeUnit } }",
+  "variables": {
+    "input": {
+      "canteenUnit": 40001,
+      "shiftCode": "A",
+      "itemCode": 4001,
+      "eligibleLimit": 6,
+      "timeOfficeUnit": "T07",
+      "modifiedUser": 1
+    }
+  }
+}
+
+###
+
+### 7.8 Mutation – delete eligibility master
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "mutation Delete($unit: Long!, $shift: String!, $item: Decimal!) { deleteEligibility(canteenUnit: $unit, shiftCode: $shift, itemCode: $item) }",
+  "variables": { "unit": 40001, "shift": "A", "item": 4001 }
+}
+
+###
+
+### 7.9 GraphQL introspection – list all queries and mutations
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "{ __schema { queryType { fields { name description args { name type { name kind ofType { name kind } } } } } mutationType { fields { name description args { name type { name kind ofType { name kind } } } } } } }"
+}
+
+###

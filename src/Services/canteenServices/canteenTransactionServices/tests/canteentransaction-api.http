@@ -1,0 +1,213 @@
+### CanteenTransactionService API Tests
+### Base URL
+@baseUrl = http://localhost:5195
+@token = {{login.response.body.token}}
+
+### ──────────────────────────────────────────────
+### 1. Authentication — Get JWT Token
+### ──────────────────────────────────────────────
+# @name login
+POST {{baseUrl}}/api/auth/token
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### ──────────────────────────────────────────────
+### 2. Canteen Transaction (CANTEEDN_DACON)
+### ──────────────────────────────────────────────
+
+### 2.1 Record a canteen transaction
+POST {{baseUrl}}/api/canteen-transactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "companyCode": 1,
+  "employeeSysId": 1001,
+  "employeeType": "R",
+  "swipeDate": "20240115",
+  "itemCode": 100,
+  "itemType": "F",
+  "employeeContribution": 50.00,
+  "employerContribution": 100.00,
+  "canteenNumber": "C1",
+  "itemQuantity": 2,
+  "entryUser": 999,
+  "entryDate": "20240115",
+  "gradeCategory": "A01"
+}
+
+### 2.2 Get transaction by serial number
+GET {{baseUrl}}/api/canteen-transactions/1
+Authorization: Bearer {{token}}
+
+### 2.3 Get transactions by employee
+GET {{baseUrl}}/api/canteen-transactions/employee/1001?fromDate=20240101&toDate=20240131
+Authorization: Bearer {{token}}
+
+### 2.4 Get transactions by company and date
+GET {{baseUrl}}/api/canteen-transactions/company/1/date/20240115
+Authorization: Bearer {{token}}
+
+### 2.5 Cancel a transaction
+DELETE {{baseUrl}}/api/canteen-transactions/1
+Authorization: Bearer {{token}}
+
+### ──────────────────────────────────────────────
+### 3. Daily Availed (CANTEEN_DAYWISE_AVAILED)
+### ──────────────────────────────────────────────
+
+### 3.1 Process daily availed record
+POST {{baseUrl}}/api/daily-availed
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "companyCode": 1,
+  "employeeSysId": 1001,
+  "employeeType": "R",
+  "swipeDate": "20240115",
+  "itemCode": 100,
+  "itemType": "F",
+  "employeeContribution": 50.00,
+  "employerContribution": 100.00,
+  "canteenNumber": "C1",
+  "itemQuantity": 1,
+  "entryUser": 999,
+  "entryDate": "20240115",
+  "gradeCategory": "A01"
+}
+
+### 3.2 Get daily availed by serial number
+GET {{baseUrl}}/api/daily-availed/1
+Authorization: Bearer {{token}}
+
+### 3.3 Get daily availed by employee
+GET {{baseUrl}}/api/daily-availed/employee/1001?fromDate=20240101&toDate=20240131
+Authorization: Bearer {{token}}
+
+### 3.4 Get daily availed by company and date
+GET {{baseUrl}}/api/daily-availed/company/1/date/20240115
+Authorization: Bearer {{token}}
+
+### ──────────────────────────────────────────────
+### 4. MIS Batch Submission (CANTEEN_MIS_SBT)
+### ──────────────────────────────────────────────
+
+### 4.1 Submit an MIS batch
+POST {{baseUrl}}/api/mis-batch
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "companyCode": 1,
+  "employeeNumber": "EMP001",
+  "swipeTime": "2024-01-15T12:30:00",
+  "itemCode": 100,
+  "itemQuantity": 3,
+  "batchDate": "2024-01-15T00:00:00",
+  "batchNumber": 5001,
+  "canteenNumber": "1",
+  "gateNumber": "G01"
+}
+
+### 4.2 Get MIS batch by serial number
+GET {{baseUrl}}/api/mis-batch/1
+Authorization: Bearer {{token}}
+
+### 4.3 Get MIS batches by batch number
+GET {{baseUrl}}/api/mis-batch/batch/5001
+Authorization: Bearer {{token}}
+
+### 4.4 Get pending MIS batches
+GET {{baseUrl}}/api/mis-batch/pending
+Authorization: Bearer {{token}}
+
+### 4.5 Process an MIS batch
+PUT {{baseUrl}}/api/mis-batch/1/process
+Authorization: Bearer {{token}}
+
+### 4.6 Fail an MIS batch
+PUT {{baseUrl}}/api/mis-batch/1/fail
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "reason": "Validation error: invalid item code"
+}
+
+### ──────────────────────────────────────────────
+### 5. Minimal API Endpoints (v2)
+### ──────────────────────────────────────────────
+
+### 5.1 Record transaction via minimal API
+POST {{baseUrl}}/api/v2/canteen-transactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "companyCode": 1,
+  "employeeSysId": 1002,
+  "employeeType": "C",
+  "swipeDate": "20240116",
+  "itemCode": 200,
+  "itemType": "B",
+  "employeeContribution": 30.00,
+  "employerContribution": 70.00,
+  "canteenNumber": "C2",
+  "itemQuantity": 1,
+  "entryUser": 999,
+  "entryDate": "20240116",
+  "gradeCategory": "B02"
+}
+
+### 5.2 Get transaction via minimal API
+GET {{baseUrl}}/api/v2/canteen-transactions/1
+Authorization: Bearer {{token}}
+
+### ──────────────────────────────────────────────
+### 6. Health Checks
+### ──────────────────────────────────────────────
+
+### 6.1 Full health check
+GET {{baseUrl}}/health
+
+### 6.2 Readiness check
+GET {{baseUrl}}/health/ready
+
+### 6.3 Liveness check
+GET {{baseUrl}}/health/live
+
+### ──────────────────────────────────────────────
+### 7. GraphQL
+### ──────────────────────────────────────────────
+
+### 7.1 Query transaction by serial number
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { transactionBySerialNumber(serialNumber: 1) { serialNumber companyCode employeeSysId swipeDate itemCode itemQuantity employeeContribution employerContribution } }"
+}
+
+### 7.2 Query daily summary via Dapper
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { dailySummary(companyCode: 1, swipeDate: \"20240115\") { companyCode swipeDate itemCode itemDescription totalQuantity totalEmployeeContribution totalEmployerContribution } }"
+}
+
+### 7.3 Record transaction via GraphQL mutation
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { recordTransaction(input: { companyCode: 1, employeeSysId: 1003, employeeType: \"R\", swipeDate: \"20240117\", itemCode: 300, itemType: \"F\", employeeContribution: 40, employerContribution: 80, canteenNumber: \"C1\", itemQuantity: 1, entryUser: 999, entryDate: \"20240117\", gradeCategory: \"A01\" }) { serialNumber companyCode employeeSysId } }"
+}

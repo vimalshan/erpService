@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: eligibility-service
+  namespace: eligibility-service
+  labels:
+    app: eligibility-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: eligibility-service
+  ports:
+  - name: http
+    port: 80
+    targetPort: 5193
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eligibility-service-internal
+  namespace: eligibility-service
+  labels:
+    app: eligibility-service
+spec:
+  type: ClusterIP
+  selector:
+    app: eligibility-service
+  ports:
+  - name: http
+    port: 5193
+    targetPort: 5193
+    protocol: TCP

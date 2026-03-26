@@ -12,12 +12,10 @@ public class CanteenUnitRepository : ICanteenUnitRepository
 
     public async Task<CanteenUnitMaster?> GetByIdAsync(decimal companyCode, CancellationToken ct)
         => await _context.CanteenUnitMasters
-            .Include(u => u.Accesses)
             .FirstOrDefaultAsync(u => u.UnComCod == companyCode, ct);
 
     public async Task<IEnumerable<CanteenUnitMaster>> GetAllAsync(CancellationToken ct)
         => await _context.CanteenUnitMasters
-            .Include(u => u.Accesses)
             .ToListAsync(ct);
 
     public async Task<CanteenUnitMaster> AddAsync(CanteenUnitMaster entity, CancellationToken ct)

@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: card-management-service
+  labels:
+    name: card-management-service
+    environment: production
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: card-management-service
+  namespace: card-management-service
+  labels:
+    app: card-management-service
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: card-management-service-role
+  namespace: card-management-service
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+  resourceNames: ["card-management-service-config"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+  resourceNames: ["card-management-service-secrets"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: card-management-service-rolebinding
+  namespace: card-management-service
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: card-management-service-role
+subjects:
+- kind: ServiceAccount
+  name: card-management-service
+  namespace: card-management-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: card-management-service-pdb
+  namespace: card-management-service
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: card-management-service

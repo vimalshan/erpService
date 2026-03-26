@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DeductionService.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(DeductionDbContext))]
-    [Migration("20260311110606_InitialCreate")]
+    [Migration("20260326055631_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -27,6 +27,10 @@ namespace DeductionService.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("DeductionService.Domain.Entities.AdhocPayDeduction", b =>
                 {
+                    b.Property<long>("SystemId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("PY_SYS_ID");
+
                     b.Property<long?>("AttachmentNumber")
                         .HasColumnType("bigint")
                         .HasColumnName("PY_ATT_NUM");
@@ -88,10 +92,6 @@ namespace DeductionService.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("PY_SRL_NUM");
 
-                    b.Property<long>("SystemId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("PY_SYS_ID");
-
                     b.Property<DateTime?>("TransactionDate")
                         .HasPrecision(3)
                         .HasColumnType("datetime2(3)")
@@ -101,11 +101,17 @@ namespace DeductionService.Infrastructure.Persistence.Migrations
                         .HasColumnType("CHAR(1)")
                         .HasColumnName("PY_UPD_FLG");
 
+                    b.HasKey("SystemId");
+
                     b.ToTable("ADHOC_PAY_DED", (string)null);
                 });
 
             modelBuilder.Entity("DeductionService.Domain.Entities.AdhocPayDeductionHistory", b =>
                 {
+                    b.Property<long>("SystemId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("PY_SYS_ID");
+
                     b.Property<long?>("AttachmentNumber")
                         .HasColumnType("bigint")
                         .HasColumnName("PY_ATT_NUM");
@@ -159,10 +165,6 @@ namespace DeductionService.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("PY_SRL_NUM");
 
-                    b.Property<long>("SystemId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("PY_SYS_ID");
-
                     b.Property<DateTime?>("TransactionDate")
                         .HasPrecision(3)
                         .HasColumnType("datetime2(3)")
@@ -171,6 +173,8 @@ namespace DeductionService.Infrastructure.Persistence.Migrations
                     b.Property<string>("UpdateFlag")
                         .HasColumnType("CHAR(1)")
                         .HasColumnName("PY_UPD_FLG");
+
+                    b.HasKey("SystemId");
 
                     b.ToTable("ADHOC_PAY_DED_HIS", (string)null);
                 });

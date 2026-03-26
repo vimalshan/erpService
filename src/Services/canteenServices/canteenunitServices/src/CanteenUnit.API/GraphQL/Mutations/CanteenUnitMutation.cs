@@ -3,12 +3,10 @@ using CanteenUnit.Application.Features.CanteenUnits.Commands.CreateCanteenUnit;
 using CanteenUnit.Application.Features.CanteenUnits.Commands.DeleteCanteenUnit;
 using CanteenUnit.Application.Features.CanteenUnits.Commands.UpdateCanteenUnit;
 using HotChocolate;
-using HotChocolate.Types;
 using MediatR;
 
 namespace CanteenUnit.API.GraphQL.Mutations;
 
-[MutationType]
 public class CanteenUnitMutation
 {
     public async Task<CanteenUnitMasterDto> CreateCanteenUnitAsync(

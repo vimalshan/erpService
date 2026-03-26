@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: swipe-transaction-service
+  namespace: swipe-transaction-service
+  labels:
+    app: swipe-transaction-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: swipe-transaction-service
+  ports:
+  - name: http
+    port: 80
+    targetPort: 5196
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: swipe-transaction-service-internal
+  namespace: swipe-transaction-service
+  labels:
+    app: swipe-transaction-service
+spec:
+  type: ClusterIP
+  selector:
+    app: swipe-transaction-service
+  ports:
+  - name: http
+    port: 5196
+    targetPort: 5196
+    protocol: TCP

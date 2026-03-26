@@ -1,0 +1,338 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  CanteenUnit API – REST + GraphQL Tests
+#  Requires: VS Code REST Client extension (humao.rest-client)
+#  API Base : http://localhost:5190
+#
+#  TOKEN: Run tests\generate-token.ps1 to regenerate a fresh token and paste
+#         the output below. The token below is valid for 24 h from generation.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@baseUrl = http://localhost:5190
+@token   = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsIm5hbWUiOiJUZXN0IFVzZXIiLCJyb2xlIjoiQWRtaW4iLCJpc3MiOiJDYW50ZWVuVW5pdEFQSSIsImF1ZCI6IkNhbnRlZW5Vbml0Q2xpZW50cyIsImlhdCI6MTc3NDQ5OTc3MywiZXhwIjoxNzc0NTg2MTczfQ.TcWfms7jxwJdQqifhasd87wXNPP4cTwfxROD3p1XJB8
+@authHeader = Bearer {{token}}
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 1  HEALTH CHECK
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 1.1 Health – detailed JSON response
+GET {{baseUrl}}/health
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 2  SWAGGER
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 2.1 Swagger UI (open in browser)
+GET {{baseUrl}}/swagger/index.html
+
+### 2.2 OpenAPI JSON spec
+GET {{baseUrl}}/swagger/v1/swagger.json
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 3  REST – CanteenUnits  (v1 Controller)   /api/CanteenUnits
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 3.1 GET all canteen units
+GET {{baseUrl}}/api/CanteenUnits
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 3.2 GET canteen unit by comCode (seeded: 1001)
+GET {{baseUrl}}/api/CanteenUnits/1001
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 3.3 GET canteen unit by comCode (seeded: 1002)
+GET {{baseUrl}}/api/CanteenUnits/1002
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 3.4 POST – create new canteen unit
+POST {{baseUrl}}/api/CanteenUnits
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "comCode": 2001,
+  "unitName": "East Block Unit",
+  "unitRef": "EBU-001",
+  "maxVal": 6000,
+  "minVal": 200,
+  "siteId": 4,
+  "hrmsId": 2001
+}
+
+###
+
+### 3.5 PUT – update canteen unit (edit the one created above)
+PUT {{baseUrl}}/api/CanteenUnits/2001
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "comCode": 2001,
+  "unitName": "East Block Unit (Updated)",
+  "unitRef": "EBU-001-UP",
+  "maxVal": 7000,
+  "minVal": 250,
+  "siteId": 4,
+  "hrmsId": 2001
+}
+
+###
+
+### 3.6 DELETE – delete canteen unit (Admin role required)
+DELETE {{baseUrl}}/api/CanteenUnits/2001
+Authorization: {{authHeader}}
+
+###
+
+### 3.7 GET – 404 for non-existent code
+GET {{baseUrl}}/api/CanteenUnits/9999
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 4  REST – CanteenMasters  (v1 Controller)   /api/CanteenMasters
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 4.1 GET all canteen masters
+GET {{baseUrl}}/api/CanteenMasters
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.2 GET canteen master by comCode
+GET {{baseUrl}}/api/CanteenMasters/1001
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.3 POST – create canteen master
+POST {{baseUrl}}/api/CanteenMasters
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "comCode": 3001,
+  "canNum": 501,
+  "fromDate": "2026-01-01T00:00:00Z",
+  "toDate": "2026-12-31T00:00:00Z",
+  "liveFlag": "Y",
+  "enteredBy": 1,
+  "remark": "East canteen master record"
+}
+
+###
+
+### 4.4 PATCH – update live flag
+PATCH {{baseUrl}}/api/CanteenMasters/3001/live?flag=N
+Authorization: {{authHeader}}
+
+###
+
+### 4.5 DELETE – delete canteen master (Admin role)
+DELETE {{baseUrl}}/api/CanteenMasters/3001
+Authorization: {{authHeader}}
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 5  MINIMAL API v2  /api/v2/canteen-units
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 5.1 GET all (v2)
+GET {{baseUrl}}/api/v2/canteen-units/
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 5.2 GET by comCode (v2)
+GET {{baseUrl}}/api/v2/canteen-units/1003
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 5.3 POST create (v2)
+POST {{baseUrl}}/api/v2/canteen-units/
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "comCode": 2002,
+  "unitName": "West Block Unit",
+  "unitRef": "WBU-002",
+  "maxVal": 4500,
+  "minVal": 150,
+  "siteId": 5,
+  "hrmsId": 2002
+}
+
+###
+
+### 5.4 Search (Dapper) – by name fragment
+GET {{baseUrl}}/api/v2/canteen-units/search?name=Wing
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 5.5 Get units with access count (Dapper)
+GET {{baseUrl}}/api/v2/canteen-units/with-access-count
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 6  GRAPHQL   /graphql
+#   Use Banana Cake Pop UI: GET http://localhost:5190/graphql
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 6.1 Query – get all canteen units
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "{ canteenUnits { unComCod unUntName untUntRef unMaxVal inMinVal unSitId unHrmsId } }"
+}
+
+###
+
+### 6.2 Query – get single canteen unit by comCode
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "query GetUnit($code: Decimal!) { canteenUnit(comCode: $code) { unComCod unUntName untUntRef unMaxVal inMinVal } }",
+  "variables": { "code": 1001 }
+}
+
+###
+
+### 6.3 Query – get all canteen masters
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "{ canteenMasters { cnComCod cnCanNum cnCanFro cnCanTo cnLivFlg cnRemMrk } }"
+}
+
+###
+
+### 6.4 Mutation – create canteen unit
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "mutation CreateUnit($input: CreateCanteenUnitCommandInput!) { createCanteenUnit(input: $input) { unComCod unUntName untUntRef unMaxVal } }",
+  "variables": {
+    "input": {
+      "comCode": 3001,
+      "unitName": "Rooftop Canteen Unit",
+      "unitRef": "RCU-003",
+      "maxVal": 8000,
+      "minVal": 300,
+      "siteId": 6,
+      "hrmsId": 3001
+    }
+  }
+}
+
+###
+
+### 6.5 Mutation – update canteen unit
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "mutation UpdateUnit($input: UpdateCanteenUnitCommandInput!) { updateCanteenUnit(input: $input) }",
+  "variables": {
+    "input": {
+      "comCode": 3001,
+      "unitName": "Rooftop Canteen Unit (Upd)",
+      "unitRef": "RCU-003-V2",
+      "maxVal": 9000,
+      "minVal": 350,
+      "siteId": 6,
+      "hrmsId": 3001
+    }
+  }
+}
+
+###
+
+### 6.6 Mutation – delete canteen unit
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "mutation DeleteUnit($code: Decimal!) { deleteCanteenUnit(comCode: $code) }",
+  "variables": { "code": 3001 }
+}
+
+###
+
+### 6.7 GraphQL introspection – list all queries and mutations
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "{ __schema { queryType { fields { name description args { name type { name kind ofType { name kind } } } } } mutationType { fields { name description args { name type { name kind ofType { name kind } } } } } } }"
+}
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 7  ERROR / EDGE CASES
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 7.1 Unauthorized – no token (expect 401)
+GET {{baseUrl}}/api/CanteenUnits
+Accept: application/json
+
+###
+
+### 7.2 POST validation – missing required unitName (expect 400)
+POST {{baseUrl}}/api/CanteenUnits
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "comCode": 5001,
+  "unitName": "",
+  "unitRef": null
+}
+
+###
+
+### 7.3 Not found (expect 404)
+GET {{baseUrl}}/api/CanteenUnits/99999
+Authorization: {{authHeader}}
+Accept: application/json
+
+###

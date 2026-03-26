@@ -93,24 +93,40 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // ─── Auto-migrate & seed on startup ──────────────────────────────────────────
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment("Testing"))
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ItemMasterDbContext>();
-    await db.Database.MigrateAsync();
-    await SeedData.SeedAsync(db, app.Logger);
+
+    // Retry migration up to 5 times (DB may still be warming up in Docker)
+    const int maxRetries = 5;
+    for (var attempt = 1; attempt <= maxRetries; attempt++)
+    {
+        try
+        {
+            await db.Database.MigrateAsync();
+            await SeedData.SeedAsync(db, app.Logger);
+            break;
+        }
+        catch (Exception ex) when (attempt < maxRetries)
+        {
+            app.Logger.LogWarning(ex, "Database migration attempt {Attempt}/{Max} failed. Retrying in 5s...", attempt, maxRetries);
+            await Task.Delay(TimeSpan.FromSeconds(5));
+        }
+    }
 }
 
 // ─── Middleware pipeline ──────────────────────────────────────────────────────
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ItemMaster API v1"));
+
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ItemMaster API v1"));
+    app.UseHttpsRedirection();
 }
-
-app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -151,3 +167,7 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions
 });
 
 app.Run();
+
+// Expose Program as public partial class so the test project can use
+// WebApplicationFactory<Program> without requiring InternalsVisibleTo.
+public partial class Program { }

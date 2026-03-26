@@ -1,0 +1,381 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  CardManagement API – REST + GraphQL Tests
+#  Requires: VS Code REST Client extension (humao.rest-client)
+#  API Base : http://localhost:5042
+#
+#  STEP 1: Run request §1.1 (POST /api/auth/token) → copy token from response
+#  STEP 2: Paste it in @token below, then run any other request
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@baseUrl    = http://localhost:5042
+@token      = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidW5pcXVlX25hbWUiOiJhZG1pbiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJhZG1pbiIsImp0aSI6IjhiMDU1YmJhLWM2NDUtNDAzZS1iYzcyLWMzMmQ2YTNhYjFjZCIsImV4cCI6MTc3NDUzMTkyOCwiaXNzIjoiQ2FyZE1hbmFnZW1lbnRBUEkiLCJhdWQiOiJDYXJkTWFuYWdlbWVudENsaWVudHMifQ.XDmcXPOp-ewxBoEYo0CHDUH5XqAgtnRfloa9vvSLhvM
+@authHeader = Bearer {{token}}
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 1  AUTHENTICATION
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 1.1 POST – Get JWT token  ← run this first, paste token above
+POST {{baseUrl}}/api/auth/token
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin"
+}
+
+###
+
+### 1.2 Invalid credentials (expect 401)
+POST {{baseUrl}}/api/auth/token
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "wrong"
+}
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 2  HEALTH CHECKS
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 2.1 Full health (db + messaging)
+GET {{baseUrl}}/health
+Accept: application/json
+
+###
+
+### 2.2 Readiness probe (db only)
+GET {{baseUrl}}/health/ready
+Accept: application/json
+
+###
+
+### 2.3 Liveness probe (always healthy)
+GET {{baseUrl}}/health/live
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 3  SWAGGER
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 3.1 OpenAPI JSON spec
+GET {{baseUrl}}/swagger/v1/swagger.json
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 4  REST – GuestCards  /api/GuestCards
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 4.1 GET all guest cards (paged)
+GET {{baseUrl}}/api/GuestCards
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.2 GET with pagination
+GET {{baseUrl}}/api/GuestCards?pageNumber=1&pageSize=2
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.3 GET filtered by canteenUnit
+GET {{baseUrl}}/api/GuestCards?canteenUnit=1001
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.4 GET by canteenUnit (seeded: 1001)
+GET {{baseUrl}}/api/GuestCards/1001
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.5 GET by canteenUnit (seeded: 1002)
+GET {{baseUrl}}/api/GuestCards/1002
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.6 POST – create new guest card
+POST {{baseUrl}}/api/GuestCards
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "canteenUnit": 2001,
+  "cardSequence": 10,
+  "cardNumber": "CARD-TEST-001",
+  "cardName": "Test Guest User",
+  "cardType": "G",
+  "reportingUnit": "IT",
+  "reportingDepartment": 50,
+  "effectiveDate": "2026-01-01T00:00:00Z"
+}
+
+###
+
+### 4.7 PUT – update guest card
+PUT {{baseUrl}}/api/GuestCards/2001
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "canteenUnit": 2001,
+  "cardName": "Test Guest User (Updated)",
+  "cardType": "V",
+  "reportingUnit": "IT-B",
+  "reportingDepartment": 55
+}
+
+###
+
+### 4.8 PATCH – close guest card
+PATCH {{baseUrl}}/api/GuestCards/2001/close
+Authorization: {{authHeader}}
+
+###
+
+### 4.9 GET – 404 for non-existent canteenUnit
+GET {{baseUrl}}/api/GuestCards/99999
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 4.10 GET – 401 Unauthorized (no token)
+GET {{baseUrl}}/api/GuestCards
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 5  REST – CardMaps  /api/CardMaps
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 5.1 GET card maps for canteenUnit 1001
+GET {{baseUrl}}/api/CardMaps/1001
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 5.2 GET card maps – active only
+GET {{baseUrl}}/api/CardMaps/1001?activeOnly=true
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 6  REST – Settlements  /api/Settlements
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 6.1 POST – create settlement
+POST {{baseUrl}}/api/Settlements
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "sysId": 1001,
+  "canteenUnit": 1001,
+  "cardNumber": "CARD-001",
+  "settlementDate": "2026-03-26T00:00:00Z"
+}
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 7  MINIMAL API  /api/minimal/cards
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 7.1 GET all cards (minimal)
+GET {{baseUrl}}/api/minimal/cards/
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 7.2 GET by canteenUnit (minimal)
+GET {{baseUrl}}/api/minimal/cards/1003
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+### 7.3 GET with pagination (minimal)
+GET {{baseUrl}}/api/minimal/cards/?pageNumber=1&pageSize=2
+Authorization: {{authHeader}}
+Accept: application/json
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 8  GRAPHQL  /graphql
+#   Banana Cake Pop UI: GET http://localhost:5042/graphql
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 8.1 Query – get all guest cards
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "{ guestCards { canteenUnit cardSequence cardNumber cardName cardType reportingUnit reportingDepartment effectiveDate closingDate isActive } }"
+}
+
+###
+
+### 8.2 Query – get guest cards with pagination
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "query GetCards($page: Int!, $size: Int!) { guestCards(pageNumber: $page, pageSize: $size) { canteenUnit cardNumber cardName isActive } }",
+  "variables": { "page": 1, "size": 2 }
+}
+
+###
+
+### 8.3 Query – get guest card by id
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "query GetCard($id: Long!) { guestCardById(canteenUnit: $id) { canteenUnit cardNumber cardName cardType effectiveDate isActive } }",
+  "variables": { "id": 1001 }
+}
+
+###
+
+### 8.4 Query – filter with where clause (HotChocolate filtering)
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "{ guestCards(where: { isActive: { eq: true } }) { canteenUnit cardNumber cardName isActive } }"
+}
+
+###
+
+### 8.5 Query – sort cards by cardName ascending
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "{ guestCards(order: [{ cardName: ASC }]) { canteenUnit cardNumber cardName } }"
+}
+
+###
+
+### 8.6 Mutation – create guest card
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "mutation CreateCard($cmd: CreateGuestCardCommandInput!) { createGuestCard(command: $cmd) { canteenUnit cardNumber cardName isActive } }",
+  "variables": {
+    "cmd": {
+      "canteenUnit": 3001,
+      "cardSequence": 20,
+      "cardNumber": "CARD-GQL-001",
+      "cardName": "GraphQL Test Card",
+      "cardType": "G",
+      "reportingUnit": "QA",
+      "reportingDepartment": 99,
+      "effectiveDate": "2026-03-26T00:00:00Z"
+    }
+  }
+}
+
+###
+
+### 8.7 Mutation – close guest card
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "mutation CloseCard($id: Long!) { closeGuestCard(canteenUnit: $id) }",
+  "variables": { "id": 3001 }
+}
+
+###
+
+### 8.8 Mutation – settle card
+POST {{baseUrl}}/graphql
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "query": "mutation Settle($cmd: SettleCardCommandInput!) { settleCard(command: $cmd) { sysId canteenUnit cardNumber settlementDate } }",
+  "variables": {
+    "cmd": {
+      "sysId": 2001,
+      "canteenUnit": 1002,
+      "cardNumber": "CARD-002",
+      "settlementDate": "2026-03-26T00:00:00Z"
+    }
+  }
+}
+
+###
+
+### 8.9 GraphQL introspection – list all queries and mutations
+POST {{baseUrl}}/graphql
+Content-Type: application/json
+
+{
+  "query": "{ __schema { queryType { fields { name description args { name type { name kind ofType { name kind } } } } } mutationType { fields { name description args { name type { name kind ofType { name kind } } } } } } }"
+}
+
+###
+
+# ───────────────────────────────────────────────────────────────────────────────
+# 9  EDGE CASES
+# ───────────────────────────────────────────────────────────────────────────────
+
+### 9.1 PUT mismatch – route id ≠ body id (expect 400)
+PUT {{baseUrl}}/api/GuestCards/1001
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "canteenUnit": 9999,
+  "cardName": "Mismatch Test",
+  "cardType": "G"
+}
+
+###
+
+### 9.2 POST duplicate card (create 2001 again – expect 409 or 400)
+POST {{baseUrl}}/api/GuestCards
+Authorization: {{authHeader}}
+Content-Type: application/json
+
+{
+  "canteenUnit": 2001,
+  "cardSequence": 10,
+  "cardNumber": "CARD-TEST-001",
+  "cardName": "Duplicate",
+  "cardType": "G",
+  "effectiveDate": "2026-01-01T00:00:00Z"
+}
+
+###

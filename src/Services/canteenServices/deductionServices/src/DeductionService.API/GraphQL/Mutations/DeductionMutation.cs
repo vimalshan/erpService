@@ -6,7 +6,6 @@ using MediatR;
 
 namespace DeductionService.API.GraphQL.Mutations;
 
-[MutationType]
 public class DeductionMutation
 {
     public async Task<AdhocPayDeductionDto> CreateDeductionAsync(

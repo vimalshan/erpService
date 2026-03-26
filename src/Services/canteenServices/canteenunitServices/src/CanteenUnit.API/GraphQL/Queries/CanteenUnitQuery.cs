@@ -3,12 +3,10 @@ using CanteenUnit.Application.Features.CanteenUnits.Queries.GetAllCanteenUnits;
 using CanteenUnit.Application.Features.CanteenUnits.Queries.GetCanteenUnit;
 using CanteenUnit.Application.Features.CanteenMasters.Queries;
 using HotChocolate;
-using HotChocolate.Types;
 using MediatR;
 
 namespace CanteenUnit.API.GraphQL.Queries;
 
-[QueryType]
 public class CanteenUnitQuery
 {
     public async Task<IEnumerable<CanteenUnitMasterDto>> GetCanteenUnitsAsync(
