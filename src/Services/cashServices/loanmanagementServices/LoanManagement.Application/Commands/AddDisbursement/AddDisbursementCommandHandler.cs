@@ -27,9 +27,8 @@ public class AddDisbursementCommandHandler : IRequestHandler<AddDisbursementComm
         var loan = await _loanRepository.GetByIdAsync(request.LoanId, cancellationToken)
             ?? throw new LoanDomainException($"Loan {request.LoanId} not found.");
 
-        var nextId = await _disbursementRepository.GetNextIdAsync(cancellationToken);
         var disbursement = LoanDisbursementSchedule.Create(
-            nextId,
+            0,
             request.LoanId,
             request.DisbDate,
             request.Amount,

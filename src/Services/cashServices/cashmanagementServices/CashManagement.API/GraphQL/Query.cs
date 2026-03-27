@@ -43,4 +43,7 @@ public class Query
 
     public async Task<IEnumerable<BankReconciliationDto>> GetReconciliations([Service] IMediator mediator, long bankAccountId, CancellationToken ct)
         => await mediator.Send(new GetReconciliationHistoryQuery(bankAccountId), ct);
+
+    public async Task<BankReconciliationDto?> GetReconciliation([Service] IMediator mediator, long id, CancellationToken ct)
+        => await mediator.Send(new GetReconciliationByIdQuery(id), ct);
 }

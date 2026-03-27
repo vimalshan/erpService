@@ -9,7 +9,6 @@ namespace DealTicketing.API.GraphQL;
 
 // ── GraphQL Query Type ──────────────────────────────────────────────────────
 
-[QueryType]
 public class DealQuery
 {
     public async Task<DealBatchDto?> GetDealBatch(long id, IMediator mediator, CancellationToken ct)
@@ -39,7 +38,6 @@ public class DealQuery
 
 // ── GraphQL Mutation Type ───────────────────────────────────────────────────
 
-[MutationType]
 public class DealMutation
 {
     public async Task<DealBatchDto> CreateDealBatch(

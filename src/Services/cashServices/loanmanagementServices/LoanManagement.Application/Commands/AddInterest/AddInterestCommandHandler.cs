@@ -29,9 +29,8 @@ public class AddInterestCommandHandler : IRequestHandler<AddInterestCommand, Int
             ?? throw new LoanDomainException($"Loan {request.LoanId} not found.");
 
         var rateType = request.RateType == "FX" ? InterestRateType.Fixed : InterestRateType.Floating;
-        var nextId = await _interestRepository.GetNextIdAsync(cancellationToken);
         var interest = LoanInterest.Create(
-            nextId, request.LoanId, rateType, request.Percentage,
+            0, request.LoanId, rateType, request.Percentage,
             request.FloatTypeId, request.EffectiveDate);
 
         loan.AddInterest(interest);

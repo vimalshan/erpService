@@ -14,20 +14,20 @@ GO
 
 -- Table: DEAL_ROLE - Role Master
 CREATE TABLE [DEAL_ROLE] (
-    [ROLE_ID] BIGINT NOT NULL  -- Role ID,
-    [ROLE_NAME] VARCHAR(50) NOT NULL  -- Role Name,
-    [ROLE_LEVEL] BIGINT NOT NULL  -- Role Level,
-    [ROLE_MODIFIEDBY] DECIMAL(38) NOT NULL  -- Modified By,
-    [ROLE_MODIFIEDON] DATETIME2(3) NOT NULL  -- Modified On,
+    [ROLE_ID] BIGINT NOT NULL,          -- Role ID
+    [ROLE_NAME] VARCHAR(50) NOT NULL,    -- Role Name
+    [ROLE_LEVEL] BIGINT NOT NULL,        -- Role Level
+    [ROLE_MODIFIEDBY] DECIMAL(38) NOT NULL, -- Modified By
+    [ROLE_MODIFIEDON] DATETIME2(3) NOT NULL, -- Modified On
     CONSTRAINT [PK_DEAL_ROLE] PRIMARY KEY ([ROLE_ID])
 );
 
 -- Table: DEAL_USERMAP - User Role Mapping
 CREATE TABLE [DEAL_USERMAP] (
-    [ROLE_MAPID] BIGINT NOT NULL  -- Role Map ID,
-    [ROLE_ID] BIGINT NOT NULL  -- Role ID,
-    [ROLE_EMPSYSID] BIGINT NOT NULL  -- Employee System ID,
-    [ROLE_ORGID] BIGINT NOT NULL  -- Organization ID,
+    [ROLE_MAPID] BIGINT NOT NULL,      -- Role Map ID
+    [ROLE_ID] BIGINT NOT NULL,          -- Role ID
+    [ROLE_EMPSYSID] BIGINT NOT NULL,    -- Employee System ID
+    [ROLE_ORGID] BIGINT NOT NULL,       -- Organization ID
     [ROLE_BUSINESS] BIGINT NULL,
     CONSTRAINT [PK_DEAL_USERMAP] PRIMARY KEY ([ROLE_MAPID]),
     CONSTRAINT [FK_DEAL_USERMAP_ROLE] FOREIGN KEY ([ROLE_ID]) REFERENCES [DEAL_ROLE]([ROLE_ID])
@@ -35,10 +35,10 @@ CREATE TABLE [DEAL_USERMAP] (
 
 -- Table: DEAL_ORGPARAMS - Organization Parameters
 CREATE TABLE [DEAL_ORGPARAMS] (
-    [ORG_PARAMID] BIGINT NOT NULL  -- Parameter ID,
-    [ORG_PARAMTYPE] CHAR(6) NOT NULL  -- Parameter Type,
-    [ORG_PARAMVALUE] BIGINT NOT NULL  -- Parameter Value,
-    [ORG_ID] BIGINT NOT NULL  -- Organization ID,
+    [ORG_PARAMID] BIGINT NOT NULL,     -- Parameter ID
+    [ORG_PARAMTYPE] CHAR(6) NOT NULL,   -- Parameter Type
+    [ORG_PARAMVALUE] BIGINT NOT NULL,   -- Parameter Value
+    [ORG_ID] BIGINT NOT NULL,           -- Organization ID
     [ORG_MODIFIEDBY] DECIMAL(38) NOT NULL,
     [ORG_MODIFIEDON] DATETIME2(3) NOT NULL,
     CONSTRAINT [PK_DEAL_ORGPARAMS] PRIMARY KEY ([ORG_PARAMID])
@@ -46,13 +46,13 @@ CREATE TABLE [DEAL_ORGPARAMS] (
 
 -- Table: DEAL_PPLIMIT - PP Limit Management
 CREATE TABLE [DEAL_PPLIMIT] (
-    [PP_LIMITID] BIGINT NOT NULL  -- PP Limit ID,
-    [PP_ORGID] BIGINT NOT NULL  -- Organization ID,
-    [PP_TRANTYPE] CHAR(1) NOT NULL  -- I/ E - Imports /Exports,
-    [PP_BASCURR] BIGINT NOT NULL  -- Base Currency ID,
-    [PP_LIMITAMT] DECIMAL(19,0) NULL  -- PP Limit Amount,
-    [PP_FINYEAR] INT NOT NULL  -- Financial Year,
-    [PP_LIMITACT] DECIMAL(19,0) NULL  -- PP Limit Used,
+    [PP_LIMITID] BIGINT NOT NULL,       -- PP Limit ID
+    [PP_ORGID] BIGINT NOT NULL,         -- Organization ID
+    [PP_TRANTYPE] CHAR(1) NOT NULL,     -- I/E - Imports/Exports
+    [PP_BASCURR] BIGINT NOT NULL,       -- Base Currency ID
+    [PP_LIMITAMT] DECIMAL(19,0) NULL,   -- PP Limit Amount
+    [PP_FINYEAR] INT NOT NULL,          -- Financial Year
+    [PP_LIMITACT] DECIMAL(19,0) NULL,   -- PP Limit Used
     [PP_CERTIFICATEUPLOAD] VARCHAR(500) NULL,
     [PP_MODIFIEDBY] DECIMAL(38) NULL,
     [PP_MODIFIEDON] DATETIME2(3) NULL,

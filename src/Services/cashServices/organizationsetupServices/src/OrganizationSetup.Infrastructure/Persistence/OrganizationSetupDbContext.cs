@@ -1,3 +1,4 @@
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OrganizationSetup.Domain.Common;
 using OrganizationSetup.Domain.Entities;
@@ -7,7 +8,12 @@ namespace OrganizationSetup.Infrastructure.Persistence;
 
 public class OrganizationSetupDbContext : DbContext
 {
-    public OrganizationSetupDbContext(DbContextOptions<OrganizationSetupDbContext> options) : base(options) { }
+    private readonly IMediator _mediator;
+
+    public OrganizationSetupDbContext(DbContextOptions<OrganizationSetupDbContext> options, IMediator mediator) : base(options)
+    {
+        _mediator = mediator;
+    }
 
     public DbSet<DealRole> DealRoles => Set<DealRole>();
     public DbSet<DealUserMap> DealUserMaps => Set<DealUserMap>();
@@ -26,10 +32,22 @@ public class OrganizationSetupDbContext : DbContext
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var entries = ChangeTracker.Entries<BaseEntity>().ToList();
+        var entries = ChangeTracker.Entries<BaseEntity>()
+            .Where(e => e.Entity.DomainEvents.Count > 0)
+            .ToList();
+
+        var domainEvents = entries
+            .SelectMany(e => e.Entity.DomainEvents)
+            .ToList();
+
         var result = await base.SaveChangesAsync(cancellationToken);
-        
-        // Domain events would be published here in a real UoW
+
+        // Dispatch domain events after successful save
+        foreach (var domainEvent in domainEvents)
+        {
+            await _mediator.Publish(domainEvent, cancellationToken);
+        }
+
         foreach (var entry in entries)
         {
             entry.Entity.ClearDomainEvents();

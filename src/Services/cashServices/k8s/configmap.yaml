@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cash-services-config
+  namespace: cash-services
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  RabbitMQ__HostName: "rabbitmq.cash-services.svc.cluster.local"
+  RabbitMQ__Port: "5672"
+  RabbitMQ__VirtualHost: "/"
+  Logging__LogLevel__Default: "Warning"
+  Logging__LogLevel__Microsoft: "Warning"

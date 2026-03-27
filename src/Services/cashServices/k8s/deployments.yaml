@@ -1,0 +1,620 @@
+# ============================================================================
+# Cash Services - All Microservice Deployments
+# ============================================================================
+
+# --------------------------------------------------------------------------
+# API Gateway (Port 5000)
+# --------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: cash-services
+  labels:
+    app: api-gateway
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5000"
+    spec:
+      serviceAccountName: cash-services-sa
+      containers:
+      - name: api-gateway
+        image: cashservices/api-gateway:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        envFrom:
+        - configMapRef:
+            name: cash-services-config
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:5000"
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: ConnectionStrings__CASHDB
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_USER
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_PASS
+        - name: ServiceEndpoints__CashManagement
+          value: "http://cash-management-api:5249"
+        - name: ServiceEndpoints__CurrencyManagement
+          value: "http://currency-management-api:5031"
+        - name: ServiceEndpoints__DealTicketing
+          value: "http://deal-ticketing-api:5081"
+        - name: ServiceEndpoints__LoanManagement
+          value: "http://loan-management-api:5268"
+        - name: ServiceEndpoints__OrganizationSetup
+          value: "http://organization-setup-api:5099"
+        - name: ServiceEndpoints__EmailNotification
+          value: "http://email-notification-api:5032"
+        - name: ServiceEndpoints__TransactionProcessing
+          value: "http://transaction-processing-api:5100"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 30
+
+---
+# --------------------------------------------------------------------------
+# Organization Setup Service (Port 5099)
+# --------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: organization-setup-api
+  namespace: cash-services
+  labels:
+    app: organization-setup-api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: organization-setup-api
+  template:
+    metadata:
+      labels:
+        app: organization-setup-api
+    spec:
+      serviceAccountName: cash-services-sa
+      containers:
+      - name: organization-setup-api
+        image: cashservices/organization-setup-api:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5099
+        envFrom:
+        - configMapRef:
+            name: cash-services-config
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:5099"
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: ConnectionStrings__CASHDB
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_USER
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_PASS
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5099
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5099
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# --------------------------------------------------------------------------
+# Currency Management Service (Port 5031)
+# --------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: currency-management-api
+  namespace: cash-services
+  labels:
+    app: currency-management-api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: currency-management-api
+  template:
+    metadata:
+      labels:
+        app: currency-management-api
+    spec:
+      serviceAccountName: cash-services-sa
+      containers:
+      - name: currency-management-api
+        image: cashservices/currency-management-api:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5031
+        envFrom:
+        - configMapRef:
+            name: cash-services-config
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:5031"
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: ConnectionStrings__CASHDB
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_USER
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_PASS
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5031
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5031
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# --------------------------------------------------------------------------
+# Deal Ticketing Service (Port 5081)
+# --------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deal-ticketing-api
+  namespace: cash-services
+  labels:
+    app: deal-ticketing-api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: deal-ticketing-api
+  template:
+    metadata:
+      labels:
+        app: deal-ticketing-api
+    spec:
+      serviceAccountName: cash-services-sa
+      containers:
+      - name: deal-ticketing-api
+        image: cashservices/deal-ticketing-api:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5081
+        envFrom:
+        - configMapRef:
+            name: cash-services-config
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:5081"
+        - name: ConnectionStrings__DealTicketingDb
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: ConnectionStrings__CASHDB
+        - name: RabbitMQ__Username
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_USER
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_PASS
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5081
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# --------------------------------------------------------------------------
+# Loan Management Service (Port 5268)
+# --------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loan-management-api
+  namespace: cash-services
+  labels:
+    app: loan-management-api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: loan-management-api
+  template:
+    metadata:
+      labels:
+        app: loan-management-api
+    spec:
+      serviceAccountName: cash-services-sa
+      containers:
+      - name: loan-management-api
+        image: cashservices/loan-management-api:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5268
+        envFrom:
+        - configMapRef:
+            name: cash-services-config
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:5268"
+        - name: ConnectionStrings__LoanManagement
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: ConnectionStrings__CASHDB
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_USER
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_PASS
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5268
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5268
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# --------------------------------------------------------------------------
+# Cash Management Service (Port 5249)
+# --------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cash-management-api
+  namespace: cash-services
+  labels:
+    app: cash-management-api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: cash-management-api
+  template:
+    metadata:
+      labels:
+        app: cash-management-api
+    spec:
+      serviceAccountName: cash-services-sa
+      containers:
+      - name: cash-management-api
+        image: cashservices/cash-management-api:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5249
+        envFrom:
+        - configMapRef:
+            name: cash-services-config
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:5249"
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: ConnectionStrings__CASHDB
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_USER
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_PASS
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5249
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5249
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# --------------------------------------------------------------------------
+# Email Notification Service (Port 5032)
+# --------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: email-notification-api
+  namespace: cash-services
+  labels:
+    app: email-notification-api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: email-notification-api
+  template:
+    metadata:
+      labels:
+        app: email-notification-api
+    spec:
+      serviceAccountName: cash-services-sa
+      containers:
+      - name: email-notification-api
+        image: cashservices/email-notification-api:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5032
+        envFrom:
+        - configMapRef:
+            name: cash-services-config
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:5032"
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: ConnectionStrings__EmailNotificationDb
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_USER
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_PASS
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5032
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5032
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# --------------------------------------------------------------------------
+# Transaction Processing Service (Port 5100)
+# --------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transaction-processing-api
+  namespace: cash-services
+  labels:
+    app: transaction-processing-api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: transaction-processing-api
+  template:
+    metadata:
+      labels:
+        app: transaction-processing-api
+    spec:
+      serviceAccountName: cash-services-sa
+      containers:
+      - name: transaction-processing-api
+        image: cashservices/transaction-processing-api:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5100
+        envFrom:
+        - configMapRef:
+            name: cash-services-config
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:5100"
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: ConnectionStrings__TransactionProcessingDb
+        - name: RabbitMQ__Enabled
+          value: "true"
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_USER
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: cash-services-secrets
+              key: RABBITMQ_PASS
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5100
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5100
+          initialDelaySeconds: 10
+          periodSeconds: 5

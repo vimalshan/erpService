@@ -68,6 +68,9 @@ public static class DependencyInjection
         }
         services.AddScoped<IBlobStorageService, BlobStorageService>();
 
+        // Register MediatR handlers from Infrastructure assembly (domain event handlers)
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
+
         return services;
     }
 }

@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  mssql-server:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cashmgmt-mssql
+    environment:
+      ACCEPT_EULA: 'Y'
+      SA_PASSWORD: 'CashServices2026!'
+      MSSQL_PID: 'Express'
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      - cashmgmt-network
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "CashServices2026!", "-No", "-Q", "SELECT 1"]
+      interval: 15s
+      timeout: 10s
+      start_period: 60s
+      retries: 15
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: cashmgmt-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - cashmgmt-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 10
+
+  cash-management-api:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile
+    container_name: cash-management-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5249'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=CashServices2026!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: 'guest'
+      RabbitMQ__Password: 'guest'
+    ports:
+      - "5249:5249"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cashmgmt-network
+
+networks:
+  cashmgmt-network:
+    driver: bridge
+
+volumes:
+  mssql_data:

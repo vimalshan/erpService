@@ -7,6 +7,8 @@ using CurrencyManagement.Application.DTOs;
 using CurrencyManagement.Application.ExchangeRates.Commands.SetExchangeRate;
 using CurrencyManagement.Application.ExchangeRates.Queries.ConvertAmount;
 using CurrencyManagement.Application.ExchangeRates.Queries.GetExchangeRate;
+using CurrencyManagement.Application.OrganizationCurrencies.Commands.MapOrganizationCurrency;
+using CurrencyManagement.Application.OrganizationCurrencies.Queries.GetOrganizationCurrencies;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -151,6 +153,45 @@ public class ExchangeRatesController : ControllerBase
         catch (System.Collections.Generic.KeyNotFoundException)
         {
             return NotFound("Exchange rate not found");
+        }
+    }
+}
+
+[ApiController]
+[Route("api/[controller]")]
+public class OrganizationCurrenciesController : ControllerBase
+{
+    private readonly IMediator _mediator;
+
+    public OrganizationCurrenciesController(IMediator mediator)
+    {
+        _mediator = mediator;
+    }
+
+    /// <summary>
+    /// Gets currencies mapped to an organization
+    /// </summary>
+    [HttpGet("{organizationId}")]
+    public async Task<ActionResult<IList<OrganizationCurrencyDto>>> GetByOrganization(long organizationId, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetOrganizationCurrenciesQuery(organizationId), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Maps a currency to an organization
+    /// </summary>
+    [HttpPost]
+    public async Task<ActionResult<OrganizationCurrencyDto>> Map(MapOrganizationCurrencyCommand command, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _mediator.Send(command, cancellationToken);
+            return CreatedAtAction(nameof(GetByOrganization), new { organizationId = result.OrganizationId }, result);
+        }
+        catch (System.Collections.Generic.KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
         }
     }
 }

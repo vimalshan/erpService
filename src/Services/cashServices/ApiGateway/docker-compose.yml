@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile
+    container_name: api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5000'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=CashServices2026!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: 'guest'
+      RabbitMQ__Password: 'guest'
+    ports:
+      - "5000:5000"
+    networks:
+      - cashservices-network
+
+networks:
+  cashservices-network:
+    external: true
+    name: cashservices-network

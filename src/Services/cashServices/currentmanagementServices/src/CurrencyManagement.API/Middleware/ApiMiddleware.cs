@@ -97,7 +97,7 @@ public class CorrelationIdMiddleware
             : Guid.NewGuid().ToString();
 
         context.Items["CorrelationID"] = correlationId;
-        context.Response.Headers.Add("X-Correlation-ID", correlationId);
+        context.Response.Headers["X-Correlation-ID"] = correlationId;
 
         await _next(context);
     }

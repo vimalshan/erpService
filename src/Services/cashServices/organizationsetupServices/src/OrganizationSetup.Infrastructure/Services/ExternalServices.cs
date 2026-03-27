@@ -35,14 +35,16 @@ public class AzureBlobStorageService : IBlobStorageService
     }
 }
 
-public class RabbitMQMessagePublisher : IMessagePublisher
-{
-    // Simplified stub for RabbitMQ publishing
-    // Real implementation would use RabbitMQ.Client
 
-    public Task PublishAsync<T>(string exchange, string routingKey, T message, CancellationToken ct = default)
-    {
-        // TODO: Implement RabbitMQ publishing
-        return Task.CompletedTask;
-    }
+
+public class NullBlobStorageService : IBlobStorageService
+{
+    public Task<string> UploadAsync(string containerName, string blobName, Stream content, CancellationToken ct = default)
+        => throw new InvalidOperationException("Blob storage is not configured. Set the BlobStorage connection string in appsettings.");
+
+    public Task<Stream> DownloadAsync(string containerName, string blobName, CancellationToken ct = default)
+        => throw new InvalidOperationException("Blob storage is not configured. Set the BlobStorage connection string in appsettings.");
+
+    public Task<bool> DeleteAsync(string containerName, string blobName, CancellationToken ct = default)
+        => throw new InvalidOperationException("Blob storage is not configured. Set the BlobStorage connection string in appsettings.");
 }

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DealTicketing.Infrastructure.Migrations
 {
     [DbContext(typeof(DealTicketingDbContext))]
-    [Migration("20260312005023_InitialCreate")]
+    [Migration("20260327121047_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -28,11 +28,8 @@ namespace DealTicketing.Infrastructure.Migrations
             modelBuilder.Entity("DealTicketing.Domain.Entities.Bank", b =>
                 {
                     b.Property<long>("BankId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("BANK_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("BankId"));
 
                     b.Property<DateTime?>("BankClsDate")
                         .HasColumnType("datetime2")
@@ -64,11 +61,8 @@ namespace DealTicketing.Infrastructure.Migrations
             modelBuilder.Entity("DealTicketing.Domain.Entities.CategoryMaster", b =>
                 {
                     b.Property<long>("CategoryId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("CATEGORY_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("CategoryId"));
 
                     b.Property<decimal>("CategoryModifiedBy")
                         .HasColumnType("decimal(38,0)")
@@ -97,11 +91,8 @@ namespace DealTicketing.Infrastructure.Migrations
             modelBuilder.Entity("DealTicketing.Domain.Entities.DealAttachment", b =>
                 {
                     b.Property<long>("DealAttachmentId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("DEAL_ATTACHMENTID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("DealAttachmentId"));
 
                     b.Property<string>("DealAttachmentFile")
                         .IsRequired()
@@ -136,11 +127,8 @@ namespace DealTicketing.Infrastructure.Migrations
             modelBuilder.Entity("DealTicketing.Domain.Entities.DealBatch", b =>
                 {
                     b.Property<long>("DealBatchId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("DEAL_BATCHID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("DealBatchId"));
 
                     b.Property<long?>("DealBankId")
                         .HasColumnType("bigint")
@@ -216,11 +204,8 @@ namespace DealTicketing.Infrastructure.Migrations
             modelBuilder.Entity("DealTicketing.Domain.Entities.DealDetail", b =>
                 {
                     b.Property<long>("DealId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("DEAL_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("DealId"));
 
                     b.Property<decimal?>("DealAmount")
                         .HasColumnType("decimal(19,0)")
@@ -446,11 +431,8 @@ namespace DealTicketing.Infrastructure.Migrations
             modelBuilder.Entity("DealTicketing.Domain.Entities.DealLoanSchedule", b =>
                 {
                     b.Property<long>("DealSchId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("DEAL_SCHID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("DealSchId"));
 
                     b.Property<long>("DealId")
                         .HasColumnType("bigint")
@@ -474,11 +456,8 @@ namespace DealTicketing.Infrastructure.Migrations
             modelBuilder.Entity("DealTicketing.Domain.Entities.DealSettlement", b =>
                 {
                     b.Property<long>("SetId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("SET_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("SetId"));
 
                     b.Property<decimal?>("SetActGainLossAmt")
                         .HasColumnType("decimal(19,0)")
@@ -593,11 +572,8 @@ namespace DealTicketing.Infrastructure.Migrations
             modelBuilder.Entity("DealTicketing.Domain.Entities.DealSettlementAttachment", b =>
                 {
                     b.Property<long>("DealAttachmentId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("DEAL_ATTACHMENTID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("DealAttachmentId"));
 
                     b.Property<string>("DealAttachmentFile")
                         .IsRequired()
@@ -625,11 +601,8 @@ namespace DealTicketing.Infrastructure.Migrations
             modelBuilder.Entity("DealTicketing.Domain.Entities.LovMaster", b =>
                 {
                     b.Property<long>("LovId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("LOV_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("LovId"));
 
                     b.Property<string>("LovName")
                         .IsRequired()

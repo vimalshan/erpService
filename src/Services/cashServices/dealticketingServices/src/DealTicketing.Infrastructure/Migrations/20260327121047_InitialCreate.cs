@@ -15,8 +15,7 @@ namespace DealTicketing.Infrastructure.Migrations
                 name: "DEAL_BANKMASTER",
                 columns: table => new
                 {
-                    BANK_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    BANK_ID = table.Column<long>(type: "bigint", nullable: false),
                     BANK_NAME = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     BANK_EFFDATE = table.Column<DateTime>(type: "datetime2", nullable: false),
                     BANK_CLSDATE = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -32,8 +31,7 @@ namespace DealTicketing.Infrastructure.Migrations
                 name: "DEAL_CATEGORYMASTER",
                 columns: table => new
                 {
-                    CATEGORY_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CATEGORY_ID = table.Column<long>(type: "bigint", nullable: false),
                     CATEGORY_NAME = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     CATEGORY_TYPE = table.Column<string>(type: "char(1)", nullable: false),
                     CATEGORY_MODIFIEDON = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -48,8 +46,7 @@ namespace DealTicketing.Infrastructure.Migrations
                 name: "DEAL_LOVMASTER",
                 columns: table => new
                 {
-                    LOV_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    LOV_ID = table.Column<long>(type: "bigint", nullable: false),
                     LOV_TYPE = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
                     LOV_NAME = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false)
                 },
@@ -62,8 +59,7 @@ namespace DealTicketing.Infrastructure.Migrations
                 name: "DEALTICKET_BATCH",
                 columns: table => new
                 {
-                    DEAL_BATCHID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DEAL_BATCHID = table.Column<long>(type: "bigint", nullable: false),
                     DEAL_DATE = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DEAL_DERTYPE = table.Column<long>(type: "bigint", nullable: false),
                     DEAL_SCREENSHOT = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
@@ -93,8 +89,7 @@ namespace DealTicketing.Infrastructure.Migrations
                 name: "DEALTICKET_DET",
                 columns: table => new
                 {
-                    DEAL_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DEAL_ID = table.Column<long>(type: "bigint", nullable: false),
                     DEAL_NO = table.Column<long>(type: "bigint", nullable: false),
                     DEAL_VERSIONID = table.Column<long>(type: "bigint", nullable: false),
                     DEAL_BATCHID = table.Column<long>(type: "bigint", nullable: false),
@@ -166,8 +161,7 @@ namespace DealTicketing.Infrastructure.Migrations
                 name: "DEALTICKET_LOANSCH",
                 columns: table => new
                 {
-                    DEAL_SCHID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DEAL_SCHID = table.Column<long>(type: "bigint", nullable: false),
                     DEAL_ID = table.Column<long>(type: "bigint", nullable: false),
                     DEAL_SCHDATE = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DEAL_SCHAMT = table.Column<long>(type: "bigint", nullable: false)
@@ -187,8 +181,7 @@ namespace DealTicketing.Infrastructure.Migrations
                 name: "DEALTICKET_SET",
                 columns: table => new
                 {
-                    SET_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SET_ID = table.Column<long>(type: "bigint", nullable: false),
                     SET_DEALID = table.Column<long>(type: "bigint", nullable: false),
                     SET_SPOTRATE = table.Column<decimal>(type: "decimal(19,0)", nullable: true),
                     SET_DATE = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -230,8 +223,7 @@ namespace DealTicketing.Infrastructure.Migrations
                 name: "DEATICKET_ATTACHMENT",
                 columns: table => new
                 {
-                    DEAL_ATTACHMENTID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DEAL_ATTACHMENTID = table.Column<long>(type: "bigint", nullable: false),
                     DEAL_BATCHID = table.Column<long>(type: "bigint", nullable: false),
                     DEAL_ID = table.Column<long>(type: "bigint", nullable: false),
                     DEAL_ATTACHMENTTYPE = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
@@ -256,8 +248,7 @@ namespace DealTicketing.Infrastructure.Migrations
                 name: "DEATICKETSET_ATTACHMENT",
                 columns: table => new
                 {
-                    DEAL_ATTACHMENTID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DEAL_ATTACHMENTID = table.Column<long>(type: "bigint", nullable: false),
                     DEAL_SETID = table.Column<long>(type: "bigint", nullable: false),
                     DEAL_ATTACHMENTTYPE = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
                     DEAL_ATTACHMENTFILE = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false)

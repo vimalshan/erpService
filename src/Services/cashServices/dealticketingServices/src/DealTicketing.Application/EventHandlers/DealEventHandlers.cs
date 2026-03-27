@@ -1,18 +1,22 @@
+using DealTicketing.Application.Contracts;
 using DealTicketing.Domain.Events;
+using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace DealTicketing.Application.EventHandlers;
 
-public class DealBatchCreatedEventHandler(ILogger<DealBatchCreatedEventHandler> logger)
+public class DealBatchCreatedEventHandler(ILogger<DealBatchCreatedEventHandler> logger, IPublishEndpoint publishEndpoint)
     : INotificationHandler<DealBatchCreatedEvent>
 {
-    public Task Handle(DealBatchCreatedEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(DealBatchCreatedEvent notification, CancellationToken cancellationToken)
     {
         logger.LogInformation(
             "Domain event: DealBatch {BatchId} created on {Date} for derivative type {DerType}",
             notification.BatchId, notification.DealDate, notification.DerType);
-        return Task.CompletedTask;
+
+        await publishEndpoint.Publish(new DealBatchCreatedMessage(
+            notification.BatchId, notification.DealDate, notification.DerType, DateTime.UtcNow), cancellationToken);
     }
 }
 
@@ -28,38 +32,44 @@ public class DealCreatedEventHandler(ILogger<DealCreatedEventHandler> logger)
     }
 }
 
-public class DealApprovedEventHandler(ILogger<DealApprovedEventHandler> logger)
+public class DealApprovedEventHandler(ILogger<DealApprovedEventHandler> logger, IPublishEndpoint publishEndpoint)
     : INotificationHandler<DealApprovedEvent>
 {
-    public Task Handle(DealApprovedEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(DealApprovedEvent notification, CancellationToken cancellationToken)
     {
         logger.LogInformation(
             "Domain event: Deal {DealId} approved by business unit {Business}",
             notification.DealId, notification.AppBusiness);
-        return Task.CompletedTask;
+
+        await publishEndpoint.Publish(new DealApprovedMessage(
+            notification.DealId, notification.BatchId, notification.AppBusiness, DateTime.UtcNow), cancellationToken);
     }
 }
 
-public class DealRejectedEventHandler(ILogger<DealRejectedEventHandler> logger)
+public class DealRejectedEventHandler(ILogger<DealRejectedEventHandler> logger, IPublishEndpoint publishEndpoint)
     : INotificationHandler<DealRejectedEvent>
 {
-    public Task Handle(DealRejectedEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(DealRejectedEvent notification, CancellationToken cancellationToken)
     {
         logger.LogWarning(
             "Domain event: Deal {DealId} rejected in batch {BatchId}. Reason: {Remarks}",
             notification.DealId, notification.BatchId, notification.Remarks);
-        return Task.CompletedTask;
+
+        await publishEndpoint.Publish(new DealRejectedMessage(
+            notification.DealId, notification.BatchId, notification.Remarks, DateTime.UtcNow), cancellationToken);
     }
 }
 
-public class DealSettledEventHandler(ILogger<DealSettledEventHandler> logger)
+public class DealSettledEventHandler(ILogger<DealSettledEventHandler> logger, IPublishEndpoint publishEndpoint)
     : INotificationHandler<DealSettledEvent>
 {
-    public Task Handle(DealSettledEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(DealSettledEvent notification, CancellationToken cancellationToken)
     {
         logger.LogInformation(
             "Domain event: Deal {DealId} settled (settlement {SettlementId}). GainLoss={GainLoss}",
             notification.DealId, notification.SettlementId, notification.GainLossAmt);
-        return Task.CompletedTask;
+
+        await publishEndpoint.Publish(new DealSettledMessage(
+            notification.DealId, notification.SettlementId, notification.GainLossAmt, DateTime.UtcNow), cancellationToken);
     }
 }

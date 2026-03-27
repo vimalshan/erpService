@@ -80,7 +80,8 @@ builder.Services
     .AddGraphQLServer()
     .AddQueryType<DealQuery>()
     .AddMutationType<DealMutation>()
-    .AddAuthorization();
+    .AddAuthorization()
+    .BindRuntimeType<char, HotChocolate.Types.StringType>();
 
 // ── Health Checks ─────────────────────────────────────────────────────────────
 builder.Services
@@ -119,9 +120,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 // ── EF Migrations auto-apply (dev only) ───────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
-    await using var scope = app.Services.CreateAsyncScope();
-    var db = scope.ServiceProvider.GetRequiredService<DealTicketingDbContext>();
-    await db.Database.MigrateAsync();
+    await DbInitializer.SeedAsync(app.Services);
 }
 
 app.Run();

@@ -1,8 +1,11 @@
 using Azure.Storage.Blobs;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OrganizationSetup.Application.Interfaces;
+using OrganizationSetup.Infrastructure.Messaging;
 using OrganizationSetup.Infrastructure.Persistence;
 using OrganizationSetup.Infrastructure.Services;
 
@@ -31,9 +34,18 @@ public static class DependencyInjection
             services.AddScoped(_ => new BlobServiceClient(blobConnectionString));
             services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
         }
+        else
+        {
+            services.AddScoped<IBlobStorageService, NullBlobStorageService>();
+        }
 
-        // Message Publisher
-        services.AddScoped<IMessagePublisher, RabbitMQMessagePublisher>();
+        // RabbitMQ
+        services.Configure<RabbitMqSettings>(configuration.GetSection(RabbitMqSettings.SectionName));
+        services.AddSingleton<RabbitMqMessagePublisher>();
+        services.AddSingleton<IMessagePublisher>(sp => sp.GetRequiredService<RabbitMqMessagePublisher>());
+
+        // Register domain event handlers from Infrastructure assembly
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
 
         return services;
     }

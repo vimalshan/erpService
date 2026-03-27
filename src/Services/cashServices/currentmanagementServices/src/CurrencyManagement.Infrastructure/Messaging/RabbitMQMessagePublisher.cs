@@ -50,8 +50,7 @@ public class RabbitMQMessagePublisher : IMessagePublisher
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error publishing message of type {typeof(T).Name}");
-            throw;
+            _logger.LogWarning(ex, "RabbitMQ unavailable - message of type {MessageType} not published (graceful degradation)", typeof(T).Name);
         }
     }
 }

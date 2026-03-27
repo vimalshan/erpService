@@ -1,3 +1,4 @@
+using EmailNotification.API.GraphQL;
 using EmailNotification.API.Middleware;
 using EmailNotification.Application;
 using EmailNotification.Infrastructure;
@@ -44,6 +45,8 @@ builder.Services.AddHealthChecks()
     .AddSqlServer(connectionString, name: "Database");
 
 // Add JWT Authentication
+var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "your-secret-key-here-min-32-characters-long!!!!!";
+
 builder.Services
     .AddAuthentication(options =>
     {
@@ -52,19 +55,26 @@ builder.Services
     })
     .AddJwtBearer(options =>
     {
-        options.Authority = builder.Configuration["Jwt:Authority"];
-        options.Audience = builder.Configuration["Jwt:Audience"];
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
             ValidateAudience = false,
             ValidateIssuer = false,
-            ValidateIssuerSigningKey = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+                System.Text.Encoding.ASCII.GetBytes(jwtSecret)),
             ValidateLifetime = true
         };
     });
 
 // Add Authorization
 builder.Services.AddAuthorization();
+
+// Add GraphQL (Hot Chocolate)
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType<EmailNotificationQuery>()
+    .AddMutationType<EmailNotificationMutation>()
+    .AddAuthorization();
 
 // Configure background service error handling
 builder.Services.Configure<HostOptions>(options =>
@@ -197,6 +207,9 @@ app.UseAuthorization();
 
 // Map health check endpoint
 app.MapHealthChecks("/health");
+
+// Map GraphQL endpoint
+app.MapGraphQL("/graphql");
 
 // Map controllers
 app.MapControllers();

@@ -34,6 +34,7 @@ public static class DependencyInjection
         services.Configure<RabbitMqSettings>(opts =>
             configuration.GetSection("RabbitMQ").Bind(opts, o => { }));
         services.AddSingleton<RabbitMqPublisher>();
+        services.AddSingleton<IEventPublisher>(sp => sp.GetRequiredService<RabbitMqPublisher>());
         services.AddHostedService<LoanEventConsumer>();
 
         // Blob Storage

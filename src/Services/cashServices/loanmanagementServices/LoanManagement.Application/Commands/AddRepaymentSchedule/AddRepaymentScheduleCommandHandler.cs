@@ -30,14 +30,13 @@ public class AddRepaymentScheduleCommandHandler
         var loan = await _loanRepository.GetByIdAsync(request.LoanId, cancellationToken)
             ?? throw new LoanDomainException($"Loan {request.LoanId} not found.");
 
-        var nextId = await _repaymentRepository.GetNextIdAsync(cancellationToken);
         var repayments = new List<LoanRepaymentSchedule>();
 
         for (int i = 0; i < request.Lines.Count; i++)
         {
             var line = request.Lines[i];
             var repayment = LoanRepaymentSchedule.Create(
-                nextId + i, request.LoanId, line.RepayDate, line.Amount);
+                0, request.LoanId, line.RepayDate, line.Amount);
             loan.AddRepayment(repayment);
             repayments.Add(repayment);
         }

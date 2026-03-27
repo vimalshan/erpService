@@ -25,11 +25,8 @@ namespace CurrencyManagement.Infrastructure.Migrations
             modelBuilder.Entity("CurrencyManagement.Domain.Entities.Currency", b =>
                 {
                     b.Property<long>("CurrencyId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("CURR_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("CurrencyId"));
 
                     b.Property<long>("ModifiedBy")
                         .HasColumnType("bigint")
@@ -60,11 +57,8 @@ namespace CurrencyManagement.Infrastructure.Migrations
             modelBuilder.Entity("CurrencyManagement.Domain.Entities.ExchangeRate", b =>
                 {
                     b.Property<long>("RateId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("CURRATE_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("RateId"));
 
                     b.Property<long?>("CurrencyId")
                         .HasColumnType("bigint");
@@ -90,7 +84,7 @@ namespace CurrencyManagement.Infrastructure.Migrations
                         .HasColumnName("CURRATE_MONTH");
 
                     b.Property<decimal>("Rate")
-                        .HasColumnType("DECIMAL(19,0)")
+                        .HasColumnType("DECIMAL(19,6)")
                         .HasColumnName("CURRATE_RATE");
 
                     b.Property<long>("ToCurrencyId")

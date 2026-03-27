@@ -6,6 +6,7 @@ using LoanManagement.Infrastructure;
 using LoanManagement.Infrastructure.Data;
 using LoanManagement.Infrastructure.Data.SeedData;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -137,6 +138,7 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<LoanManagementDbContext>();
+    db.Database.Migrate();
     var seedLogger = scope.ServiceProvider.GetRequiredService<ILogger<LoanManagementDbContext>>();
     await LoanManagementDbContextSeed.SeedAsync(db, seedLogger);
 }

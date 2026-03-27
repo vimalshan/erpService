@@ -45,11 +45,32 @@ builder.Services.AddEndpointsApiExplorer();
 // Swagger
 builder.Services.AddSwaggerGen();
 
+// GraphQL — HotChocolate
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType()
+    .AddMutationType()
+    .AddTypeExtension<OrganizationSetup.API.GraphQL.OrganizationSetupQuery>()
+    .AddTypeExtension<OrganizationSetup.API.GraphQL.OrganizationSetupMutation>()
+    .AddAuthorization();
+
 // Health Checks
 builder.Services
     .AddHealthChecks()
     .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ?? 
-        "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=CASHDB;Integrated Security=True;");
+        "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=CASHDB;Integrated Security=True;")
+    .AddRabbitMQ(sp =>
+    {
+        var config = builder.Configuration.GetSection("RabbitMQ");
+        var factory = new RabbitMQ.Client.ConnectionFactory
+        {
+            HostName = config["HostName"] ?? "localhost",
+            Port = int.Parse(config["Port"] ?? "5672"),
+            UserName = config["UserName"] ?? "guest",
+            Password = config["Password"] ?? "guest"
+        };
+        return factory.CreateConnectionAsync();
+    }, name: "rabbitmq");
 
 var app = builder.Build();
 
@@ -68,4 +89,5 @@ app.UseAuthorization();
 app.MapHealthChecks("/health");
 
 app.MapControllers();
+app.MapGraphQL("/graphql");
 app.Run();

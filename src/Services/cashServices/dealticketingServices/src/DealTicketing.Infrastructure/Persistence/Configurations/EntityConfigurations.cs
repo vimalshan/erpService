@@ -10,7 +10,7 @@ public class BankConfiguration : IEntityTypeConfiguration<Bank>
     {
         builder.ToTable("DEAL_BANKMASTER");
         builder.HasKey(b => b.BankId);
-        builder.Property(b => b.BankId).HasColumnName("BANK_ID");
+        builder.Property(b => b.BankId).HasColumnName("BANK_ID").ValueGeneratedNever();
         builder.Property(b => b.BankName).HasColumnName("BANK_NAME").HasMaxLength(50).IsRequired();
         builder.Property(b => b.BankEffDate).HasColumnName("BANK_EFFDATE");
         builder.Property(b => b.BankClsDate).HasColumnName("BANK_CLSDATE");
@@ -26,7 +26,7 @@ public class CategoryMasterConfiguration : IEntityTypeConfiguration<CategoryMast
     {
         builder.ToTable("DEAL_CATEGORYMASTER");
         builder.HasKey(c => c.CategoryId);
-        builder.Property(c => c.CategoryId).HasColumnName("CATEGORY_ID");
+        builder.Property(c => c.CategoryId).HasColumnName("CATEGORY_ID").ValueGeneratedNever();
         builder.Property(c => c.CategoryName).HasColumnName("CATEGORY_NAME").HasMaxLength(50).IsRequired();
         builder.Property(c => c.CategoryType).HasColumnName("CATEGORY_TYPE").HasColumnType("char(1)");
         builder.Property(c => c.CategoryModifiedOn).HasColumnName("CATEGORY_MODIFIEDON");
@@ -41,7 +41,7 @@ public class LovMasterConfiguration : IEntityTypeConfiguration<LovMaster>
     {
         builder.ToTable("DEAL_LOVMASTER");
         builder.HasKey(l => l.LovId);
-        builder.Property(l => l.LovId).HasColumnName("LOV_ID");
+        builder.Property(l => l.LovId).HasColumnName("LOV_ID").ValueGeneratedNever();
         builder.Property(l => l.LovType).HasColumnName("LOV_TYPE").HasMaxLength(10).IsRequired();
         builder.Property(l => l.LovName).HasColumnName("LOV_NAME").HasMaxLength(150).IsRequired();
         builder.Ignore(l => l.DomainEvents);
@@ -54,7 +54,7 @@ public class DealBatchConfiguration : IEntityTypeConfiguration<DealBatch>
     {
         builder.ToTable("DEALTICKET_BATCH");
         builder.HasKey(b => b.DealBatchId);
-        builder.Property(b => b.DealBatchId).HasColumnName("DEAL_BATCHID");
+        builder.Property(b => b.DealBatchId).HasColumnName("DEAL_BATCHID").ValueGeneratedNever();
         builder.Property(b => b.DealDate).HasColumnName("DEAL_DATE");
         builder.Property(b => b.DealDerType).HasColumnName("DEAL_DERTYPE");
         builder.Property(b => b.DealScreenshot).HasColumnName("DEAL_SCREENSHOT").HasMaxLength(50);
@@ -88,7 +88,7 @@ public class DealDetailConfiguration : IEntityTypeConfiguration<DealDetail>
     {
         builder.ToTable("DEALTICKET_DET");
         builder.HasKey(d => d.DealId);
-        builder.Property(d => d.DealId).HasColumnName("DEAL_ID");
+        builder.Property(d => d.DealId).HasColumnName("DEAL_ID").ValueGeneratedNever();
         builder.Property(d => d.DealNo).HasColumnName("DEAL_NO");
         builder.Property(d => d.DealVersionId).HasColumnName("DEAL_VERSIONID");
         builder.Property(d => d.DealBatchId).HasColumnName("DEAL_BATCHID");
@@ -163,7 +163,7 @@ public class DealLoanScheduleConfiguration : IEntityTypeConfiguration<DealLoanSc
     {
         builder.ToTable("DEALTICKET_LOANSCH");
         builder.HasKey(l => l.DealSchId);
-        builder.Property(l => l.DealSchId).HasColumnName("DEAL_SCHID");
+        builder.Property(l => l.DealSchId).HasColumnName("DEAL_SCHID").ValueGeneratedNever();
         builder.Property(l => l.DealId).HasColumnName("DEAL_ID");
         builder.Property(l => l.DealSchDate).HasColumnName("DEAL_SCHDATE");
         builder.Property(l => l.DealSchAmt).HasColumnName("DEAL_SCHAMT");
@@ -183,7 +183,7 @@ public class DealSettlementConfiguration : IEntityTypeConfiguration<DealSettleme
     {
         builder.ToTable("DEALTICKET_SET");
         builder.HasKey(s => s.SetId);
-        builder.Property(s => s.SetId).HasColumnName("SET_ID");
+        builder.Property(s => s.SetId).HasColumnName("SET_ID").ValueGeneratedNever();
         builder.Property(s => s.SetDealId).HasColumnName("SET_DEALID");
         builder.Property(s => s.SetSpotRate).HasColumnName("SET_SPOTRATE").HasColumnType("decimal(19,0)");
         builder.Property(s => s.SetDate).HasColumnName("SET_DATE");
@@ -226,7 +226,7 @@ public class DealAttachmentConfiguration : IEntityTypeConfiguration<DealAttachme
     {
         builder.ToTable("DEATICKET_ATTACHMENT");
         builder.HasKey(a => a.DealAttachmentId);
-        builder.Property(a => a.DealAttachmentId).HasColumnName("DEAL_ATTACHMENTID");
+        builder.Property(a => a.DealAttachmentId).HasColumnName("DEAL_ATTACHMENTID").ValueGeneratedNever();
         builder.Property(a => a.DealBatchId).HasColumnName("DEAL_BATCHID");
         builder.Property(a => a.DealId).HasColumnName("DEAL_ID");
         builder.Property(a => a.DealAttachmentType).HasColumnName("DEAL_ATTACHMENTTYPE").HasMaxLength(10);
@@ -255,7 +255,7 @@ public class DealSettlementAttachmentConfiguration : IEntityTypeConfiguration<De
     {
         builder.ToTable("DEATICKETSET_ATTACHMENT");
         builder.HasKey(a => a.DealAttachmentId);
-        builder.Property(a => a.DealAttachmentId).HasColumnName("DEAL_ATTACHMENTID");
+        builder.Property(a => a.DealAttachmentId).HasColumnName("DEAL_ATTACHMENTID").ValueGeneratedNever();
         builder.Property(a => a.DealSetId).HasColumnName("DEAL_SETID");
         builder.Property(a => a.DealAttachmentType).HasColumnName("DEAL_ATTACHMENTTYPE").HasMaxLength(10);
         builder.Property(a => a.DealAttachmentFile).HasColumnName("DEAL_ATTACHMENTFILE").HasMaxLength(200);

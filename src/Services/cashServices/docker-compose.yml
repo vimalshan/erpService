@@ -1,0 +1,235 @@
+version: '3.8'
+
+# ============================================================================
+# Cash Services - Full Stack Docker Compose
+# Usage: docker-compose -f docker-compose.shared.yml -f docker-compose.yml up -d
+# ============================================================================
+
+services:
+  # --------------------------------------------------------------------------
+  # API Gateway (Port 5000)
+  # --------------------------------------------------------------------------
+  api-gateway:
+    build:
+      context: ./ApiGateway
+      dockerfile: Docker/Dockerfile
+    container_name: cashservices-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5000'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=${MSSQL_SA_PASSWORD:-CashServices2026!};Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: '${RABBITMQ_USER:-guest}'
+      RabbitMQ__Password: '${RABBITMQ_PASS:-guest}'
+      ServiceEndpoints__CashManagement: 'http://cash-management-api:5249'
+      ServiceEndpoints__CurrencyManagement: 'http://currency-management-api:5031'
+      ServiceEndpoints__DealTicketing: 'http://deal-ticketing-api:5081'
+      ServiceEndpoints__LoanManagement: 'http://loan-management-api:5268'
+      ServiceEndpoints__OrganizationSetup: 'http://organization-setup-api:5099'
+      ServiceEndpoints__EmailNotification: 'http://email-notification-api:5032'
+      ServiceEndpoints__TransactionProcessing: 'http://transaction-processing-api:5100'
+    ports:
+      - "5000:5000"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cashservices-network
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Organization Setup Service (Port 5099)
+  # --------------------------------------------------------------------------
+  organization-setup-api:
+    build:
+      context: ./organizationsetupServices
+      dockerfile: Docker/Dockerfile
+    container_name: cashservices-orgsetup
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5099'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=${MSSQL_SA_PASSWORD:-CashServices2026!};Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: '${RABBITMQ_USER:-guest}'
+      RabbitMQ__Password: '${RABBITMQ_PASS:-guest}'
+    ports:
+      - "5099:5099"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cashservices-network
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Currency Management Service (Port 5031)
+  # --------------------------------------------------------------------------
+  currency-management-api:
+    build:
+      context: ./currentmanagementServices
+      dockerfile: Docker/Dockerfile
+    container_name: cashservices-currency
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5031'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=${MSSQL_SA_PASSWORD:-CashServices2026!};Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: '${RABBITMQ_USER:-guest}'
+      RabbitMQ__Password: '${RABBITMQ_PASS:-guest}'
+    ports:
+      - "5031:5031"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cashservices-network
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Deal Ticketing Service (Port 5081)
+  # --------------------------------------------------------------------------
+  deal-ticketing-api:
+    build:
+      context: ./dealticketingServices
+      dockerfile: Docker/Dockerfile
+    container_name: cashservices-deals
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5081'
+      ConnectionStrings__DealTicketingDb: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=${MSSQL_SA_PASSWORD:-CashServices2026!};Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Username: '${RABBITMQ_USER:-guest}'
+      RabbitMQ__Password: '${RABBITMQ_PASS:-guest}'
+    ports:
+      - "5081:5081"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cashservices-network
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Loan Management Service (Port 5268)
+  # --------------------------------------------------------------------------
+  loan-management-api:
+    build:
+      context: ./loanmanagementServices
+      dockerfile: Docker/Dockerfile
+    container_name: cashservices-loans
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5268'
+      ConnectionStrings__LoanManagement: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=${MSSQL_SA_PASSWORD:-CashServices2026!};Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: '${RABBITMQ_USER:-guest}'
+      RabbitMQ__Password: '${RABBITMQ_PASS:-guest}'
+    ports:
+      - "5268:5268"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cashservices-network
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Cash Management Service (Port 5249)
+  # --------------------------------------------------------------------------
+  cash-management-api:
+    build:
+      context: ./cashmanagementServices
+      dockerfile: Docker/Dockerfile
+    container_name: cashservices-cash
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5249'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=${MSSQL_SA_PASSWORD:-CashServices2026!};Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: '${RABBITMQ_USER:-guest}'
+      RabbitMQ__Password: '${RABBITMQ_PASS:-guest}'
+    ports:
+      - "5249:5249"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cashservices-network
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Email Notification Service (Port 5032)
+  # --------------------------------------------------------------------------
+  email-notification-api:
+    build:
+      context: ./emailnotificationServices
+      dockerfile: Docker/Dockerfile
+    container_name: cashservices-email
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5032'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=EmailNotificationDb;User ID=sa;Password=${MSSQL_SA_PASSWORD:-CashServices2026!};Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: '${RABBITMQ_USER:-guest}'
+      RabbitMQ__Password: '${RABBITMQ_PASS:-guest}'
+    ports:
+      - "5032:5032"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cashservices-network
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Transaction Processing Service (Port 5100)
+  # --------------------------------------------------------------------------
+  transaction-processing-api:
+    build:
+      context: ./transactionServices
+      dockerfile: Docker/Dockerfile
+    container_name: cashservices-transaction
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5100'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=TransactionProcessingDb;User ID=sa;Password=${MSSQL_SA_PASSWORD:-CashServices2026!};Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__Enabled: 'true'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: '${RABBITMQ_USER:-guest}'
+      RabbitMQ__Password: '${RABBITMQ_PASS:-guest}'
+    ports:
+      - "5100:5100"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cashservices-network
+    restart: unless-stopped
+
+networks:
+  cashservices-network:
+    external: true
+    name: cashservices-network

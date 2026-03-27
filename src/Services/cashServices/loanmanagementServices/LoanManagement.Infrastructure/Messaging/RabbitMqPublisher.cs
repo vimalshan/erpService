@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using LoanManagement.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -16,7 +17,7 @@ public class RabbitMqSettings
     public string VirtualHost { get; set; } = "/";
 }
 
-public class RabbitMqPublisher : IAsyncDisposable
+public class RabbitMqPublisher : IEventPublisher, IAsyncDisposable
 {
     private readonly ILogger<RabbitMqPublisher> _logger;
     private IConnection? _connection;
@@ -49,15 +50,22 @@ public class RabbitMqPublisher : IAsyncDisposable
 
     public async Task PublishAsync<T>(string exchange, string routingKey, T message)
     {
-        await EnsureConnectedAsync();
+        try
+        {
+            await EnsureConnectedAsync();
 
-        await _channel!.ExchangeDeclareAsync(exchange, ExchangeType.Topic, durable: true);
+            await _channel!.ExchangeDeclareAsync(exchange, ExchangeType.Topic, durable: true);
 
-        var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
-        var props = new BasicProperties { ContentType = "application/json", DeliveryMode = DeliveryModes.Persistent };
+            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
+            var props = new BasicProperties { ContentType = "application/json", DeliveryMode = DeliveryModes.Persistent };
 
-        await _channel.BasicPublishAsync(exchange, routingKey, false, props, body);
-        _logger.LogInformation("Published message to {Exchange}/{RoutingKey}", exchange, routingKey);
+            await _channel.BasicPublishAsync(exchange, routingKey, false, props, body);
+            _logger.LogInformation("Published message to {Exchange}/{RoutingKey}", exchange, routingKey);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish message to {Exchange}/{RoutingKey} — RabbitMQ may be unavailable", exchange, routingKey);
+        }
     }
 
     public async Task SubscribeAsync<T>(string queue, string exchange, string routingKey, Func<T, Task> handler)

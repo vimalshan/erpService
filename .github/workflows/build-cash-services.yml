@@ -1,0 +1,169 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Build & Push Cash Service Docker Images to GitHub Container Registry (GHCR)
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# Triggers:
+#   - Push to main (only when relevant service files change)
+#   - Manual dispatch (workflow_dispatch) to build all or specific services
+#
+# Prerequisites (GitHub repo settings):
+#   No secrets needed — uses the built-in GITHUB_TOKEN for GHCR authentication.
+#   Ensure "Read and write permissions" is enabled under:
+#     Settings → Actions → General → Workflow permissions
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Build & Push Cash Services
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/Services/cashServices/**'
+
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to build (or "all")'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - api-gateway
+          - cash-management-service
+          - current-management-service
+          - deal-ticketing-service
+          - email-notification-service
+          - loan-management-service
+          - organization-setup-service
+          - transaction-service
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/erp
+
+jobs:
+  # ── Detect which services changed ────────────────────────────────────────
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine changed services
+        id: set-matrix
+        run: |
+          # Service registry: name → context + dockerfile
+          declare -A SVC_CONTEXT SVC_DOCKERFILE
+          SVC_CONTEXT[api-gateway]="src/Services/cashServices/ApiGateway";                          SVC_DOCKERFILE[api-gateway]="Docker/Dockerfile"
+          SVC_CONTEXT[cash-management-service]="src/Services/cashServices/cashmanagementServices";  SVC_DOCKERFILE[cash-management-service]="Docker/Dockerfile"
+          SVC_CONTEXT[current-management-service]="src/Services/cashServices/currentmanagementServices"; SVC_DOCKERFILE[current-management-service]="Docker/Dockerfile"
+          SVC_CONTEXT[deal-ticketing-service]="src/Services/cashServices/dealticketingServices";    SVC_DOCKERFILE[deal-ticketing-service]="Docker/Dockerfile"
+          SVC_CONTEXT[email-notification-service]="src/Services/cashServices/emailnotificationServices"; SVC_DOCKERFILE[email-notification-service]="Docker/Dockerfile"
+          SVC_CONTEXT[loan-management-service]="src/Services/cashServices/loanmanagementServices";  SVC_DOCKERFILE[loan-management-service]="Docker/Dockerfile"
+          SVC_CONTEXT[organization-setup-service]="src/Services/cashServices/organizationsetupServices"; SVC_DOCKERFILE[organization-setup-service]="Docker/Dockerfile"
+          SVC_CONTEXT[transaction-service]="src/Services/cashServices/transactionServices";         SVC_DOCKERFILE[transaction-service]="Docker/Dockerfile"
+
+          # Ordered list matching the paths for change detection
+          SVC_NAMES=(api-gateway cash-management-service current-management-service deal-ticketing-service email-notification-service loan-management-service organization-setup-service transaction-service)
+          SVC_PATHS=(
+            "src/Services/cashServices/ApiGateway/"
+            "src/Services/cashServices/cashmanagementServices/"
+            "src/Services/cashServices/currentmanagementServices/"
+            "src/Services/cashServices/dealticketingServices/"
+            "src/Services/cashServices/emailnotificationServices/"
+            "src/Services/cashServices/loanmanagementServices/"
+            "src/Services/cashServices/organizationsetupServices/"
+            "src/Services/cashServices/transactionServices/"
+          )
+
+          make_entry() {
+            local n="$1"
+            echo "{\"name\":\"${n}\",\"context\":\"${SVC_CONTEXT[$n]}\",\"dockerfile\":\"${SVC_DOCKERFILE[$n]}\"}"
+          }
+
+          # If manual dispatch with a specific service, build only that
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            INPUT="${{ github.event.inputs.service }}"
+            if [[ "$INPUT" != "all" ]]; then
+              ENTRY=$(make_entry "$INPUT")
+              echo "matrix={\"include\":[${ENTRY}]}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          # For push events or "all", detect changes
+          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "src/Services/cashServices/")
+          BUILD_ALL=$([[ "${{ github.event.inputs.service }}" == "all" ]] && echo "true" || echo "false")
+
+          SERVICES=()
+          for i in "${!SVC_NAMES[@]}"; do
+            NAME="${SVC_NAMES[$i]}"
+            PATH_PREFIX="${SVC_PATHS[$i]}"
+            if [[ "$BUILD_ALL" == "true" ]] || echo "$CHANGED" | grep -q "^${PATH_PREFIX}"; then
+              SERVICES+=("$(make_entry "$NAME")")
+            fi
+          done
+
+          if [[ ${#SERVICES[@]} -eq 0 ]]; then
+            echo "matrix={\"include\":[]}" >> "$GITHUB_OUTPUT"
+          else
+            JSON=$(printf '%s,' "${SERVICES[@]}")
+            JSON="[${JSON%,}]"
+            echo "matrix={\"include\":${JSON}}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Print matrix
+        run: echo '${{ steps.set-matrix.outputs.matrix }}'
+
+  # ── Build & Push ─────────────────────────────────────────────────────────
+  build-and-push:
+    name: Build ${{ matrix.name }}
+    needs: changes
+    if: ${{ fromJson(needs.changes.outputs.matrix).include[0] != null }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64

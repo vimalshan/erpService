@@ -47,6 +47,15 @@ public class Mutation
     public async Task<BankReconciliationDto> PerformReconciliation([Service] IMediator mediator, PerformReconciliationInput input, CancellationToken ct)
         => await mediator.Send(new PerformBankReconciliationCommand(
             input.BankAccountId, input.BankStatementBalance, input.ReconciliationDate, input.CreatedBy), ct);
+
+    public async Task<bool> CancelCheque([Service] IMediator mediator, long chequeId, long processedBy, CancellationToken ct)
+        => await mediator.Send(new CancelChequeCommand(chequeId, processedBy), ct);
+
+    public async Task<bool> UpdateCashUnitStatus([Service] IMediator mediator, long cashUnitId, bool isActive, long updatedBy, CancellationToken ct)
+        => await mediator.Send(new UpdateCashUnitStatusCommand(cashUnitId, isActive, updatedBy), ct);
+
+    public async Task<bool> UpdateBankAccountStatus([Service] IMediator mediator, long bankAccountId, bool isActive, long updatedBy, CancellationToken ct)
+        => await mediator.Send(new UpdateBankAccountStatusCommand(bankAccountId, isActive, updatedBy), ct);
 }
 
 // Input types for GraphQL mutations

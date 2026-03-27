@@ -5,9 +5,11 @@ using CashManagement.Domain.Interfaces;
 using CashManagement.Domain.Interfaces.Repositories;
 using CashManagement.Infrastructure.BlobStorage;
 using CashManagement.Infrastructure.Dapper;
+using CashManagement.Infrastructure.Messaging.RabbitMQ;
 using CashManagement.Infrastructure.Messaging.Settings;
 using CashManagement.Infrastructure.Persistence;
 using CashManagement.Infrastructure.Persistence.Repositories;
+using MediatR;
 
 namespace CashManagement.Infrastructure;
 
@@ -46,6 +48,12 @@ public static class DependencyInjection
 
         // RabbitMQ settings
         services.Configure<RabbitMqSettings>(configuration.GetSection(RabbitMqSettings.SectionName));
+
+        // Event Publisher (RabbitMQ with graceful degradation)
+        services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
+
+        // Register domain event handlers from Infrastructure assembly
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
 
         return services;
     }

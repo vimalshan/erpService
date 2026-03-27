@@ -1,0 +1,99 @@
+@ApiGateway.API_HostAddress = http://localhost:5000
+
+### Ping Gateway
+GET {{ApiGateway.API_HostAddress}}/api/v1/gateway/ping
+
+### Generate JWT Token
+POST {{ApiGateway.API_HostAddress}}/api/v1/auth/token
+Content-Type: application/json
+
+{
+  "userId": "1001",
+  "userName": "admin",
+  "role": "Admin"
+}
+
+### Validate Token
+GET {{ApiGateway.API_HostAddress}}/api/v1/auth/validate
+Authorization: Bearer {{token}}
+
+### Get Service Routes
+GET {{ApiGateway.API_HostAddress}}/api/v1/gateway/routes
+
+### Get All Services Info (Requires Auth)
+GET {{ApiGateway.API_HostAddress}}/api/v1/gateway/services
+Authorization: Bearer {{token}}
+
+### Check Individual Service Health (Requires Auth)
+GET {{ApiGateway.API_HostAddress}}/api/v1/gateway/services/CashManagement/health
+Authorization: Bearer {{token}}
+
+### Gateway Health Check
+GET {{ApiGateway.API_HostAddress}}/health
+
+### Gateway Readiness Check
+GET {{ApiGateway.API_HostAddress}}/health/ready
+
+### Gateway Liveness Check
+GET {{ApiGateway.API_HostAddress}}/health/live
+
+### Gateway Config (Requires Auth)
+GET {{ApiGateway.API_HostAddress}}/api/v1/gateway/config
+Authorization: Bearer {{token}}
+
+### ========== PROXIED REQUESTS ==========
+
+### Cash Management - Get Cash Units (via Gateway)
+GET {{ApiGateway.API_HostAddress}}/api/v1/cash/cashunits
+Authorization: Bearer {{token}}
+
+### Cash Management - Get Bank Accounts (via Gateway)
+GET {{ApiGateway.API_HostAddress}}/api/v1/cash/bankaccounts
+Authorization: Bearer {{token}}
+
+### Currency Management - Get Currencies (via Gateway)
+GET {{ApiGateway.API_HostAddress}}/api/v1/currency/currencies
+Authorization: Bearer {{token}}
+
+### Deal Ticketing - Get Deal Batches (via Gateway)
+GET {{ApiGateway.API_HostAddress}}/api/v1/deals/dealbatches
+Authorization: Bearer {{token}}
+
+### Loan Management - Get Loans (via Gateway)
+GET {{ApiGateway.API_HostAddress}}/api/v1/loans/loans
+Authorization: Bearer {{token}}
+
+### Organization Setup - Get Roles (via Gateway)
+GET {{ApiGateway.API_HostAddress}}/api/v1/organization/roles
+Authorization: Bearer {{token}}
+
+### Email Notification - Get Email Types (via Gateway)
+GET {{ApiGateway.API_HostAddress}}/api/v1/email/emailtypes
+Authorization: Bearer {{token}}
+
+### ========== GRAPHQL ==========
+
+### Gateway GraphQL - Service Status
+POST {{ApiGateway.API_HostAddress}}/graphql
+Content-Type: application/json
+
+{
+  "query": "{ serviceStatus { services { name baseUrl restPrefix graphQlPrefix } } gatewayVersion }"
+}
+
+### Gateway GraphQL - Generate Token
+POST {{ApiGateway.API_HostAddress}}/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { authenticate(userId: \"1001\", userName: \"admin\", role: \"Admin\") { token tokenType } }"
+}
+
+### Cash Management GraphQL (via Gateway proxy)
+POST {{ApiGateway.API_HostAddress}}/graphql/cash
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "{ cashUnits { cashUnitId cashUnitName cashUnitCode } }"
+}

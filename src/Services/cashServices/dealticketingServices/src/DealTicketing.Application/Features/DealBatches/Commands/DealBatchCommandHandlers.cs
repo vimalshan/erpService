@@ -50,3 +50,20 @@ public class RejectDealBatchCommandHandler(
         return Unit.Value;
     }
 }
+
+public class UpdateDealBatchScreenshotCommandHandler(
+    IDealBatchRepository repository,
+    IApplicationDbContext dbContext)
+    : IRequestHandler<UpdateDealBatchScreenshotCommand, Unit>
+{
+    public async Task<Unit> Handle(UpdateDealBatchScreenshotCommand request, CancellationToken ct)
+    {
+        var batch = await repository.GetByIdAsync(request.DealBatchId, ct)
+            ?? throw new DealBatchNotFoundException(request.DealBatchId);
+
+        batch.SetScreenshot(request.Screenshot, request.ModifiedBy);
+        repository.Update(batch);
+        await dbContext.SaveChangesAsync(ct);
+        return Unit.Value;
+    }
+}

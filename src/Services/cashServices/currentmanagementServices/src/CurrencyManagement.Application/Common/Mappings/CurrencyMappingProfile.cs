@@ -14,7 +14,8 @@ public class CurrencyMappingProfile : Profile
         CreateMap<Currency, CurrencyDto>()
             .ForMember(dest => dest.Symbol, opt => opt.MapFrom(src => src.Symbol.Value));
 
-        CreateMap<ExchangeRate, ExchangeRateDto>();
+        CreateMap<ExchangeRate, ExchangeRateDto>()
+            .ForMember(dest => dest.Rate, opt => opt.MapFrom(src => src.Rate.Value));
 
         CreateMap<OrganizationCurrencyMapping, OrganizationCurrencyDto>();
     }

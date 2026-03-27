@@ -1,0 +1,126 @@
+@TransactionProcessing.API_HostAddress = http://localhost:5100
+
+### Ping
+GET {{TransactionProcessing.API_HostAddress}}/ping
+
+### Health Check
+GET {{TransactionProcessing.API_HostAddress}}/health
+
+### Generate Token
+POST {{TransactionProcessing.API_HostAddress}}/api/auth/token
+Content-Type: application/json
+
+{
+  "userId": "1",
+  "userName": "admin",
+  "role": "Admin"
+}
+
+### Validate Token
+GET {{TransactionProcessing.API_HostAddress}}/api/auth/validate
+Authorization: Bearer {{token}}
+
+### Create Batch
+POST {{TransactionProcessing.API_HostAddress}}/api/batches
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "batchType": "DAILY_SETTLEMENT",
+  "batchDate": "2024-01-15T00:00:00Z",
+  "createdBy": 1
+}
+
+### Process Deal Settlement
+POST {{TransactionProcessing.API_HostAddress}}/api/settlements
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "batchId": 1,
+  "dealId": 100,
+  "setId": 1,
+  "settlementType": "U",
+  "spotRate": 1.2500,
+  "exchangeRate": 1.2510,
+  "settlementAmount": 100000.00,
+  "gainLossAmount": 100.00,
+  "premiumAmount": 250.00,
+  "windingFee": 50.00,
+  "netAmount": 99600.00,
+  "currencyId": 2,
+  "bankAccountId": 1,
+  "remarks": "Deal settlement",
+  "createdBy": 1
+}
+
+### Process Loan Disbursement
+POST {{TransactionProcessing.API_HostAddress}}/api/disbursements
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "batchId": 1,
+  "loanId": 200,
+  "disbId": 1,
+  "disbAmount": 50000.00,
+  "exchangeRate": 1.0000,
+  "currencyId": 1,
+  "bankAccountId": 1,
+  "remarks": "Loan disbursement",
+  "createdBy": 1
+}
+
+### Process Loan Repayment
+POST {{TransactionProcessing.API_HostAddress}}/api/repayments
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "batchId": 1,
+  "loanId": 200,
+  "repayId": 1,
+  "repayAmount": 5000.00,
+  "exchangeRate": 1.0000,
+  "currencyId": 1,
+  "bankAccountId": 1,
+  "remarks": "Monthly repayment",
+  "createdBy": 1
+}
+
+### Process Cash Transfer
+POST {{TransactionProcessing.API_HostAddress}}/api/transactions/cash-transfer
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "batchId": null,
+  "amount": 10000.00,
+  "currencyId": 1,
+  "exchangeRate": 1.0000,
+  "subType": "INTERNAL",
+  "sourceService": "CashManagement",
+  "sourceId": 1,
+  "remarks": "Internal cash transfer",
+  "createdBy": 1
+}
+
+### Get Transaction Ledger
+GET {{TransactionProcessing.API_HostAddress}}/api/transactions/ledger?pageSize=10&page=1
+Authorization: Bearer {{token}}
+
+### Get Transaction By ID
+GET {{TransactionProcessing.API_HostAddress}}/api/transactions/1
+Authorization: Bearer {{token}}
+
+### GraphQL - Get Transaction
+POST {{TransactionProcessing.API_HostAddress}}/graphql
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "{ transaction(txnId: 1) { txnId txnType txnAmount txnStatus txnReference } }"
+}
+
+### Swagger
+GET {{TransactionProcessing.API_HostAddress}}/swagger/v1/swagger.json

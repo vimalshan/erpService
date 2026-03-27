@@ -1,0 +1,163 @@
+# ============================================================================
+# Cash Services - Kubernetes Services
+# ============================================================================
+
+# --------------------------------------------------------------------------
+# API Gateway (External LoadBalancer)
+# --------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: cash-services
+  labels:
+    app: api-gateway
+spec:
+  type: LoadBalancer
+  selector:
+    app: api-gateway
+  ports:
+  - name: http
+    port: 80
+    targetPort: 5000
+    protocol: TCP
+
+---
+# --------------------------------------------------------------------------
+# Organization Setup Service (ClusterIP)
+# --------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: organization-setup-api
+  namespace: cash-services
+  labels:
+    app: organization-setup-api
+spec:
+  type: ClusterIP
+  selector:
+    app: organization-setup-api
+  ports:
+  - name: http
+    port: 5099
+    targetPort: 5099
+
+---
+# --------------------------------------------------------------------------
+# Currency Management Service (ClusterIP)
+# --------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: currency-management-api
+  namespace: cash-services
+  labels:
+    app: currency-management-api
+spec:
+  type: ClusterIP
+  selector:
+    app: currency-management-api
+  ports:
+  - name: http
+    port: 5031
+    targetPort: 5031
+
+---
+# --------------------------------------------------------------------------
+# Deal Ticketing Service (ClusterIP)
+# --------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: deal-ticketing-api
+  namespace: cash-services
+  labels:
+    app: deal-ticketing-api
+spec:
+  type: ClusterIP
+  selector:
+    app: deal-ticketing-api
+  ports:
+  - name: http
+    port: 5081
+    targetPort: 5081
+
+---
+# --------------------------------------------------------------------------
+# Loan Management Service (ClusterIP)
+# --------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: loan-management-api
+  namespace: cash-services
+  labels:
+    app: loan-management-api
+spec:
+  type: ClusterIP
+  selector:
+    app: loan-management-api
+  ports:
+  - name: http
+    port: 5268
+    targetPort: 5268
+
+---
+# --------------------------------------------------------------------------
+# Cash Management Service (ClusterIP)
+# --------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: cash-management-api
+  namespace: cash-services
+  labels:
+    app: cash-management-api
+spec:
+  type: ClusterIP
+  selector:
+    app: cash-management-api
+  ports:
+  - name: http
+    port: 5249
+    targetPort: 5249
+
+---
+# --------------------------------------------------------------------------
+# Email Notification Service (ClusterIP)
+# --------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: email-notification-api
+  namespace: cash-services
+  labels:
+    app: email-notification-api
+spec:
+  type: ClusterIP
+  selector:
+    app: email-notification-api
+  ports:
+  - name: http
+    port: 5032
+    targetPort: 5032
+
+---
+# --------------------------------------------------------------------------
+# Transaction Processing Service (ClusterIP)
+# --------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: transaction-processing-api
+  namespace: cash-services
+  labels:
+    app: transaction-processing-api
+spec:
+  type: ClusterIP
+  selector:
+    app: transaction-processing-api
+  ports:
+  - name: http
+    port: 5100
+    targetPort: 5100

@@ -17,7 +17,8 @@ public class CurrencyConfiguration : IEntityTypeConfiguration<Currency>
             .HasName("PK_DEAL_CURRMAST");
 
         builder.Property(c => c.CurrencyId)
-            .HasColumnName("CURR_ID");
+            .HasColumnName("CURR_ID")
+            .ValueGeneratedNever();
 
         builder.Property(c => c.Name)
             .HasColumnName("CURR_NAME")
@@ -58,7 +59,8 @@ public class ExchangeRateConfiguration : IEntityTypeConfiguration<ExchangeRate>
             .HasName("PK_DEAL_CURRATES");
 
         builder.Property(e => e.RateId)
-            .HasColumnName("CURRATE_ID");
+            .HasColumnName("CURRATE_ID")
+            .ValueGeneratedNever();
 
         builder.Property(e => e.FinancialYear)
             .HasColumnName("CURRATE_FINYEAR")
@@ -78,7 +80,7 @@ public class ExchangeRateConfiguration : IEntityTypeConfiguration<ExchangeRate>
 
         builder.Property(e => e.Rate)
             .HasColumnName("CURRATE_RATE")
-            .HasColumnType("DECIMAL(19,0)")
+            .HasColumnType("DECIMAL(19,6)")
             .IsRequired()
             .HasConversion(
                 v => v.Value,

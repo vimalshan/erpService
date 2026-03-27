@@ -68,8 +68,7 @@ public class ExchangeRate : BaseEntity
         if (amount < 0)
             throw new ArgumentException("Amount cannot be negative", nameof(amount));
 
-        // The rate is stored with 6 decimal places (DECIMAL(19,0) in DB but value is like 1175000 for 1.175)
-        return amount * Rate.Value / 1_000_000m;
+        return amount * Rate.Value;
     }
     #endregion
 }

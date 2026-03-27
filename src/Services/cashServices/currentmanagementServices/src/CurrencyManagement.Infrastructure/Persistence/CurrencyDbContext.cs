@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MediatR;
 using CurrencyManagement.Application.Common.Interfaces;
 using CurrencyManagement.Domain.Entities;
 using CurrencyManagement.Infrastructure.Persistence.Configurations;
@@ -10,12 +11,15 @@ namespace CurrencyManagement.Infrastructure.Persistence;
 /// </summary>
 public class CurrencyDbContext : DbContext, IApplicationDbContext
 {
+    private readonly IMediator? _mediator;
+
     public DbSet<Currency> Currencies { get; set; } = null!;
     public DbSet<ExchangeRate> ExchangeRates { get; set; } = null!;
     public DbSet<OrganizationCurrencyMapping> OrganizationCurrencyMappings { get; set; } = null!;
 
-    public CurrencyDbContext(DbContextOptions<CurrencyDbContext> options) : base(options)
+    public CurrencyDbContext(DbContextOptions<CurrencyDbContext> options, IMediator? mediator = null) : base(options)
     {
+        _mediator = mediator;
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -30,12 +34,11 @@ public class CurrencyDbContext : DbContext, IApplicationDbContext
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        // Dispatch domain events before saving
-        await DispatchDomainEventsAsync();
+        await DispatchDomainEventsAsync(cancellationToken);
         return await base.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task DispatchDomainEventsAsync()
+    private async Task DispatchDomainEventsAsync(CancellationToken cancellationToken)
     {
         var entities = ChangeTracker
             .Entries<CurrencyManagement.Domain.Common.BaseEntity>()
@@ -49,8 +52,12 @@ public class CurrencyDbContext : DbContext, IApplicationDbContext
 
         entities.ForEach(e => e.ClearDomainEvents());
 
-        // In a complete implementation, dispatch these events to MediatR or event bus
-        // For now, we're just clearing them to prevent re-processing
-        await Task.CompletedTask;
+        if (_mediator != null)
+        {
+            foreach (var domainEvent in events)
+            {
+                await _mediator.Publish(domainEvent, cancellationToken);
+            }
+        }
     }
 }
