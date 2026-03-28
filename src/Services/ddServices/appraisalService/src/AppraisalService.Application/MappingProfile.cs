@@ -15,12 +15,16 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         // Entity to DTO mappings
-        CreateMap<AppraisalBandEntity, AppraisalBandDto>();
+        CreateMap<AppraisalBandEntity, AppraisalBandDto>()
+            .ForMember(dest => dest.BandId, opt => opt.MapFrom(src => src.Id));
 
+        // RequestNumber is ignored in EF Core (Id == RequestNumber); map from Id.
         CreateMap<AppraisalMainEntity, AppraisalMainDto>()
+            .ForMember(dest => dest.RequestNumber, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.Code));
 
         CreateMap<AppraisalMainEntity, AppraisalDetailedDto>()
+            .ForMember(dest => dest.RequestNumber, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.Code))
             .ForMember(dest => dest.Compensation, opt => opt.MapFrom(src => src.Compensation))
             .ForMember(dest => dest.Benefits, opt => opt.MapFrom(src => src.Benefits))

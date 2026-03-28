@@ -4,6 +4,7 @@ namespace Document.Application.Common.Interfaces;
 
 public interface IApplicationDbContext
 {
+    Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade Database { get; }
     Microsoft.EntityFrameworkCore.DbSet<Signatory> Signatories { get; }
     Microsoft.EntityFrameworkCore.DbSet<AppraisalLetter> AppraisalLetters { get; }
     Microsoft.EntityFrameworkCore.DbSet<AppraisalLetterNew> AppraisalLettersNew { get; }

@@ -5,10 +5,8 @@ using Document.Infrastructure.Persistence;
 
 namespace Document.API.GraphQL;
 
-[QueryType]
 public class DocumentQuery
 {
-    [UseProjection]
     [UseFiltering]
     [UseSorting]
     public IQueryable<SignatoryDto> GetSignatories([Service] DocumentDbContext context)
@@ -19,7 +17,6 @@ public class DocumentQuery
                 s.SignatoryNumber, s.Name, s.Designation,
                 s.LiveFlag, s.EmployeeSysId, s.ImageFileName));
 
-    [UseProjection]
     [UseFiltering]
     [UseSorting]
     public IQueryable<AppraisalLetterDto> GetAppraisalLetters([Service] DocumentDbContext context)
@@ -30,7 +27,6 @@ public class DocumentQuery
                 l.Paragraph1, l.Paragraph2, l.Paragraph3, l.Paragraph4,
                 l.Paragraph5, l.EffectiveDate, l.PrintDate));
 
-    [UseProjection]
     [UseFiltering]
     [UseSorting]
     public IQueryable<GeneratedLetterDto> GetGeneratedLetters([Service] DocumentDbContext context)

@@ -30,12 +30,15 @@ public class AuthController(IConfiguration config) : ControllerBase
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expiry = DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["ExpiryMinutes"] ?? "60"));
 
+        // Demo: username "admin" receives the Admin role; all others receive User
+        var role = request.Username.Equals("admin", StringComparison.OrdinalIgnoreCase) ? "Admin" : "User";
+
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, request.Username),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(ClaimTypes.Name, request.Username),
-            new Claim(ClaimTypes.Role, "User")
+            new Claim(ClaimTypes.Role, role)
         };
 
         var token = new JwtSecurityToken(

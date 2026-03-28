@@ -1,0 +1,327 @@
+{
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/api/authorization/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5177 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "authorization" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/authorization/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5177 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/transaction/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5178 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "transaction" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/transaction/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5178 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/recruitment/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5237 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "recruitment" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/recruitment/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5237 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/employee/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5049 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "employee" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/employee/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5049 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/compensation/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5000 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "compensation" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/compensation/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5000 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/competency/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5261 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "competency" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/competency/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5261 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/appraisal/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5100 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "appraisal" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/appraisal/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5100 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/document/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5081 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "document" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/document/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5081 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/feedback/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5101 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "feedback" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/feedback/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5101 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/learning/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5102 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "learning" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/learning/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5102 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/objective/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5258 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "objective" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/objective/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5258 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/demandmanagement/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5210 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "demandmanagement" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/demandmanagement/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5210 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/promotion/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5103 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "promotion" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/promotion/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5103 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/reporting/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5104 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "reporting" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/reporting/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5104 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    },
+    {
+      "UpstreamPathTemplate": "/api/other/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5224 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 3, "DurationOfBreak": 30000, "TimeoutValue": 10000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "other" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/other/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5224 }],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "GatewayAuth" },
+      "RateLimitOptions": { "EnableRateLimiting": true, "Period": "1m", "Limit": 50 }
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5200",
+    "RateLimitOptions": {
+      "DisableRateLimitHeaders": false,
+      "QuotaExceededMessage": "Too many requests. Please try again later.",
+      "HttpStatusCode": 429,
+      "ClientIdHeader": "X-ClientId"
+    },
+    "QoSOptions": {
+      "ExceptionsAllowedBeforeBreaking": 3,
+      "DurationOfBreak": 30000,
+      "TimeoutValue": 15000
+    },
+    "LoadBalancerOptions": {
+      "Type": "RoundRobin"
+    },
+    "HttpHandlerOptions": {
+      "AllowAutoRedirect": false,
+      "UseCookieContainer": false,
+      "UseTracing": true
+    },
+    "RequestIdKey": "X-Correlation-Id"
+  }
+}

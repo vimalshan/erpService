@@ -27,7 +27,7 @@ public class AppraisalRepository : IAppraisalRepository
     {
         return await _context.AppraisalMains
             .Include(a => a.CompetencyAssessments)
-            .FirstOrDefaultAsync(a => a.RequestNumber == requestNumber, cancellationToken);
+            .FirstOrDefaultAsync(a => a.Id == requestNumber, cancellationToken);
     }
 
     public async Task<AppraisalMainEntity?> GetByUserCodeAsync(string userCode, CancellationToken cancellationToken = default)

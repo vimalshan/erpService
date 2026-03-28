@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Document.Application.Common.Interfaces;
 using Document.Application.DTOs;
 using Document.Domain.Entities;
@@ -37,8 +38,21 @@ public class LogLetterOpenCommandHandler : IRequestHandler<LogLetterOpenCommand,
             request.LetterType,
             request.FinancialYearId);
 
-        await _ctx.LetterLogHistories.AddAsync(log, cancellationToken);
-        await _ctx.SaveChangesAsync(cancellationToken);
+        // DDLETTER_LOGHISTORY has no primary key (HasNoKey) — use raw SQL insert
+        var sqlParams = new object?[]
+        {
+            log.LogSysId,
+            log.IpAddress,
+            log.OpenedOn,
+            (object?)log.EmployeeSysId ?? (object?)null,
+            (object?)log.LetterType ?? (object?)null,
+            (object?)log.FinancialYearId ?? (object?)null
+        };
+        await _ctx.Database.ExecuteSqlRawAsync(
+            @"INSERT INTO DDLETTER_LOGHISTORY 
+              (DDLETTER_LOGSYSID, DDLETTER_IPADDRESS, DDLETTER_OPENEDON, DDLETTER_EMPSYSID, DDLETTER_TYPE, DDLETTER_FINYEARID)
+              VALUES ({0}, {1}, {2}, {3}, {4}, {5})",
+            sqlParams);
 
         return new LetterLogHistoryDto(log.LogSysId, log.IpAddress, log.OpenedOn, log.EmployeeSysId, log.LetterType);
     }

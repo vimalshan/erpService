@@ -7,14 +7,15 @@ public abstract class Entity
 {
     public decimal Id { get; protected set; }
     public DateTime CreatedDate { get; set; }
-    public string CreatedBy { get; set; }
+    public string CreatedBy { get; set; } = string.Empty;
     public DateTime? ModifiedDate { get; set; }
-    public string ModifiedBy { get; set; }
+    public string ModifiedBy { get; set; } = string.Empty;
     public bool IsDeleted { get; set; }
 
     protected Entity()
     {
         CreatedDate = DateTime.UtcNow;
+        CreatedBy = "system";
     }
 
     public override bool Equals(object obj)

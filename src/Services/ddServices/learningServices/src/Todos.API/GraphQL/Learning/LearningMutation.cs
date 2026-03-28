@@ -22,8 +22,7 @@ public class LearningMutation
         decimal requestNumber,
         string? employeeId,
         string? specificNeed,
-        decimal modifiedBy,
-        CancellationToken cancellationToken)
+        decimal modifiedBy)
     {
         var command = new CreateLearningRecordCommand
         {
@@ -34,7 +33,7 @@ public class LearningMutation
             ModifiedBy = modifiedBy
         };
 
-        var result = await _mediator.Send(command, cancellationToken);
+        var result = await _mediator.Send(command);
         return result.Data;
     }
 
@@ -46,8 +45,7 @@ public class LearningMutation
         string? developmentArea,
         string? expectedPostTraining,
         string? bhrStatus,
-        decimal modifiedBy,
-        CancellationToken cancellationToken)
+        decimal modifiedBy)
     {
         var command = new UpdateLearningRecordCommand
         {
@@ -60,15 +58,15 @@ public class LearningMutation
             ModifiedBy = modifiedBy
         };
 
-        var result = await _mediator.Send(command, cancellationToken);
+        var result = await _mediator.Send(command);
         return result.Data;
     }
 
     [GraphQLName("deleteLearningRecord")]
-    public async Task<bool> DeleteLearningRecord(Guid id, CancellationToken cancellationToken)
+    public async Task<bool> DeleteLearningRecord(Guid id)
     {
         var command = new DeleteLearningRecordCommand { Id = id };
-        var result = await _mediator.Send(command, cancellationToken);
+        var result = await _mediator.Send(command);
         return result.Success;
     }
 
@@ -80,8 +78,7 @@ public class LearningMutation
         string? appraiseeComments,
         string? appraiserComments,
         string? reviewerComments,
-        decimal modifiedBy,
-        CancellationToken cancellationToken)
+        decimal modifiedBy)
     {
         var command = new SubmitLearningFeedbackCommand
         {
@@ -94,7 +91,7 @@ public class LearningMutation
             ModifiedBy = modifiedBy
         };
 
-        var result = await _mediator.Send(command, cancellationToken);
+        var result = await _mediator.Send(command);
         return result.Data;
     }
 
@@ -102,8 +99,7 @@ public class LearningMutation
     public async Task<LearningRecordDto?> IdentifyLearningNeed(
         Guid learningRecordId,
         string developmentArea,
-        string indicator,
-        CancellationToken cancellationToken)
+        string indicator)
     {
         var command = new IdentifyLearningNeedCommand
         {
@@ -112,7 +108,7 @@ public class LearningMutation
             Indicator = indicator
         };
 
-        var result = await _mediator.Send(command, cancellationToken);
+        var result = await _mediator.Send(command);
         return result.Data;
     }
 }

@@ -14,7 +14,7 @@ public class AppraisalBandDto
     public string? SignatoryName { get; set; }
     public string? SignatoryDesignation { get; set; }
     public string? Code { get; set; }
-    public char? FormFlag { get; set; }
+    public string? FormFlag { get; set; }
     public long? GradeId { get; set; }
     public DateTime CreatedOn { get; set; }
     public DateTime ModifiedOn { get; set; }
@@ -92,7 +92,7 @@ public class AppraisalDetailedDto
     public string? EmployeeType { get; set; }
     public long? PromotionBand { get; set; }
     public string? FinalVtcRating { get; set; }
-    public char? PayrollStatus { get; set; }
+    public string? PayrollStatus { get; set; }
 
     public CompensationDto? Compensation { get; set; }
     public BenefitsDto? Benefits { get; set; }

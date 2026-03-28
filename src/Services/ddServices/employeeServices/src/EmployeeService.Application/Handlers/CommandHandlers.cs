@@ -30,7 +30,7 @@ namespace EmployeeService.Application.Handlers.Commands
             try
             {
                 // Check if employee number is unique
-                if (await _unitOfWork.Employees.IsEmployeeNumberUniqueAsync(request.EmployeeNumber))
+                if (!await _unitOfWork.Employees.IsEmployeeNumberUniqueAsync(request.EmployeeNumber))
                 {
                     return new CreateEmployeeResponse
                     {
@@ -76,7 +76,8 @@ namespace EmployeeService.Application.Handlers.Commands
                     request.GradeCode,
                     request.GradeName,
                     request.GradeId,
-                    request.CadreName);
+                    request.CadreName,
+                    request.GradeType ?? "N/A");
 
                 var organizationalAssignment = new OrganizationalAssignment(
                     request.UnitBusinessId,

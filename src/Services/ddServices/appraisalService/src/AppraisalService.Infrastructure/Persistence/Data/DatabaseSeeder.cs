@@ -53,10 +53,10 @@ public class DatabaseSeeder
     {
         var bands = new List<AppraisalBandEntity>
         {
-            new AppraisalBandEntity(0, "Executive", "C-Level Executives", "CEO", "Chief Executive Officer", "EXE", 'Y', 1),
-            new AppraisalBandEntity(0, "Senior Mgr", "Senior Management", "SVP", "Senior Vice President", "MGR", 'Y', 2),
-            new AppraisalBandEntity(0, "Team Lead", "Team Leaders & Staff", "Director", "Director of Operations", "TL", 'Y', 3),
-            new AppraisalBandEntity(0, "Individual IC", "Staff & Professionals", "Manager", "Department Manager", "IC", 'Y', 4)
+            new AppraisalBandEntity(0, "Executive", "C-Level Executives", "CEO", "Chief Executive Officer", "EXE", "Y", 1),
+            new AppraisalBandEntity(0, "Senior Mgr", "Senior Management", "SVP", "Senior Vice President", "MGR", "Y", 2),
+            new AppraisalBandEntity(0, "Team Lead", "Team Leaders & Staff", "Director", "Director of Operations", "TL", "Y", 3),
+            new AppraisalBandEntity(0, "Individual IC", "Staff & Professionals", "Manager", "Department Manager", "IC", "Y", 4)
         };
 
         await _context.AppraisalBands.AddRangeAsync(bands);

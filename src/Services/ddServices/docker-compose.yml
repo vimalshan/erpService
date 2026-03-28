@@ -1,0 +1,433 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml — DD ERP Microservices Full Stack
+# Connects to existing infrastructure (erp-sqlserver, erp-rabbitmq, erp-azurite)
+# on the erp-network. If you want standalone infra, run docker-compose.shared.yml first.
+# Usage: docker compose -f docker-compose.yml up -d --build
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # API GATEWAY
+  # ═══════════════════════════════════════════════════════════════════════════
+  api-gateway:
+    build:
+      context: ./apiGateway
+      dockerfile: Dockerfile
+    container_name: dd-api-gateway
+    ports:
+      - "5200:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-very-long-secret-key-change-this-in-production-at-least-32-characters}
+    depends_on:
+      appraisal-service:
+        condition: service_started
+      authorization-service:
+        condition: service_started
+      compensation-service:
+        condition: service_started
+      competency-service:
+        condition: service_started
+      demandmanagement-service:
+        condition: service_started
+      document-service:
+        condition: service_started
+      employee-service:
+        condition: service_started
+      feedback-service:
+        condition: service_started
+      learning-service:
+        condition: service_started
+      objective-service:
+        condition: service_started
+      other-service:
+        condition: service_started
+      promotion-service:
+        condition: service_started
+      recruitment-service:
+        condition: service_started
+      reporting-service:
+        condition: service_started
+      transaction-service:
+        condition: service_started
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # MICROSERVICES
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # ─── Appraisal Service ────────────────────────────────────────────────────
+  appraisal-service:
+    build:
+      context: ./appraisalService
+      dockerfile: Dockerfile
+    container_name: dd-appraisal-service
+    ports:
+      - "5100:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__AppraisalDb=Server=erp-sqlserver,1433;Database=AppraisalDb;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__HostName=erp-rabbitmq
+      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Authorization Service ────────────────────────────────────────────────
+  authorization-service:
+    build:
+      context: ./authorizationServices
+      dockerfile: Dockerfile
+    container_name: dd-authorization-service
+    ports:
+      - "5177:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=erp-sqlserver,1433;Database=AuthorizationServiceDb;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__Hostname=erp-rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Compensation Service ─────────────────────────────────────────────────
+  compensation-service:
+    build:
+      context: ./compensationServices
+      dockerfile: Dockerfile
+    container_name: dd-compensation-service
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__CompensationDb=Server=erp-sqlserver,1433;Database=CompensationDb;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__HostName=erp-rabbitmq
+      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Competency Service ───────────────────────────────────────────────────
+  competency-service:
+    build:
+      context: ./competencyServices
+      dockerfile: Dockerfile
+    container_name: dd-competency-service
+    ports:
+      - "5261:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__CompetencyDb=Server=erp-sqlserver,1433;Database=DDDB;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__Host=erp-rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Demand Management Service ────────────────────────────────────────────
+  demandmanagement-service:
+    build:
+      context: ./demandmanagementServices
+      dockerfile: Dockerfile
+    container_name: dd-demandmanagement-service
+    ports:
+      - "5210:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=erp-sqlserver,1433;Database=DDDB;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__Host=erp-rabbitmq
+      - RabbitMQ__Enabled=true
+      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Document Service ─────────────────────────────────────────────────────
+  document-service:
+    build:
+      context: ./documentServices
+      dockerfile: Dockerfile
+    container_name: dd-document-service
+    ports:
+      - "5081:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=erp-sqlserver,1433;Database=DDDB;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__Host=erp-rabbitmq
+      - RabbitMQ__Enabled=true
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Employee Service ─────────────────────────────────────────────────────
+  employee-service:
+    build:
+      context: ./employeeServices
+      dockerfile: Dockerfile
+    container_name: dd-employee-service
+    ports:
+      - "5049:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=erp-sqlserver,1433;Database=EmployeeServiceDB;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__HostName=erp-rabbitmq
+      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Feedback Service ─────────────────────────────────────────────────────
+  feedback-service:
+    build:
+      context: ./feedbackServices
+      dockerfile: Dockerfile
+    container_name: dd-feedback-service
+    ports:
+      - "5101:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=erp-sqlserver,1433;Database=DDDB;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__Hostname=erp-rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Learning Service ─────────────────────────────────────────────────────
+  learning-service:
+    build:
+      context: ./learningServices
+      dockerfile: Dockerfile
+    container_name: dd-learning-service
+    ports:
+      - "5102:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=erp-sqlserver,1433;Database=TodosDB;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__HostName=erp-rabbitmq
+      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Objective Service ────────────────────────────────────────────────────
+  objective-service:
+    build:
+      context: ./objectiveServices
+      dockerfile: Dockerfile
+    container_name: dd-objective-service
+    ports:
+      - "5258:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=erp-sqlserver,1433;Database=DDDB;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__HostName=erp-rabbitmq
+      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Other Service ────────────────────────────────────────────────────────
+  other-service:
+    build:
+      context: ./OtherServices
+      dockerfile: Dockerfile
+    container_name: dd-other-service
+    ports:
+      - "5224:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=erp-sqlserver,1433;Database=DDDB;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__Host=erp-rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+      - Features__RabbitMQ__Enabled=true
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Promotion Service ────────────────────────────────────────────────────
+  promotion-service:
+    build:
+      context: ./promotionServices
+      dockerfile: Dockerfile
+    container_name: dd-promotion-service
+    ports:
+      - "5103:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=erp-sqlserver,1433;Database=DDDB;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMq__HostName=erp-rabbitmq
+      - RabbitMq__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMq__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Recruitment Service ──────────────────────────────────────────────────
+  recruitment-service:
+    build:
+      context: ./recruitmentServices
+      dockerfile: Dockerfile
+    container_name: dd-recruitment-service
+    ports:
+      - "5237:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=erp-sqlserver,1433;Database=RecruitmentDb;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__HostName=erp-rabbitmq
+      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Reporting Service ────────────────────────────────────────────────────
+  reporting-service:
+    build:
+      context: ./reportingServices
+      dockerfile: Dockerfile
+    container_name: dd-reporting-service
+    ports:
+      - "5104:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=erp-sqlserver,1433;Database=ReportingServiceDb;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__Hostname=erp-rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+  # ─── Transaction Service ──────────────────────────────────────────────────
+  transaction-service:
+    build:
+      context: ./transactionServices
+      dockerfile: Dockerfile
+    container_name: dd-transaction-service
+    ports:
+      - "5178:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=erp-sqlserver,1433;Database=TransactionServiceDb;User Id=sa;Password=${DB_PASSWORD:-YourStr0ng!Passw0rd};TrustServerCertificate=True;MultipleActiveResultSets=True;
+      - RabbitMQ__Hostname=erp-rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+
+networks:
+  erp-network:
+    external: true

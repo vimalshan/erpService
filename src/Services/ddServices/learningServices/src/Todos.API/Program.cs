@@ -41,6 +41,7 @@ public class Program
             options.UseSqlServer(connectionString, sqlOptions =>
             {
                 sqlOptions.MigrationsHistoryTable("__TodosMigrationsHistory");
+                sqlOptions.MigrationsAssembly("Todos.Infrastructure");
             }));
 
         // Register UnitOfWork and Repositories
@@ -59,11 +60,13 @@ public class Program
 
         // Add Fluent Validation
         builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+        builder.Services.AddValidatorsFromAssembly(typeof(Todos.Application.Queries.GetAllLearningRecordsQuery).Assembly);
 
         // Add MediatR
         builder.Services.AddMediatR(config =>
         {
             config.RegisterServicesFromAssemblyContaining<Program>();
+            config.RegisterServicesFromAssembly(typeof(Todos.Application.Queries.GetAllLearningRecordsQuery).Assembly);
             config.AddOpenBehavior(typeof(LoggingBehavior<,>));
             config.AddOpenBehavior(typeof(ValidationBehavior<,>));
             config.AddOpenBehavior(typeof(PerformanceMonitoringBehavior<,>));
@@ -126,9 +129,8 @@ public class Program
 
         // Add Health Checks
         builder.Services.AddHealthChecks()
-            .AddSqlServer(connectionString, name: "SQL Server")
-            .AddRabbitMQ(new Uri($"amqp://guest:guest@{rabbitmqConfig?.HostName ?? "localhost"}:{rabbitmqConfig?.Port ?? 5672}"),
-                name: "RabbitMQ");
+            .AddSqlServer(connectionString, name: "SQL Server");
+            // RabbitMQ is optional - omitted from health checks since NoOp publisher handles unavailability gracefully
 
         // Add Controllers
         builder.Services.AddControllers();

@@ -27,24 +27,15 @@ using AppraisalService.Application;
 using AppraisalService.Application.Behaviors;
 using AppraisalService.Application.CQRS.Commands;
 using AppraisalService.API.Middleware;
-
+using AppraisalService.API.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"]!);
 
-// Database
-builder.Services.AddDbContext<AppraisalDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("AppraisalDb"),
-        b => b.MigrationsAssembly("AppraisalService.Infrastructure")));
-
-// Repository Pattern & Unit of Work
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-// JWT Token Service
-builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+// Add all core infrastructure services from the extension (DbContext, UoW, JWT, RabbitMQ, Storage)
+builder.Services.AddAppraisalServices(builder.Configuration);
 
 // MediatR - Register from Application assembly
 builder.Services.AddMediatR(typeof(MappingProfile));
@@ -162,6 +153,11 @@ builder.Services.AddLogging(config =>
 var app = builder.Build();
 
 // Middleware pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {

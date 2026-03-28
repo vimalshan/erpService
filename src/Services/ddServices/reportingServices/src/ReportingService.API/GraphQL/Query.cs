@@ -8,21 +8,14 @@ namespace ReportingService.API.GraphQL;
 
 public class Query
 {
-    private readonly IMediator _mediator;
-
-    public Query(IMediator mediator)
+    public async Task<AppraisalDto?> GetAppraisalAsync([Service] IMediator mediator, long id)
     {
-        _mediator = mediator;
+        return await mediator.Send(new GetAppraisalByIdQuery { Id = id });
     }
 
-    public async Task<AppraisalDto?> GetAppraisalAsync(long id)
+    public async Task<IEnumerable<AppraisalDto>> GetApprisalsAsync([Service] IMediator mediator)
     {
-        return await _mediator.Send(new GetAppraisalByIdQuery { Id = id });
-    }
-
-    public async Task<IEnumerable<AppraisalDto>> GetApprisalsAsync()
-    {
-        return await _mediator.Send(new GetAllApprisalsQuery());
+        return await mediator.Send(new GetAllApprisalsQuery());
     }
 }
 
@@ -32,11 +25,11 @@ public class QueryType : ObjectType<Query>
     {
         descriptor.Name("Query");
         descriptor
-            .Field(q => q.GetAppraisalAsync(default))
+            .Field(q => q.GetAppraisalAsync(default!, default))
             .Name("getAppraisal")
             .Type<AppraisalType>();
         descriptor
-            .Field(q => q.GetApprisalsAsync())
+            .Field(q => q.GetApprisalsAsync(default!))
             .Name("getAppraisals")
             .Type<NonNullType<ListType<AppraisalType>>>();
     }

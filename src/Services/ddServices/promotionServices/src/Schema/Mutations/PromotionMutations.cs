@@ -7,7 +7,6 @@ using PromotionService.Types;
 namespace PromotionService.Schema.Mutations;
 
 /// <summary>GraphQL Mutation resolvers for Promotion Service</summary>
-[MutationType]
 public class PromotionMutations
 {
     #region Rating Mutations

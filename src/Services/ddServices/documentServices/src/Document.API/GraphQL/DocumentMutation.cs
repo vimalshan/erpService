@@ -4,7 +4,6 @@ using Document.Application.Features.Signatories.Commands;
 
 namespace Document.API.GraphQL;
 
-[MutationType]
 public class DocumentMutation
 {
     public async Task<SignatoryDto> CreateSignatory(

@@ -12,7 +12,7 @@ public class AppraisalBandEntity : AggregateRoot
     public string? SignatoryName { get; set; }
     public string? SignatoryDesignation { get; set; }
     public string? Code { get; set; }
-    public char? FormFlag { get; set; }
+    public string? FormFlag { get; set; }
     public long? GradeId { get; set; }
 
     private AppraisalBandEntity() { }
@@ -24,7 +24,7 @@ public class AppraisalBandEntity : AggregateRoot
         string? signatoryName,
         string? signatoryDesignation,
         string? code,
-        char? formFlag,
+        string? formFlag,
         long? gradeId) : base(id)
     {
         Description = description;
@@ -42,7 +42,7 @@ public class AppraisalBandEntity : AggregateRoot
         string? signatoryName,
         string? signatoryDesignation,
         string? code,
-        char? formFlag,
+        string? formFlag,
         long? gradeId)
     {
         Description = description;

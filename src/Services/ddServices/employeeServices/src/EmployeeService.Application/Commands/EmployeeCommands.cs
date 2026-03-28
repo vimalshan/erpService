@@ -29,6 +29,7 @@ namespace EmployeeService.Application.Commands.Employees
         public string GradeCode { get; set; }
         public string GradeName { get; set; }
         public long GradeId { get; set; }
+        public string GradeType { get; set; }
         public string CadreName { get; set; }
         public long UnitBusinessId { get; set; }
         public long UnitOrgId { get; set; }

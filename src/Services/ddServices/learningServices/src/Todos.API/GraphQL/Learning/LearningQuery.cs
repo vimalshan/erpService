@@ -17,40 +17,37 @@ public class LearningQuery
     }
 
     [GraphQLName("getLearningRecord")]
-    public async Task<LearningRecordDto?> GetLearningRecord(Guid id, CancellationToken cancellationToken)
+    public async Task<LearningRecordDto?> GetLearningRecord(Guid id)
     {
-        var result = await _mediator.Send(new GetLearningRecordByIdQuery { Id = id }, cancellationToken);
+        var result = await _mediator.Send(new GetLearningRecordByIdQuery { Id = id });
         return result.Data;
     }
 
     [GraphQLName("getAllLearningRecords")]
-    public async Task<IEnumerable<LearningRecordDto>> GetAllLearningRecords(int pageNumber = 1, int pageSize = 10, CancellationToken? cancellationToken = null)
+    public async Task<IEnumerable<LearningRecordDto>> GetAllLearningRecords(int pageNumber = 1, int pageSize = 10)
     {
-        var ct = cancellationToken ?? CancellationToken.None;
-        var result = await _mediator.Send(new GetAllLearningRecordsQuery { PageNumber = pageNumber, PageSize = pageSize }, ct);
+        var result = await _mediator.Send(new GetAllLearningRecordsQuery { PageNumber = pageNumber, PageSize = pageSize });
         return result.Data ?? [];
     }
 
     [GraphQLName("searchLearningRecords")]
-    public async Task<IEnumerable<LearningRecordDto>> SearchLearningRecords(decimal requestNumber, CancellationToken? cancellationToken = null)
+    public async Task<IEnumerable<LearningRecordDto>> SearchLearningRecords(decimal requestNumber)
     {
-        var ct = cancellationToken ?? CancellationToken.None;
-        var result = await _mediator.Send(new SearchLearningRecordsByRequestNumberQuery { RequestNumber = requestNumber }, ct);
+        var result = await _mediator.Send(new SearchLearningRecordsByRequestNumberQuery { RequestNumber = requestNumber });
         return result.Data ?? [];
     }
 
     [GraphQLName("getLearningFeedback")]
-    public async Task<LearningFeedbackDto?> GetLearningFeedback(Guid id, CancellationToken cancellationToken)
+    public async Task<LearningFeedbackDto?> GetLearningFeedback(Guid id)
     {
-        var result = await _mediator.Send(new GetLearningFeedbackByIdQuery { Id = id }, cancellationToken);
+        var result = await _mediator.Send(new GetLearningFeedbackByIdQuery { Id = id });
         return result.Data;
     }
 
     [GraphQLName("getAllLearningFeedback")]
-    public async Task<IEnumerable<LearningFeedbackDto>> GetAllLearningFeedback(int pageNumber = 1, int pageSize = 10, CancellationToken? cancellationToken = null)
+    public async Task<IEnumerable<LearningFeedbackDto>> GetAllLearningFeedback(int pageNumber = 1, int pageSize = 10)
     {
-        var ct = cancellationToken ?? CancellationToken.None;
-        var result = await _mediator.Send(new GetAllLearningFeedbackQuery { PageNumber = pageNumber, PageSize = pageSize }, ct);
+        var result = await _mediator.Send(new GetAllLearningFeedbackQuery { PageNumber = pageNumber, PageSize = pageSize });
         return result.Data ?? [];
     }
 }

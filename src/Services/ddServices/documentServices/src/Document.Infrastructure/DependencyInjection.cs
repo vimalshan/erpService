@@ -30,29 +30,36 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IBlobStorageService, BlobStorageService>();
-        services.AddScoped<IMessagePublisher, MessagePublisher>();
 
-        // MassTransit + RabbitMQ
-        services.AddMassTransit(x =>
+        // MassTransit + RabbitMQ (only when RabbitMQ:Enabled = true)
+        if (configuration.GetValue<bool>("RabbitMQ:Enabled"))
         {
-            x.AddConsumer<LetterGeneratedConsumer>();
-            x.AddConsumer<LetterOpenedConsumer>();
-
-            x.UsingRabbitMq((ctx, cfg) =>
+            services.AddMassTransit(x =>
             {
-                cfg.Host(configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+                x.AddConsumer<LetterGeneratedConsumer>();
+                x.AddConsumer<LetterOpenedConsumer>();
+
+                x.UsingRabbitMq((ctx, cfg) =>
                 {
-                    h.Username(configuration["RabbitMQ:Username"] ?? "guest");
-                    h.Password(configuration["RabbitMQ:Password"] ?? "guest");
+                    cfg.Host(configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+                    {
+                        h.Username(configuration["RabbitMQ:Username"] ?? "guest");
+                        h.Password(configuration["RabbitMQ:Password"] ?? "guest");
+                    });
+
+                    cfg.ReceiveEndpoint("letter-generated-queue", e =>
+                        e.ConfigureConsumer<LetterGeneratedConsumer>(ctx));
+
+                    cfg.ReceiveEndpoint("letter-opened-queue", e =>
+                        e.ConfigureConsumer<LetterOpenedConsumer>(ctx));
                 });
-
-                cfg.ReceiveEndpoint("letter-generated-queue", e =>
-                    e.ConfigureConsumer<LetterGeneratedConsumer>(ctx));
-
-                cfg.ReceiveEndpoint("letter-opened-queue", e =>
-                    e.ConfigureConsumer<LetterOpenedConsumer>(ctx));
             });
-        });
+            services.AddScoped<IMessagePublisher, MessagePublisher>();
+        }
+        else
+        {
+            services.AddScoped<IMessagePublisher, NullMessagePublisher>();
+        }
 
         return services;
     }

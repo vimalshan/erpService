@@ -65,14 +65,18 @@ builder.Services.AddGraphQLServer()
     .AddFiltering()
     .AddSorting()
     .AddProjections()
-    .AddAuthorization();
+    .AddAuthorization()
+    .ModifyRequestOptions(o => o.IncludeExceptionDetails = true);
 
-builder.Services.AddHealthChecks()
+var healthChecks = builder.Services.AddHealthChecks()
     .AddSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")!,
         name: "sql-server",
-        tags: new[] { "db", "sql" })
-    .AddRabbitMQ(sp =>
+        tags: new[] { "db", "sql" });
+
+if (builder.Configuration.GetValue<bool>("RabbitMQ:Enabled"))
+{
+    healthChecks.AddRabbitMQ(sp =>
         {
             var factory = new RabbitMQ.Client.ConnectionFactory
             {
@@ -84,6 +88,7 @@ builder.Services.AddHealthChecks()
         },
         name: "rabbitmq",
         tags: new[] { "messaging" });
+}
 
 builder.Services.AddHealthChecksUI(opts =>
 {

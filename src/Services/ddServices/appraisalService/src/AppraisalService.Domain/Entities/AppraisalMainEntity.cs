@@ -25,7 +25,7 @@ public class AppraisalMainEntity : AggregateRoot
     public string? AppraisalType { get; private set; }
     public long? CancelledByApproverId { get; private set; }
     public DateTime? CancelledDate { get; private set; }
-    public char? HasSubordinates { get; private set; }
+    public string? HasSubordinates { get; private set; }
 
     // Compensation details
     public CompensationDetails? Compensation { get; private set; }
@@ -48,7 +48,7 @@ public class AppraisalMainEntity : AggregateRoot
     public string? EmployeeType { get; private set; }
 
     // Approval status: N- Processing, A- Approved HR, C- Approved by All CEO, S- Digitally Signed, R- Released Letter, E- Release to Employee, Y- Pushed to Payroll
-    public char? PayrollStatus { get; private set; }
+    public string? PayrollStatus { get; private set; }
 
     private List<AppraisalDetailsEntity> _appraisalDetails = new();
     public IReadOnlyCollection<AppraisalDetailsEntity> AppraisalDetails => _appraisalDetails.AsReadOnly();
@@ -155,7 +155,7 @@ public class AppraisalMainEntity : AggregateRoot
         RaiseDomainEvent(new AppraisalCancelledEvent(RequestNumber, UserCode, remarks));
     }
 
-    public void SetPayrollStatus(char status)
+    public void SetPayrollStatus(string status)
     {
         PayrollStatus = status;
         ModifiedOn = DateTime.UtcNow;

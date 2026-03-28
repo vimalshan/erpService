@@ -156,25 +156,18 @@ try
         .AddGraphQLServer()
         .AddQueryType<PromotionQueries>()
         .AddMutationType<PromotionMutations>()
+        // Object Types
         .AddType<RatingType>()
         .AddType<PromotionRecommendationType>()
         .AddType<IncrementRequestType>()
-        .AddType<VTCAssessmentType>();
+        .AddType<VTCAssessmentType>()
+        .AddType<PromotionPayloadType>()
+        .AddType<PromotionListPayloadType>();
 
     // ── Health Checks ────────────────────────────────────────────────────
-    var rabbitHost = config["RabbitMq:HostName"] ?? "localhost";
-    var rabbitPort = config["RabbitMq:Port"] ?? "5672";
-    var rabbitUser = config["RabbitMq:UserName"] ?? "guest";
-    var rabbitPass = config["RabbitMq:Password"] ?? "guest";
-    var rabbitVHost = Uri.EscapeDataString(config["RabbitMq:VirtualHost"] ?? "/");
-
     builder.Services.AddHealthChecks()
         .AddDbContextCheck<PromotionDbContext>("EfCoreDb", tags: new[] { "db", "ready" })
-        .AddCheck<PromotionServiceHealthCheck>("PromotionDomain", tags: new[] { "domain", "ready" })
-        .AddRabbitMQ(
-            rabbitConnectionString: $"amqp://{rabbitUser}:{rabbitPass}@{rabbitHost}:{rabbitPort}/{rabbitVHost}",
-            name: "RabbitMQ",
-            tags: new[] { "messaging", "ready" });
+        .AddCheck<PromotionServiceHealthCheck>("PromotionDomain", tags: new[] { "domain", "ready" });
 
     // ── CORS ─────────────────────────────────────────────────────────────
     builder.Services.AddCors(options =>

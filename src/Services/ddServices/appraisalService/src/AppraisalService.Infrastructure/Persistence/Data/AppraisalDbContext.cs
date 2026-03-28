@@ -45,7 +45,7 @@ public class AppraisalDbContext : DbContext
         modelBuilder.Entity<AppraisalMainEntity>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).HasColumnName("AP_REQ_NUM");
+            entity.Property(e => e.Id).HasColumnName("AP_REQ_NUM").ValueGeneratedNever();
             entity.Property(e => e.UserCode).HasColumnName("AP_USR_COD").HasMaxLength(25).IsRequired();
             entity.Property(e => e.UserNumber).HasColumnName("AP_USR_NUM");
             entity.Property(e => e.PinNumber).HasColumnName("AP_PIN_NUM");
@@ -102,6 +102,10 @@ public class AppraisalDbContext : DbContext
                 ben.Property(b => b.IsPfAvailable).HasColumnName("AP_BENF_PF");
                 ben.Property(b => b.NewFlexipay).HasColumnName("AP_NEWFLEXIPAY");
             });
+
+            // RequestNumber == Id (same column AP_REQ_NUM); ignore to avoid EF Core
+            // trying to map it to a non-existent 'RequestNumber' column.
+            entity.Ignore(e => e.RequestNumber);
 
             entity.HasMany(e => e.CompetencyAssessments)
                 .WithOne(c => c.AppraisalMain)

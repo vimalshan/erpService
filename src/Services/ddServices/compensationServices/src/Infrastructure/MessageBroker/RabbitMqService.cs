@@ -105,10 +105,34 @@ public static class RabbitMqServiceExtensions
             VirtualHost = rabbitMqConfig["VirtualHost"] ?? "/"
         };
 
-        var connection = factory.CreateConnection();
-        services.AddSingleton(connection);
-        services.AddScoped<IRabbitMqService, RabbitMqService>();
+        try
+        {
+            var connection = factory.CreateConnection();
+            services.AddSingleton(connection);
+            services.AddScoped<IRabbitMqService, RabbitMqService>();
+            Console.WriteLine("RabbitMQ connected successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"RabbitMQ connection failed: {ex.Message}. Using mocked RabbitMQ service.");
+            services.AddScoped<IRabbitMqService, MockRabbitMqService>();
+        }
 
         return services;
+    }
+}
+
+public class MockRabbitMqService : IRabbitMqService
+{
+    public Task PublishMessageAsync(string queueName, string message, CancellationToken cancellationToken = default)
+    {
+        Console.WriteLine($"[MockRabbitMQ] Publish to '{queueName}': {message}");
+        return Task.CompletedTask;
+    }
+
+    public Task SubscribeToQueueAsync(string queueName, Func<string, Task> messageHandler, CancellationToken cancellationToken = default)
+    {
+        Console.WriteLine($"[MockRabbitMQ] Subscribed to '{queueName}'");
+        return Task.CompletedTask;
     }
 }

@@ -26,7 +26,7 @@ public class CreateCompensationPeriodCommandHandler : IRequestHandler<CreateComp
         try
         {
             var dto = request.Dto;
-            var periodId = decimal.Parse(Guid.NewGuid().ToString("N").Substring(0, 10));
+            var periodId = Convert.ToDecimal(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
             var period = CompensationPeriod.Create(
                 periodId,
@@ -184,7 +184,7 @@ public class CreateCompensationRecommendationCommandHandler : IRequestHandler<Cr
         try
         {
             var dto = request.Dto;
-            var recommendationId = decimal.Parse(Guid.NewGuid().ToString("N").Substring(0, 10));
+            var recommendationId = Convert.ToDecimal(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
             var recommendation = CompensationRecommendation.Create(
                 recommendationId,

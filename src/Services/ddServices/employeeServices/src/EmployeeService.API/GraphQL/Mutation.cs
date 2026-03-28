@@ -30,6 +30,7 @@ namespace EmployeeService.API.GraphQL
                 GradeCode = input.GradeCode,
                 GradeName = input.GradeName,
                 GradeId = input.GradeId,
+                GradeType = input.GradeType,
                 CadreName = input.CadreName,
                 UnitBusinessId = input.UnitBusinessId,
                 UnitOrgId = input.UnitOrgId,
@@ -109,6 +110,7 @@ namespace EmployeeService.API.GraphQL
         public string GradeCode { get; set; }
         public string GradeName { get; set; }
         public long GradeId { get; set; }
+        public string GradeType { get; set; }
         public string CadreName { get; set; }
         public long UnitBusinessId { get; set; }
         public long UnitOrgId { get; set; }

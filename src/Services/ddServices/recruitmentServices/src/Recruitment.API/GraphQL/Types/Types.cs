@@ -18,11 +18,11 @@ public class ApplicationType
 {
     public decimal ApplicationNumber { get; set; }
     public decimal JobId { get; set; }
-    public string SparshId { get; set; }
-    public string Status { get; set; }
-    public string Achievements { get; set; }
-    public string ReasonForJoining { get; set; }
-    public string Strength { get; set; }
+    public string? SparshId { get; set; }
+    public string? Status { get; set; }
+    public string? Achievements { get; set; }
+    public string? ReasonForJoining { get; set; }
+    public string? Strength { get; set; }
     public decimal? CrtMarks { get; set; }
     public decimal? DomainMarks { get; set; }
     public DateTime CreatedDate { get; set; }

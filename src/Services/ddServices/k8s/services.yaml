@@ -1,0 +1,1306 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# DD ERP — All Microservice Deployments & Services (K8s)
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# API GATEWAY
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: dd-erp
+  labels:
+    app: api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: dderp/api-gateway:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: LoadBalancer
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# APPRAISAL SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appraisal-service
+  namespace: dd-erp
+  labels:
+    app: appraisal-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: appraisal-service
+  template:
+    metadata:
+      labels:
+        app: appraisal-service
+    spec:
+      containers:
+        - name: appraisal-service
+          image: dderp/appraisal-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__AppraisalDb
+              value: "Server=sqlserver-service,1433;Database=AppraisalDb;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__HostName
+              value: "rabbitmq-service"
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: appraisal-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: appraisal-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# AUTHORIZATION SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authorization-service
+  namespace: dd-erp
+  labels:
+    app: authorization-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: authorization-service
+  template:
+    metadata:
+      labels:
+        app: authorization-service
+    spec:
+      containers:
+        - name: authorization-service
+          image: dderp/authorization-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-service,1433;Database=AuthorizationServiceDb;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__Hostname
+              value: "rabbitmq-service"
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authorization-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: authorization-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# COMPENSATION SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compensation-service
+  namespace: dd-erp
+  labels:
+    app: compensation-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: compensation-service
+  template:
+    metadata:
+      labels:
+        app: compensation-service
+    spec:
+      containers:
+        - name: compensation-service
+          image: dderp/compensation-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__CompensationDb
+              value: "Server=sqlserver-service,1433;Database=CompensationDb;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__HostName
+              value: "rabbitmq-service"
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: compensation-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: compensation-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# COMPETENCY SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: competency-service
+  namespace: dd-erp
+  labels:
+    app: competency-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: competency-service
+  template:
+    metadata:
+      labels:
+        app: competency-service
+    spec:
+      containers:
+        - name: competency-service
+          image: dderp/competency-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__CompetencyDb
+              value: "Server=sqlserver-service,1433;Database=DDDB;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__Host
+              value: "rabbitmq-service"
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: competency-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: competency-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# DEMAND MANAGEMENT SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demandmanagement-service
+  namespace: dd-erp
+  labels:
+    app: demandmanagement-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demandmanagement-service
+  template:
+    metadata:
+      labels:
+        app: demandmanagement-service
+    spec:
+      containers:
+        - name: demandmanagement-service
+          image: dderp/demandmanagement-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-service,1433;Database=DDDB;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__Host
+              value: "rabbitmq-service"
+            - name: RabbitMQ__Enabled
+              value: "true"
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demandmanagement-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: demandmanagement-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# DOCUMENT SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: document-service
+  namespace: dd-erp
+  labels:
+    app: document-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: document-service
+  template:
+    metadata:
+      labels:
+        app: document-service
+    spec:
+      containers:
+        - name: document-service
+          image: dderp/document-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-service,1433;Database=DDDB;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__Host
+              value: "rabbitmq-service"
+            - name: RabbitMQ__Enabled
+              value: "true"
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: document-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: document-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# EMPLOYEE SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: employee-service
+  namespace: dd-erp
+  labels:
+    app: employee-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: employee-service
+  template:
+    metadata:
+      labels:
+        app: employee-service
+    spec:
+      containers:
+        - name: employee-service
+          image: dderp/employee-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-service,1433;Database=EmployeeServiceDB;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__HostName
+              value: "rabbitmq-service"
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: employee-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: employee-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# FEEDBACK SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feedback-service
+  namespace: dd-erp
+  labels:
+    app: feedback-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: feedback-service
+  template:
+    metadata:
+      labels:
+        app: feedback-service
+    spec:
+      containers:
+        - name: feedback-service
+          image: dderp/feedback-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-service,1433;Database=DDDB;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__Hostname
+              value: "rabbitmq-service"
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: feedback-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: feedback-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# LEARNING SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: learning-service
+  namespace: dd-erp
+  labels:
+    app: learning-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: learning-service
+  template:
+    metadata:
+      labels:
+        app: learning-service
+    spec:
+      containers:
+        - name: learning-service
+          image: dderp/learning-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-service,1433;Database=TodosDB;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__HostName
+              value: "rabbitmq-service"
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: learning-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: learning-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# OBJECTIVE SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: objective-service
+  namespace: dd-erp
+  labels:
+    app: objective-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: objective-service
+  template:
+    metadata:
+      labels:
+        app: objective-service
+    spec:
+      containers:
+        - name: objective-service
+          image: dderp/objective-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-service,1433;Database=DDDB;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__HostName
+              value: "rabbitmq-service"
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: objective-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: objective-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# OTHER SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: other-service
+  namespace: dd-erp
+  labels:
+    app: other-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: other-service
+  template:
+    metadata:
+      labels:
+        app: other-service
+    spec:
+      containers:
+        - name: other-service
+          image: dderp/other-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-service,1433;Database=DDDB;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__Host
+              value: "rabbitmq-service"
+            - name: Features__RabbitMQ__Enabled
+              value: "true"
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: other-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: other-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# PROMOTION SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: promotion-service
+  namespace: dd-erp
+  labels:
+    app: promotion-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: promotion-service
+  template:
+    metadata:
+      labels:
+        app: promotion-service
+    spec:
+      containers:
+        - name: promotion-service
+          image: dderp/promotion-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-service,1433;Database=DDDB;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMq__HostName
+              value: "rabbitmq-service"
+            - name: RabbitMq__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMq__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: promotion-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: promotion-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# RECRUITMENT SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recruitment-service
+  namespace: dd-erp
+  labels:
+    app: recruitment-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: recruitment-service
+  template:
+    metadata:
+      labels:
+        app: recruitment-service
+    spec:
+      containers:
+        - name: recruitment-service
+          image: dderp/recruitment-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-service,1433;Database=RecruitmentDb;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__HostName
+              value: "rabbitmq-service"
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recruitment-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: recruitment-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# REPORTING SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reporting-service
+  namespace: dd-erp
+  labels:
+    app: reporting-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reporting-service
+  template:
+    metadata:
+      labels:
+        app: reporting-service
+    spec:
+      containers:
+        - name: reporting-service
+          image: dderp/reporting-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-service,1433;Database=ReportingServiceDb;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__Hostname
+              value: "rabbitmq-service"
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reporting-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: reporting-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# TRANSACTION SERVICE
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transaction-service
+  namespace: dd-erp
+  labels:
+    app: transaction-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: transaction-service
+  template:
+    metadata:
+      labels:
+        app: transaction-service
+    spec:
+      containers:
+        - name: transaction-service
+          image: dderp/transaction-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: dd-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-service,1433;Database=TransactionServiceDb;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: db-password
+            - name: RabbitMQ__Hostname
+              value: "rabbitmq-service"
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: dd-erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transaction-service
+  namespace: dd-erp
+spec:
+  selector:
+    app: transaction-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP

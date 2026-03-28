@@ -9,45 +9,38 @@ namespace Recruitment.API.GraphQL;
 
 public class Query
 {
-    private readonly IMediator _mediator;
-
-    public Query(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-
-    public async Task<IList<JobType>> GetAllJobs()
+    public async Task<IList<JobType>> GetAllJobs([Service] IMediator mediator)
     {
         var query = new GetAllJobsQuery();
-        var result = await _mediator.Send(query);
+        var result = await mediator.Send(query);
         return result.Select(MapToJobType).ToList();
     }
 
-    public async Task<JobType?> GetJobById(decimal jobId)
+    public async Task<JobType?> GetJobById([Service] IMediator mediator, decimal jobId)
     {
         var query = new GetJobByIdQuery { JobId = jobId };
-        var result = await _mediator.Send(query);
+        var result = await mediator.Send(query);
         return result != null ? MapToJobType(result) : null;
     }
 
-    public async Task<IList<ApplicationType>> GetAllApplications()
+    public async Task<IList<ApplicationType>> GetAllApplications([Service] IMediator mediator)
     {
         var query = new GetAllApplicationsQuery();
-        var result = await _mediator.Send(query);
+        var result = await mediator.Send(query);
         return result.Select(MapToApplicationType).ToList();
     }
 
-    public async Task<ApplicationType?> GetApplicationById(decimal applicationNumber)
+    public async Task<ApplicationType?> GetApplicationById([Service] IMediator mediator, decimal applicationNumber)
     {
         var query = new GetApplicationByIdQuery { ApplicationNumber = applicationNumber };
-        var result = await _mediator.Send(query);
+        var result = await mediator.Send(query);
         return result != null ? MapToApplicationType(result) : null;
     }
 
-    public async Task<IList<ApplicationType>> GetApplicationsByJobId(decimal jobId)
+    public async Task<IList<ApplicationType>> GetApplicationsByJobId([Service] IMediator mediator, decimal jobId)
     {
         var query = new GetApplicationsByJobIdQuery { JobId = jobId };
-        var result = await _mediator.Send(query);
+        var result = await mediator.Send(query);
         return result.Select(MapToApplicationType).ToList();
     }
 
@@ -94,14 +87,7 @@ public class Query
 
 public class Mutation
 {
-    private readonly IMediator _mediator;
-
-    public Mutation(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-
-    public async Task<decimal> CreateJob(CreateJobInput jobData)
+    public async Task<decimal> CreateJob([Service] IMediator mediator, CreateJobInput jobData)
     {
         var command = new CreateJobCommand
         {
@@ -120,10 +106,10 @@ public class Mutation
             }
         };
 
-        return await _mediator.Send(command);
+        return await mediator.Send(command);
     }
 
-    public async Task<decimal> CreateApplication(CreateApplicationInput applicationData)
+    public async Task<decimal> CreateApplication([Service] IMediator mediator, CreateApplicationInput applicationData)
     {
         var command = new CreateApplicationCommand
         {
@@ -136,7 +122,7 @@ public class Mutation
             }
         };
 
-        return await _mediator.Send(command);
+        return await mediator.Send(command);
     }
 }
 

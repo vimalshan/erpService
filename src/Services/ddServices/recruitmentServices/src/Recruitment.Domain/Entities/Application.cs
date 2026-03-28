@@ -26,7 +26,16 @@ public class Application : Entity
     public List<CourseDetail> CourseDetails { get; private set; } = new();
 
     // Required for EF Core
-    public Application() { }
+    public Application()
+    {
+        CurrentJobDesciption = string.Empty;
+        Achievements = string.Empty;
+        ReasonForJoining = string.Empty;
+        Strength = string.Empty;
+        Awards = string.Empty;
+        CrtDocumentPath = string.Empty;
+        DomainDocumentPath = string.Empty;
+    }
 
     public Application(
         decimal applicationNumber,
@@ -38,6 +47,13 @@ public class Application : Entity
         ContactInfo = contactInfo;
         Status = ApplicationStatus.Pending;
         Id = applicationNumber;
+        CurrentJobDesciption = string.Empty;
+        Achievements = string.Empty;
+        ReasonForJoining = string.Empty;
+        Strength = string.Empty;
+        Awards = string.Empty;
+        CrtDocumentPath = string.Empty;
+        DomainDocumentPath = string.Empty;
     }
 
     public void UpdateApplicationDetails(

@@ -35,9 +35,8 @@ public class PromotionServiceHealthCheck : IHealthCheck
                 ["checkedAt"] = DateTime.UtcNow
             };
 
-            return periodCount > 0
-                ? HealthCheckResult.Healthy("Promotion service is healthy.", data)
-                : HealthCheckResult.Degraded("No promotion periods found.", data: data);
+            // Service is healthy if database is accessible, even without promotion periods
+            return HealthCheckResult.Healthy("Promotion service is healthy.", data);
         }
         catch (Exception ex)
         {

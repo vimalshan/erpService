@@ -8,7 +8,6 @@ using PromotionService.Types;
 namespace PromotionService.Schema.Queries;
 
 /// <summary>GraphQL Query resolvers for Promotion Service</summary>
-[QueryType]
 public class PromotionQueries
 {
     /// <summary>Get rating by ID</summary>

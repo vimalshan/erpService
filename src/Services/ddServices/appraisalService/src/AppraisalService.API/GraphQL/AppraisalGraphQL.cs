@@ -12,7 +12,6 @@ namespace AppraisalService.API.GraphQL;
 /// <summary>
 /// GraphQL Query type
 /// </summary>
-[QueryType]
 public class AppraisalQueries
 {
     public async Task<AppraisalDetailedDto?> GetAppraisalAsync(
@@ -68,7 +67,6 @@ public class AppraisalQueries
 /// <summary>
 /// GraphQL Mutation type
 /// </summary>
-[MutationType]
 public class AppraisalMutations
 {
     public async Task<long> CreateAppraisalAsync(
@@ -83,7 +81,7 @@ public class AppraisalMutations
 
     public async Task<bool> UpdateAppraisalAsync(
         long requestNumber,
-        [GraphQLType("UpdateAppraisalInput")] CreateOrUpdateAppraisalDto input,
+        CreateOrUpdateAppraisalDto input,
         [Service] IMediator mediator,
         CancellationToken cancellationToken)
     {

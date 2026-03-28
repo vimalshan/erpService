@@ -42,7 +42,7 @@ public static class ServiceCollectionExtensions
             Port = int.TryParse(rabbitMQConfig["Port"], out var port) ? port : 5672
         };
 
-        services.AddSingleton(connectionFactory);
+        services.AddSingleton<IConnectionFactory>(connectionFactory);
         services.AddScoped<IMessagePublisher, RabbitMQPublisher>();
         services.AddScoped<DomainEventConsumer>();
 

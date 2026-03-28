@@ -12,3 +12,10 @@ public class MessagePublisher : IMessagePublisher
     public async Task PublishAsync<T>(T message, CancellationToken cancellationToken = default) where T : class
         => await _bus.Publish(message, cancellationToken);
 }
+
+/// <summary>No-op publisher used when RabbitMQ is disabled in local dev.</summary>
+public sealed class NullMessagePublisher : IMessagePublisher
+{
+    public Task PublishAsync<T>(T message, CancellationToken cancellationToken = default) where T : class
+        => Task.CompletedTask;
+}

@@ -85,6 +85,7 @@ public class RequestResponseLoggingMiddleware
         {
             responseBody.Seek(0, SeekOrigin.Begin);
             await responseBody.CopyToAsync(originalBodyStream);
+            context.Response.Body = originalBodyStream;
         }
     }
 }

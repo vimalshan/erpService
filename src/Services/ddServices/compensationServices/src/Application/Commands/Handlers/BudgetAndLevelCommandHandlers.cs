@@ -25,7 +25,7 @@ public class CreateBudgetCommandHandler : IRequestHandler<CreateBudgetCommand, A
         try
         {
             var dto = request.Dto;
-            var budgetId = decimal.Parse(Guid.NewGuid().ToString("N").Substring(0, 10));
+            var budgetId = Convert.ToDecimal(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             
             var budget = Budget.Create(
                 budgetId,
@@ -135,7 +135,7 @@ public class CreateCompensationLevelCommandHandler : IRequestHandler<CreateCompe
         try
         {
             var dto = request.Dto;
-            var levelId = decimal.Parse(Guid.NewGuid().ToString("N").Substring(0, 10));
+            var levelId = Convert.ToDecimal(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
             var level = CompensationLevel.Create(
                 levelId,

@@ -9,6 +9,7 @@ using CompensationService.Infrastructure.Repositories;
 using CompensationService.Application;
 using CompensationService.Application.Behaviours;
 using System.IO;
+using CompensationService.Infrastructure.MessageBroker;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -123,7 +124,9 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Add GraphQL
-builder.Services.AddGraphQLServer();
+builder.Services.AddGraphQLServer()
+    .AddQueryType<CompensationService.API.GraphQL.Query>()
+    .AddMutationType<CompensationService.API.GraphQL.Mutation>();
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -135,6 +138,9 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader();
     });
 });
+
+// Add RabbitMQ
+builder.Services.AddRabbitMq(builder.Configuration);
 
 var app = builder.Build();
 
@@ -164,7 +170,7 @@ app.MapHealthChecks("/health");
 app.MapControllers();
 
 // GraphQL endpoint
-// app.MapGraphQL("/graphql");
+app.MapGraphQL("/graphql");
 
 // Minimal API endpoints
 app.MapGet("/api/version", () => new { version = "1.0.0", name = "Compensation Service" })

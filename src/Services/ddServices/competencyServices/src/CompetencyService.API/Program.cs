@@ -82,7 +82,8 @@ builder.Services
     .AddMutationType<CompetencyMutation>()
     .AddFiltering()
     .AddSorting()
-    .AddProjections();
+    .AddProjections()
+    .BindRuntimeType<char, HotChocolate.Types.StringType>();
 
 // ── Health Checks ─────────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()
