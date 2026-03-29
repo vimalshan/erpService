@@ -59,14 +59,14 @@ jobs:
         run: |
           # Service registry: name → context + dockerfile
           declare -A SVC_CONTEXT SVC_DOCKERFILE
-          SVC_CONTEXT[api-gateway]="src/Services/healthServices/apiGateway";                              SVC_DOCKERFILE[api-gateway]="Dockerfile"
-          SVC_CONTEXT[accident-management-service]="src/Services/healthServices/accidentmanagementServices"; SVC_DOCKERFILE[accident-management-service]="Dockerfile"
-          SVC_CONTEXT[healthcheckup-service]="src/Services/healthServices/healthcheckupServices";         SVC_DOCKERFILE[healthcheckup-service]="Dockerfile"
-          SVC_CONTEXT[health-transaction-service]="src/Services/healthServices/healthTransactionServices"; SVC_DOCKERFILE[health-transaction-service]="Dockerfile"
-          SVC_CONTEXT[insurance-management-service]="src/Services/healthServices/insurancemanagementServices"; SVC_DOCKERFILE[insurance-management-service]="Dockerfile"
-          SVC_CONTEXT[master-service]="src/Services/healthServices/masterServices";                       SVC_DOCKERFILE[master-service]="Dockerfile"
-          SVC_CONTEXT[medicalvisit-service]="src/Services/healthServices/medicalvisitServices";           SVC_DOCKERFILE[medicalvisit-service]="Dockerfile"
-          SVC_CONTEXT[medicine-management-service]="src/Services/healthServices/medicinemanagementServices"; SVC_DOCKERFILE[medicine-management-service]="Dockerfile"
+          SVC_CONTEXT[api-gateway]="src/Services/healthServices/apiGateway/src";                              SVC_DOCKERFILE[api-gateway]="Dockerfile"
+          SVC_CONTEXT[accident-management-service]="src/Services/healthServices/accidentmanagementServices/src"; SVC_DOCKERFILE[accident-management-service]="Dockerfile"
+          SVC_CONTEXT[healthcheckup-service]="src/Services/healthServices/healthcheckupServices/src";         SVC_DOCKERFILE[healthcheckup-service]="Dockerfile"
+          SVC_CONTEXT[health-transaction-service]="src/Services/healthServices/healthTransactionServices/src"; SVC_DOCKERFILE[health-transaction-service]="Dockerfile"
+          SVC_CONTEXT[insurance-management-service]="src/Services/healthServices/insurancemanagementServices/src"; SVC_DOCKERFILE[insurance-management-service]="Dockerfile"
+          SVC_CONTEXT[master-service]="src/Services/healthServices/masterServices/src";                       SVC_DOCKERFILE[master-service]="Dockerfile"
+          SVC_CONTEXT[medicalvisit-service]="src/Services/healthServices/medicalvisitServices/src";           SVC_DOCKERFILE[medicalvisit-service]="Dockerfile"
+          SVC_CONTEXT[medicine-management-service]="src/Services/healthServices/medicinemanagementServices/src"; SVC_DOCKERFILE[medicine-management-service]="Dockerfile"
 
           # Ordered list matching the paths for change detection
           SVC_NAMES=(api-gateway accident-management-service healthcheckup-service health-transaction-service insurance-management-service master-service medicalvisit-service medicine-management-service)
