@@ -121,6 +121,10 @@ namespace MedicineManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("CHAR(3)")
                         .HasColumnName("MD_COM_COD");
 
+                    b.Property<long>("TransactionCode")
+                        .HasColumnType("bigint")
+                        .HasColumnName("MD_TRN_COD");
+
                     b.Property<string>("CancelFlag")
                         .HasColumnType("CHAR(1)")
                         .HasColumnName("MD_CAN_FLG");
@@ -171,10 +175,6 @@ namespace MedicineManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("CHAR(1)")
                         .HasColumnName("MD_REC_TYP");
 
-                    b.Property<long>("TransactionCode")
-                        .HasColumnType("bigint")
-                        .HasColumnName("MD_TRN_COD");
-
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("DATETIME2(3)")
                         .HasColumnName("MD_TRN_DAT");
@@ -183,7 +183,7 @@ namespace MedicineManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("MD_TRN_NUM");
 
-                    b.HasKey("CompanyCode");
+                    b.HasKey("CompanyCode", "TransactionCode");
 
                     b.HasIndex("CompanyCode")
                         .HasDatabaseName("IDX_MEDICINE_CREDIT_MD_COM_COD");
@@ -214,6 +214,11 @@ namespace MedicineManagement.Infrastructure.Persistence.Migrations
                     b.Property<string>("CompanyCode")
                         .HasColumnType("CHAR(3)")
                         .HasColumnName("MD_COM_COD");
+
+                    b.Property<string>("TransactionNumber")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("MD_TRN_NUM");
 
                     b.Property<DateTime?>("EntryDate")
                         .HasColumnType("DATETIME2(3)")
@@ -254,15 +259,12 @@ namespace MedicineManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("MD_TRN_DAT");
 
-                    b.Property<string>("TransactionNumber")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("MD_TRN_NUM");
-
                     b.Property<string>("VisitNumber")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("MD_VIS_NUM");
+
+                    b.HasKey("CompanyCode", "TransactionNumber");
 
                     b.ToTable("MEDICINE_ISSUE", (string)null);
                 });

@@ -77,7 +77,13 @@ builder.Services
     .AddMutationType<Mutation>()
     .AddFiltering()
     .AddSorting()
-    .AddProjections();
+    .AddProjections()
+    .BindRuntimeType<char, StringType>()
+    .BindRuntimeType<char?, StringType>()
+    .AddTypeConverter<char, string>(c => c.ToString())
+    .AddTypeConverter<char?, string?>(c => c?.ToString())
+    .AddTypeConverter<string, char>(s => s.Length > 0 ? s[0] : '\0')
+    .AddTypeConverter<string?, char?>(s => s?.Length > 0 ? s[0] : (char?)null);
 
 // Health Checks
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;

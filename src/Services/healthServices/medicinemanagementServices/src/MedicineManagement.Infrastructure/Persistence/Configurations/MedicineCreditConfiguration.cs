@@ -9,7 +9,7 @@ public class MedicineCreditConfiguration : IEntityTypeConfiguration<MedicineCred
     public void Configure(EntityTypeBuilder<MedicineCredit> builder)
     {
         builder.ToTable("MEDICINE_CREDIT");
-        builder.HasKey(e => e.CompanyCode);
+        builder.HasKey(e => new { e.CompanyCode, e.TransactionCode });
         builder.Property(e => e.CompanyCode).HasColumnName("MD_COM_COD").HasColumnType("CHAR(3)").IsRequired();
         builder.Property(e => e.TransactionCode).HasColumnName("MD_TRN_COD").IsRequired();
         builder.Property(e => e.MedicineCode).HasColumnName("MD_MED_COD").HasColumnType("CHAR(3)").IsRequired();

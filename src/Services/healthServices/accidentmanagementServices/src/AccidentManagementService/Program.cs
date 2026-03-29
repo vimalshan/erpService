@@ -5,7 +5,10 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using AccidentManagementService.Infrastructure.Persistence;
 using AccidentManagementService.Infrastructure.Data;
+using AccidentManagementService.Infrastructure.EventBus;
+using AccidentManagementService.Infrastructure.EventBus.Consumers;
 using AccidentManagementService.GraphQL;
+using MassTransit;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -116,6 +119,43 @@ builder.Services
     .AddType<AccidentType>()
     .ModifyRequestOptions(options => options.IncludeExceptionDetails = builder.Environment.IsDevelopment());
 
+// Health Checks
+builder.Services.AddHealthChecks();
+
+// RabbitMQ - raw publisher
+builder.Services.Configure<RabbitMQOptions>(configuration.GetSection("RabbitMQ"));
+builder.Services.AddSingleton<IEventBus, RabbitMQEventBus>();
+
+// MassTransit + RabbitMQ consumers
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<AccidentReportCreatedConsumer>();
+    x.AddConsumer<AccidentStatusChangedConsumer>();
+    x.AddConsumer<AccidentSeverityChangedConsumer>();
+    x.AddConsumer<AccidentDetailsUpdatedConsumer>();
+    x.AddConsumer<AccidentReportDeletedConsumer>();
+    x.AddConsumer<AccidentReportRestoredConsumer>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        var rabbitHost = configuration["RabbitMQ:Host"] ?? "localhost";
+        var rabbitPort = int.TryParse(configuration["RabbitMQ:Port"], out var p) ? p : 5672;
+        var rabbitUser = configuration["RabbitMQ:Username"] ?? "guest";
+        var rabbitPass = configuration["RabbitMQ:Password"] ?? "guest";
+
+        cfg.Host(rabbitHost, (ushort)rabbitPort, "/", h =>
+        {
+            h.Username(rabbitUser);
+            h.Password(rabbitPass);
+        });
+
+        cfg.ReceiveEndpoint("accident_queue", ep =>
+        {
+            ep.ConfigureConsumers(context);
+        });
+    });
+});
+
 var app = builder.Build();
 
 // Log the environment
@@ -161,6 +201,8 @@ app.UseAuthorization();
 
 // Map GraphQL endpoint
 app.MapGraphQL("/graphql");
+
+app.MapHealthChecks("/health");
 
 app.MapControllers();
 

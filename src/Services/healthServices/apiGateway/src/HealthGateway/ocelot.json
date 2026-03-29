@@ -1,0 +1,71 @@
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5000 }],
+      "UpstreamPathTemplate": "/api/accident/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 60, "Limit": 100 }
+    },
+    {
+      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 7101 }],
+      "UpstreamPathTemplate": "/api/checkup/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 60, "Limit": 100 }
+    },
+    {
+      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5100 }],
+      "UpstreamPathTemplate": "/api/insurance/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5200 }],
+      "UpstreamPathTemplate": "/api/masters/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5300 }],
+      "UpstreamPathTemplate": "/api/medicalvisit/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5400 }],
+      "UpstreamPathTemplate": "/api/medicine/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "localhost", "Port": 5500 }],
+      "UpstreamPathTemplate": "/api/transaction/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5600",
+    "RequestIdKey": "X-Correlation-ID",
+    "RateLimitOptions": {
+      "DisableRateLimitHeaders": false,
+      "QuotaExceededMessage": "Rate limit exceeded. Please retry after some time.",
+      "HttpStatusCode": 429
+    }
+  }
+}

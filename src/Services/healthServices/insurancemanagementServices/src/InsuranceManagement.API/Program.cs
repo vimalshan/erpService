@@ -62,7 +62,10 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// GraphQL
+// GraphQL - register types in DI so constructor injection of IMediator works
+builder.Services.AddScoped<InsuranceManagement.API.GraphQL.InsuranceQuery>();
+builder.Services.AddScoped<InsuranceManagement.API.GraphQL.InsuranceMutation>();
+
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<InsuranceManagement.API.GraphQL.InsuranceQuery>()
@@ -111,7 +114,10 @@ app.UseSwaggerUI(options =>
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "Insurance Management API v1");
 });
 
-app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors("AllowAll");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseAuthentication();

@@ -9,9 +9,9 @@ public class MedicineIssueConfiguration : IEntityTypeConfiguration<MedicineIssue
     public void Configure(EntityTypeBuilder<MedicineIssue> builder)
     {
         builder.ToTable("MEDICINE_ISSUE");
-        builder.HasNoKey();
-        builder.Property(e => e.CompanyCode).HasColumnName("MD_COM_COD").HasColumnType("CHAR(3)");
-        builder.Property(e => e.TransactionNumber).HasColumnName("MD_TRN_NUM").HasMaxLength(255);
+        builder.HasKey(e => new { e.CompanyCode, e.TransactionNumber });
+        builder.Property(e => e.CompanyCode).HasColumnName("MD_COM_COD").HasColumnType("CHAR(3)").IsRequired();
+        builder.Property(e => e.TransactionNumber).HasColumnName("MD_TRN_NUM").HasMaxLength(255).IsRequired();
         builder.Property(e => e.TransactionDate).HasColumnName("MD_TRN_DAT").HasMaxLength(255);
         builder.Property(e => e.IssuedQuantity).HasColumnName("MD_ISS_QNT");
         builder.Property(e => e.EntryUser).HasColumnName("MD_ENT_USR").HasMaxLength(25);

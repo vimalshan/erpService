@@ -24,7 +24,7 @@ public class MappingProfile : Profile
                 src.MinPremium,
                 src.MaxPremium,
                 src.CoverageDetails,
-                createdBy: 0)); // Will be set by handler
+                0)); // createdBy - Will be set by handler
 
         // InsuranceEnrollment mappings
         CreateMap<InsuranceEnrollment, InsuranceEnrollmentDto>()

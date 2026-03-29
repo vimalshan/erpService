@@ -7,6 +7,12 @@ using InsuranceManagement.Application.DTOs;
 
 namespace InsuranceManagement.API.Controllers;
 
+/// <summary>Request body for calculate-reimbursement endpoint</summary>
+public record CalculateReimbursementRequest(
+    decimal ClaimAmount,
+    string ClaimType,
+    decimal CopayPercentage = 20.0m);
+
 /// <summary>
 /// API Controller for Insurance Claims Management
 /// </summary>
@@ -183,13 +189,13 @@ public class InsuranceClaimsController : ControllerBase
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<decimal>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<decimal>>> CalculateReimbursement(
-        [FromBody] dynamic dto)
+        [FromBody] CalculateReimbursementRequest dto)
     {
         var query = new CalculateClaimReimbursementQuery
         {
-            ClaimAmount = dto.claimAmount,
-            ClaimType = dto.claimType,
-            CopayPercentage = dto.copayPercentage ?? 20.0m
+            ClaimAmount = dto.ClaimAmount,
+            ClaimType = dto.ClaimType,
+            CopayPercentage = dto.CopayPercentage
         };
 
         var result = await _mediator.Send(query);

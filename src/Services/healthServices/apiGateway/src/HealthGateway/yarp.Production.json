@@ -1,0 +1,204 @@
+{
+  "ReverseProxy": {
+    "Routes": {
+      "accident-route": {
+        "ClusterId": "accident-cluster",
+        "AuthorizationPolicy": "default",
+        "RateLimiterPolicy": "standard",
+        "Match": { "Path": "/api/accident/{**catch-all}" },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/accident" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      },
+      "checkup-route": {
+        "ClusterId": "checkup-cluster",
+        "AuthorizationPolicy": "default",
+        "RateLimiterPolicy": "standard",
+        "Match": { "Path": "/api/checkup/{**catch-all}" },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/checkup" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      },
+      "insurance-route": {
+        "ClusterId": "insurance-cluster",
+        "AuthorizationPolicy": "default",
+        "RateLimiterPolicy": "standard",
+        "Match": { "Path": "/api/insurance/{**catch-all}" },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/insurance" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      },
+      "masters-route": {
+        "ClusterId": "masters-cluster",
+        "AuthorizationPolicy": "default",
+        "RateLimiterPolicy": "standard",
+        "Match": { "Path": "/api/masters/{**catch-all}" },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/masters" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      },
+      "medicalvisit-route": {
+        "ClusterId": "medicalvisit-cluster",
+        "AuthorizationPolicy": "default",
+        "RateLimiterPolicy": "standard",
+        "Match": { "Path": "/api/medicalvisit/{**catch-all}" },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/medicalvisit" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      },
+      "medicine-route": {
+        "ClusterId": "medicine-cluster",
+        "AuthorizationPolicy": "default",
+        "RateLimiterPolicy": "standard",
+        "Match": { "Path": "/api/medicine/{**catch-all}" },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/medicine" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      },
+      "health-transaction-route": {
+        "ClusterId": "health-transaction-cluster",
+        "AuthorizationPolicy": "default",
+        "RateLimiterPolicy": "standard",
+        "Match": { "Path": "/api/transaction/{**catch-all}" },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/transaction" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      },
+      "accident-graphql-route": {
+        "ClusterId": "accident-cluster",
+        "AuthorizationPolicy": "default",
+        "Match": { "Path": "/graphql/accident" },
+        "Transforms": [
+          { "PathSet": "/graphql" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      },
+      "checkup-graphql-route": {
+        "ClusterId": "checkup-cluster",
+        "AuthorizationPolicy": "default",
+        "Match": { "Path": "/graphql/checkup" },
+        "Transforms": [
+          { "PathSet": "/graphql" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      },
+      "insurance-graphql-route": {
+        "ClusterId": "insurance-cluster",
+        "AuthorizationPolicy": "default",
+        "Match": { "Path": "/graphql/insurance" },
+        "Transforms": [
+          { "PathSet": "/graphql" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      },
+      "masters-graphql-route": {
+        "ClusterId": "masters-cluster",
+        "AuthorizationPolicy": "default",
+        "Match": { "Path": "/graphql/masters" },
+        "Transforms": [
+          { "PathSet": "/graphql" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      },
+      "medicalvisit-graphql-route": {
+        "ClusterId": "medicalvisit-cluster",
+        "AuthorizationPolicy": "default",
+        "Match": { "Path": "/graphql/medicalvisit" },
+        "Transforms": [
+          { "PathSet": "/graphql" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      },
+      "medicine-graphql-route": {
+        "ClusterId": "medicine-cluster",
+        "AuthorizationPolicy": "default",
+        "Match": { "Path": "/graphql/medicine" },
+        "Transforms": [
+          { "PathSet": "/graphql" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      },
+      "transaction-graphql-route": {
+        "ClusterId": "health-transaction-cluster",
+        "AuthorizationPolicy": "default",
+        "Match": { "Path": "/graphql/transaction" },
+        "Transforms": [
+          { "PathSet": "/graphql" },
+          { "RequestHeader": "X-Gateway-Source", "Set": "HealthGateway" }
+        ]
+      }
+    },
+    "Clusters": {
+      "accident-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": { "Enabled": true, "Interval": "00:00:30", "Timeout": "00:00:10", "Path": "/health" }
+        },
+        "Destinations": {
+          "accident/destination1": { "Address": "http://accident-service:5000/" }
+        }
+      },
+      "checkup-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": { "Enabled": true, "Interval": "00:00:30", "Timeout": "00:00:10", "Path": "/health" }
+        },
+        "Destinations": {
+          "checkup/destination1": { "Address": "http://checkup-service:7101/" }
+        }
+      },
+      "insurance-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": { "Enabled": true, "Interval": "00:00:30", "Timeout": "00:00:10", "Path": "/health" }
+        },
+        "Destinations": {
+          "insurance/destination1": { "Address": "http://insurance-service:5100/" }
+        }
+      },
+      "masters-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": { "Enabled": true, "Interval": "00:00:30", "Timeout": "00:00:10", "Path": "/health" }
+        },
+        "Destinations": {
+          "masters/destination1": { "Address": "http://masters-service:5200/" }
+        }
+      },
+      "medicalvisit-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": { "Enabled": true, "Interval": "00:00:30", "Timeout": "00:00:10", "Path": "/health" }
+        },
+        "Destinations": {
+          "medicalvisit/destination1": { "Address": "http://medicalvisit-service:5300/" }
+        }
+      },
+      "medicine-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": { "Enabled": true, "Interval": "00:00:30", "Timeout": "00:00:10", "Path": "/health" }
+        },
+        "Destinations": {
+          "medicine/destination1": { "Address": "http://medicine-service:5400/" }
+        }
+      },
+      "health-transaction-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": { "Enabled": true, "Interval": "00:00:30", "Timeout": "00:00:10", "Path": "/health" }
+        },
+        "Destinations": {
+          "transaction/destination1": { "Address": "http://transaction-service:5500/" }
+        }
+      }
+    }
+  }
+}

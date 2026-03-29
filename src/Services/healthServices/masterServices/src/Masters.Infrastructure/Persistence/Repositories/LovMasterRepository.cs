@@ -26,8 +26,9 @@ public class LovMasterRepository : ILovMasterRepository
 
     public async Task<IEnumerable<LovMaster>> GetByTypeAsync(string lovType, CancellationToken cancellationToken = default)
     {
+        var typeKey = Domain.ValueObjects.LovTypeCode.Create(lovType);
         return await _context.LovMasters
-            .Where(x => x.LovType.Value == lovType)
+            .Where(x => x.LovType == typeKey)
             .ToListAsync(cancellationToken);
     }
 

@@ -111,7 +111,7 @@ builder.Services.AddApplicationInsightsTelemetry(configuration["Azure:Applicatio
 // Redis Caching
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = configuration.GetConnectionString("Redis:Configuration");
+    options.Configuration = configuration["Redis:Configuration"] ?? "localhost:6379";
 });
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
@@ -192,7 +192,10 @@ app.UseCors("AllowAll");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseRouting();
 
 app.UseAuthentication();
@@ -236,7 +239,6 @@ app.MapGet("/health/ready", () => new { status = "ready", service = "CheckupMana
 try
 {
     Log.Information("Checkup Management Service starting...");
-    app.Urls.Add("http://localhost:7101");
     app.Run();
 }
 catch (Exception ex)

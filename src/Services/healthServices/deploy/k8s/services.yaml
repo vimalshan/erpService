@@ -1,0 +1,671 @@
+---
+# Accident Management Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: accident-service
+  namespace: health-services
+  labels:
+    app: accident-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: accident-service
+  template:
+    metadata:
+      labels:
+        app: accident-service
+    spec:
+      containers:
+        - name: accident-service
+          image: ${REGISTRY}/accident-service:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:5000"
+            - name: ConnectionStrings__HealthDb
+              value: "Server=sqlserver-svc;Database=HEALTHDB;User Id=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: sa-password
+            - name: Authentication__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: jwt-secret-key
+            - name: RabbitMQ__Host
+              value: "rabbitmq-svc"
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-password
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: accident-svc
+  namespace: health-services
+spec:
+  selector:
+    app: accident-service
+  ports:
+    - port: 5000
+      targetPort: 5000
+---
+# Checkup Management Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkup-service
+  namespace: health-services
+  labels:
+    app: checkup-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: checkup-service
+  template:
+    metadata:
+      labels:
+        app: checkup-service
+    spec:
+      containers:
+        - name: checkup-service
+          image: ${REGISTRY}/checkup-service:latest
+          ports:
+            - containerPort: 7101
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:7101"
+            - name: ConnectionStrings__HealthDb
+              value: "Server=sqlserver-svc;Database=HEALTHDB;User Id=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: sa-password
+            - name: Authentication__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: jwt-secret-key
+            - name: RabbitMQ__Host
+              value: "rabbitmq-svc"
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-password
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 7101
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 7101
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkup-svc
+  namespace: health-services
+spec:
+  selector:
+    app: checkup-service
+  ports:
+    - port: 7101
+      targetPort: 7101
+---
+# Insurance Management Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insurance-service
+  namespace: health-services
+  labels:
+    app: insurance-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: insurance-service
+  template:
+    metadata:
+      labels:
+        app: insurance-service
+    spec:
+      containers:
+        - name: insurance-service
+          image: ${REGISTRY}/insurance-service:latest
+          ports:
+            - containerPort: 5100
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:5100"
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-svc;Database=HEALTHDB;User Id=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: sa-password
+            - name: Authentication__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: jwt-secret-key
+            - name: RabbitMQ__HostName
+              value: "rabbitmq-svc"
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-password
+            - name: RabbitMQ__Enabled
+              value: "true"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5100
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5100
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: insurance-svc
+  namespace: health-services
+spec:
+  selector:
+    app: insurance-service
+  ports:
+    - port: 5100
+      targetPort: 5100
+---
+# Masters Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: masters-service
+  namespace: health-services
+  labels:
+    app: masters-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: masters-service
+  template:
+    metadata:
+      labels:
+        app: masters-service
+    spec:
+      containers:
+        - name: masters-service
+          image: ${REGISTRY}/masters-service:latest
+          ports:
+            - containerPort: 5200
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:5200"
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-svc;Database=HEALTHDB;User Id=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: sa-password
+            - name: Jwt__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: jwt-secret-key
+            - name: RabbitMQ__ConnectionString
+              value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASS)@rabbitmq-svc:5672"
+            - name: RABBITMQ_USER
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-user
+            - name: RABBITMQ_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-password
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5200
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5200
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: masters-svc
+  namespace: health-services
+spec:
+  selector:
+    app: masters-service
+  ports:
+    - port: 5200
+      targetPort: 5200
+---
+# Medical Visit Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medicalvisit-service
+  namespace: health-services
+  labels:
+    app: medicalvisit-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: medicalvisit-service
+  template:
+    metadata:
+      labels:
+        app: medicalvisit-service
+    spec:
+      containers:
+        - name: medicalvisit-service
+          image: ${REGISTRY}/medicalvisit-service:latest
+          ports:
+            - containerPort: 5300
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:5300"
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-svc;Database=HEALTHDB;User Id=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: sa-password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: jwt-secret-key
+            - name: RabbitMQ__HostName
+              value: "rabbitmq-svc"
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-password
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5300
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5300
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: medicalvisit-svc
+  namespace: health-services
+spec:
+  selector:
+    app: medicalvisit-service
+  ports:
+    - port: 5300
+      targetPort: 5300
+---
+# Medicine Management Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medicine-service
+  namespace: health-services
+  labels:
+    app: medicine-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: medicine-service
+  template:
+    metadata:
+      labels:
+        app: medicine-service
+    spec:
+      containers:
+        - name: medicine-service
+          image: ${REGISTRY}/medicine-service:latest
+          ports:
+            - containerPort: 5400
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:5400"
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-svc;Database=HEALTHDB_MedicineManagement;User Id=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: sa-password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: jwt-secret-key
+            - name: RabbitMQ__HostName
+              value: "rabbitmq-svc"
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-password
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5400
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5400
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: medicine-svc
+  namespace: health-services
+spec:
+  selector:
+    app: medicine-service
+  ports:
+    - port: 5400
+      targetPort: 5400
+---
+# Health Transaction Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transaction-service
+  namespace: health-services
+  labels:
+    app: transaction-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: transaction-service
+  template:
+    metadata:
+      labels:
+        app: transaction-service
+    spec:
+      containers:
+        - name: transaction-service
+          image: ${REGISTRY}/transaction-service:latest
+          ports:
+            - containerPort: 5500
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:5500"
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-svc;Database=HEALTHDB_HealthTransactions;User Id=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: sa-password
+            - name: JwtSettings__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: jwt-secret-key
+            - name: RabbitMQ__HostName
+              value: "rabbitmq-svc"
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-password
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5500
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5500
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transaction-svc
+  namespace: health-services
+spec:
+  selector:
+    app: transaction-service
+  ports:
+    - port: 5500
+      targetPort: 5500
+---
+# Health Gateway (API Gateway)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: health-gateway
+  namespace: health-services
+  labels:
+    app: health-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: health-gateway
+  template:
+    metadata:
+      labels:
+        app: health-gateway
+    spec:
+      containers:
+        - name: health-gateway
+          image: ${REGISTRY}/health-gateway:latest
+          ports:
+            - containerPort: 5600
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:5600"
+            - name: Jwt__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: jwt-secret-key
+            - name: Services__AccidentService
+              value: "http://accident-svc:5000"
+            - name: Services__CheckupService
+              value: "http://checkup-svc:7101"
+            - name: Services__InsuranceService
+              value: "http://insurance-svc:5100"
+            - name: Services__MastersService
+              value: "http://masters-svc:5200"
+            - name: Services__MedicalVisitService
+              value: "http://medicalvisit-svc:5300"
+            - name: Services__MedicineService
+              value: "http://medicine-svc:5400"
+            - name: Services__TransactionService
+              value: "http://transaction-svc:5500"
+            - name: Redis__Connection
+              value: "redis-svc:6379"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5600
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5600
+            initialDelaySeconds: 20
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: health-gateway-svc
+  namespace: health-services
+spec:
+  selector:
+    app: health-gateway
+  ports:
+    - port: 5600
+      targetPort: 5600

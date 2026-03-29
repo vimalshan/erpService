@@ -5,6 +5,7 @@ using MedicalVisit.Application;
 using MedicalVisit.Infrastructure;
 using MedicalVisit.Infrastructure.Persistence;
 using MedicalVisit.API.GraphQL;
+using HotChocolate.Types;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -76,7 +77,13 @@ builder.Services
     .AddFiltering()
     .AddSorting()
     .AddProjections()
-    .AddAuthorizationCore();
+    .AddAuthorization()
+    .BindRuntimeType<char, StringType>()
+    .BindRuntimeType<char?, StringType>()
+    .AddTypeConverter<char, string>(c => c.ToString())
+    .AddTypeConverter<char?, string?>(c => c?.ToString())
+    .AddTypeConverter<string, char>(s => s.Length > 0 ? s[0] : '\0')
+    .AddTypeConverter<string?, char?>(s => s?.Length > 0 ? s[0] : (char?)null);
 
 // Health Checks
 builder.Services.AddHealthChecks()

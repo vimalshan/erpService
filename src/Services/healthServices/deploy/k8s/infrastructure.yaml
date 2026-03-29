@@ -1,0 +1,211 @@
+---
+# SQL Server StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sqlserver
+  namespace: health-services
+spec:
+  serviceName: sqlserver-svc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sqlserver
+  template:
+    metadata:
+      labels:
+        app: sqlserver
+    spec:
+      containers:
+        - name: sqlserver
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          ports:
+            - containerPort: 1433
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: sa-password
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: sqlserver-data
+              mountPath: /var/opt/mssql
+          readinessProbe:
+            exec:
+              command:
+                - /opt/mssql-tools18/bin/sqlcmd
+                - -S
+                - localhost
+                - -U
+                - sa
+                - -C
+                - -Q
+                - "SELECT 1"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - /opt/mssql-tools18/bin/sqlcmd
+                - -S
+                - localhost
+                - -U
+                - sa
+                - -C
+                - -Q
+                - "SELECT 1"
+            initialDelaySeconds: 60
+            periodSeconds: 30
+  volumeClaimTemplates:
+    - metadata:
+        name: sqlserver-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sqlserver-svc
+  namespace: health-services
+spec:
+  selector:
+    app: sqlserver
+  ports:
+    - port: 1433
+      targetPort: 1433
+  clusterIP: None
+---
+# RabbitMQ StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rabbitmq
+  namespace: health-services
+spec:
+  serviceName: rabbitmq-svc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-management-alpine
+          ports:
+            - containerPort: 5672
+              name: amqp
+            - containerPort: 15672
+              name: management
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-user
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: health-secrets
+                  key: rabbitmq-password
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: rabbitmq-data
+              mountPath: /var/lib/rabbitmq
+          readinessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "check_port_connectivity"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata:
+        name: rabbitmq-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-svc
+  namespace: health-services
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+    - port: 5672
+      targetPort: 5672
+      name: amqp
+    - port: 15672
+      targetPort: 15672
+      name: management
+  clusterIP: None
+---
+# Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: health-services
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-svc
+  namespace: health-services
+spec:
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379

@@ -1,0 +1,51 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: health-gateway-ingress
+  namespace: health-services
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - health-api.example.com
+      secretName: health-tls-secret
+  rules:
+    - host: health-api.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: health-gateway-svc
+                port:
+                  number: 5600
+---
+# RabbitMQ Management UI (internal access only)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rabbitmq-management-ingress
+  namespace: health-services
+  annotations:
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: health-secrets
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: rabbitmq.health-internal.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rabbitmq-svc
+                port:
+                  number: 15672

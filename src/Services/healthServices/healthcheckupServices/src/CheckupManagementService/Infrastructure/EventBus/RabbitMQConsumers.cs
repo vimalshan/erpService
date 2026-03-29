@@ -17,7 +17,7 @@ public abstract class RabbitMQConsumerBase : BackgroundService
     protected readonly ILogger<RabbitMQConsumerBase> _logger;
     protected IConnection? _connection;
     protected IModel? _channel;
-    protected EventingBasicConsumer? _consumer;
+    protected AsyncEventingBasicConsumer? _consumer;
 
     public RabbitMQConsumerBase(IConfiguration configuration, ILogger<RabbitMQConsumerBase> logger)
     {
@@ -53,7 +53,7 @@ public abstract class RabbitMQConsumerBase : BackgroundService
 
             _channel.BasicQos(0, 10, false);
 
-            _consumer = new EventingBasicConsumer(_channel);
+            _consumer = new AsyncEventingBasicConsumer(_channel);
             _consumer.Received += async (model, ea) =>
             {
                 try

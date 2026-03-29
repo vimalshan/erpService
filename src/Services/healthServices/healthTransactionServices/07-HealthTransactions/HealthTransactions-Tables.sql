@@ -1,0 +1,84 @@
+-- ============================================================
+-- HealthTransaction Service — Database Schema
+-- Database: HEALTHDB_HealthTransactions
+-- ============================================================
+
+USE HEALTHDB_HealthTransactions;
+GO
+
+-- Pre-employment health checkup main records
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'CHKUP_PRE_MAIN' AND type = 'U')
+CREATE TABLE CHKUP_PRE_MAIN (
+    CPM_EMP_NUM     NUMERIC(10,0)   NOT NULL,
+    CPM_COM_COD     VARCHAR(3)      NOT NULL,
+    CPM_HLTH_NUM    NUMERIC(10,0)   NOT NULL,
+    CPM_PHYS_HAND   VARCHAR(1)      NULL,
+    CPM_PROP_EMP    VARCHAR(50)     NULL,
+    CPM_IDENT_MARKS VARCHAR(200)    NULL,
+    CPM_FINAL_RMKS  VARCHAR(500)    NULL,
+    CPM_FIT_PH      CHAR(3)         NULL,
+    CPM_FIT_FINAL   VARCHAR(1)      NULL,
+    CPM_CHK_DAT     DATE            NULL,
+    CONSTRAINT PK_CHKUP_PRE_MAIN PRIMARY KEY (CPM_EMP_NUM, CPM_COM_COD)
+);
+GO
+
+-- PFI (Personal/Family/Immunization) history
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'CHKUP_PFI_HIST' AND type = 'U')
+CREATE TABLE CHKUP_PFI_HIST (
+    CPH_HLTH_NUM    NUMERIC(10,0)   NOT NULL,
+    CPH_EMP_NUM     NUMERIC(10,0)   NOT NULL,
+    CPH_SYMP_ID     NUMERIC(10,0)   NOT NULL,
+    CPH_YN_FLAG     CHAR(1)         NULL,
+    CPH_IMM_DAT     DATE            NULL,
+    CPH_TEST_VAL    VARCHAR(100)    NULL,
+    CONSTRAINT PK_CHKUP_PFI_HIST PRIMARY KEY (CPH_HLTH_NUM, CPH_SYMP_ID)
+);
+GO
+
+-- Health checkup card (aggregate root)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'HLTH_CHKUP_CARD' AND type = 'U')
+CREATE TABLE HLTH_CHKUP_CARD (
+    HCC_HLTH_NUM      NUMERIC(10,0)   NOT NULL,
+    HCC_EMP_NUM       NUMERIC(10,0)   NOT NULL,
+    HCC_EMP_DATE      DATE            NULL,
+    HCC_COM_COD       VARCHAR(3)      NULL,
+    HCC_PER_DET       VARCHAR(1000)   NULL,
+    HCC_COMPL_DET     VARCHAR(1000)   NULL,
+    HCC_ADV_RMK1      VARCHAR(500)    NULL,
+    HCC_ADV_RMK2      VARCHAR(500)    NULL,
+    HCC_DOC_DATE1     DATE            NULL,
+    HCC_DOC_DATE2     DATE            NULL,
+    HCC_ADV_FOLLOW1   VARCHAR(500)    NULL,
+    HCC_ADV_FOLLOW2   VARCHAR(500)    NULL,
+    CONSTRAINT PK_HLTH_CHKUP_CARD PRIMARY KEY (HCC_HLTH_NUM)
+);
+GO
+
+-- Health checkup card sub-records
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'HLTH_CHKCARD_SUB' AND type = 'U')
+CREATE TABLE HLTH_CHKCARD_SUB (
+    HCS_HLTH_NUM    NUMERIC(10,0)   NOT NULL,
+    HCS_SYMP_ID     NUMERIC(10,0)   NOT NULL,
+    HCS_FLAG_YN     CHAR(1)         NULL,
+    HCS_SYMP_VAL    VARCHAR(200)    NULL,
+    HCS_EMP_NUM     NUMERIC(10,0)   NOT NULL,
+    CONSTRAINT PK_HLTH_CHKCARD_SUB PRIMARY KEY (HCS_HLTH_NUM, HCS_SYMP_ID),
+    CONSTRAINT FK_CHKCARD_SUB_CARD FOREIGN KEY (HCS_HLTH_NUM)
+        REFERENCES HLTH_CHKUP_CARD(HCC_HLTH_NUM) ON DELETE CASCADE
+);
+GO
+
+-- Dynamic health details (flexible form data)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'HEALTH_DYN_DET' AND type = 'U')
+CREATE TABLE HEALTH_DYN_DET (
+    CDD_HLTH_NUM    NUMERIC(10,0)   NOT NULL,
+    CDD_CHKUP_COD   VARCHAR(10)     NOT NULL,
+    CDD_COM_COD     VARCHAR(3)      NOT NULL,
+    CDD_CTRLSRC_ID  NUMERIC(10,0)   NOT NULL,
+    CDD_DYN_VAL     VARCHAR(500)    NULL,
+    CDD_EMP_NUM     NUMERIC(10,0)   NOT NULL,
+    CDD_SYS_DAT     DATE            NULL,
+    CONSTRAINT PK_HEALTH_DYN_DET PRIMARY KEY (CDD_HLTH_NUM, CDD_CHKUP_COD, CDD_COM_COD, CDD_CTRLSRC_ID)
+);
+GO

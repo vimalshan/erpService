@@ -1,4 +1,5 @@
 using InsuranceManagement.Infrastructure.MessageConsumers;
+using InsuranceManagement.Infrastructure.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -12,7 +13,7 @@ namespace InsuranceManagement.Infrastructure.Extensions;
 public static class RabbitMqExtensions
 {
     /// <summary>
-    /// Add RabbitMQ message consumers
+    /// Add RabbitMQ message publisher and consumers
     /// </summary>
     public static IServiceCollection AddRabbitMqConsumers(
         this IServiceCollection services,
@@ -22,11 +23,21 @@ public static class RabbitMqExtensions
         var rabbitMqConfig = new RabbitMqConfiguration();
         configuration.GetSection("RabbitMQ").Bind(rabbitMqConfig);
 
+        // Check if RabbitMQ is enabled
+        var enabled = configuration.GetValue<bool>("RabbitMQ:Enabled", true);
+        if (!enabled)
+        {
+            return services;
+        }
+
         // Register RabbitMQ configuration
         services.AddSingleton(rabbitMqConfig);
 
         // Register connection factory
         services.AddSingleton<IRabbitMqConnectionFactory, RabbitMqConnectionFactory>();
+
+        // Register publisher
+        services.AddSingleton<IInsuranceMessagePublisher, InsuranceRabbitMqPublisher>();
 
         // Register consumers
         services.AddSingleton<EnrollmentEventConsumer>();

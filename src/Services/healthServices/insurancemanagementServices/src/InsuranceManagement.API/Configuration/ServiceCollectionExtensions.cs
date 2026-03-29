@@ -2,6 +2,8 @@ using MediatR;
 using AutoMapper;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using InsuranceManagement.Application.Mappings;
 
 namespace InsuranceManagement.API.Configuration;
@@ -55,14 +57,31 @@ public static class ServiceCollectionExtensions
             ?? "https://localhost:7001";
         var audience = configuration["Authentication:Audience"] 
             ?? "insurance-api";
+        var secretKey = configuration["Authentication:SecretKey"];
 
-        services.AddAuthentication("Bearer")
+        var authBuilder = services.AddAuthentication("Bearer")
             .AddJwtBearer("Bearer", options =>
             {
-                options.Authority = authority;
-                options.Audience = audience;
-                options.TokenValidationParameters.ValidateAudience = false;
-                options.TokenValidationParameters.ValidateIssuer = false;
+                if (!string.IsNullOrEmpty(secretKey) && secretKey.Length >= 32)
+                {
+                    // Development: use symmetric key instead of authority
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey)),
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.Zero
+                    };
+                }
+                else
+                {
+                    options.Authority = authority;
+                    options.Audience = audience;
+                    options.TokenValidationParameters.ValidateAudience = false;
+                    options.TokenValidationParameters.ValidateIssuer = false;
+                }
             });
 
         services.AddAuthorization();

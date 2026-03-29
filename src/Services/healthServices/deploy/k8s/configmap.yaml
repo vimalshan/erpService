@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: health-config
+  namespace: health-services
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  SQLSERVER_HOST: "sqlserver-svc"
+  RABBITMQ_HOST: "rabbitmq-svc"
+  REDIS_HOST: "redis-svc"
+  # Connection strings (passwords injected from secrets)
+  HEALTHDB_CONNSTR: "Server=sqlserver-svc;Database=HEALTHDB;User Id=sa;TrustServerCertificate=True"
+  HEALTHDB_MEDICINE_CONNSTR: "Server=sqlserver-svc;Database=HEALTHDB_MedicineManagement;User Id=sa;TrustServerCertificate=True"
+  HEALTHDB_TRANSACTIONS_CONNSTR: "Server=sqlserver-svc;Database=HEALTHDB_HealthTransactions;User Id=sa;TrustServerCertificate=True"
