@@ -6,7 +6,6 @@ using MediatR;
 
 namespace EmployeeManagement.API.GraphQL.Queries;
 
-[QueryType]
 public sealed class EmployeeQuery
 {
     /// <summary>Get a single employee by ID via GraphQL.</summary>

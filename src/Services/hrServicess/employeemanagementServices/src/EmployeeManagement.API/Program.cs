@@ -72,7 +72,9 @@ builder.Services
     .AddGraphQLServer()
     .AddQueryType<EmployeeManagement.API.GraphQL.Queries.EmployeeQuery>()
     .AddMutationType<EmployeeManagement.API.GraphQL.Mutations.EmployeeMutation>()
-    .AddAuthorization();
+    .AddAuthorization()
+    .BindRuntimeType<char, HotChocolate.Types.StringType>()
+    .BindRuntimeType<char?, HotChocolate.Types.StringType>();
 
 // ─── Health Checks ───────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()

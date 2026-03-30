@@ -15,15 +15,15 @@ public class CircularDto
     public string? CircularPdfFileName { get; set; }
     public string? CircularRtf { get; set; }
     public long CircularSignatoryId { get; set; }
-    public char CircularSparshFlag { get; set; }
+    public string CircularSparshFlag { get; set; } = string.Empty;
     public DateTime? CircularPostDate { get; set; }
     public DateTime? CircularRemoveDate { get; set; }
     public string CircularDesc { get; set; } = string.Empty;
     public string CircularSubject { get; set; } = string.Empty;
     public string CircularToList { get; set; } = string.Empty;
     public string? CircularCcList { get; set; }
-    public char CircularStatus { get; set; }
-    public char? CircularAttachEmpFlag { get; set; }
+    public string CircularStatus { get; set; } = string.Empty;
+    public string? CircularAttachEmpFlag { get; set; }
     public long CreatedBy { get; set; }
     public DateTime CreatedOn { get; set; }
     public long? ModifiedBy { get; set; }

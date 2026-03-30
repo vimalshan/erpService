@@ -43,16 +43,26 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, EmailService>();
 
         // ── Messaging / MassTransit ───────────────────────────────────────────
-        // In-memory transport for local development — swap UsingInMemory for
-        // UsingRabbitMq (with a valid MassTransit license) in production.
         services.AddMassTransit(bus =>
         {
             bus.AddConsumer<ApplicationSubmittedConsumer>();
             bus.AddConsumer<VacancyCreatedConsumer>();
             bus.AddConsumer<ApplicationStatusChangedConsumer>();
 
-            bus.UsingInMemory((ctx, cfg) =>
+            bus.UsingRabbitMq((ctx, cfg) =>
             {
+                var rabbitSection = configuration.GetSection("RabbitMQ");
+                var host = rabbitSection["Host"] ?? "localhost";
+                var virtualHost = rabbitSection["VirtualHost"] ?? "/";
+                var username = rabbitSection["Username"] ?? "guest";
+                var password = rabbitSection["Password"] ?? "guest";
+
+                cfg.Host(host, virtualHost, h =>
+                {
+                    h.Username(username);
+                    h.Password(password);
+                });
+
                 cfg.ConfigureEndpoints(ctx);
             });
         });

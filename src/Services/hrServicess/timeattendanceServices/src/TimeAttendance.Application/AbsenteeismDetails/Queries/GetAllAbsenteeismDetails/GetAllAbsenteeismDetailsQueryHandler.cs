@@ -26,7 +26,7 @@ public class GetAllAbsenteeismDetailsQueryHandler(IAbsenteeismDetailRepository r
                 e.TotalManDays - e.AbsentManDays,
                 e.AbsenteeismRate,
                 e.GradeCategory, e.FunctionId, e.AgeId,
-                e.ExperienceId, e.Gender,
+                e.ExperienceId, e.Gender.ToString(),
                 e.InternalExperienceId, e.TotalExperienceId,
                 e.CreatedAt, e.CreatedBy,
                 e.LastModifiedAt, e.LastModifiedBy))

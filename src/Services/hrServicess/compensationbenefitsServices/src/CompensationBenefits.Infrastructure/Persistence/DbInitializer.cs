@@ -37,12 +37,10 @@ public static class DbInitializer
             {
                 // Use raw SQL to bypass EF identity tracking and insert seed data properly
                 await context.Database.ExecuteSqlRawAsync("""
-                    SET IDENTITY_INSERT [SALSTRUCTURE_MAIN] ON;
                     INSERT INTO [SALSTRUCTURE_MAIN] (STRUCTURE_ID, STRUCTURE_UNITID, STRUCTURE_NAME, STRUCTURE_GRADECATEGORY,
                         STRUCTURE_APPLYTOALL, STRUCTURE_GRADEID, STRUCTURE_TYPE, STRUCTURE_CTCMIN, STRUCTURE_CTCMAX,
                         STRUCTURE_FOOTERID, STRUCTURE_CREATEDBY, STRUCTURE_CREATEDON, STRUCTURE_LASTMODIFIEDBY, STRUCTURE_LASTMODIFIEDON)
                     VALUES (1, 1, N'Standard CTC Structure - Grade A', N'GRA', 0, 1, N'C', 300000, 2000000, 1, 1, GETUTCDATE(), 1, GETUTCDATE());
-                    SET IDENTITY_INSERT [SALSTRUCTURE_MAIN] OFF;
                     """);
                 logger.LogInformation("Seeded default SalaryStructure.");
             }
@@ -51,10 +49,8 @@ public static class DbInitializer
             if (!await context.RetiralRangeMasters.AnyAsync())
             {
                 await context.Database.ExecuteSqlRawAsync("""
-                    SET IDENTITY_INSERT [RETRIALS_RANGEMAST] ON;
                     INSERT INTO [RETRIALS_RANGEMAST] (RRMAST_ID, RRMAST_UNITID, RRMAST_FROMYEAR, RRMAST_TOYEAR, RRMAST_PERCENTAGE, RRMAST_MODIFIEDBY, RRMAST_MODIFIEDON)
                     VALUES (1, 1, 0, 5, 12, 1, GETUTCDATE());
-                    SET IDENTITY_INSERT [RETRIALS_RANGEMAST] OFF;
                     """);
                 logger.LogInformation("Seeded default RetiralRangeMaster.");
             }

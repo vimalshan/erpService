@@ -13,7 +13,7 @@ public record AbsenteeismDetailDto(
     long FunctionId,
     long AgeId,
     long ExperienceId,
-    char Gender,
+    string Gender,
     long InternalExperienceId,
     long TotalExperienceId,
     DateTime CreatedAt,

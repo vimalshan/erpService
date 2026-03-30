@@ -20,16 +20,12 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
                 .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
             modelBuilder.Entity("EmployeeRelations.Domain.Aggregates.DisciplinaryAction", b =>
                 {
                     b.Property<decimal>("ActionId")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("decimal(38,0)")
                         .HasColumnName("DISACTION_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<decimal>("ActionId"));
 
                     b.Property<DateTime>("ActionDate")
                         .HasColumnType("datetime2")
@@ -126,11 +122,9 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
             modelBuilder.Entity("EmployeeRelations.Domain.Aggregates.DisciplinaryMain", b =>
                 {
                     b.Property<decimal>("Id")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("decimal(38,0)")
                         .HasColumnName("DISCIPLINE_MAINID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<decimal>("Id"));
 
                     b.Property<decimal>("CreatedBy")
                         .HasColumnType("decimal(38,0)")
@@ -170,11 +164,9 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
             modelBuilder.Entity("EmployeeRelations.Domain.Aggregates.EwsAppInput", b =>
                 {
                     b.Property<long>("InputId")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("bigint")
                         .HasColumnName("APP_INPUTID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("InputId"));
 
                     b.Property<string>("AppType")
                         .IsRequired()
@@ -224,11 +216,9 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
             modelBuilder.Entity("EmployeeRelations.Domain.Aggregates.EwsMain", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("bigint")
                         .HasColumnName("EWS_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("AprFlag")
                         .HasMaxLength(1)
@@ -347,11 +337,9 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
             modelBuilder.Entity("EmployeeRelations.Domain.Aggregates.SurveyMaster", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("bigint")
                         .HasColumnName("SURVEY_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("AutoLock")
                         .IsRequired()
@@ -400,11 +388,9 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
             modelBuilder.Entity("EmployeeRelations.Domain.Aggregates.SurveyOption", b =>
                 {
                     b.Property<long>("OptionId")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("bigint")
                         .HasColumnName("SURVEY_OPTIONID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("OptionId"));
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -426,11 +412,9 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
             modelBuilder.Entity("EmployeeRelations.Domain.Aggregates.SurveyQuestion", b =>
                 {
                     b.Property<long>("QuestId")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("bigint")
                         .HasColumnName("SURVEY_QUESTID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("QuestId"));
 
                     b.Property<string>("Mandatory")
                         .IsRequired()
@@ -504,11 +488,9 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
             modelBuilder.Entity("EmployeeRelations.Domain.Aggregates.SurveyResponseMain", b =>
                 {
                     b.Property<long>("ResponseId")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("bigint")
                         .HasColumnName("RESPONSE_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ResponseId"));
 
                     b.Property<long>("EmpSysId")
                         .HasColumnType("bigint")

@@ -66,7 +66,7 @@ public sealed class CreatePromotionCommandHandler : IRequestHandler<CreatePromot
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new PromotionDto(promotion.PromotionNo, promotion.EmployeeId, promotion.Source,
-            promotion.OldGradeId, promotion.NewGradeId, promotion.Status,
-            promotion.Designation, promotion.PromotionType, promotion.CreatedOn, promotion.CreatedBy);
+            promotion.OldGradeId, promotion.NewGradeId, promotion.Status.ToString(),
+            promotion.Designation, promotion.PromotionType?.ToString(), promotion.CreatedOn, promotion.CreatedBy);
     }
 }

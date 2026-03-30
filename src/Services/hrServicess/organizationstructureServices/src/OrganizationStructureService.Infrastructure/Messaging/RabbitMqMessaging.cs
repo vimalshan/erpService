@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -97,12 +98,21 @@ public class BusinessCreatedConsumer : IDisposable
             Password = settings.Password,
             VirtualHost = settings.VirtualHost
         };
-        _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
-        _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
+        try
+        {
+            _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
+            _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
 
-        _channel.ExchangeDeclareAsync(settings.ExchangeName, ExchangeType.Topic, durable: true).GetAwaiter().GetResult();
-        _channel.QueueDeclareAsync(_queueName, durable: true, exclusive: false, autoDelete: false).GetAwaiter().GetResult();
-        _channel.QueueBindAsync(_queueName, settings.ExchangeName, "business.created").GetAwaiter().GetResult();
+            _channel.ExchangeDeclareAsync(settings.ExchangeName, ExchangeType.Topic, durable: true).GetAwaiter().GetResult();
+            _channel.QueueDeclareAsync(_queueName, durable: true, exclusive: false, autoDelete: false).GetAwaiter().GetResult();
+            _channel.QueueBindAsync(_queueName, settings.ExchangeName, "business.created").GetAwaiter().GetResult();
+            _logger.LogInformation("BusinessCreatedConsumer connected to RabbitMQ. Exchange={Exchange} Queue={Queue}", settings.ExchangeName, _queueName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "BusinessCreatedConsumer failed to connect to RabbitMQ at {Host}:{Port}. Consumer will not be available.", settings.HostName, settings.Port);
+            throw;
+        }
     }
 
     public async Task StartConsumingAsync(CancellationToken ct)
@@ -130,5 +140,27 @@ public class BusinessCreatedConsumer : IDisposable
     {
         _channel?.CloseAsync().GetAwaiter().GetResult();
         _connection?.CloseAsync().GetAwaiter().GetResult();
+    }
+}
+
+public class BusinessCreatedConsumerService : BackgroundService
+{
+    private readonly BusinessCreatedConsumer _consumer;
+
+    public BusinessCreatedConsumerService(BusinessCreatedConsumer consumer)
+    {
+        _consumer = consumer;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        await _consumer.StartConsumingAsync(stoppingToken);
+        await Task.Delay(Timeout.Infinite, stoppingToken);
+    }
+
+    public override void Dispose()
+    {
+        _consumer.Dispose();
+        base.Dispose();
     }
 }

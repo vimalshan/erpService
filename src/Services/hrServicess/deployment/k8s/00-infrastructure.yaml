@@ -1,0 +1,229 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hr-microservices
+  labels:
+    name: hr-microservices
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hr-config
+  namespace: hr-microservices
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  RabbitMQ__Host: "rabbitmq"
+  RabbitMQ__Port: "5672"
+  RabbitMQ__Username: "guest"
+  # Password is stored in Secret for security
+  ConnectionStrings__SqlServer: "Server=mssql-server;Database=master;User=sa;TrustServerCertificate=True"
+  # All database-specific strings will be overridden per service
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hr-secrets
+  namespace: hr-microservices
+type: Opaque
+stringData:
+  SA_PASSWORD: "SafePassword123!@#"
+  RabbitMQ__Password: "guest"
+  JwtSecret: "SuperSecureGatewaySecretKey2026$#@!"
+  # Individual service JWT Keys (in production, use Azure Key Vault)
+  AlertsNotificationsJwtKey: "AlertsNotificationsSuperSecretKey2026$#@!"
+  CompensationBenefitsJwtKey: "CompensationBenefitsSuperSecretKey2026$#@!"
+  EmployeeManagementJwtKey: "EmployeeManagementSuperSecretKey2026$#@!"
+  EmployeeRelationsJwtKey: "EmployeeRelationsSuperSecretKey2026$#@!"
+  ExitManagementJwtKey: "ExitManagementSuperSecretKey2026$#@!"
+  OrganizationStructureJwtKey: "OrganizationStructureSuperSecretKey2026$#@!"
+  RecruitmentJwtKey: "RecruitmentSuperSecretKey2026$#@!"
+  TimeAttendanceJwtKey: "TimeAttendanceSuperSecretKey2026$#@!"
+  TrainingDevelopmentJwtKey: "TrainingDevelopmentSuperSecretKey2026$#@!"
+  UserSecurityJwtKey: "UserSecuritySuperSecretKey2026$#@!"
+  EmployeeTransactionsJwtKey: "EmployeeTransactionsSuperSecretKey2026$#@!"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql-server
+  namespace: hr-microservices
+  labels:
+    app: mssql-server
+spec:
+  type: ClusterIP
+  ports:
+    - port: 1433
+      targetPort: 1433
+      protocol: TCP
+  selector:
+    app: mssql-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mssql-server
+  namespace: hr-microservices
+  labels:
+    app: mssql-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mssql-server
+  template:
+    metadata:
+      labels:
+        app: mssql-server
+    spec:
+      containers:
+      - name: mssql-server
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        ports:
+        - containerPort: 1433
+        env:
+        - name: ACCEPT_EULA
+          value: "Y"
+        - name: MSSQL_SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: SA_PASSWORD
+        - name: MSSQL_AGENT_ENABLED
+          value: "true"
+        volumeMounts:
+        - name: mssql-storage
+          mountPath: /var/opt/mssql
+        - name: init-db-script
+          mountPath: /docker-entrypoint-initdb.d
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          exec:
+            command:
+            - /opt/mssql-tools18/bin/sqlcmd
+            - -S
+            - localhost
+            - -U
+            - sa
+            - -P
+            - $(MSSQL_SA_PASSWORD)
+            - -Q
+            - SELECT 1
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: mssql-storage
+        persistentVolumeClaim:
+          claimName: mssql-pvc
+      - name: init-db-script
+        configMap:
+          name: init-db-script
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mssql-pvc
+  namespace: hr-microservices
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: hr-microservices
+  labels:
+    app: rabbitmq
+spec:
+  type: ClusterIP
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: 5672
+      protocol: TCP
+    - name: management
+      port: 15672
+      targetPort: 15672
+      protocol: TCP
+  selector:
+    app: rabbitmq
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: hr-microservices
+  labels:
+    app: rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: rabbitmq:3.12-management-alpine
+        ports:
+        - containerPort: 5672
+          name: amqp
+        - containerPort: 15672
+          name: management
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          value: "guest"
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: RabbitMQ__Password
+        - name: RABBITMQ_DEFAULT_VHOST
+          value: "/"
+        volumeMounts:
+        - name: rabbitmq-storage
+          mountPath: /var/lib/rabbitmq
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - rabbitmq-diagnostics
+            - -q
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: rabbitmq-storage
+        persistentVolumeClaim:
+          claimName: rabbitmq-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rabbitmq-pvc
+  namespace: hr-microservices
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

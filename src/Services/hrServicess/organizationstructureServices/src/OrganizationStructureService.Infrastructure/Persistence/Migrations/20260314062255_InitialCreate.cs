@@ -12,6 +12,25 @@ namespace OrganizationStructureService.Infrastructure.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "BUSINESS_MASTER",
+                columns: table => new
+                {
+                    BUSINESS_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
+                    BUSINESS_CODE = table.Column<string>(type: "nchar(9)", fixedLength: true, maxLength: 9, nullable: false),
+                    BUSINESS_SHTNAME = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    BUSINESS_NAME = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    BUSINESS_COMPID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
+                    BUSINESS_COMP_CODE = table.Column<string>(type: "nchar(3)", fixedLength: true, maxLength: 3, nullable: false),
+                    BUSINESS_LIVFLAG = table.Column<string>(type: "nchar(1)", fixedLength: true, maxLength: 1, nullable: false),
+                    BUSINESS_UPDATEDON = table.Column<DateTime>(type: "datetime2(3)", nullable: true),
+                    BUSINESS_UPDATEDBY = table.Column<decimal>(type: "decimal(22,0)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BUSINESS_MASTER", x => x.BUSINESS_ID);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "DEPARTMENT_MASTER",
                 columns: table => new
                 {
@@ -244,6 +263,9 @@ namespace OrganizationStructureService.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "BUSINESS_MASTER");
+
             migrationBuilder.DropTable(
                 name: "DEPARTMENT_MASTER");
 

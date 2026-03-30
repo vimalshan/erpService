@@ -40,7 +40,13 @@ public sealed class EmployeeEventConsumer : BackgroundService
                 _connection = await factory.CreateConnectionAsync(stoppingToken);
                 _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
-                await _channel.QueueDeclareAsync("hr.employee.events", true, false, false, cancellationToken: stoppingToken);
+                const string exchange = "hr.events";
+                const string queue = "hr.employee.events";
+                await _channel.ExchangeDeclareAsync(exchange, ExchangeType.Topic, durable: true, cancellationToken: stoppingToken);
+                await _channel.QueueDeclareAsync(queue, true, false, false, cancellationToken: stoppingToken);
+                await _channel.QueueBindAsync(queue, exchange, "employee.created", cancellationToken: stoppingToken);
+                await _channel.QueueBindAsync(queue, exchange, "employee.promoted", cancellationToken: stoppingToken);
+                await _channel.QueueBindAsync(queue, exchange, "employee.transferred", cancellationToken: stoppingToken);
 
                 var consumer = new AsyncEventingBasicConsumer(_channel);
                 consumer.ReceivedAsync += async (_, ea) =>

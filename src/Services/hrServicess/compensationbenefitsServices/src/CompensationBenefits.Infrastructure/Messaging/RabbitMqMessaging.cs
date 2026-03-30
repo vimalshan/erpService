@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+using CompensationBenefits.Application.Contracts;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -6,11 +6,6 @@ using System.Text;
 using System.Text.Json;
 
 namespace CompensationBenefits.Infrastructure.Messaging;
-
-public interface IMessagePublisher
-{
-    Task PublishAsync<T>(string exchange, string routingKey, T message);
-}
 
 public class RabbitMqMessagePublisher(IConnection connection, ILogger<RabbitMqMessagePublisher> logger)
     : IMessagePublisher, IAsyncDisposable
@@ -50,7 +45,7 @@ public class RabbitMqMessagePublisher(IConnection connection, ILogger<RabbitMqMe
 
 /// <summary>Consumer that listens for salary-processing events on RabbitMQ.</summary>
 public class SalaryEventConsumer(IConnection connection, ILogger<SalaryEventConsumer> logger)
-    : IAsyncDisposable
+    : Microsoft.Extensions.Hosting.IHostedService, IAsyncDisposable
 {
     private IChannel? _channel;
 
@@ -62,8 +57,12 @@ public class SalaryEventConsumer(IConnection connection, ILogger<SalaryEventCons
             return;
         }
         _channel = await connection.CreateChannelAsync(cancellationToken: ct);
+        const string exchange = "compensation.events";
         const string queue = "compensation.salary.events";
+        await _channel.ExchangeDeclareAsync(exchange, ExchangeType.Topic, durable: true, cancellationToken: ct);
         await _channel.QueueDeclareAsync(queue, durable: true, exclusive: false, autoDelete: false, cancellationToken: ct);
+        await _channel.QueueBindAsync(queue, exchange, "salary.created", cancellationToken: ct);
+        await _channel.QueueBindAsync(queue, exchange, "salary-structure.created", cancellationToken: ct);
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
         consumer.ReceivedAsync += async (_, ea) =>
@@ -71,7 +70,7 @@ public class SalaryEventConsumer(IConnection connection, ILogger<SalaryEventCons
             try
             {
                 var body = Encoding.UTF8.GetString(ea.Body.Span);
-                logger.LogInformation("Received salary event: {Body}", body);
+                logger.LogInformation("Received salary event [{RoutingKey}]: {Body}", ea.RoutingKey, body);
                 await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
             }
             catch (Exception ex)
@@ -82,7 +81,10 @@ public class SalaryEventConsumer(IConnection connection, ILogger<SalaryEventCons
         };
 
         await _channel.BasicConsumeAsync(queue, autoAck: false, consumer: consumer, cancellationToken: ct);
+        logger.LogInformation("SalaryEventConsumer started — listening on queue '{Queue}'", queue);
     }
+
+    public Task StopAsync(CancellationToken ct) => Task.CompletedTask;
 
     public async ValueTask DisposeAsync()
     {
@@ -93,7 +95,7 @@ public class SalaryEventConsumer(IConnection connection, ILogger<SalaryEventCons
 
 /// <summary>Consumer for Mediclaim policy events.</summary>
 public class MediclaimEventConsumer(IConnection connection, ILogger<MediclaimEventConsumer> logger)
-    : IAsyncDisposable
+    : Microsoft.Extensions.Hosting.IHostedService, IAsyncDisposable
 {
     private IChannel? _channel;
 
@@ -105,8 +107,11 @@ public class MediclaimEventConsumer(IConnection connection, ILogger<MediclaimEve
             return;
         }
         _channel = await connection.CreateChannelAsync(cancellationToken: ct);
+        const string exchange = "compensation.events";
         const string queue = "compensation.mediclaim.events";
+        await _channel.ExchangeDeclareAsync(exchange, ExchangeType.Topic, durable: true, cancellationToken: ct);
         await _channel.QueueDeclareAsync(queue, durable: true, exclusive: false, autoDelete: false, cancellationToken: ct);
+        await _channel.QueueBindAsync(queue, exchange, "mediclaim.updated", cancellationToken: ct);
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
         consumer.ReceivedAsync += async (_, ea) =>
@@ -114,7 +119,7 @@ public class MediclaimEventConsumer(IConnection connection, ILogger<MediclaimEve
             try
             {
                 var body = Encoding.UTF8.GetString(ea.Body.Span);
-                logger.LogInformation("Received mediclaim event: {Body}", body);
+                logger.LogInformation("Received mediclaim event [{RoutingKey}]: {Body}", ea.RoutingKey, body);
                 await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
             }
             catch (Exception ex)
@@ -125,7 +130,10 @@ public class MediclaimEventConsumer(IConnection connection, ILogger<MediclaimEve
         };
 
         await _channel.BasicConsumeAsync(queue, autoAck: false, consumer: consumer, cancellationToken: ct);
+        logger.LogInformation("MediclaimEventConsumer started — listening on queue '{Queue}'", queue);
     }
+
+    public Task StopAsync(CancellationToken ct) => Task.CompletedTask;
 
     public async ValueTask DisposeAsync()
     {

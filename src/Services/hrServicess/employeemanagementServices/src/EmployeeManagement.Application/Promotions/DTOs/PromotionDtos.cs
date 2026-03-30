@@ -6,9 +6,9 @@ public sealed record PromotionDto(
     string Source,
     long OldGradeId,
     long NewGradeId,
-    char Status,
+    string Status,
     string? Designation,
-    char? PromotionType,
+    string? PromotionType,
     DateTime CreatedOn,
     long CreatedBy
 );

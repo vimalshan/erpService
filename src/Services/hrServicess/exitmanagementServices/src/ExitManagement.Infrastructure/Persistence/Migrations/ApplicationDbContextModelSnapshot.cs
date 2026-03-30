@@ -257,7 +257,7 @@ namespace ExitManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("INT_UPDATED_ON");
 
-                    b.HasKey("ExitNo");
+                    b.HasKey("ExitNo", "SerialNo");
 
                     b.ToTable("EMPLOYEE_EXIT_INT", (string)null);
                 });

@@ -15,8 +15,7 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
                 name: "DISCIPLINARY_MAIN",
                 columns: table => new
                 {
-                    DISCIPLINE_MAINID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DISCIPLINE_MAINID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     DISCIPLINE_UNITID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     DISCIPLINE_DATE = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DISCIPLINE_DETAILS = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
@@ -34,8 +33,7 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
                 name: "EWS_MAIN",
                 columns: table => new
                 {
-                    EWS_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EWS_ID = table.Column<long>(type: "bigint", nullable: false),
                     EWS_EMPSYSID = table.Column<long>(type: "bigint", nullable: false),
                     EWS_PERIODNO = table.Column<int>(type: "int", nullable: false),
                     EWS_HRENTRYBY = table.Column<long>(type: "bigint", nullable: true),
@@ -69,8 +67,7 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
                 name: "SURVEY_MASTER",
                 columns: table => new
                 {
-                    SURVEY_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SURVEY_ID = table.Column<long>(type: "bigint", nullable: false),
                     SURVEY_NAME = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     SURVEY_IMAGE = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     SURVEY_STARTDATE = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -89,8 +86,7 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
                 name: "DISCIPLINARY_ACTION",
                 columns: table => new
                 {
-                    DISACTION_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DISACTION_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     DISACTION_MAINID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     DISACTION_EMPSYSID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     DISACTION_TYPEID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
@@ -141,8 +137,7 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
                 name: "EWS_APPINPUTS",
                 columns: table => new
                 {
-                    APP_INPUTID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    APP_INPUTID = table.Column<long>(type: "bigint", nullable: false),
                     APP_EWSID = table.Column<long>(type: "bigint", nullable: false),
                     APP_EMPSYSID = table.Column<long>(type: "bigint", nullable: false),
                     APP_TYPE = table.Column<string>(type: "nvarchar(1)", maxLength: 1, nullable: false),
@@ -167,8 +162,7 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
                 name: "SURVEY_QUESTIONS",
                 columns: table => new
                 {
-                    SURVEY_QUESTID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SURVEY_QUESTID = table.Column<long>(type: "bigint", nullable: false),
                     SURVEY_ID = table.Column<long>(type: "bigint", nullable: false),
                     SURVEY_QUESTNAME = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
                     SURVEY_QUESTTYPE = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
@@ -193,8 +187,7 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
                 name: "SURVEY_RESPONSEMAIN",
                 columns: table => new
                 {
-                    RESPONSE_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RESPONSE_ID = table.Column<long>(type: "bigint", nullable: false),
                     RESPONSE_SURVEYID = table.Column<long>(type: "bigint", nullable: false),
                     RESPONSE_EMPSYSID = table.Column<long>(type: "bigint", nullable: false),
                     RESPONSE_UPDATEDBY = table.Column<long>(type: "bigint", nullable: false),
@@ -217,8 +210,7 @@ namespace EmployeeRelations.Infrastructure.Persistence.EfCore.Migrations
                 name: "SURVEY_OPTIONS",
                 columns: table => new
                 {
-                    SURVEY_OPTIONID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SURVEY_OPTIONID = table.Column<long>(type: "bigint", nullable: false),
                     SURVEY_QUESTIONID = table.Column<long>(type: "bigint", nullable: false),
                     SURVEY_DESCRIPTION = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false)
                 },

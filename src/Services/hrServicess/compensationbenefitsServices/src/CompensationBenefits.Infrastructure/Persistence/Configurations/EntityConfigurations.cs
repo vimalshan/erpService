@@ -10,7 +10,7 @@ public class SalaryMainConfiguration : IEntityTypeConfiguration<SalaryMain>
     {
         b.ToTable("SALARY_MAIN");
         b.HasKey(x => x.SalaryId);
-        b.Property(x => x.SalaryId).HasColumnName("SALARY_ID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.SalaryId).HasColumnName("SALARY_ID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.SalaryType).HasColumnName("SALARY_TYPE").HasMaxLength(1).IsRequired();
         b.Property(x => x.SalaryCTC).HasColumnName("SALARY_CTC").HasColumnType("decimal(38,0)");
         b.Property(x => x.SalaryStructureId).HasColumnName("SALARY_STRUCTUREID").HasColumnType("decimal(38,0)");
@@ -33,7 +33,7 @@ public class SalaryDetailConfiguration : IEntityTypeConfiguration<SalaryDetail>
     {
         b.ToTable("SALARY_DET");
         b.HasKey(x => x.SalDetId);
-        b.Property(x => x.SalDetId).HasColumnName("SALDET_ID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.SalDetId).HasColumnName("SALDET_ID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.SalDetSalaryId).HasColumnName("SALDET_SALARYID").HasColumnType("decimal(38,0)");
         b.Property(x => x.SalDetSrl).HasColumnName("SALDET_SRL").HasColumnType("decimal(38,0)");
         b.Property(x => x.SalDetAnnGroup).HasColumnName("SALDET_ANNGROUP").HasMaxLength(50);
@@ -58,7 +58,7 @@ public class SalaryStructureMainConfiguration : IEntityTypeConfiguration<SalaryS
     {
         b.ToTable("SALSTRUCTURE_MAIN");
         b.HasKey(x => x.StructureId);
-        b.Property(x => x.StructureId).HasColumnName("STRUCTURE_ID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.StructureId).HasColumnName("STRUCTURE_ID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.StructureUnitId).HasColumnName("STRUCTURE_UNITID").HasColumnType("decimal(38,0)");
         b.Property(x => x.StructureName).HasColumnName("STRUCTURE_NAME").HasMaxLength(200).IsRequired();
         b.Property(x => x.StructureGradeCategory).HasColumnName("STRUCTURE_GRADECATEGORY").HasMaxLength(3).IsRequired();
@@ -88,7 +88,7 @@ public class SalaryStructureDetailConfiguration : IEntityTypeConfiguration<Salar
     {
         b.ToTable("SALSTRUCTURE_DET");
         b.HasKey(x => x.StructDetId);
-        b.Property(x => x.StructDetId).HasColumnName("STRUCTDET_ID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.StructDetId).HasColumnName("STRUCTDET_ID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.StructDetStructureId).HasColumnName("STRUCTDET_STRUCTUREID").HasColumnType("decimal(38,0)");
         b.Property(x => x.StructDetEdId).HasColumnName("STRUCTDET_EDID").HasColumnType("decimal(38,0)");
         b.Property(x => x.StructDetAmtType).HasColumnName("STRUCTDET_AMTTYPE").HasMaxLength(1).IsRequired();
@@ -118,7 +118,7 @@ public class MediclaimMasterConfiguration : IEntityTypeConfiguration<MediclaimMa
     {
         b.ToTable("MEDICLAIM_MASTER");
         b.HasKey(x => x.MediclaimId);
-        b.Property(x => x.MediclaimId).HasColumnName("MEDICLAIM_ID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.MediclaimId).HasColumnName("MEDICLAIM_ID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.MediclaimRefName).HasColumnName("MEDICLAIM_REFNAME").HasMaxLength(200);
         b.Property(x => x.MediclaimProviderId).HasColumnName("MEDICLAIM_PROVIDERID").HasColumnType("decimal(38,0)");
         b.Property(x => x.MediclaimTppId).HasColumnName("MEDICLAIM_TPPID").HasColumnType("decimal(38,0)");
@@ -145,7 +145,7 @@ public class MediclaimDetailConfiguration : IEntityTypeConfiguration<MediclaimDe
     {
         b.ToTable("MEDICLAIM_DET");
         b.HasKey(x => x.MedNominationRunId);
-        b.Property(x => x.MedNominationRunId).HasColumnName("MED_NOMINATIONRUNID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.MedNominationRunId).HasColumnName("MED_NOMINATIONRUNID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.MedNominationId).HasColumnName("MED_NOMINATIONID").HasColumnType("decimal(38,0)");
         b.Property(x => x.MedRelationship).HasColumnName("MED_RELATIONSHIP").HasColumnType("decimal(38,0)");
         b.Property(x => x.MedNomineeName).HasColumnName("MED_NOMINEENAME").HasMaxLength(200).IsRequired();
@@ -166,7 +166,7 @@ public class MediclaimYearlyPremiumConfiguration : IEntityTypeConfiguration<Medi
     {
         b.ToTable("MEDICLAIM_YEARLYPREM");
         b.HasKey(x => x.MedYpYearlyPremId);
-        b.Property(x => x.MedYpYearlyPremId).HasColumnName("MEDYP_YEARLYPREMID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.MedYpYearlyPremId).HasColumnName("MEDYP_YEARLYPREMID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.MedYpMediclaimId).HasColumnName("MEDYP_MEDICLAIMID").HasColumnType("decimal(38,0)");
         b.Property(x => x.MedYpSumAssured).HasColumnName("MEDYP_SUMASSURED").HasColumnType("decimal(38,0)");
         b.Property(x => x.MedYpPremiumAmnt).HasColumnName("MEDYP_PREMIUMAMNT").HasColumnType("decimal(38,0)");
@@ -182,7 +182,7 @@ public class MobileConnectionConfiguration : IEntityTypeConfiguration<MobileConn
     {
         b.ToTable("MOBILE_CONNECTION");
         b.HasKey(x => x.ConnId);
-        b.Property(x => x.ConnId).HasColumnName("CONN_ID");
+        b.Property(x => x.ConnId).HasColumnName("CONN_ID").ValueGeneratedNever();
         b.Property(x => x.ConnEmpSysId).HasColumnName("CONN_EMPSYSID");
         b.Property(x => x.ConnEffDate).HasColumnName("CONN_EFFDATE");
         b.Property(x => x.ConnClsDate).HasColumnName("CONN_CLSDATE");
@@ -205,7 +205,7 @@ public class RetiralRangeMasterConfiguration : IEntityTypeConfiguration<RetiralR
     {
         b.ToTable("RETRIALS_RANGEMAST");
         b.HasKey(x => x.RrMastId);
-        b.Property(x => x.RrMastId).HasColumnName("RRMAST_ID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.RrMastId).HasColumnName("RRMAST_ID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.RrMastUnitId).HasColumnName("RRMAST_UNITID").HasColumnType("decimal(38,0)");
         b.Property(x => x.RrMastFromYear).HasColumnName("RRMAST_FROMYEAR").HasColumnType("decimal(38,0)");
         b.Property(x => x.RrMastToYear).HasColumnName("RRMAST_TOYEAR").HasColumnType("decimal(38,0)");
@@ -232,7 +232,7 @@ public class MediclaimPremiumPercentageConfiguration : IEntityTypeConfiguration<
     {
         b.ToTable("MEDICLAIM_PREMPERCENTAGE");
         b.HasKey(x => x.MedPpId);
-        b.Property(x => x.MedPpId).HasColumnName("MED_PPID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.MedPpId).HasColumnName("MED_PPID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.MedRelationshipId).HasColumnName("MED_RELATIONSHIPID").HasColumnType("decimal(38,0)");
         b.Property(x => x.MedPercentage).HasColumnName("MED_PERCENTAGE").HasColumnType("decimal(38,0)");
     }
@@ -244,7 +244,7 @@ public class MobileLimitMasterConfiguration : IEntityTypeConfiguration<MobileLim
     {
         b.ToTable("MOBILE_LIMITMAST");
         b.HasKey(x => x.LimitId);
-        b.Property(x => x.LimitId).HasColumnName("LIMIT_ID");
+        b.Property(x => x.LimitId).HasColumnName("LIMIT_ID").ValueGeneratedNever();
         b.Property(x => x.LimitOrg).HasColumnName("LIMIT_ORG");
         b.Property(x => x.LimitUnitId).HasColumnName("LIMIT_UNITID");
         b.Property(x => x.LimitGradeCatId).HasColumnName("LIMIT_GRADECATID").HasMaxLength(3).IsRequired();
@@ -265,7 +265,7 @@ public class MobileAdditionalLimitConfiguration : IEntityTypeConfiguration<Mobil
     {
         b.ToTable("MOBILE_ADDLIMIT");
         b.HasKey(x => x.AddId);
-        b.Property(x => x.AddId).HasColumnName("ADD_ID");
+        b.Property(x => x.AddId).HasColumnName("ADD_ID").ValueGeneratedNever();
         b.Property(x => x.AddEmpSysId).HasColumnName("ADD_EMPSYSID");
         b.Property(x => x.AddEffDate).HasColumnName("ADD_EFFDATE");
         b.Property(x => x.AddClsDate).HasColumnName("ADD_CLSDATE");
@@ -285,7 +285,7 @@ public class EmployeeRetiralEmpSpecificConfiguration : IEntityTypeConfiguration<
     {
         b.ToTable("EMP_RETIRALS_EMPSPECIFIC");
         b.HasKey(x => x.EmpRetId);
-        b.Property(x => x.EmpRetId).HasColumnName("EMPRET_ID");
+        b.Property(x => x.EmpRetId).HasColumnName("EMPRET_ID").ValueGeneratedNever();
         b.Property(x => x.EmpRetEmpSysId).HasColumnName("EMPRET_EMPSYSID");
         b.Property(x => x.EmpRetPayType).HasColumnName("EMPRET_PAYTYPE").HasMaxLength(3).IsRequired();
         b.Property(x => x.EmpRetEdId).HasColumnName("EMPRET_EDID");
@@ -305,7 +305,7 @@ public class EmployeeRetiralDetailConfiguration : IEntityTypeConfiguration<Emplo
     {
         b.ToTable("EMP_RETIRALSDET");
         b.HasKey(x => x.ErDetId);
-        b.Property(x => x.ErDetId).HasColumnName("ERDET_ID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.ErDetId).HasColumnName("ERDET_ID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.ErDetEmpSysId).HasColumnName("ERDET_EMPSYSID").HasColumnType("decimal(38,0)");
         b.Property(x => x.ErDetPfClsDate).HasColumnName("ERDET_PFCLSDATE");
         b.Property(x => x.ErDetRemarks).HasColumnName("ERDET_REMARKS").HasMaxLength(200).IsRequired();
@@ -320,7 +320,7 @@ public class BasicSlabIncrementConfiguration : IEntityTypeConfiguration<BasicSla
     {
         b.ToTable("BASIC_SLABINC");
         b.HasKey(x => x.SlabIncId);
-        b.Property(x => x.SlabIncId).HasColumnName("SLAB_INCID");
+        b.Property(x => x.SlabIncId).HasColumnName("SLAB_INCID").ValueGeneratedNever();
         b.Property(x => x.SlabGradeId).HasColumnName("SLAB_GRADEID");
         b.Property(x => x.SlabUnitId).HasColumnName("SLAB_UNITID");
         b.Property(x => x.SlabIncStrtDate).HasColumnName("SLAB_INCSTRTDATE");
@@ -336,7 +336,7 @@ public class CompensationParameterConfiguration : IEntityTypeConfiguration<Compe
     {
         b.ToTable("COMP_PARAMS");
         b.HasKey(x => x.CpId);
-        b.Property(x => x.CpId).HasColumnName("CP_ID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.CpId).HasColumnName("CP_ID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.CpCountryCode).HasColumnName("CP_COUNTRYCODE").HasMaxLength(3).IsRequired();
         b.Property(x => x.CpEdGroup).HasColumnName("CP_EDGROUP").HasMaxLength(3).IsRequired();
         b.Property(x => x.CpType).HasColumnName("CP_TYPE").HasMaxLength(3).IsRequired();
@@ -352,7 +352,7 @@ public class DiligenceRateMasterConfiguration : IEntityTypeConfiguration<Diligen
     {
         b.ToTable("DILIGENCE_RATEMAST");
         b.HasKey(x => x.DiligenceId);
-        b.Property(x => x.DiligenceId).HasColumnName("DILIGENCE_ID");
+        b.Property(x => x.DiligenceId).HasColumnName("DILIGENCE_ID").ValueGeneratedNever();
         b.Property(x => x.DiligencePayUnitId).HasColumnName("DILIGENCE_PAYUNITID");
         b.Property(x => x.DiligenceGradeCategory).HasColumnName("DILIGENCE_GRADECATEGORY").HasMaxLength(3).IsRequired();
         b.Property(x => x.DiligenceEdId).HasColumnName("DILIGENCE_EDID");
@@ -372,7 +372,7 @@ public class PmsCashPayConfiguration : IEntityTypeConfiguration<PmsCashPay>
     {
         b.ToTable("PMS_CASHPAY");
         b.HasKey(x => x.CashPayId);
-        b.Property(x => x.CashPayId).HasColumnName("CASHPAY_ID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.CashPayId).HasColumnName("CASHPAY_ID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.CashPayUnitId).HasColumnName("CASHPAY_UNITID").HasColumnType("decimal(38,0)");
         b.Property(x => x.CashPayGradeCat).HasColumnName("CASHPAY_GRADECAT").HasMaxLength(5).IsRequired();
         b.Property(x => x.CashPayPayType).HasColumnName("CASHPAY_PAYTYPE").HasMaxLength(1).IsRequired();
@@ -393,7 +393,7 @@ public class PmsCashPayDetailConfiguration : IEntityTypeConfiguration<PmsCashPay
     {
         b.ToTable("PMS_CASHPAYDET");
         b.HasKey(x => x.CashPayDetId);
-        b.Property(x => x.CashPayDetId).HasColumnName("CASHPAY_DETID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.CashPayDetId).HasColumnName("CASHPAY_DETID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.CashPayId).HasColumnName("CASHPAY_ID").HasColumnType("decimal(38,0)");
         b.Property(x => x.CashPayPer).HasColumnName("CASHPAY_PER").HasColumnType("decimal(38,0)");
         b.Property(x => x.CashPayPayDate).HasColumnName("CASHPAY_PAYDATE").HasMaxLength(20).IsRequired();
@@ -406,7 +406,7 @@ public class EmployeeCtcRemarksConfiguration : IEntityTypeConfiguration<Employee
     {
         b.ToTable("EMPLOYEE_CTCREMARKS");
         b.HasKey(x => x.CtcRemEmpSysId);
-        b.Property(x => x.CtcRemEmpSysId).HasColumnName("CTCREM_EMP_SYSID").HasColumnType("decimal(38,0)");
+        b.Property(x => x.CtcRemEmpSysId).HasColumnName("CTCREM_EMP_SYSID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         b.Property(x => x.CtcRemId).HasColumnName("CTCREM_ID").HasColumnType("decimal(38,0)");
         b.Property(x => x.CtcRemLine1).HasColumnName("CTCREM_LINE1").HasMaxLength(200);
         b.Property(x => x.CtcRemLine2).HasColumnName("CTCREM_LINE2").HasMaxLength(200);

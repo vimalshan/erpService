@@ -8,6 +8,8 @@ using EmployeeRelations.Infrastructure;
 using EmployeeRelations.API.Middleware;
 using EmployeeRelations.API.GraphQL;
 using EmployeeRelations.API.MinimalApis;
+using EmployeeRelations.Infrastructure.Persistence.EfCore;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -90,7 +92,13 @@ builder.Services.AddHttpClient("ExternalApi")
 
 // ══════════════════════════════════════════════════════════════════════════
 var app = builder.Build();
-// ══════════════════════════════════════════════════════════════════════════
+
+// Run EF migrations on startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<EmployeeRelationsDbContext>();
+    await db.Database.MigrateAsync();
+}
 
 // Configure the HTTP request pipeline.
 

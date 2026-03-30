@@ -15,8 +15,7 @@ namespace EmployeeManagement.Infrastructure.Migrations
                 name: "EMP_PROBATIONKK",
                 columns: table => new
                 {
-                    PROBATION_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PROBATION_ID = table.Column<long>(type: "bigint", nullable: false),
                     PROBATION_EMPSYSID = table.Column<long>(type: "bigint", nullable: false),
                     PROBATION_UNITID = table.Column<long>(type: "bigint", nullable: false),
                     PROBATION_GRADE = table.Column<long>(type: "bigint", nullable: false),
@@ -41,8 +40,7 @@ namespace EmployeeManagement.Infrastructure.Migrations
                 name: "EMP_RETIRALS",
                 columns: table => new
                 {
-                    RETIRAL_EMP_SYSID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RETIRAL_EMP_SYSID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     RETIRAL_TRANID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     RETIRAL_PFAPPLICABLE = table.Column<string>(type: "nvarchar(1)", maxLength: 1, nullable: true),
                     RETIRAL_PFTRUST = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: true),
@@ -64,8 +62,7 @@ namespace EmployeeManagement.Infrastructure.Migrations
                 name: "EMPLOYEE_ADDRESS",
                 columns: table => new
                 {
-                    ADDRESS_EMP_SYSID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ADDRESS_EMP_SYSID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     ADDRESS_FLAG = table.Column<string>(type: "nvarchar(1)", maxLength: 1, nullable: false),
                     ADDRESS_1 = table.Column<string>(type: "nvarchar(65)", maxLength: 65, nullable: true),
                     ADDRESS_2 = table.Column<string>(type: "nvarchar(65)", maxLength: 65, nullable: true),
@@ -87,8 +84,7 @@ namespace EmployeeManagement.Infrastructure.Migrations
                 name: "EMPLOYEE_CAREER",
                 columns: table => new
                 {
-                    CAREER_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CAREER_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     CAREER_EMP_SYSID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     CAREER_BUSINESS = table.Column<string>(type: "nvarchar(9)", maxLength: 9, nullable: true),
                     CAREER_UNIT = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: true),
@@ -150,8 +146,7 @@ namespace EmployeeManagement.Infrastructure.Migrations
                 name: "EMPLOYEE_MASTER",
                 columns: table => new
                 {
-                    EMP_SYSID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EMP_SYSID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     EMP_NO = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
                     EMP_BUSINESS = table.Column<string>(type: "nvarchar(9)", maxLength: 9, nullable: true),
                     EMP_UNIT = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: true),
@@ -175,8 +170,7 @@ namespace EmployeeManagement.Infrastructure.Migrations
                 name: "EMPLOYEE_PROMOTION",
                 columns: table => new
                 {
-                    PROM_NO = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PROM_NO = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     PROM_SOURCE = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
                     PROM_REQUESTNO = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     PROM_RECDATE = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -207,8 +201,7 @@ namespace EmployeeManagement.Infrastructure.Migrations
                 name: "EMPLOYEE_QUALIFICATION",
                 columns: table => new
                 {
-                    QUAL_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    QUAL_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     QUAL_EMP_SYSID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     QUAL_CODE = table.Column<decimal>(type: "decimal(38,0)", nullable: true),
                     QUAL_DESC = table.Column<string>(type: "nvarchar(65)", maxLength: 65, nullable: true),
@@ -234,8 +227,7 @@ namespace EmployeeManagement.Infrastructure.Migrations
                 name: "TRANSFER_MAIN",
                 columns: table => new
                 {
-                    TRANSFER_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TRANSFER_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     TRANSFER_EMPSYSID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     TRANSFER_OLDUNIT = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: true),
                     TRANSFER_NEWUNIT = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: true),

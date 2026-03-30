@@ -1,11 +1,11 @@
 using MediatR;
 using EmployeeRelations.Application.DTOs;
+using EmployeeRelations.Application.Mappings;
 using EmployeeRelations.Domain.Interfaces;
 using EmployeeRelations.Domain.Aggregates;
 using EmployeeRelations.Domain.ValueObjects;
 using EmployeeRelations.Domain.Exceptions;
 using FluentValidation;
-using AutoMapper;
 
 namespace EmployeeRelations.Application.Commands.Ews;
 
@@ -25,9 +25,8 @@ public class CreateEwsHandler : IRequestHandler<CreateEwsCommand, EwsMainDto>
 {
     private readonly IEwsRepository _repo;
     private readonly IUnitOfWork _uow;
-    private readonly IMapper _mapper;
 
-    public CreateEwsHandler(IEwsRepository repo, IUnitOfWork uow, IMapper mapper) { _repo = repo; _uow = uow; _mapper = mapper; }
+    public CreateEwsHandler(IEwsRepository repo, IUnitOfWork uow) { _repo = repo; _uow = uow; }
 
     public async Task<EwsMainDto> Handle(CreateEwsCommand req, CancellationToken ct)
     {
@@ -35,7 +34,7 @@ public class CreateEwsHandler : IRequestHandler<CreateEwsCommand, EwsMainDto>
         var ews = new EwsMain(id, req.EmpSysId, req.PeriodNo);
         await _repo.AddAsync(ews, ct);
         await _uow.SaveChangesAsync(ct);
-        return _mapper.Map<EwsMainDto>(ews);
+        return ews.ToDto();
     }
 }
 

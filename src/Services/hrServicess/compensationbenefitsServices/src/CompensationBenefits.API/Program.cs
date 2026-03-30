@@ -46,7 +46,8 @@ builder.Services.AddAuthorization();
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<CompensationBenefits.API.GraphQL.Query>()
-    .AddMutationType<CompensationBenefits.API.GraphQL.Mutation>();
+    .AddMutationType<CompensationBenefits.API.GraphQL.Mutation>()
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true);
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>

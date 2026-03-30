@@ -20,16 +20,14 @@ namespace EmployeeManagement.Infrastructure.Migrations
                 .HasAnnotation("ProductVersion", "9.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
 
             modelBuilder.Entity("EmployeeManagement.Domain.Entities.Employee", b =>
                 {
                     b.Property<decimal>("Id")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("decimal(38,0)")
                         .HasColumnName("EMP_SYSID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<decimal>("Id"));
 
                     b.Property<string>("BusinessUnit")
                         .HasMaxLength(9)
@@ -95,11 +93,9 @@ namespace EmployeeManagement.Infrastructure.Migrations
             modelBuilder.Entity("EmployeeManagement.Domain.Entities.EmployeeAddress", b =>
                 {
                     b.Property<decimal>("EmployeeId")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("decimal(38,0)")
                         .HasColumnName("ADDRESS_EMP_SYSID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<decimal>("EmployeeId"));
 
                     b.Property<string>("AddressFlag")
                         .IsRequired()
@@ -160,11 +156,9 @@ namespace EmployeeManagement.Infrastructure.Migrations
             modelBuilder.Entity("EmployeeManagement.Domain.Entities.EmployeeCareer", b =>
                 {
                     b.Property<decimal>("CareerId")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("decimal(38,0)")
                         .HasColumnName("CAREER_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<decimal>("CareerId"));
 
                     b.Property<string>("Business")
                         .HasMaxLength(9)
@@ -326,11 +320,9 @@ namespace EmployeeManagement.Infrastructure.Migrations
             modelBuilder.Entity("EmployeeManagement.Domain.Entities.EmployeeProbation", b =>
                 {
                     b.Property<long>("ProbationId")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("bigint")
                         .HasColumnName("PROBATION_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ProbationId"));
 
                     b.Property<decimal>("CreatedBy")
                         .HasColumnType("decimal(38,0)")
@@ -401,11 +393,9 @@ namespace EmployeeManagement.Infrastructure.Migrations
             modelBuilder.Entity("EmployeeManagement.Domain.Entities.EmployeePromotion", b =>
                 {
                     b.Property<decimal>("PromotionNo")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("decimal(38,0)")
                         .HasColumnName("PROM_NO");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<decimal>("PromotionNo"));
 
                     b.Property<DateTime?>("ConfirmationDate")
                         .HasColumnType("datetime2")
@@ -504,11 +494,9 @@ namespace EmployeeManagement.Infrastructure.Migrations
             modelBuilder.Entity("EmployeeManagement.Domain.Entities.EmployeeQualification", b =>
                 {
                     b.Property<decimal>("QualificationId")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("decimal(38,0)")
                         .HasColumnName("QUAL_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<decimal>("QualificationId"));
 
                     b.Property<decimal?>("DegreeCode")
                         .HasColumnType("decimal(38,0)")
@@ -586,11 +574,9 @@ namespace EmployeeManagement.Infrastructure.Migrations
             modelBuilder.Entity("EmployeeManagement.Domain.Entities.EmployeeRetiral", b =>
                 {
                     b.Property<decimal>("EmployeeId")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("decimal(38,0)")
                         .HasColumnName("RETIRAL_EMP_SYSID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<decimal>("EmployeeId"));
 
                     b.Property<DateTime?>("ClosureDate")
                         .HasColumnType("datetime2")
@@ -648,11 +634,9 @@ namespace EmployeeManagement.Infrastructure.Migrations
             modelBuilder.Entity("EmployeeManagement.Domain.Entities.EmployeeTransfer", b =>
                 {
                     b.Property<decimal>("TransferId")
-                        .ValueGeneratedOnAdd()
+                        .ValueGeneratedNever()
                         .HasColumnType("decimal(38,0)")
                         .HasColumnName("TRANSFER_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<decimal>("TransferId"));
 
                     b.Property<decimal?>("CreatedBy")
                         .HasColumnType("decimal(38,0)")

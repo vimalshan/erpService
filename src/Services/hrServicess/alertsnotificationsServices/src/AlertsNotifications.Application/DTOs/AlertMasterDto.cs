@@ -10,5 +10,5 @@ public class AlertMasterDto
     public string? AlertToDesc { get; set; }
     public string? AlertCcDesc { get; set; }
     public string? AlertGradeCat { get; set; }
-    public char? AlertUnitSpecific { get; set; }
+    public string? AlertUnitSpecific { get; set; }
 }

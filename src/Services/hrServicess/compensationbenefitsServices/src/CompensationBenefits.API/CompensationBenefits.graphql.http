@@ -1,0 +1,161 @@
+@host = http://localhost:5009
+@graphql = {{host}}/graphql
+
+# ══════════════════════════════════════════════════════════════════
+#  GraphQL — Queries
+# ══════════════════════════════════════════════════════════════════
+
+### Get all salaries
+POST {{graphql}}
+Content-Type: application/json
+
+{
+  "query": "{ salaries { salaryId salaryType salaryCTC salaryStructureId salaryFooterId salaryCancelledOn } }"
+}
+
+###
+
+### Get salary by ID
+POST {{graphql}}
+Content-Type: application/json
+
+{
+  "query": "query GetSalary($id: Long!) { salary(id: $id) { salaryId salaryType salaryCTC salaryStructureId salaryFooterId salaryCancelledOn } }",
+  "variables": { "id": 2001 }
+}
+
+###
+
+### Get all salary structures
+POST {{graphql}}
+Content-Type: application/json
+
+{
+  "query": "{ salaryStructures { structureId unitId name gradeCategory gradeId type ctcMin ctcMax footerId } }"
+}
+
+###
+
+### Get salary structure by ID
+POST {{graphql}}
+Content-Type: application/json
+
+{
+  "query": "query GetSalaryStructure($id: Long!) { salaryStructure(id: $id) { structureId unitId name gradeCategory gradeId type ctcMin ctcMax footerId } }",
+  "variables": { "id": 1001 }
+}
+
+###
+
+### Get all mediclaims
+POST {{graphql}}
+Content-Type: application/json
+
+{
+  "query": "{ mediclaims { mediclaimId refName type paidBy startDate closeDate } }"
+}
+
+###
+
+### Get mediclaim by ID
+POST {{graphql}}
+Content-Type: application/json
+
+{
+  "query": "query GetMediclaim($id: Long!) { mediclaim(id: $id) { mediclaimId refName type paidBy startDate closeDate } }",
+  "variables": { "id": 3001 }
+}
+
+###
+
+# ══════════════════════════════════════════════════════════════════
+#  GraphQL — Mutations
+# ══════════════════════════════════════════════════════════════════
+
+### Create salary
+POST {{graphql}}
+Content-Type: application/json
+
+{
+  "query": "mutation CreateSalary($cmd: CreateSalaryCommandInput!) { createSalary(command: $cmd) }",
+  "variables": {
+    "cmd": {
+      "salaryId": 2001,
+      "salaryType": "C",
+      "salaryCTC": 1200000.00,
+      "salaryStructureId": 1001,
+      "salaryFooterId": 1,
+      "createdBy": 1
+    }
+  }
+}
+
+###
+
+### Create salary structure
+POST {{graphql}}
+Content-Type: application/json
+
+{
+  "query": "mutation CreateSalaryStructure($cmd: CreateSalaryStructureCommandInput!) { createSalaryStructure(command: $cmd) }",
+  "variables": {
+    "cmd": {
+      "structureId": 1001,
+      "unitId": 10,
+      "name": "Senior Engineer Band",
+      "gradeCategory": "Technical",
+      "gradeId": 5,
+      "type": "C",
+      "ctcMin": 800000.00,
+      "ctcMax": 1500000.00,
+      "footerId": 1,
+      "createdBy": 1
+    }
+  }
+}
+
+###
+
+### Create mediclaim
+POST {{graphql}}
+Content-Type: application/json
+
+{
+  "query": "mutation CreateMediclaim($cmd: CreateMediclaimCommandInput!) { createMediclaim(command: $cmd) }",
+  "variables": {
+    "cmd": {
+      "mediclaimId": 3001,
+      "refName": "Star Health Gold Plan 2026",
+      "type": "F",
+      "paidBy": "C",
+      "startDate": "2026-04-01T00:00:00Z",
+      "closeDate": "2027-03-31T00:00:00Z"
+    }
+  }
+}
+
+###
+
+# ══════════════════════════════════════════════════════════════════
+#  GraphQL — Introspection (schema discovery)
+# ══════════════════════════════════════════════════════════════════
+
+### List all types in schema
+POST {{graphql}}
+Content-Type: application/json
+
+{
+  "query": "{ __schema { types { name kind } } }"
+}
+
+###
+
+### Inspect Query type fields
+POST {{graphql}}
+Content-Type: application/json
+
+{
+  "query": "{ __type(name: \"Query\") { fields { name args { name type { name kind } } type { name kind } } } }"
+}
+
+###

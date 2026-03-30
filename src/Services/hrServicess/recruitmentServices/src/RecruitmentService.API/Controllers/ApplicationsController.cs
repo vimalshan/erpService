@@ -1,9 +1,11 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MassTransit;
 using RecruitmentService.Application.Commands.Applications;
 using RecruitmentService.Application.DTOs;
 using RecruitmentService.Application.Queries.Applications;
+using RecruitmentService.Infrastructure.Messaging.Consumers;
 
 namespace RecruitmentService.API.Controllers;
 
@@ -13,8 +15,13 @@ namespace RecruitmentService.API.Controllers;
 public class ApplicationsController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IPublishEndpoint _publishEndpoint;
 
-    public ApplicationsController(IMediator mediator) => _mediator = mediator;
+    public ApplicationsController(IMediator mediator, IPublishEndpoint publishEndpoint)
+    {
+        _mediator = mediator;
+        _publishEndpoint = publishEndpoint;
+    }
 
     /// <summary>Get application by ID.</summary>
     [HttpGet("{id:decimal}")]
@@ -40,6 +47,11 @@ public class ApplicationsController : ControllerBase
     {
         var submittedBy = GetCurrentUserId();
         var id = await _mediator.Send(new SubmitApplicationCommand(request, submittedBy), ct);
+
+        await _publishEndpoint.Publish(
+            new ApplicationSubmittedMessage(id, request.VacancyId, DateTime.UtcNow),
+            ct);
+
         return CreatedAtAction(nameof(GetById), new { id }, id);
     }
 
@@ -51,6 +63,11 @@ public class ApplicationsController : ControllerBase
     public async Task<IActionResult> UpdateStatus(decimal id, [FromBody] UpdateStatusRequest request, CancellationToken ct)
     {
         await _mediator.Send(new UpdateApplicationStatusCommand(id, request.StatusCode, request.Remarks, GetCurrentUserId()), ct);
+
+        await _publishEndpoint.Publish(
+            new ApplicationStatusChangedMessage(id, "UNKNOWN", request.StatusCode, DateTime.UtcNow),
+            ct);
+
         return NoContent();
     }
 

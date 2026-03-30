@@ -13,6 +13,8 @@ public abstract class RabbitMqConsumerBase<T> : BackgroundService
     private IChannel? _channel;
     private readonly ILogger _logger;
     protected abstract string QueueName { get; }
+    protected abstract string RoutingKey { get; }
+    private const string Exchange = "er.events";
 
     protected RabbitMqConsumerBase(IConnection connection, ILogger logger)
     {
@@ -23,7 +25,9 @@ public abstract class RabbitMqConsumerBase<T> : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
+        await _channel.ExchangeDeclareAsync(Exchange, RabbitMQ.Client.ExchangeType.Topic, durable: true, cancellationToken: stoppingToken);
         await _channel.QueueDeclareAsync(QueueName, durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
+        await _channel.QueueBindAsync(QueueName, Exchange, RoutingKey, cancellationToken: stoppingToken);
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
         consumer.ReceivedAsync += async (_, ea) =>

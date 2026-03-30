@@ -24,7 +24,7 @@ namespace ExitManagement.Infrastructure.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EMPLOYEE_EXIT_INT", x => x.INT_EXITNO);
+                    table.PrimaryKey("PK_EMPLOYEE_EXIT_INT", x => new { x.INT_EXITNO, x.INT_SLNO });
                 });
 
             migrationBuilder.CreateTable(

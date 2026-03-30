@@ -1,0 +1,857 @@
+---
+# AlertsNotifications Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: alerts-service
+  namespace: hr-microservices
+  labels:
+    app: alerts-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5154
+      targetPort: 5154
+      protocol: TCP
+  selector:
+    app: alerts-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alerts-service
+  namespace: hr-microservices
+  labels:
+    app: alerts-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: alerts-service
+  template:
+    metadata:
+      labels:
+        app: alerts-service
+    spec:
+      containers:
+      - name: alerts-service
+        image: hr-alerts-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5154
+        envFrom:
+        - configMapRef:
+            name: hr-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=mssql-server;Database=AlertsNotificationsDB;User=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+        - name: JwtSettings__Key
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: AlertsNotificationsJwtKey
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: SA_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5154
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5154
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+# CompensationBenefits Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: compensation-service
+  namespace: hr-microservices
+  labels:
+    app: compensation-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5009
+      targetPort: 5009
+      protocol: TCP
+  selector:
+    app: compensation-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compensation-service
+  namespace: hr-microservices
+  labels:
+    app: compensation-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: compensation-service
+  template:
+    metadata:
+      labels:
+        app: compensation-service
+    spec:
+      containers:
+      - name: compensation-service
+        image: hr-compensation-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5009
+        envFrom:
+        - configMapRef:
+            name: hr-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=mssql-server;Database=CompensationBenefitsDB;User=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+        - name: JwtSettings__Key
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: CompensationBenefitsJwtKey
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: SA_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5009
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5009
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+# EmployeeManagement Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: employee-management-service
+  namespace: hr-microservices
+  labels:
+    app: employee-management-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5004
+      targetPort: 5004
+      protocol: TCP
+  selector:
+    app: employee-management-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: employee-management-service
+  namespace: hr-microservices
+  labels:
+    app: employee-management-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: employee-management-service
+  template:
+    metadata:
+      labels:
+        app: employee-management-service
+    spec:
+      containers:
+      - name: employee-management-service
+        image: hr-employee-management-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5004
+        envFrom:
+        - configMapRef:
+            name: hr-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=mssql-server;Database=EmployeeManagementDB;User=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+        - name: JwtSettings__Key
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: EmployeeManagementJwtKey
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: SA_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5004
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5004
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+# EmployeeRelations Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: employee-relations-service
+  namespace: hr-microservices
+  labels:
+    app: employee-relations-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5075
+      targetPort: 5075
+      protocol: TCP
+  selector:
+    app: employee-relations-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: employee-relations-service
+  namespace: hr-microservices
+  labels:
+    app: employee-relations-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: employee-relations-service
+  template:
+    metadata:
+      labels:
+        app: employee-relations-service
+    spec:
+      containers:
+      - name: employee-relations-service
+        image: hr-employee-relations-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5075
+        envFrom:
+        - configMapRef:
+            name: hr-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=mssql-server;Database=EmployeeRelationsDB;User=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+        - name: JwtSettings__Key
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: EmployeeRelationsJwtKey
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: SA_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5075
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5075
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+# ExitManagement Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: exit-management-service
+  namespace: hr-microservices
+  labels:
+    app: exit-management-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5094
+      targetPort: 5094
+      protocol: TCP
+  selector:
+    app: exit-management-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exit-management-service
+  namespace: hr-microservices
+  labels:
+    app: exit-management-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: exit-management-service
+  template:
+    metadata:
+      labels:
+        app: exit-management-service
+    spec:
+      containers:
+      - name: exit-management-service
+        image: hr-exit-management-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5094
+        envFrom:
+        - configMapRef:
+            name: hr-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=mssql-server;Database=ExitManagementDB;User=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+        - name: JwtSettings__Key
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: ExitManagementJwtKey
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: SA_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5094
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5094
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+# OrganizationStructure Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: organization-service
+  namespace: hr-microservices
+  labels:
+    app: organization-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5027
+      targetPort: 5027
+      protocol: TCP
+  selector:
+    app: organization-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: organization-service
+  namespace: hr-microservices
+  labels:
+    app: organization-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: organization-service
+  template:
+    metadata:
+      labels:
+        app: organization-service
+    spec:
+      containers:
+      - name: organization-service
+        image: hr-organization-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5027
+        envFrom:
+        - configMapRef:
+            name: hr-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=mssql-server;Database=OrganizationStructureDB;User=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+        - name: JwtSettings__Key
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: OrganizationStructureJwtKey
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: SA_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5027
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5027
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+# Recruitment Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: recruitment-service
+  namespace: hr-microservices
+  labels:
+    app: recruitment-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5265
+      targetPort: 5265
+      protocol: TCP
+  selector:
+    app: recruitment-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recruitment-service
+  namespace: hr-microservices
+  labels:
+    app: recruitment-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: recruitment-service
+  template:
+    metadata:
+      labels:
+        app: recruitment-service
+    spec:
+      containers:
+      - name: recruitment-service
+        image: hr-recruitment-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5265
+        envFrom:
+        - configMapRef:
+            name: hr-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=mssql-server;Database=RecruitmentDB;User=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+        - name: JwtSettings__Key
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: RecruitmentJwtKey
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: SA_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5265
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5265
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+# TimeAttendance Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: time-attendance-service
+  namespace: hr-microservices
+  labels:
+    app: time-attendance-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5235
+      targetPort: 5235
+      protocol: TCP
+  selector:
+    app: time-attendance-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: time-attendance-service
+  namespace: hr-microservices
+  labels:
+    app: time-attendance-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: time-attendance-service
+  template:
+    metadata:
+      labels:
+        app: time-attendance-service
+    spec:
+      containers:
+      - name: time-attendance-service
+        image: hr-time-attendance-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5235
+        envFrom:
+        - configMapRef:
+            name: hr-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=mssql-server;Database=TimeAttendanceDB;User=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+        - name: JwtSettings__Key
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: TimeAttendanceJwtKey
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: SA_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5235
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5235
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+# TrainingDevelopment Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: training-service
+  namespace: hr-microservices
+  labels:
+    app: training-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5003
+      targetPort: 5003
+      protocol: TCP
+  selector:
+    app: training-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: training-service
+  namespace: hr-microservices
+  labels:
+    app: training-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: training-service
+  template:
+    metadata:
+      labels:
+        app: training-service
+    spec:
+      containers:
+      - name: training-service
+        image: hr-training-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5003
+        envFrom:
+        - configMapRef:
+            name: hr-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=mssql-server;Database=TrainingDevelopmentDB;User=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+        - name: JwtSettings__Key
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: TrainingDevelopmentJwtKey
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: SA_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5003
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5003
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+# UserSecurity Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-security-service
+  namespace: hr-microservices
+  labels:
+    app: user-security-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5140
+      targetPort: 5140
+      protocol: TCP
+  selector:
+    app: user-security-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-security-service
+  namespace: hr-microservices
+  labels:
+    app: user-security-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-security-service
+  template:
+    metadata:
+      labels:
+        app: user-security-service
+    spec:
+      containers:
+      - name: user-security-service
+        image: hr-user-security-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5140
+        envFrom:
+        - configMapRef:
+            name: hr-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=mssql-server;Database=UserSecurityDB;User=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+        - name: JwtSettings__Key
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: UserSecurityJwtKey
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: SA_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5140
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5140
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+# EmployeeTransactions Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: employee-transactions-service
+  namespace: hr-microservices
+  labels:
+    app: employee-transactions-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5204
+      targetPort: 5204
+      protocol: TCP
+  selector:
+    app: employee-transactions-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: employee-transactions-service
+  namespace: hr-microservices
+  labels:
+    app: employee-transactions-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: employee-transactions-service
+  template:
+    metadata:
+      labels:
+        app: employee-transactions-service
+    spec:
+      containers:
+      - name: employee-transactions-service
+        image: hr-employee-transactions-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5204
+        envFrom:
+        - configMapRef:
+            name: hr-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=mssql-server;Database=EmployeeTransactionsDB;User=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+        - name: JwtSettings__Key
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: EmployeeTransactionsJwtKey
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hr-secrets
+              key: SA_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5204
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5204
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+# Horizontal Pod Autoscalers for Microservices
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: microservices-hpa
+  namespace: hr-microservices
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: alerts-service
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70

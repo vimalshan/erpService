@@ -11,6 +11,7 @@ public class DisciplinaryActionConsumer : RabbitMqConsumerBase<DisciplinaryActio
 {
     private readonly ILogger<DisciplinaryActionConsumer> _log;
     protected override string QueueName => "disciplinary.actions";
+    protected override string RoutingKey => "disciplinary.action";
 
     public DisciplinaryActionConsumer(IConnection connection, ILogger<DisciplinaryActionConsumer> logger)
         : base(connection, logger) => _log = logger;
@@ -28,6 +29,7 @@ public class EwsCompletedConsumer : RabbitMqConsumerBase<EwsCompletedNotificatio
 {
     private readonly ILogger<EwsCompletedConsumer> _log;
     protected override string QueueName => "ews.completed";
+    protected override string RoutingKey => "ews.completed";
 
     public EwsCompletedConsumer(IConnection connection, ILogger<EwsCompletedConsumer> logger)
         : base(connection, logger) => _log = logger;
@@ -44,6 +46,7 @@ public class SurveyResponseConsumer : RabbitMqConsumerBase<SurveyResponseNotific
 {
     private readonly ILogger<SurveyResponseConsumer> _log;
     protected override string QueueName => "survey.responses";
+    protected override string RoutingKey => "survey.response";
 
     public SurveyResponseConsumer(IConnection connection, ILogger<SurveyResponseConsumer> logger)
         : base(connection, logger) => _log = logger;

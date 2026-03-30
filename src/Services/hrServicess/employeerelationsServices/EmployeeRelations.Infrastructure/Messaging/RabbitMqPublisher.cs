@@ -25,6 +25,7 @@ public class RabbitMqPublisher : IMessagePublisher, IDisposable
 
     public async Task PublishAsync<T>(string exchange, string routingKey, T message, CancellationToken ct = default)
     {
+        await _channel.ExchangeDeclareAsync(exchange, RabbitMQ.Client.ExchangeType.Topic, durable: true, cancellationToken: ct);
         var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
         var props = new BasicProperties { ContentType = "application/json", DeliveryMode = DeliveryModes.Persistent };
 

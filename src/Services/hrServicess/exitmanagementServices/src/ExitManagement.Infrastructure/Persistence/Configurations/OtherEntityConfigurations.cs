@@ -10,7 +10,7 @@ public class ExitInterviewFeedbackConfiguration : IEntityTypeConfiguration<ExitI
     {
         builder.ToTable("EMPLOYEE_EXIT_INT");
 
-        builder.HasKey(e => e.ExitNo);
+        builder.HasKey(e => new { e.ExitNo, e.SerialNo });
         builder.Property(e => e.ExitNo).HasColumnName("INT_EXITNO").HasColumnType("decimal(38,0)");
         builder.Property(e => e.SerialNo).HasColumnName("INT_SLNO").HasColumnType("decimal(38,0)");
         builder.Property(e => e.QuestionId).HasColumnName("INT_QUES_ID").HasMaxLength(4);

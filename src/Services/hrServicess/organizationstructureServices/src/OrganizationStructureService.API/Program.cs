@@ -7,6 +7,7 @@ using OrganizationStructureService.API.Middleware;
 using OrganizationStructureService.Application;
 using OrganizationStructureService.Infrastructure;
 using OrganizationStructureService.Infrastructure.Persistence;
+using OrganizationStructureService.Infrastructure.Messaging;
 using Serilog;
 using System.Text;
 
@@ -100,6 +101,17 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
 var app = builder.Build();
 
 await DatabaseInitializer.InitializeDatabaseAsync(app.Services);
+
+// Eagerly initialize RabbitMQ publisher to declare exchange at startup
+try
+{
+    app.Services.GetRequiredService<IMessagePublisher>();
+    Log.Information("RabbitMQ publisher initialized — exchange declared.");
+}
+catch (Exception ex)
+{
+    Log.Warning(ex, "RabbitMQ publisher failed to initialize at startup. Messaging will be unavailable.");
+}
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 

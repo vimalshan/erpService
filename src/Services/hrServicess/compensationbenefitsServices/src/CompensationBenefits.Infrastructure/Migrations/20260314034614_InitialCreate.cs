@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -15,8 +15,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "BASIC_SLABINC",
                 columns: table => new
                 {
-                    SLAB_INCID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SLAB_INCID = table.Column<long>(type: "bigint", nullable: false),
                     SLAB_GRADEID = table.Column<long>(type: "bigint", nullable: false),
                     SLAB_UNITID = table.Column<long>(type: "bigint", nullable: false),
                     SLAB_INCSTRTDATE = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -33,8 +32,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "COMP_PARAMS",
                 columns: table => new
                 {
-                    CP_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CP_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     CP_COUNTRYCODE = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
                     CP_EDGROUP = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
                     CP_TYPE = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
@@ -51,8 +49,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "DILIGENCE_RATEMAST",
                 columns: table => new
                 {
-                    DILIGENCE_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DILIGENCE_ID = table.Column<long>(type: "bigint", nullable: false),
                     DILIGENCE_PAYUNITID = table.Column<long>(type: "bigint", nullable: false),
                     DILIGENCE_GRADECATEGORY = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
                     DILIGENCE_EDID = table.Column<long>(type: "bigint", nullable: false),
@@ -73,8 +70,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "EMP_RETIRALS_EMPSPECIFIC",
                 columns: table => new
                 {
-                    EMPRET_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EMPRET_ID = table.Column<long>(type: "bigint", nullable: false),
                     EMPRET_EMPSYSID = table.Column<long>(type: "bigint", nullable: false),
                     EMPRET_PAYTYPE = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
                     EMPRET_EDID = table.Column<long>(type: "bigint", nullable: false),
@@ -95,8 +91,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "EMP_RETIRALSDET",
                 columns: table => new
                 {
-                    ERDET_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ERDET_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     ERDET_EMPSYSID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     ERDET_PFCLSDATE = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ERDET_REMARKS = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
@@ -112,8 +107,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "EMPLOYEE_CTCREMARKS",
                 columns: table => new
                 {
-                    CTCREM_EMP_SYSID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CTCREM_EMP_SYSID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     CTCREM_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     CTCREM_LINE1 = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     CTCREM_LINE2 = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
@@ -141,8 +135,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "MEDICLAIM_MASTER",
                 columns: table => new
                 {
-                    MEDICLAIM_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MEDICLAIM_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     MEDICLAIM_REFNAME = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     MEDICLAIM_PROVIDERID = table.Column<decimal>(type: "decimal(38,0)", nullable: true),
                     MEDICLAIM_TPPID = table.Column<decimal>(type: "decimal(38,0)", nullable: true),
@@ -166,8 +159,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "MEDICLAIM_PREMPERCENTAGE",
                 columns: table => new
                 {
-                    MED_PPID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MED_PPID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     MED_RELATIONSHIPID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     MED_PERCENTAGE = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
                 },
@@ -180,8 +172,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "MOBILE_ADDLIMIT",
                 columns: table => new
                 {
-                    ADD_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ADD_ID = table.Column<long>(type: "bigint", nullable: false),
                     ADD_EMPSYSID = table.Column<long>(type: "bigint", nullable: false),
                     ADD_EFFDATE = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ADD_CLSDATE = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -202,8 +193,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "MOBILE_CONNECTION",
                 columns: table => new
                 {
-                    CONN_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CONN_ID = table.Column<long>(type: "bigint", nullable: false),
                     CONN_EMPSYSID = table.Column<long>(type: "bigint", nullable: false),
                     CONN_EFFDATE = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CONN_CLSDATE = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -227,8 +217,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "MOBILE_LIMITMAST",
                 columns: table => new
                 {
-                    LIMIT_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    LIMIT_ID = table.Column<long>(type: "bigint", nullable: false),
                     LIMIT_ORG = table.Column<long>(type: "bigint", nullable: false),
                     LIMIT_UNITID = table.Column<long>(type: "bigint", nullable: false),
                     LIMIT_GRADECATID = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
@@ -250,8 +239,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "PMS_CASHPAY",
                 columns: table => new
                 {
-                    CASHPAY_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CASHPAY_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     CASHPAY_UNITID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     CASHPAY_GRADECAT = table.Column<string>(type: "nvarchar(5)", maxLength: 5, nullable: false),
                     CASHPAY_PAYTYPE = table.Column<string>(type: "nvarchar(1)", maxLength: 1, nullable: false),
@@ -269,8 +257,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "RETRIALS_RANGEMAST",
                 columns: table => new
                 {
-                    RRMAST_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RRMAST_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     RRMAST_UNITID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     RRMAST_FROMYEAR = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     RRMAST_TOYEAR = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
@@ -287,8 +274,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "SALARY_MAIN",
                 columns: table => new
                 {
-                    SALARY_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SALARY_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     SALARY_TYPE = table.Column<string>(type: "nvarchar(1)", maxLength: 1, nullable: false),
                     SALARY_CTC = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     SALARY_STRUCTUREID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
@@ -308,8 +294,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "SALSTRUCTURE_MAIN",
                 columns: table => new
                 {
-                    STRUCTURE_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    STRUCTURE_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     STRUCTURE_UNITID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     STRUCTURE_NAME = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     STRUCTURE_GRADECATEGORY = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
@@ -359,8 +344,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "MEDICLAIM_DET",
                 columns: table => new
                 {
-                    MED_NOMINATIONRUNID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MED_NOMINATIONRUNID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     MED_NOMINATIONID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     MED_RELATIONSHIP = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     MED_NOMINEENAME = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
@@ -388,8 +372,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "MEDICLAIM_YEARLYPREM",
                 columns: table => new
                 {
-                    MEDYP_YEARLYPREMID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MEDYP_YEARLYPREMID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     MEDYP_MEDICLAIMID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     MEDYP_SUMASSURED = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     MEDYP_PREMIUMAMNT = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
@@ -412,8 +395,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "PMS_CASHPAYDET",
                 columns: table => new
                 {
-                    CASHPAY_DETID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CASHPAY_DETID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     CASHPAY_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     CASHPAY_PER = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     CASHPAY_PAYDATE = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
@@ -433,8 +415,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "SALARY_DET",
                 columns: table => new
                 {
-                    SALDET_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SALDET_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     SALDET_SALARYID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     SALDET_SRL = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     SALDET_ANNGROUP = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
@@ -466,8 +447,7 @@ namespace CompensationBenefits.Infrastructure.Migrations
                 name: "SALSTRUCTURE_DET",
                 columns: table => new
                 {
-                    STRUCTDET_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    STRUCTDET_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     STRUCTDET_STRUCTUREID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     STRUCTDET_EDID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     STRUCTDET_AMTTYPE = table.Column<string>(type: "nvarchar(1)", maxLength: 1, nullable: false),
@@ -597,3 +577,4 @@ namespace CompensationBenefits.Infrastructure.Migrations
         }
     }
 }
+

@@ -42,6 +42,8 @@ public static class DependencyInjection
         // RabbitMQ
         services.Configure<RabbitMqSettings>(configuration.GetSection("RabbitMQ"));
         services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
+        services.AddSingleton<BusinessCreatedConsumer>();
+        services.AddHostedService<BusinessCreatedConsumerService>();
 
         // Azure Blob Storage
         services.AddSingleton<IBlobStorageService, BlobStorageService>();

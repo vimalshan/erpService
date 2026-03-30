@@ -1,0 +1,426 @@
+version: '3.8'
+
+services:
+  # SQL Server Database
+  sql-server:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: hr-sql-server
+    environment:
+      SA_PASSWORD: "SafePassword123!@#"
+      ACCEPT_EULA: "Y"
+      MSSQL_AGENT_ENABLED: "true"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./deployment/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "SafePassword123!@#", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: hr-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfiles/ApiGateway.Dockerfile
+    container_name: hr-api-gateway
+    ports:
+      - "5310:5310"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__SqlServer: "Server=sql-server;Database=master;User=sa;Password=SafePassword123!@#;TrustServerCertificate=True"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      Jwt__Secret: "SuperSecureGatewaySecretKey2026$#@!"
+      Jwt__Issuer: "HrGateway"
+      Jwt__Audience: "HrGatewayClients"
+    depends_on:
+      sql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5310/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # AlertsNotifications Service
+  alerts-service:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfiles/AlertsNotifications.Dockerfile
+    container_name: hr-alerts-service
+    ports:
+      - "5154:5154"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sql-server;Database=AlertsNotificationsDB;User=sa;Password=SafePassword123!@#;TrustServerCertificate=True"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      JwtSettings__Key: "AlertsNotificationsSuperSecretKey2026$#@!"
+      JwtSettings__Issuer: "AlertsNotificationsService"
+      JwtSettings__Audience: "AlertsNotificationsClient"
+    depends_on:
+      sql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5154/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # CompensationBenefits Service
+  compensation-service:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfiles/CompensationBenefits.Dockerfile
+    container_name: hr-compensation-service
+    ports:
+      - "5009:5009"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sql-server;Database=CompensationBenefitsDB;User=sa;Password=SafePassword123!@#;TrustServerCertificate=True"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      JwtSettings__Key: "CompensationBenefitsSuperSecretKey2026$#@!"
+      JwtSettings__Issuer: "CompensationBenefitsService"
+      JwtSettings__Audience: "CompensationBenefitsClient"
+    depends_on:
+      sql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5009/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # EmployeeManagement Service
+  employee-management-service:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfiles/EmployeeManagement.Dockerfile
+    container_name: hr-employee-management-service
+    ports:
+      - "5004:5004"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sql-server;Database=EmployeeManagementDB;User=sa;Password=SafePassword123!@#;TrustServerCertificate=True"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      JwtSettings__Key: "EmployeeManagementSuperSecretKey2026$#@!"
+      JwtSettings__Issuer: "EmployeeManagementService"
+      JwtSettings__Audience: "EmployeeManagementClient"
+    depends_on:
+      sql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5004/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # EmployeeRelations Service
+  employee-relations-service:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfiles/EmployeeRelations.Dockerfile
+    container_name: hr-employee-relations-service
+    ports:
+      - "5075:5075"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sql-server;Database=EmployeeRelationsDB;User=sa;Password=SafePassword123!@#;TrustServerCertificate=True"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      JwtSettings__Key: "EmployeeRelationsSuperSecretKey2026$#@!"
+      JwtSettings__Issuer: "EmployeeRelationsService"
+      JwtSettings__Audience: "EmployeeRelationsClient"
+    depends_on:
+      sql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5075/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ExitManagement Service
+  exit-management-service:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfiles/ExitManagement.Dockerfile
+    container_name: hr-exit-management-service
+    ports:
+      - "5094:5094"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sql-server;Database=ExitManagementDB;User=sa;Password=SafePassword123!@#;TrustServerCertificate=True"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      JwtSettings__Key: "ExitManagementSuperSecretKey2026$#@!"
+      JwtSettings__Issuer: "ExitManagementService"
+      JwtSettings__Audience: "ExitManagementClient"
+    depends_on:
+      sql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5094/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # OrganizationStructure Service
+  organization-service:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfiles/OrganizationStructure.Dockerfile
+    container_name: hr-organization-service
+    ports:
+      - "5027:5027"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sql-server;Database=OrganizationStructureDB;User=sa;Password=SafePassword123!@#;TrustServerCertificate=True"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      JwtSettings__Key: "OrganizationStructureSuperSecretKey2026$#@!"
+      JwtSettings__Issuer: "OrganizationStructureService"
+      JwtSettings__Audience: "OrganizationStructureClient"
+    depends_on:
+      sql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5027/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Recruitment Service
+  recruitment-service:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfiles/Recruitment.Dockerfile
+    container_name: hr-recruitment-service
+    ports:
+      - "5265:5265"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sql-server;Database=RecruitmentDB;User=sa;Password=SafePassword123!@#;TrustServerCertificate=True"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      JwtSettings__Key: "RecruitmentSuperSecretKey2026$#@!"
+      JwtSettings__Issuer: "RecruitmentService"
+      JwtSettings__Audience: "RecruitmentClient"
+    depends_on:
+      sql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5265/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # TimeAttendance Service
+  time-attendance-service:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfiles/TimeAttendance.Dockerfile
+    container_name: hr-time-attendance-service
+    ports:
+      - "5235:5235"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sql-server;Database=TimeAttendanceDB;User=sa;Password=SafePassword123!@#;TrustServerCertificate=True"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      JwtSettings__Key: "TimeAttendanceSuperSecretKey2026$#@!"
+      JwtSettings__Issuer: "TimeAttendanceService"
+      JwtSettings__Audience: "TimeAttendanceClient"
+    depends_on:
+      sql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5235/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # TrainingDevelopment Service
+  training-service:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfiles/TrainingDevelopment.Dockerfile
+    container_name: hr-training-service
+    ports:
+      - "5003:5003"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sql-server;Database=TrainingDevelopmentDB;User=sa;Password=SafePassword123!@#;TrustServerCertificate=True"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      JwtSettings__Key: "TrainingDevelopmentSuperSecretKey2026$#@!"
+      JwtSettings__Issuer: "TrainingDevelopmentService"
+      JwtSettings__Audience: "TrainingDevelopmentClient"
+    depends_on:
+      sql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # UserSecurity Service
+  user-security-service:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfiles/UserSecurity.Dockerfile
+    container_name: hr-user-security-service
+    ports:
+      - "5140:5140"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sql-server;Database=UserSecurityDB;User=sa;Password=SafePassword123!@#;TrustServerCertificate=True"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      JwtSettings__Key: "UserSecuritySuperSecretKey2026$#@!"
+      JwtSettings__Issuer: "UserSecurityService"
+      JwtSettings__Audience: "UserSecurityClient"
+    depends_on:
+      sql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5140/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # EmployeeTransactions Service
+  employee-transactions-service:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfiles/EmployeeTransactions.Dockerfile
+    container_name: hr-employee-transactions-service
+    ports:
+      - "5204:5204"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sql-server;Database=EmployeeTransactionsDB;User=sa;Password=SafePassword123!@#;TrustServerCertificate=True"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+      JwtSettings__Key: "EmployeeTransactionsSuperSecretKey2026$#@!"
+      JwtSettings__Issuer: "EmployeeTransactionsService"
+      JwtSettings__Audience: "EmployeeTransactionsClient"
+    depends_on:
+      sql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5204/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sqlserver-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+
+networks:
+  hr-network:
+    driver: bridge

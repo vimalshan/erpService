@@ -1,10 +1,10 @@
 using MediatR;
 using EmployeeRelations.Application.DTOs;
+using EmployeeRelations.Application.Mappings;
 using EmployeeRelations.Domain.Interfaces;
 using EmployeeRelations.Domain.Aggregates;
 using EmployeeRelations.Domain.Exceptions;
 using FluentValidation;
-using AutoMapper;
 
 namespace EmployeeRelations.Application.Commands.Survey;
 
@@ -26,9 +26,8 @@ public class CreateSurveyHandler : IRequestHandler<CreateSurveyCommand, SurveyMa
 {
     private readonly ISurveyRepository _repo;
     private readonly IUnitOfWork _uow;
-    private readonly IMapper _mapper;
 
-    public CreateSurveyHandler(ISurveyRepository repo, IUnitOfWork uow, IMapper mapper) { _repo = repo; _uow = uow; _mapper = mapper; }
+    public CreateSurveyHandler(ISurveyRepository repo, IUnitOfWork uow) { _repo = repo; _uow = uow; }
 
     public async Task<SurveyMasterDto> Handle(CreateSurveyCommand req, CancellationToken ct)
     {
@@ -36,7 +35,7 @@ public class CreateSurveyHandler : IRequestHandler<CreateSurveyCommand, SurveyMa
         var survey = new SurveyMaster(id, req.Name, req.Image, req.StartDate, req.EndDate, req.AutoLock);
         await _repo.AddAsync(survey, ct);
         await _uow.SaveChangesAsync(ct);
-        return _mapper.Map<SurveyMasterDto>(survey);
+        return survey.ToDto();
     }
 }
 

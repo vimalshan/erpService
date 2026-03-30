@@ -1,10 +1,10 @@
 using MediatR;
 using EmployeeRelations.Application.DTOs;
+using EmployeeRelations.Application.Mappings;
 using EmployeeRelations.Domain.Interfaces;
 using EmployeeRelations.Domain.Aggregates;
 using EmployeeRelations.Domain.Exceptions;
 using FluentValidation;
-using AutoMapper;
 
 namespace EmployeeRelations.Application.Commands.Disciplinary;
 
@@ -26,13 +26,11 @@ public class CreateDisciplinaryCaseHandler : IRequestHandler<CreateDisciplinaryC
 {
     private readonly IDisciplinaryRepository _repo;
     private readonly IUnitOfWork _uow;
-    private readonly IMapper _mapper;
 
-    public CreateDisciplinaryCaseHandler(IDisciplinaryRepository repo, IUnitOfWork uow, IMapper mapper)
+    public CreateDisciplinaryCaseHandler(IDisciplinaryRepository repo, IUnitOfWork uow)
     {
         _repo = repo;
         _uow = uow;
-        _mapper = mapper;
     }
 
     public async Task<DisciplinaryMainDto> Handle(CreateDisciplinaryCaseCommand req, CancellationToken ct)
@@ -43,7 +41,7 @@ public class CreateDisciplinaryCaseHandler : IRequestHandler<CreateDisciplinaryC
             discipline.AddEmployee(empId);
         await _repo.AddAsync(discipline, ct);
         await _uow.SaveChangesAsync(ct);
-        return _mapper.Map<DisciplinaryMainDto>(discipline);
+        return discipline.ToDto();
     }
 }
 

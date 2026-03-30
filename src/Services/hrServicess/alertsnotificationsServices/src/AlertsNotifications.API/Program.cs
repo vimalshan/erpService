@@ -6,8 +6,10 @@ using AlertsNotifications.Infrastructure.Seed;
 using AlertsNotifications.API;
 using AlertsNotifications.API.GraphQL;
 using AlertsNotifications.API.Middleware;
+using HotChocolate.Types;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using RabbitMQ.Client;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,6 +56,8 @@ builder.Services
     .AddGraphQLServer()
     .AddQueryType<AlertsQuery>()
     .AddMutationType<AlertsMutation>()
+    .BindRuntimeType<char, StringType>()
+    .BindRuntimeType<char?, StringType>()
     .AddFiltering()
     .AddSorting()
     .AddProjections();
@@ -65,6 +69,20 @@ builder.Services.AddHealthChecks()
         name: "sqlserver",
         tags: new[] { "db", "sql" })
     .AddRabbitMQ(
+        sp =>
+        {
+            var config = sp.GetRequiredService<IConfiguration>();
+            var factory = new ConnectionFactory
+            {
+                HostName = config["RabbitMQ:HostName"] ?? "localhost",
+                Port = int.TryParse(config["RabbitMQ:Port"], out var port) ? port : 5672,
+                UserName = config["RabbitMQ:UserName"] ?? "guest",
+                Password = config["RabbitMQ:Password"] ?? "guest",
+                VirtualHost = config["RabbitMQ:VirtualHost"] ?? "/"
+            };
+
+            return factory.CreateConnectionAsync().GetAwaiter().GetResult();
+        },
         name: "rabbitmq",
         tags: new[] { "messaging" });
 

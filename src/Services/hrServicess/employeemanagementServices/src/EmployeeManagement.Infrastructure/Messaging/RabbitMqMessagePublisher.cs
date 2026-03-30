@@ -55,9 +55,11 @@ public sealed class RabbitMqMessagePublisher : IMessagePublisher, IAsyncDisposab
 
         await _pipeline.ExecuteAsync(async token =>
         {
+            await _channel.ExchangeDeclareAsync(exchange, ExchangeType.Topic, durable: true, cancellationToken: token);
             var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
-            await _channel.BasicPublishAsync(exchange, routingKey, body, token);
-            _logger.LogDebug("Published message to {Exchange}/{RoutingKey}", exchange, routingKey);
+            var props = new BasicProperties { Persistent = true };
+            await _channel.BasicPublishAsync(exchange, routingKey, mandatory: false, props, body, token);
+            _logger.LogInformation("Published message to {Exchange}/{RoutingKey}", exchange, routingKey);
         }, ct);
     }
 

@@ -16,8 +16,11 @@ public class BusinessRepository : IBusinessRepository
     public async Task<IReadOnlyList<Business>> GetAllAsync(CancellationToken ct = default) =>
         await _ctx.Businesses.ToListAsync(ct);
 
-    public async Task<IReadOnlyList<Business>> GetActiveAsync(CancellationToken ct = default) =>
-        await _ctx.Businesses.Where(b => b.LiveFlag.Value == "Y").ToListAsync(ct);
+    public async Task<IReadOnlyList<Business>> GetActiveAsync(CancellationToken ct = default)
+    {
+        var all = await _ctx.Businesses.ToListAsync(ct);
+        return all.Where(b => b.LiveFlag.Value == "Y").ToList();
+    }
 
     public async Task AddAsync(Business business, CancellationToken ct = default)
     {
@@ -49,8 +52,11 @@ public class UnitRepository : IUnitRepository
     public async Task<IReadOnlyList<Unit>> GetByBusinessIdAsync(decimal businessId, CancellationToken ct = default) =>
         await _ctx.Units.Where(u => u.UnitBusinessId == businessId).ToListAsync(ct);
 
-    public async Task<IReadOnlyList<Unit>> GetActiveAsync(CancellationToken ct = default) =>
-        await _ctx.Units.Where(u => u.LiveFlag.Value == "Y").ToListAsync(ct);
+    public async Task<IReadOnlyList<Unit>> GetActiveAsync(CancellationToken ct = default)
+    {
+        var all = await _ctx.Units.ToListAsync(ct);
+        return all.Where(u => u.LiveFlag.Value == "Y").ToList();
+    }
 
     public async Task AddAsync(Unit unit, CancellationToken ct = default)
     {
@@ -127,8 +133,11 @@ public class GradeRepository : IGradeRepository
     public async Task<IReadOnlyList<Grade>> GetAllAsync(CancellationToken ct = default) =>
         await _ctx.Grades.ToListAsync(ct);
 
-    public async Task<IReadOnlyList<Grade>> GetActiveAsync(CancellationToken ct = default) =>
-        await _ctx.Grades.Where(g => g.LiveFlag != null && g.LiveFlag.Value == "Y").ToListAsync(ct);
+    public async Task<IReadOnlyList<Grade>> GetActiveAsync(CancellationToken ct = default)
+    {
+        var all = await _ctx.Grades.ToListAsync(ct);
+        return all.Where(g => g.LiveFlag?.Value == "Y").ToList();
+    }
 
     public async Task AddAsync(Grade grade, CancellationToken ct = default)
     {

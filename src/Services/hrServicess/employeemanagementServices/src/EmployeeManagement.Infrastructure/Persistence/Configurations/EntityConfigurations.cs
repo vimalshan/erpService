@@ -43,7 +43,7 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
     {
         builder.ToTable("EMPLOYEE_MASTER");
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.Id).HasColumnName("EMP_SYSID").HasColumnType("decimal(38,0)");
+        builder.Property(e => e.Id).HasColumnName("EMP_SYSID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         builder.Property(e => e.EmployeeNo).HasColumnName("EMP_NO").HasMaxLength(20);
         builder.Property(e => e.BusinessUnit).HasColumnName("EMP_BUSINESS").HasMaxLength(9);
         builder.Property(e => e.Unit).HasColumnName("EMP_UNIT").HasMaxLength(3);
@@ -78,7 +78,7 @@ public class EmployeeAddressConfiguration : IEntityTypeConfiguration<EmployeeAdd
     {
         builder.ToTable("EMPLOYEE_ADDRESS");
         builder.HasKey(e => e.EmployeeId);
-        builder.Property(e => e.EmployeeId).HasColumnName("ADDRESS_EMP_SYSID").HasColumnType("decimal(38,0)");
+        builder.Property(e => e.EmployeeId).HasColumnName("ADDRESS_EMP_SYSID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         builder.Property(e => e.AddressFlag).HasColumnName("ADDRESS_FLAG").HasMaxLength(1);
         builder.Property(e => e.Line1).HasColumnName("ADDRESS_1").HasMaxLength(65);
         builder.Property(e => e.Line2).HasColumnName("ADDRESS_2").HasMaxLength(65);
@@ -99,7 +99,7 @@ public class EmployeeCareerConfiguration : IEntityTypeConfiguration<EmployeeCare
     {
         builder.ToTable("EMPLOYEE_CAREER");
         builder.HasKey(e => e.CareerId);
-        builder.Property(e => e.CareerId).HasColumnName("CAREER_ID").HasColumnType("decimal(38,0)");
+        builder.Property(e => e.CareerId).HasColumnName("CAREER_ID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         builder.Property(e => e.EmployeeId).HasColumnName("CAREER_EMP_SYSID").HasColumnType("decimal(38,0)");
         builder.Property(e => e.Business).HasColumnName("CAREER_BUSINESS").HasMaxLength(9);
         builder.Property(e => e.Unit).HasColumnName("CAREER_UNIT").HasMaxLength(3);
@@ -127,7 +127,7 @@ public class EmployeeQualificationConfiguration : IEntityTypeConfiguration<Emplo
     {
         builder.ToTable("EMPLOYEE_QUALIFICATION");
         builder.HasKey(e => e.QualificationId);
-        builder.Property(e => e.QualificationId).HasColumnName("QUAL_ID").HasColumnType("decimal(38,0)");
+        builder.Property(e => e.QualificationId).HasColumnName("QUAL_ID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         builder.Property(e => e.EmployeeId).HasColumnName("QUAL_EMP_SYSID").HasColumnType("decimal(38,0)");
         builder.Property(e => e.QualCode).HasColumnName("QUAL_CODE").HasColumnType("decimal(38,0)");
         builder.Property(e => e.QualDescription).HasColumnName("QUAL_DESC").HasMaxLength(65);
@@ -152,7 +152,7 @@ public class EmployeePromotionConfiguration : IEntityTypeConfiguration<EmployeeP
     {
         builder.ToTable("EMPLOYEE_PROMOTION");
         builder.HasKey(e => e.PromotionNo);
-        builder.Property(e => e.PromotionNo).HasColumnName("PROM_NO").HasColumnType("decimal(38,0)");
+        builder.Property(e => e.PromotionNo).HasColumnName("PROM_NO").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         builder.Property(e => e.Source).HasColumnName("PROM_SOURCE").HasMaxLength(3);
         builder.Property(e => e.RequestNo).HasColumnName("PROM_REQUESTNO").HasColumnType("decimal(38,0)");
         builder.Property(e => e.RecommendationDate).HasColumnName("PROM_RECDATE");
@@ -182,7 +182,7 @@ public class EmployeeTransferConfiguration : IEntityTypeConfiguration<EmployeeTr
     {
         builder.ToTable("TRANSFER_MAIN");
         builder.HasKey(e => e.TransferId);
-        builder.Property(e => e.TransferId).HasColumnName("TRANSFER_ID").HasColumnType("decimal(38,0)");
+        builder.Property(e => e.TransferId).HasColumnName("TRANSFER_ID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         builder.Property(e => e.EmployeeId).HasColumnName("TRANSFER_EMPSYSID").HasColumnType("decimal(38,0)");
         builder.Property(e => e.OldUnit).HasColumnName("TRANSFER_OLDUNIT").HasMaxLength(3);
         builder.Property(e => e.NewUnit).HasColumnName("TRANSFER_NEWUNIT").HasMaxLength(3);
@@ -209,7 +209,7 @@ public class EmployeeProbationConfiguration : IEntityTypeConfiguration<EmployeeP
     {
         builder.ToTable("EMP_PROBATIONKK");
         builder.HasKey(e => e.ProbationId);
-        builder.Property(e => e.ProbationId).HasColumnName("PROBATION_ID");
+        builder.Property(e => e.ProbationId).HasColumnName("PROBATION_ID").ValueGeneratedNever();
         builder.Property(e => e.EmployeeId).HasColumnName("PROBATION_EMPSYSID");
         builder.Property(e => e.UnitId).HasColumnName("PROBATION_UNITID");
         builder.Property(e => e.GradeId).HasColumnName("PROBATION_GRADE");
@@ -233,7 +233,7 @@ public class EmployeeRetiralConfiguration : IEntityTypeConfiguration<EmployeeRet
     {
         builder.ToTable("EMP_RETIRALS");
         builder.HasKey(e => e.EmployeeId);
-        builder.Property(e => e.EmployeeId).HasColumnName("RETIRAL_EMP_SYSID").HasColumnType("decimal(38,0)");
+        builder.Property(e => e.EmployeeId).HasColumnName("RETIRAL_EMP_SYSID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         builder.Property(e => e.TransactionId).HasColumnName("RETIRAL_TRANID").HasColumnType("decimal(38,0)");
         builder.Property(e => e.PfApplicable).HasColumnName("RETIRAL_PFAPPLICABLE").HasMaxLength(1);
         builder.Property(e => e.PfTrust).HasColumnName("RETIRAL_PFTRUST").HasMaxLength(3);

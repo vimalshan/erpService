@@ -22,7 +22,8 @@ public static class DependencyInjection
         services.AddDbContext<CompensationBenefitsDbContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection"),
-                sql => sql.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null)));
+                sql => sql.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null))
+            .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
         // ── Repositories ─────────────────────────────────────────────────────────
         services.AddScoped<ISalaryRepository, SalaryRepository>();
@@ -63,9 +64,9 @@ public static class DependencyInjection
             }
         });
 
-        services.AddSingleton<IMessagePublisher, RabbitMqMessagePublisher>();
-        services.AddSingleton<SalaryEventConsumer>();
-        services.AddSingleton<MediclaimEventConsumer>();
+        services.AddSingleton<Application.Contracts.IMessagePublisher, RabbitMqMessagePublisher>();
+        services.AddHostedService<SalaryEventConsumer>();
+        services.AddHostedService<MediclaimEventConsumer>();
         services.AddScoped<ISalaryEventProcessor, SalaryEventProcessor>();
 
         // ── Polly Circuit Breaker ─────────────────────────────────────────────────

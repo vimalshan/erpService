@@ -19,7 +19,7 @@ public class GetAbsenteeismDetailQueryHandler(IAbsenteeismDetailRepository repos
             entity.TotalManDays - entity.AbsentManDays,
             entity.AbsenteeismRate,
             entity.GradeCategory, entity.FunctionId, entity.AgeId,
-            entity.ExperienceId, entity.Gender,
+            entity.ExperienceId, entity.Gender.ToString(),
             entity.InternalExperienceId, entity.TotalExperienceId,
             entity.CreatedAt, entity.CreatedBy,
             entity.LastModifiedAt, entity.LastModifiedBy);

@@ -1,6 +1,199 @@
-@CompensationBenefits.API_HostAddress = http://localhost:5009
+@host = http://localhost:5009
+@token = YOUR_JWT_TOKEN_HERE
 
-GET {{CompensationBenefits.API_HostAddress}}/weatherforecast/
+# ══════════════════════════════════════════════════════════════════
+#  SALARY STRUCTURES  —  /api/salarystructures
+# ══════════════════════════════════════════════════════════════════
+
+### Get all salary structures
+GET {{host}}/api/salarystructures
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+### Get salary structure by ID
+GET {{host}}/api/salarystructures/1001
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+### Create salary structure
+POST {{host}}/api/salarystructures
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "structureId": 1001,
+  "unitId": 10,
+  "name": "Senior Engineer Band",
+  "gradeCategory": "Technical",
+  "gradeId": 5,
+  "type": "C",
+  "ctcMin": 800000.00,
+  "ctcMax": 1500000.00,
+  "footerId": 1,
+  "createdBy": 1
+}
+
+###
+
+### Update salary structure
+PUT {{host}}/api/salarystructures/1001
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "structureId": 1001,
+  "name": "Senior Engineer Band - Updated",
+  "ctcMin": 900000.00,
+  "ctcMax": 1600000.00,
+  "modifiedBy": 1
+}
+
+###
+
+# ══════════════════════════════════════════════════════════════════
+#  SALARIES  —  /api/salaries
+# ══════════════════════════════════════════════════════════════════
+
+### Get all salaries
+GET {{host}}/api/salaries
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+### Get salary by ID
+GET {{host}}/api/salaries/2001
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+### Create salary
+POST {{host}}/api/salaries
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "salaryId": 2001,
+  "salaryType": "C",
+  "salaryCTC": 1200000.00,
+  "salaryStructureId": 1001,
+  "salaryFooterId": 1,
+  "createdBy": 1
+}
+
+###
+
+### Cancel salary
+DELETE {{host}}/api/salaries/2001/cancel?cancelledBy=1
+Authorization: Bearer {{token}}
+
+###
+
+# ══════════════════════════════════════════════════════════════════
+#  MEDICLAIM  —  /api/mediclaim
+# ══════════════════════════════════════════════════════════════════
+
+### Get all mediclaims
+GET {{host}}/api/mediclaim
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+### Get mediclaim by ID
+GET {{host}}/api/mediclaim/3001
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+### Create mediclaim
+POST {{host}}/api/mediclaim
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "mediclaimId": 3001,
+  "refName": "Star Health Gold Plan 2026",
+  "type": "F",
+  "paidBy": "C",
+  "startDate": "2026-04-01T00:00:00Z",
+  "closeDate": "2027-03-31T00:00:00Z"
+}
+
+###
+
+# ══════════════════════════════════════════════════════════════════
+#  MOBILE CONNECTIONS  —  /api/mobileconnections
+# ══════════════════════════════════════════════════════════════════
+
+### Get mobile connections by employee
+GET {{host}}/api/mobileconnections/employee/501
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+### Create mobile connection
+POST {{host}}/api/mobileconnections
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "connId": 4001,
+  "empSysId": 501,
+  "type": "C",
+  "phoneNo": 9876543210,
+  "calendarId": 1,
+  "createdBy": 1,
+  "effDate": "2026-04-01T00:00:00Z"
+}
+
+###
+
+# ══════════════════════════════════════════════════════════════════
+#  MINIMAL API  —  /api/v2/salaries  &  /api/v2/salary-structures
+# ══════════════════════════════════════════════════════════════════
+
+### Get all salaries (Minimal API)
+GET {{host}}/api/v2/salaries
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+### Get salary by ID (Minimal API)
+GET {{host}}/api/v2/salaries/2001
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+### Get all salary structures (Minimal API)
+GET {{host}}/api/v2/salary-structures
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+### Get salary structure by ID (Minimal API)
+GET {{host}}/api/v2/salary-structures/1001
+Authorization: Bearer {{token}}
+Accept: application/json
+
+###
+
+# ══════════════════════════════════════════════════════════════════
+#  HEALTH CHECK  —  /health
+# ══════════════════════════════════════════════════════════════════
+
+### Health check
+GET {{host}}/health
 Accept: application/json
 
 ###

@@ -46,8 +46,13 @@ public class DapperReadRepository : IDapperReadRepository
             WHERE SURVEY_FLAG IS NULL OR SURVEY_FLAG <> 'C'";
 
         using var conn = CreateConnection();
-        var result = await conn.QueryAsync<SurveyMasterDto>(new CommandDefinition(sql, cancellationToken: ct));
-        return result.Select(s => s with { Questions = Enumerable.Empty<SurveyQuestionDto>() });
+        var rows = await conn.QueryAsync(new CommandDefinition(sql, cancellationToken: ct));
+        return rows.Select(r => new SurveyMasterDto(
+            (long)r.Id, (string)r.Name, (string)r.Image,
+            (DateTime)r.StartDate, (DateTime?)r.EndDate,
+            (DateTime?)r.ClosureDate, (string)r.AutoLock,
+            (string?)r.Flag, r.TemplateId == null ? (long?)null : (long)r.TemplateId,
+            Enumerable.Empty<SurveyQuestionDto>()));
     }
 
     public async Task<IEnumerable<DisciplinaryMainDto>> GetDisciplinaryCasesByUnitAsync(long unitId, CancellationToken ct = default)
@@ -61,8 +66,12 @@ public class DapperReadRepository : IDapperReadRepository
             ORDER BY DISCIPLINE_DATE DESC";
 
         using var conn = CreateConnection();
-        var result = await conn.QueryAsync<DisciplinaryMainDto>(
-            new CommandDefinition(sql, new { UnitId = unitId }, cancellationToken: ct));
-        return result.Select(d => d with { Employees = Enumerable.Empty<DisciplinaryEmpDto>(), Actions = Enumerable.Empty<DisciplinaryActionDto>() });
+        var rows = await conn.QueryAsync(
+            new CommandDefinition(sql, new { UnitId = (decimal)unitId }, cancellationToken: ct));
+        return rows.Select(r => new DisciplinaryMainDto(
+            (long)(decimal)r.Id, (long)(decimal)r.UnitId,
+            (DateTime)r.Date, (string)r.Details,
+            (long)(decimal)r.CreatedBy, (DateTime)r.CreatedOn,
+            Enumerable.Empty<DisciplinaryEmpDto>(), Enumerable.Empty<DisciplinaryActionDto>()));
     }
 }

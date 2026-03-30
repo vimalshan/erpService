@@ -11,7 +11,7 @@ public class DisciplinaryMainConfiguration : IEntityTypeConfiguration<Disciplina
     {
         builder.ToTable("DISCIPLINARY_MAIN");
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.Id).HasColumnName("DISCIPLINE_MAINID").HasColumnType("decimal(38,0)");
+        builder.Property(e => e.Id).HasColumnName("DISCIPLINE_MAINID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         builder.Property(e => e.UnitId).HasColumnName("DISCIPLINE_UNITID").HasColumnType("decimal(38,0)");
         builder.Property(e => e.Date).HasColumnName("DISCIPLINE_DATE");
         builder.Property(e => e.Details).HasColumnName("DISCIPLINE_DETAILS").HasMaxLength(500);
@@ -46,7 +46,7 @@ public class DisciplinaryActionConfiguration : IEntityTypeConfiguration<Discipli
     {
         builder.ToTable("DISCIPLINARY_ACTION");
         builder.HasKey(e => e.ActionId);
-        builder.Property(e => e.ActionId).HasColumnName("DISACTION_ID").HasColumnType("decimal(38,0)");
+        builder.Property(e => e.ActionId).HasColumnName("DISACTION_ID").HasColumnType("decimal(38,0)").ValueGeneratedNever();
         builder.Property(e => e.MainId).HasColumnName("DISACTION_MAINID").HasColumnType("decimal(38,0)");
         builder.Property(e => e.EmpSysId).HasColumnName("DISACTION_EMPSYSID").HasColumnType("decimal(38,0)");
         builder.Property(e => e.TypeId).HasColumnName("DISACTION_TYPEID").HasColumnType("decimal(38,0)");
@@ -71,7 +71,7 @@ public class EwsMainConfiguration : IEntityTypeConfiguration<EwsMain>
     {
         builder.ToTable("EWS_MAIN");
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.Id).HasColumnName("EWS_ID");
+        builder.Property(e => e.Id).HasColumnName("EWS_ID").ValueGeneratedNever();
         builder.Property(e => e.EmpSysId).HasColumnName("EWS_EMPSYSID");
         builder.Property(e => e.PeriodNo).HasColumnName("EWS_PERIODNO");
         builder.Property(e => e.HrEntryBy).HasColumnName("EWS_HRENTRYBY");
@@ -120,7 +120,7 @@ public class EwsAppInputConfiguration : IEntityTypeConfiguration<EwsAppInput>
     {
         builder.ToTable("EWS_APPINPUTS");
         builder.HasKey(e => e.InputId);
-        builder.Property(e => e.InputId).HasColumnName("APP_INPUTID");
+        builder.Property(e => e.InputId).HasColumnName("APP_INPUTID").ValueGeneratedNever();
         builder.Property(e => e.EwsId).HasColumnName("APP_EWSID");
         builder.Property(e => e.EmpSysId).HasColumnName("APP_EMPSYSID");
         builder.Property(e => e.AppType).HasColumnName("APP_TYPE").HasMaxLength(1);
@@ -139,7 +139,7 @@ public class SurveyMasterConfiguration : IEntityTypeConfiguration<SurveyMaster>
     {
         builder.ToTable("SURVEY_MASTER");
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.Id).HasColumnName("SURVEY_ID");
+        builder.Property(e => e.Id).HasColumnName("SURVEY_ID").ValueGeneratedNever();
         builder.Property(e => e.Name).HasColumnName("SURVEY_NAME").HasMaxLength(100).IsRequired();
         builder.Property(e => e.Image).HasColumnName("SURVEY_IMAGE").HasMaxLength(100).IsRequired();
         builder.Property(e => e.StartDate).HasColumnName("SURVEY_STARTDATE").IsRequired();
@@ -160,7 +160,7 @@ public class SurveyQuestionConfiguration : IEntityTypeConfiguration<SurveyQuesti
     {
         builder.ToTable("SURVEY_QUESTIONS");
         builder.HasKey(e => e.QuestId);
-        builder.Property(e => e.QuestId).HasColumnName("SURVEY_QUESTID");
+        builder.Property(e => e.QuestId).HasColumnName("SURVEY_QUESTID").ValueGeneratedNever();
         builder.Property(e => e.SurveyId).HasColumnName("SURVEY_ID");
         builder.Property(e => e.QuestName).HasColumnName("SURVEY_QUESTNAME").HasMaxLength(1000).IsRequired();
         builder.Property(e => e.QuestType).HasColumnName("SURVEY_QUESTTYPE").HasMaxLength(100).IsRequired();
@@ -181,7 +181,7 @@ public class SurveyOptionConfiguration : IEntityTypeConfiguration<SurveyOption>
     {
         builder.ToTable("SURVEY_OPTIONS");
         builder.HasKey(e => e.OptionId);
-        builder.Property(e => e.OptionId).HasColumnName("SURVEY_OPTIONID");
+        builder.Property(e => e.OptionId).HasColumnName("SURVEY_OPTIONID").ValueGeneratedNever();
         builder.Property(e => e.QuestionId).HasColumnName("SURVEY_QUESTIONID");
         builder.Property(e => e.Description).HasColumnName("SURVEY_DESCRIPTION").HasMaxLength(200).IsRequired();
         builder.Ignore(e => e.DomainEvents);
@@ -194,7 +194,7 @@ public class SurveyResponseMainConfiguration : IEntityTypeConfiguration<SurveyRe
     {
         builder.ToTable("SURVEY_RESPONSEMAIN");
         builder.HasKey(e => e.ResponseId);
-        builder.Property(e => e.ResponseId).HasColumnName("RESPONSE_ID");
+        builder.Property(e => e.ResponseId).HasColumnName("RESPONSE_ID").ValueGeneratedNever();
         builder.Property(e => e.SurveyId).HasColumnName("RESPONSE_SURVEYID");
         builder.Property(e => e.EmpSysId).HasColumnName("RESPONSE_EMPSYSID");
         builder.Property(e => e.UpdatedBy).HasColumnName("RESPONSE_UPDATEDBY");

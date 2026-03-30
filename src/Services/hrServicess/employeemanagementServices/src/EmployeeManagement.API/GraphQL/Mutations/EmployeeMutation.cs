@@ -7,7 +7,6 @@ using MediatR;
 
 namespace EmployeeManagement.API.GraphQL.Mutations;
 
-[MutationType]
 public sealed class EmployeeMutation
 {
     /// <summary>Create a new employee via GraphQL.</summary>

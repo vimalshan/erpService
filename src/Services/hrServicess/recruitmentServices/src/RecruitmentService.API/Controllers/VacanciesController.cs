@@ -1,10 +1,12 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MassTransit;
 using RecruitmentService.Application.Commands.Vacancies;
 using RecruitmentService.Application.DTOs;
 using RecruitmentService.Application.Interfaces;
 using RecruitmentService.Application.Queries.Vacancies;
+using RecruitmentService.Infrastructure.Messaging.Consumers;
 
 namespace RecruitmentService.API.Controllers;
 
@@ -15,11 +17,13 @@ public class VacanciesController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IBlobStorageService _blobStorage;
+    private readonly IPublishEndpoint _publishEndpoint;
 
-    public VacanciesController(IMediator mediator, IBlobStorageService blobStorage)
+    public VacanciesController(IMediator mediator, IBlobStorageService blobStorage, IPublishEndpoint publishEndpoint)
     {
         _mediator = mediator;
         _blobStorage = blobStorage;
+        _publishEndpoint = publishEndpoint;
     }
 
     /// <summary>Get all open vacancies.</summary>
@@ -50,6 +54,11 @@ public class VacanciesController : ControllerBase
     {
         var postedBy = GetCurrentUserId();
         var id = await _mediator.Send(new CreateVacancyCommand(request, postedBy), ct);
+
+        await _publishEndpoint.Publish(
+            new VacancyCreatedMessage(id, request.VacancyName, request.VacancyUnit, DateTime.UtcNow),
+            ct);
+
         return CreatedAtAction(nameof(GetById), new { id }, id);
     }
 
