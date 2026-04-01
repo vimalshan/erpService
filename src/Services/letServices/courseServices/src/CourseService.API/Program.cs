@@ -7,6 +7,7 @@ using CourseService.API.MinimalApis;
 using CourseService.Application;
 using CourseService.Infrastructure;
 using CourseService.Infrastructure.Persistence;
+using HotChocolate.Types;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
@@ -107,6 +108,11 @@ builder.Services.AddSwaggerGen(options =>
 // ==========================================
 builder.Services
     .AddGraphQLServer()
+    .BindRuntimeType<char, StringType>()
+    .BindRuntimeType<char?, StringType>()
+    .AddTypeConverter<char, string>(c => c.ToString())
+    .AddTypeConverter<string, char>(s => string.IsNullOrWhiteSpace(s) ? '\0' : s[0])
+    .AddTypeConverter<string, char?>(s => string.IsNullOrWhiteSpace(s) ? null : s[0])
     .AddQueryType<CourseQuery>()
     .AddMutationType<CourseMutation>()
     .AddAuthorization();
@@ -116,6 +122,7 @@ builder.Services
 // ==========================================
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database", HealthStatus.Unhealthy, ["db", "sql"])
+    .AddCheck<RabbitMqHealthCheck>("rabbitmq", HealthStatus.Degraded, ["mq", "rabbitmq"])
     .AddCheck("self", () => HealthCheckResult.Healthy("API is running."), ["api"]);
 
 // ==========================================

@@ -41,6 +41,9 @@ public static class InfrastructureServiceExtensions
         // Messaging
         services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
 
+        // Register MediatR notification handlers in Infrastructure assembly
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(InfrastructureServiceExtensions).Assembly));
+
         // Blob Storage
         services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
 

@@ -1,0 +1,141 @@
+@host = http://localhost:5320
+
+### ─── LET Requests ──────────────────────────────────────────────────────────
+
+### Get all LET requests
+GET {{host}}/api/LetRequests?page=1&pageSize=20
+
+### Get LET request by number
+GET {{host}}/api/LetRequests/1001
+
+### Create a new LET request
+POST {{host}}/api/LetRequests
+Content-Type: application/json
+
+{
+  "employeeUserId": "EMP001",
+  "requestDate": "2025-01-15T00:00:00",
+  "departmentCode": "IT",
+  "supervisorUserId": "SUP001",
+  "requestType": "T",
+  "remark": "Annual training request"
+}
+
+### Add sub-entry to LET request
+POST {{host}}/api/LetRequests/1001/sub
+Content-Type: application/json
+
+{
+  "requestNumber": 1001,
+  "courseNumber": 2001,
+  "courseDescription": "Advanced .NET",
+  "startDate": "2025-03-01T00:00:00",
+  "endDate": "2025-03-05T00:00:00",
+  "trainingProvider": "Microsoft",
+  "estimatedCost": 2500.00
+}
+
+### ─── Feedback ──────────────────────────────────────────────────────────────
+
+### Get all feedback
+GET {{host}}/api/Feedback?page=1&pageSize=20
+
+### Get feedback by number
+GET {{host}}/api/Feedback/3001
+
+### Submit feedback
+POST {{host}}/api/Feedback
+Content-Type: application/json
+
+{
+  "courseNumber": 2001,
+  "participantUserId": "EMP001",
+  "feedbackDate": "2025-03-06T00:00:00",
+  "overallRating": 4,
+  "remark": "Excellent training",
+  "details": [
+    {
+      "questionCode": "Q1",
+      "questionText": "Course content relevance",
+      "rating": 5
+    },
+    {
+      "questionCode": "Q2",
+      "questionText": "Instructor effectiveness",
+      "rating": 4
+    }
+  ]
+}
+
+### Cancel feedback
+POST {{host}}/api/Feedback/3001/cancel
+
+### ─── Reviews ───────────────────────────────────────────────────────────────
+
+### Get pending reviews
+GET {{host}}/api/Reviews/pending?page=1&pageSize=20
+
+### Get review by number
+GET {{host}}/api/Reviews/4001
+
+### Submit a review
+POST {{host}}/api/Reviews
+Content-Type: application/json
+
+{
+  "requestNumber": 1001,
+  "reviewerUserId": "REV001",
+  "reviewDate": "2025-03-10T00:00:00",
+  "reviewType": "A",
+  "remark": "Annual review"
+}
+
+### Approve a review
+POST {{host}}/api/Reviews/4001/approve
+Content-Type: application/json
+
+{
+  "reviewNumber": 4001,
+  "approvedByUserId": "MGR001",
+  "remark": "Approved"
+}
+
+### ─── Minimal API v2 ────────────────────────────────────────────────────────
+
+### Get LET request (v2)
+GET {{host}}/api/v2/let-requests/1001
+
+### Get feedback (v2)
+GET {{host}}/api/v2/feedback/3001
+
+### Get review (v2)
+GET {{host}}/api/v2/reviews/4001
+
+### ─── Health Checks ─────────────────────────────────────────────────────────
+
+### Overall health
+GET {{host}}/health
+
+### Liveness
+GET {{host}}/health/live
+
+### Readiness
+GET {{host}}/health/ready
+
+### ─── GraphQL ───────────────────────────────────────────────────────────────
+
+### Get LET request via GraphQL
+POST {{host}}/graphql
+Content-Type: application/json
+
+{
+  "query": "{ letRequest(requestNumber: 1001) { requestNumber employeeUserId requestDate subEntries { serialNumber courseDescription } } }"
+}
+
+### Get pending reviews via GraphQL
+POST {{host}}/graphql
+Content-Type: application/json
+
+{
+  "query": "{ pendingReviews(page: 1, pageSize: 10) { reviewNumber reviewerUserId reviewDate reviewStatus } }"
+}

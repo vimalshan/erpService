@@ -1,0 +1,548 @@
+# ═══════════════════════════════════════════════════════════════════════
+# LET ERP — All Microservice Deployments + Services
+# ═══════════════════════════════════════════════════════════════════════
+
+# ─── Leave Service ───────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: leave-svc
+  namespace: let-erp
+  labels:
+    app: leave-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: leave-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leave-service
+  namespace: let-erp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: leave-service
+  template:
+    metadata:
+      labels:
+        app: leave-service
+    spec:
+      containers:
+        - name: leave-service
+          image: ${REGISTRY:-letregistry}/leave-service:${IMAGE_TAG:-latest}
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: let-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-svc;Database=LETDB;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: rabbitmq-password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+
+---
+# ─── Course Service ──────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: course-svc
+  namespace: let-erp
+  labels:
+    app: course-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: course-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: course-service
+  namespace: let-erp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: course-service
+  template:
+    metadata:
+      labels:
+        app: course-service
+    spec:
+      containers:
+        - name: course-service
+          image: ${REGISTRY:-letregistry}/course-service:${IMAGE_TAG:-latest}
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: let-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-svc;Database=LETDB;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: rabbitmq-password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+
+---
+# ─── Request Service ─────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: request-svc
+  namespace: let-erp
+  labels:
+    app: request-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: request-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: request-service
+  namespace: let-erp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: request-service
+  template:
+    metadata:
+      labels:
+        app: request-service
+    spec:
+      containers:
+        - name: request-service
+          image: ${REGISTRY:-letregistry}/request-service:${IMAGE_TAG:-latest}
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: let-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-svc;Database=LETDB;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: rabbitmq-password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+
+---
+# ─── Review Service ──────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: review-svc
+  namespace: let-erp
+  labels:
+    app: review-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: review-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: review-service
+  namespace: let-erp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: review-service
+  template:
+    metadata:
+      labels:
+        app: review-service
+    spec:
+      containers:
+        - name: review-service
+          image: ${REGISTRY:-letregistry}/review-service:${IMAGE_TAG:-latest}
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: let-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-svc;Database=LETDB;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: rabbitmq-password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+
+---
+# ─── Development Service ─────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: development-svc
+  namespace: let-erp
+  labels:
+    app: development-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: development-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: development-service
+  namespace: let-erp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: development-service
+  template:
+    metadata:
+      labels:
+        app: development-service
+    spec:
+      containers:
+        - name: development-service
+          image: ${REGISTRY:-letregistry}/development-service:${IMAGE_TAG:-latest}
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: let-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-svc;Database=LETDB;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: rabbitmq-password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+
+---
+# ─── Master Service ──────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: master-svc
+  namespace: let-erp
+  labels:
+    app: master-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: master-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: master-service
+  namespace: let-erp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: master-service
+  template:
+    metadata:
+      labels:
+        app: master-service
+    spec:
+      containers:
+        - name: master-service
+          image: ${REGISTRY:-letregistry}/master-service:${IMAGE_TAG:-latest}
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: let-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-svc;Database=LETDB;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: rabbitmq-password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+
+---
+# ─── LET Transaction Service ─────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: let-transaction-svc
+  namespace: let-erp
+  labels:
+    app: let-transaction-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: let-transaction-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: let-transaction-service
+  namespace: let-erp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: let-transaction-service
+  template:
+    metadata:
+      labels:
+        app: let-transaction-service
+    spec:
+      containers:
+        - name: let-transaction-service
+          image: ${REGISTRY:-letregistry}/let-transaction-service:${IMAGE_TAG:-latest}
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: let-erp-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver-svc;Database=LETDB;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: rabbitmq-password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: let-erp-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30

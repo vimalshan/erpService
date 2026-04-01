@@ -1,4 +1,5 @@
 using Azure.Storage.Blobs;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,10 @@ public static class InfrastructureServiceRegistration
         // Repositories
         services.AddScoped<IReviewRepository, ReviewRepository>();
         services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+
+        // MediatR — register domain-event handlers from Infrastructure assembly
+        services.AddMediatR(cfg =>
+            cfg.RegisterServicesFromAssembly(typeof(InfrastructureServiceRegistration).Assembly));
 
         // Azure Blob Storage
         var blobConnectionString = configuration["AzureBlobStorage:ConnectionString"];

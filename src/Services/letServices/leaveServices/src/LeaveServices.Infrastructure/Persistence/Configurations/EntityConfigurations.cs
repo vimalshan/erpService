@@ -1,4 +1,5 @@
 using LeaveServices.Domain.Entities;
+using LeaveServices.Infrastructure.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -142,5 +143,24 @@ public class LeaveSignatureIdConfiguration : IEntityTypeConfiguration<LeaveSigna
         builder.Property(x => x.SigName).HasColumnName("SIG_NAME").HasMaxLength(50);
         builder.Property(x => x.SigDesg).HasColumnName("SIG_DESG").HasMaxLength(10);
         builder.Ignore(x => x.DomainEvents);
+    }
+}
+
+public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage>
+{
+    public void Configure(EntityTypeBuilder<OutboxMessage> builder)
+    {
+        builder.ToTable("OUTBOX_MESSAGES");
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).HasColumnName("ID").UseIdentityColumn();
+        builder.Property(x => x.EventType).HasColumnName("EVENT_TYPE").HasMaxLength(256).IsRequired();
+        builder.Property(x => x.RoutingKey).HasColumnName("ROUTING_KEY").HasMaxLength(256).IsRequired();
+        builder.Property(x => x.Payload).HasColumnName("PAYLOAD").IsRequired();
+        builder.Property(x => x.CreatedOn).HasColumnName("CREATED_ON").IsRequired();
+        builder.Property(x => x.ProcessedOn).HasColumnName("PROCESSED_ON");
+        builder.Property(x => x.RetryCount).HasColumnName("RETRY_COUNT").HasDefaultValue(0);
+        builder.Property(x => x.Error).HasColumnName("ERROR").HasMaxLength(2000);
+
+        builder.HasIndex(x => x.ProcessedOn).HasDatabaseName("IDX_OUTBOX_PROCESSED");
     }
 }

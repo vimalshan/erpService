@@ -1,5 +1,6 @@
 using LeaveServices.Domain.Entities;
 using LeaveServices.Domain.Events;
+using LeaveServices.Infrastructure.Messaging;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,6 +23,7 @@ public sealed class LeaveDbContext : DbContext
     public DbSet<LeaveCounter> LeaveCounters => Set<LeaveCounter>();
     public DbSet<LeaveModel> LeaveModels => Set<LeaveModel>();
     public DbSet<LeaveSignatureId> LeaveSignatureIds => Set<LeaveSignatureId>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

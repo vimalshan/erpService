@@ -1,0 +1,211 @@
+{
+  "rabbit_version": "4.0",
+  "users": [
+    {
+      "name": "letadmin",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"]
+    }
+  ],
+  "vhosts": [
+    { "name": "/" }
+  ],
+  "permissions": [
+    {
+      "user": "letadmin",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "leave.events",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "course.events",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "request.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "review.events",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "development.events",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "master.events",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "let.transaction.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "let.dlx",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "leave.request.created",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "let.dlx",
+        "x-dead-letter-routing-key": "dlx.leave.request.created",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "leave.request.approved",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "let.dlx",
+        "x-dead-letter-routing-key": "dlx.leave.request.approved",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "course.nomination.created",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "let.dlx",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "course.feedback.submitted",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "let.dlx",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "request.created",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "let.dlx",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "review.submitted",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "let.dlx",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "review.approved",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "let.dlx",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "let.request.created",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "let.dlx",
+        "x-dead-letter-routing-key": "dlx.let.request.created",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "let.review.approval.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "let.dlx",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "let.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    { "source": "leave.events", "vhost": "/", "destination": "leave.request.created", "destination_type": "queue", "routing_key": "leave.request.created", "arguments": {} },
+    { "source": "leave.events", "vhost": "/", "destination": "leave.request.approved", "destination_type": "queue", "routing_key": "leave.request.approved", "arguments": {} },
+    { "source": "course.events", "vhost": "/", "destination": "course.nomination.created", "destination_type": "queue", "routing_key": "course.nomination.created", "arguments": {} },
+    { "source": "course.events", "vhost": "/", "destination": "course.feedback.submitted", "destination_type": "queue", "routing_key": "course.feedback.submitted", "arguments": {} },
+    { "source": "request.exchange", "vhost": "/", "destination": "request.created", "destination_type": "queue", "routing_key": "request.created", "arguments": {} },
+    { "source": "review.events", "vhost": "/", "destination": "review.submitted", "destination_type": "queue", "routing_key": "review.submitted", "arguments": {} },
+    { "source": "review.events", "vhost": "/", "destination": "review.approved", "destination_type": "queue", "routing_key": "review.approved", "arguments": {} },
+    { "source": "let.transaction.exchange", "vhost": "/", "destination": "let.request.created", "destination_type": "queue", "routing_key": "let.request.created", "arguments": {} },
+    { "source": "let.transaction.exchange", "vhost": "/", "destination": "let.review.approval.queue", "destination_type": "queue", "routing_key": "let.review.approved", "arguments": {} },
+    { "source": "let.dlx", "vhost": "/", "destination": "let.dlq", "destination_type": "queue", "routing_key": "#", "arguments": {} }
+  ]
+}

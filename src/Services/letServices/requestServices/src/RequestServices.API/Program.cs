@@ -84,12 +84,18 @@ public class Program
             .AddType<RequestMainType>()
             .AddType<RequestSubType>()
             .AddType<PendingRequestType>()
+            .BindRuntimeType<char, HotChocolate.Types.StringType>()
+            .BindRuntimeType<char?, HotChocolate.Types.StringType>()
+            .AddTypeConverter<char, string>(c => c.ToString())
+            .AddTypeConverter<string, char>(s => s.Length > 0 ? s[0] : ' ')
+            .AddTypeConverter<char?, string>(c => c?.ToString() ?? string.Empty)
             .AddAuthorization();
 
         // ─── Health Checks ──────────────────────────────────────────────
         builder.Services
             .AddHealthChecks()
             .AddCheck<DatabaseHealthCheck>("database")
+            .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: new[] { "messaging" })
             .AddSqlServer(
                 builder.Configuration.GetConnectionString("DefaultConnection")!,
                 name: "sql-server");

@@ -1,0 +1,335 @@
+# ═══════════════════════════════════════════════════════════════════════
+# LET ERP Microservices — Docker Compose
+# ═══════════════════════════════════════════════════════════════════════
+name: let-erp
+
+services:
+  # ─── Infrastructure ─────────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: let-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SQL_SA_PASSWORD:-Let@Str0ng!Pass2026}"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./infrastructure/db-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" || exit 1
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - let-network
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: let-rabbitmq
+    hostname: let-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-letadmin}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASS:-LetR@bbit2026}"
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./infrastructure/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./infrastructure/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - let-network
+
+  # ─── DB Initialization ─────────────────────────────────────────────
+  db-init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    container_name: let-db-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./infrastructure/db-init:/scripts:ro
+      - ./masterServices/06_Master_Module:/modules/06_Master:ro
+      - ./leaveServices/01_Leave_Module:/modules/01_Leave:ro
+      - ./courseServices/02_Course_Module:/modules/02_Course:ro
+      - ./requestServices/03_Request_Module:/modules/03_Request:ro
+      - ./reviewServices/04_Review_Module:/modules/04_Review:ro
+      - ./developmentServices/05_Development_Module:/modules/05_Development:ro
+    entrypoint: >
+      /bin/bash -c "
+        echo '═══ LET ERP Database Initialization ═══' &&
+        sleep 5 &&
+        SQLCMD='/opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P ${SQL_SA_PASSWORD:-Let@Str0ng!Pass2026} -C' &&
+        echo '[1/13] Creating database...' &&
+        $$SQLCMD -i /scripts/01-init-letdb.sql &&
+        echo '[2/13] Master module schema...' &&
+        $$SQLCMD -d LETDB -i /modules/06_Master/01_Master_Module_Schema.sql &&
+        echo '[3/13] Master module procedures...' &&
+        $$SQLCMD -d LETDB -i /modules/06_Master/02_Master_Module_Procedures.sql &&
+        echo '[4/13] Leave module schema...' &&
+        $$SQLCMD -d LETDB -i /modules/01_Leave/01_Leave_Module_Schema.sql &&
+        echo '[5/13] Leave module procedures...' &&
+        $$SQLCMD -d LETDB -i /modules/01_Leave/02_Leave_Module_Procedures.sql &&
+        echo '[6/13] Course module schema...' &&
+        $$SQLCMD -d LETDB -i /modules/02_Course/01_Course_Module_Schema.sql &&
+        echo '[7/13] Course module procedures...' &&
+        $$SQLCMD -d LETDB -i /modules/02_Course/02_Course_Module_Procedures.sql &&
+        echo '[8/13] Request module schema...' &&
+        $$SQLCMD -d LETDB -i /modules/03_Request/01_Request_Module_Schema.sql &&
+        echo '[9/13] Request module procedures...' &&
+        $$SQLCMD -d LETDB -i /modules/03_Request/02_Request_Module_Procedures.sql &&
+        echo '[10/13] Review module schema...' &&
+        $$SQLCMD -d LETDB -i /modules/04_Review/01_Review_Module_Schema.sql &&
+        echo '[11/13] Review module procedures...' &&
+        $$SQLCMD -d LETDB -i /modules/04_Review/02_Review_Module_Procedures.sql &&
+        echo '[12/13] Development module schema...' &&
+        $$SQLCMD -d LETDB -i /modules/05_Development/01_Development_Module_Schema.sql &&
+        echo '[13/13] Development module procedures...' &&
+        $$SQLCMD -d LETDB -i /modules/05_Development/02_Development_Module_Procedures.sql &&
+        echo '═══ Database initialization completed successfully. ═══'
+      "
+    networks:
+      - let-network
+
+  # ─── API Gateway ───────────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./apiGateway
+      dockerfile: Dockerfile
+    container_name: let-api-gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=LETDB;User Id=sa;Password=${SQL_SA_PASSWORD:-Let@Str0ng!Pass2026};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__UserName=${RABBITMQ_USER:-letadmin}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-LetR@bbit2026}
+      - Jwt__Key=${JWT_SECRET_KEY:-LET_ERP_Production_JWT_SecretKey_Min32Chars_2026!}
+      - Jwt__Issuer=LET-ERP-Gateway
+      - Jwt__Audience=LET-ERP-Services
+      - ReverseProxy__Clusters__leave-cluster__Destinations__leave-d1__Address=http://leave-service:8080
+      - ReverseProxy__Clusters__course-cluster__Destinations__course-d1__Address=http://course-service:8080
+      - ReverseProxy__Clusters__request-cluster__Destinations__request-d1__Address=http://request-service:8080
+      - ReverseProxy__Clusters__review-cluster__Destinations__review-d1__Address=http://review-service:8080
+      - ReverseProxy__Clusters__development-cluster__Destinations__development-d1__Address=http://development-service:8080
+      - ReverseProxy__Clusters__master-cluster__Destinations__master-d1__Address=http://master-service:8080
+      - ReverseProxy__Clusters__let-transaction-cluster__Destinations__let-d1__Address=http://let-transaction-service:8080
+    ports:
+      - "5400:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - let-network
+    restart: unless-stopped
+
+  # ─── Leave Service ─────────────────────────────────────────────────
+  leave-service:
+    build:
+      context: ./leaveServices
+      dockerfile: Dockerfile
+    container_name: let-leave-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=LETDB;User Id=sa;Password=${SQL_SA_PASSWORD:-Let@Str0ng!Pass2026};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER:-letadmin}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-LetR@bbit2026}
+      - Jwt__Key=${JWT_SECRET_KEY:-LET_ERP_Production_JWT_SecretKey_Min32Chars_2026!}
+      - Jwt__Issuer=LET-ERP-Gateway
+      - Jwt__Audience=LET-ERP-Services
+    ports:
+      - "5166:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - let-network
+    restart: unless-stopped
+
+  # ─── Course Service ────────────────────────────────────────────────
+  course-service:
+    build:
+      context: ./courseServices
+      dockerfile: Dockerfile
+    container_name: let-course-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=LETDB;User Id=sa;Password=${SQL_SA_PASSWORD:-Let@Str0ng!Pass2026};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER:-letadmin}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-LetR@bbit2026}
+      - Jwt__Key=${JWT_SECRET_KEY:-LET_ERP_Production_JWT_SecretKey_Min32Chars_2026!}
+      - Jwt__Issuer=LET-ERP-Gateway
+      - Jwt__Audience=LET-ERP-Services
+    ports:
+      - "5215:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - let-network
+    restart: unless-stopped
+
+  # ─── Request Service ───────────────────────────────────────────────
+  request-service:
+    build:
+      context: ./requestServices
+      dockerfile: Dockerfile
+    container_name: let-request-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=LETDB;User Id=sa;Password=${SQL_SA_PASSWORD:-Let@Str0ng!Pass2026};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER:-letadmin}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-LetR@bbit2026}
+      - Jwt__Key=${JWT_SECRET_KEY:-LET_ERP_Production_JWT_SecretKey_Min32Chars_2026!}
+      - Jwt__Issuer=LET-ERP-Gateway
+      - Jwt__Audience=LET-ERP-Services
+    ports:
+      - "5006:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - let-network
+    restart: unless-stopped
+
+  # ─── Review Service ────────────────────────────────────────────────
+  review-service:
+    build:
+      context: ./reviewServices
+      dockerfile: Dockerfile
+    container_name: let-review-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=LETDB;User Id=sa;Password=${SQL_SA_PASSWORD:-Let@Str0ng!Pass2026};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER:-letadmin}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-LetR@bbit2026}
+      - Jwt__Key=${JWT_SECRET_KEY:-LET_ERP_Production_JWT_SecretKey_Min32Chars_2026!}
+      - Jwt__Issuer=LET-ERP-Gateway
+      - Jwt__Audience=LET-ERP-Services
+    ports:
+      - "5114:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - let-network
+    restart: unless-stopped
+
+  # ─── Development Service ───────────────────────────────────────────
+  development-service:
+    build:
+      context: ./developmentServices
+      dockerfile: Dockerfile
+    container_name: let-development-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=LETDB;User Id=sa;Password=${SQL_SA_PASSWORD:-Let@Str0ng!Pass2026};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER:-letadmin}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-LetR@bbit2026}
+      - Jwt__Key=${JWT_SECRET_KEY:-LET_ERP_Production_JWT_SecretKey_Min32Chars_2026!}
+      - Jwt__Issuer=LET-ERP-Gateway
+      - Jwt__Audience=LET-ERP-Services
+    ports:
+      - "5216:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - let-network
+    restart: unless-stopped
+
+  # ─── Master Service ────────────────────────────────────────────────
+  master-service:
+    build:
+      context: ./masterServices
+      dockerfile: Dockerfile
+    container_name: let-master-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=LETDB;User Id=sa;Password=${SQL_SA_PASSWORD:-Let@Str0ng!Pass2026};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER:-letadmin}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-LetR@bbit2026}
+      - Jwt__Key=${JWT_SECRET_KEY:-LET_ERP_Production_JWT_SecretKey_Min32Chars_2026!}
+      - Jwt__Issuer=LET-ERP-Gateway
+      - Jwt__Audience=LET-ERP-Services
+    ports:
+      - "5279:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - let-network
+    restart: unless-stopped
+
+  # ─── LET Transaction Service ───────────────────────────────────────
+  let-transaction-service:
+    build:
+      context: ./letTransactionServices
+      dockerfile: Dockerfile
+    container_name: let-transaction-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=LETDB;User Id=sa;Password=${SQL_SA_PASSWORD:-Let@Str0ng!Pass2026};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Enabled=true
+      - RabbitMQ__UserName=${RABBITMQ_USER:-letadmin}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-LetR@bbit2026}
+      - Jwt__Key=${JWT_SECRET_KEY:-LET_ERP_Production_JWT_SecretKey_Min32Chars_2026!}
+      - Jwt__Issuer=LET-ERP-Gateway
+      - Jwt__Audience=LET-ERP-Services
+    ports:
+      - "5320:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - let-network
+    restart: unless-stopped
+
+# ─── Networks ──────────────────────────────────────────────────────────
+networks:
+  let-network:
+    driver: bridge
+
+# ─── Volumes ──────────────────────────────────────────────────────────
+volumes:
+  sqlserver-data:
+  rabbitmq-data:

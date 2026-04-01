@@ -63,6 +63,11 @@ builder.Services.AddOpenApi(options =>
 // ──────────────────────────────────────────────────────────────────────────────
 builder.Services
     .AddGraphQLServer()
+    .BindRuntimeType<char, HotChocolate.Types.StringType>()
+    .BindRuntimeType<char?, HotChocolate.Types.StringType>()
+    .AddTypeConverter<char, string>(c => c.ToString())
+    .AddTypeConverter<string, char>(s => string.IsNullOrWhiteSpace(s) ? '\0' : s[0])
+    .AddTypeConverter<string, char?>(s => string.IsNullOrWhiteSpace(s) ? null : s[0])
     .AddQueryType<DevelopmentService.API.GraphQL.Queries.DevelopmentQuery>()
     .AddMutationType<DevelopmentService.API.GraphQL.Mutations.DevelopmentMutation>()
     .AddAuthorization();
@@ -75,7 +80,8 @@ builder.Services.AddHealthChecks()
         builder.Configuration.GetConnectionString("DefaultConnection")!,
         name: "sql-server",
         tags: ["db", "sql"])
-    .AddCheck<DevelopmentDbHealthCheck>("efcore-db-check", tags: ["db"]);
+    .AddCheck<DevelopmentDbHealthCheck>("efcore-db-check", tags: ["db"])
+    .AddCheck<RabbitMqHealthCheck>("rabbitmq", Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded, ["mq", "rabbitmq"]);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Background Services (Azure Function equivalent)

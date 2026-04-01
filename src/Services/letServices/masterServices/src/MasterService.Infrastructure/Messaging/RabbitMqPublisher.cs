@@ -21,7 +21,10 @@ public sealed class RabbitMqPublisher(IConfiguration configuration, ILogger<Rabb
 
     private async Task EnsureConnectionAsync()
     {
-        if (_connection?.IsOpen == true) return;
+        if (_connection?.IsOpen == true && _channel?.IsOpen == true) return;
+
+        _channel?.Dispose();
+        _connection?.Dispose();
 
         var factory = new ConnectionFactory
         {
@@ -40,6 +43,12 @@ public sealed class RabbitMqPublisher(IConfiguration configuration, ILogger<Rabb
     public async Task PublishAsync<T>(string exchange, string routingKey, T message)
     {
         await EnsureConnectionAsync();
+
+        await _channel!.ExchangeDeclareAsync(
+            exchange: exchange,
+            type: ExchangeType.Topic,
+            durable: true,
+            autoDelete: false);
 
         var json = JsonSerializer.Serialize(message);
         var body = Encoding.UTF8.GetBytes(json);

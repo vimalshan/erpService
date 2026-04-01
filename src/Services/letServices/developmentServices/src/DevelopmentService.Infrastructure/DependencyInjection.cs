@@ -44,9 +44,14 @@ public static class DependencyInjection
             }
         });
 
-        // RabbitMQ Consumers
-        services.AddHostedService<LearningPlanCreatedConsumer>();
-        services.AddHostedService<BhrPlanApprovedConsumer>();
+        // RabbitMQ Consumers are optional in local/dev when broker is unavailable.
+        var enableConsumersConfig = configuration["RabbitMQ:EnableConsumers"];
+        var enableConsumers = !bool.TryParse(enableConsumersConfig, out var parsedEnableConsumers) || parsedEnableConsumers;
+        if (enableConsumers)
+        {
+            services.AddHostedService<LearningPlanCreatedConsumer>();
+            services.AddHostedService<BhrPlanApprovedConsumer>();
+        }
 
         // Blob Storage
         services.AddScoped<IBlobStorageService, BlobStorageService>();

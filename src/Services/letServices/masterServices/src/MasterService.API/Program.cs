@@ -69,6 +69,11 @@ builder.Services
     .AddType<MasterService.API.GraphQL.Types.TrainingProviderType>()
     .AddType<MasterService.API.GraphQL.Types.JobMasterType>()
     .AddType<MasterService.API.GraphQL.Types.CategoryType>()
+    .BindRuntimeType<char, HotChocolate.Types.StringType>()
+    .BindRuntimeType<char?, HotChocolate.Types.StringType>()
+    .AddTypeConverter<char, string>(c => c.ToString())
+    .AddTypeConverter<string, char>(s => s.Length > 0 ? s[0] : default)
+    .AddTypeConverter<char?, string>(c => c?.ToString() ?? "")
     .AddAuthorization();
 
 builder.Services.AddHealthChecks()

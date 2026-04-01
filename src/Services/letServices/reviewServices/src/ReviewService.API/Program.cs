@@ -12,6 +12,8 @@ using ReviewService.API.GraphQL;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using HotChocolate.Types;
+using ReviewService.API.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -68,7 +70,12 @@ builder.Services
     .AddGraphQLServer()
     .AddQueryType<ReviewQuery>()
     .AddMutationType<ReviewMutation>()
-    .AddAuthorization();
+    .AddAuthorization()
+    .BindRuntimeType<char, StringType>()
+    .BindRuntimeType<char?, StringType>()
+    .AddTypeConverter<char, string>(c => c.ToString())
+    .AddTypeConverter<string, char>(s => s.Length > 0 ? s[0] : ' ')
+    .AddTypeConverter<char?, string>(c => c?.ToString() ?? "");
 
 // ── Health Checks ────────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()
@@ -77,6 +84,7 @@ builder.Services.AddHealthChecks()
         name: "sqlserver",
         failureStatus: HealthStatus.Unhealthy,
         tags: ["db", "sql"])
+    .AddCheck<RabbitMqHealthCheck>("rabbitmq", HealthStatus.Degraded, ["messaging"])
     .AddCheck("self", () => HealthCheckResult.Healthy(), ["live"]);
 
 // ── RabbitMQ Consumer ────────────────────────────────────────────────────────

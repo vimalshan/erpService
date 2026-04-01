@@ -351,6 +351,59 @@ namespace LeaveServices.Infrastructure.Migrations
                     b.ToTable("LOSS_OF_PAY", (string)null);
                 });
 
+            modelBuilder.Entity("LeaveServices.Infrastructure.Messaging.OutboxMessage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("ID");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CREATED_ON");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("ERROR");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("EVENT_TYPE");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("PAYLOAD");
+
+                    b.Property<DateTime?>("ProcessedOn")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("PROCESSED_ON");
+
+                    b.Property<int>("RetryCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("RETRY_COUNT");
+
+                    b.Property<string>("RoutingKey")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("ROUTING_KEY");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProcessedOn")
+                        .HasDatabaseName("IDX_OUTBOX_PROCESSED");
+
+                    b.ToTable("OUTBOX_MESSAGES", (string)null);
+                });
+
             modelBuilder.Entity("LeaveServices.Domain.Entities.LeaveRequestDetail", b =>
                 {
                     b.HasOne("LeaveServices.Domain.Entities.LeaveRequest", "LeaveRequest")

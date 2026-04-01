@@ -39,7 +39,11 @@ public static class DependencyInjection
         // RabbitMQ
         services.Configure<RabbitMqOptions>(opts =>
             configuration.GetSection(RabbitMqOptions.SectionName).Bind(opts));
-        services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
+        services.AddSingleton<RabbitMqPublisher>();
+        services.AddSingleton<IMessagePublisher>(sp => sp.GetRequiredService<RabbitMqPublisher>());
+
+        // Register MediatR notification handlers in Infrastructure assembly
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
 
         // Azure Blob Storage
         services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();

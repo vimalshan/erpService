@@ -1,4 +1,5 @@
 using LeaveServices.API.Auth;
+using LeaveServices.API.BackgroundServices;
 using LeaveServices.API.GraphQL;
 using LeaveServices.API.Middleware;
 using LeaveServices.API.MinimalApis;
@@ -72,7 +73,12 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<LeaveQuery>()
-    .AddMutationType<LeaveMutation>();
+    .AddMutationType<LeaveMutation>()
+    .BindRuntimeType<char, HotChocolate.Types.StringType>()
+    .BindRuntimeType<char?, HotChocolate.Types.StringType>()
+    .AddTypeConverter<char, string>(c => c.ToString())
+    .AddTypeConverter<string, char>(s => s.Length > 0 ? s[0] : default)
+    .AddTypeConverter<char?, string>(c => c?.ToString() ?? "");
 
 // ─── Health Checks ────────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()
@@ -80,23 +86,17 @@ builder.Services.AddHealthChecks()
         builder.Configuration.GetConnectionString("LeaveDb")!,
         name: "leavedb",
         tags: ["db", "sql"])
-    .AddRabbitMQ(sp =>
-    {
-        var factory = new RabbitMQ.Client.ConnectionFactory
-        {
-            HostName = builder.Configuration["RabbitMQ:Host"] ?? "localhost",
-            UserName = builder.Configuration["RabbitMQ:Username"] ?? "guest",
-            Password = builder.Configuration["RabbitMQ:Password"] ?? "guest",
-            Port = int.TryParse(builder.Configuration["RabbitMQ:Port"], out var port) ? port : 5672
-        };
-        return factory.CreateConnectionAsync().GetAwaiter().GetResult();
-    },
-    name: "rabbitmq",
-    tags: ["messaging"]);
+    .AddCheck<LeaveServices.API.HealthChecks.RabbitMqHealthCheck>(
+        "rabbitmq",
+        Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded,
+        ["messaging"]);
 
 // ─── Exception Handler ────────────────────────────────────────────────────────
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+
+// ─── Background Services ──────────────────────────────────────────────────────
+builder.Services.AddHostedService<OutboxProcessor>();
 
 // ─── Build ────────────────────────────────────────────────────────────────────
 var app = builder.Build();
