@@ -257,11 +257,8 @@ namespace LoanDefinition.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("LoanDefinition.Domain.Entities.LoanMaster", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("LOAN_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<long>("AdditionalLoanNo")
                         .HasColumnType("bigint")

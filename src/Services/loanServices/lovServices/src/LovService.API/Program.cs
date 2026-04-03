@@ -1,8 +1,8 @@
 using HealthChecks.SqlServer;
 using LovService.API.Extensions;
+using LovService.API.GraphQL;
 using LovService.API.Middleware;
 using LovService.API.MinimalApis;
-using LovService.API.GraphQL;
 using LovService.Application;
 using LovService.Infrastructure;
 using LovService.Infrastructure.Data;
@@ -37,10 +37,15 @@ builder.Services
     .AddGraphQLServer()
     .AddQueryType<LovQuery>()
     .AddMutationType<LovMutation>()
+    .AddType<LovTypeMastType>()
+    .AddType<LovMasterType>()
+    .AddType<ProgramLovMastType>()
     .AddProjections()
     .AddFiltering()
     .AddSorting()
-    .AddAuthorization();
+    .AddAuthorization()
+    .BindRuntimeType<char, StringType>()
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true);
 
 // Health Checks
 builder.Services

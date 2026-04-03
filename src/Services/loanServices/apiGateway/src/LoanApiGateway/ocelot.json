@@ -1,0 +1,173 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ThreeMammals/Ocelot/main/src/Ocelot/Configuration/File/OcelotSchema.json",
+  "_comment": "Ocelot-style route configuration (reference/documentation format). YARP is the active proxy.",
+
+  "Routes": [
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LOAN TRANSACTION SERVICE  →  http://localhost:5292
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      "UpstreamPathTemplate": "/api/transactions/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "PATCH", "DELETE" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "localhost", "Port": 5292 } ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "Key": "loan-transaction-api"
+    },
+    {
+      "UpstreamPathTemplate": "/api/transactions/graphql",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "localhost", "Port": 5292 } ],
+      "DownstreamPathTemplate": "/graphql",
+      "Key": "loan-transaction-graphql"
+    },
+    {
+      "UpstreamPathTemplate": "/api/transactions/health",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "localhost", "Port": 5292 } ],
+      "DownstreamPathTemplate": "/health",
+      "Key": "loan-transaction-health"
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LOAN APPLICATION SERVICE  →  http://localhost:5282
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      "UpstreamPathTemplate": "/api/applications/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "PATCH", "DELETE" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "localhost", "Port": 5282 } ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "Key": "loan-application-api"
+    },
+    {
+      "UpstreamPathTemplate": "/api/applications/graphql",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "localhost", "Port": 5282 } ],
+      "DownstreamPathTemplate": "/graphql",
+      "Key": "loan-application-graphql"
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LOAN ACCOUNT SERVICE  →  http://localhost:5150
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      "UpstreamPathTemplate": "/api/accounts/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "PATCH", "DELETE" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "localhost", "Port": 5150 } ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "Key": "loan-account-api"
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LOAN DEFINITION SERVICE  →  http://localhost:5077
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      "UpstreamPathTemplate": "/api/definitions/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "PATCH", "DELETE" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "localhost", "Port": 5077 } ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "CacheOptions": {
+        "TtlSeconds": 60
+      },
+      "Key": "loan-definition-api"
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // DOCUMENT SERVICE  →  http://localhost:5280
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      "UpstreamPathTemplate": "/api/documents/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "localhost", "Port": 5280 } ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "Key": "document-api"
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LOV SERVICE  →  http://localhost:5008
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      "UpstreamPathTemplate": "/api/lovs/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "localhost", "Port": 5008 } ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "CacheOptions": {
+        "TtlSeconds": 300
+      },
+      "Key": "lov-api"
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // UTILITY SERVICE  →  http://localhost:5143
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      "UpstreamPathTemplate": "/api/utility/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "localhost", "Port": 5143 } ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "Key": "utility-api"
+    }
+  ],
+
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:6100",
+    "RequestIdKey": "X-Correlation-ID",
+    "RateLimitOptions": {
+      "QuotaExceededMessage": "Rate limit exceeded. Please retry after {1} second(s).",
+      "HttpStatusCode": 429,
+      "EnableRateLimiting": true,
+      "DisableRateLimitHeaders": false,
+      "RateLimitCounterPrefix": "loan-gateway"
+    },
+    "LoadBalancerOptions": {
+      "Type": "RoundRobin"
+    },
+    "QoSOptions": {
+      "ExceptionsAllowedBeforeBreaking": 5,
+      "DurationOfBreak": 30000,
+      "TimeoutValue": 30000
+    }
+  }
+}

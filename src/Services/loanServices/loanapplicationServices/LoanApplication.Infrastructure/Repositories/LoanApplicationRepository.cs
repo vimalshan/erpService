@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using LoanApplication.Domain.Aggregates;
 using LoanApplication.Domain.Interfaces;
+using LoanApplication.Domain.ValueObjects;
 using LoanApplication.Infrastructure.Data;
 
 namespace LoanApplication.Infrastructure.Repositories;
@@ -43,9 +44,11 @@ public class LoanApplicationRepository : ILoanApplicationRepository
 
     public async Task<IEnumerable<LoanApplicationAggregate>> GetPendingAsync(CancellationToken cancellationToken = default)
     {
+        var pending = LoanApplicationStatus.Apply();
+        var created = LoanApplicationStatus.CreateNew();
         return await _context.LoanApplications
             .AsNoTracking()
-            .Where(x => x.Status.Value == 'P' || x.Status.Value == 'C')
+            .Where(x => x.Status == pending || x.Status == created)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
     }

@@ -28,7 +28,7 @@ public class LoanMasterConfiguration : IEntityTypeConfiguration<LoanMaster>
     {
         builder.ToTable("LOAN_MASTER");
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.Id).HasColumnName("LOAN_ID");
+        builder.Property(e => e.Id).HasColumnName("LOAN_ID").ValueGeneratedNever();
         builder.Property(e => e.LoanName).HasColumnName("LOAN_NAME").HasMaxLength(65).IsRequired();
         builder.Property(e => e.LoanPurpose).HasColumnName("LOAN_PURPOSE").HasMaxLength(200).IsRequired();
         builder.Property(e => e.ApplyToUnit).HasColumnName("LOAN_APPLYToUNIT");

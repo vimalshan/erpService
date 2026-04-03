@@ -75,7 +75,8 @@ builder.Services
     .AddQueryType<LoanQuery>()
     .AddMutationType<LoanMutation>()
     .AddFiltering()
-    .AddSorting();
+    .AddSorting()
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true);
 
 // Health Checks
 builder.Services.AddHealthChecks()

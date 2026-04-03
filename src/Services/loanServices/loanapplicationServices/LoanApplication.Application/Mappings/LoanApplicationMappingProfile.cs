@@ -18,7 +18,12 @@ public class LoanApplicationMappingProfile : Profile
             .ForMember(dest => dest.Source, opt => opt.MapFrom(src => src.Source.Value))
             .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.Amount.Amount))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.Value))
-            .ForMember(dest => dest.StatusDisplayName, opt => opt.MapFrom<StatusNameResolver>());
+            .ForMember(dest => dest.StatusDisplayName, opt => opt.MapFrom(src =>
+                src.Status.Value == 'C' ? "Created" :
+                src.Status.Value == 'P' ? "Pending" :
+                src.Status.Value == 'A' ? "Approved" :
+                src.Status.Value == 'R' ? "Rejected" :
+                src.Status.Value == 'D' ? "Disbursed" : "Unknown"));
 
         // Domain Service Result to DTO
         CreateMap<EligibilityCheckResult, EligibilityCheckDto>();

@@ -1,4 +1,5 @@
 using MassTransit;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +33,10 @@ public static class DependencyInjection
 
         // Blob Storage
         services.AddSingleton<IBlobStorageService, BlobStorageService>();
+
+        // Register domain event handlers (INotificationHandler) from Infrastructure assembly
+        services.AddMediatR(cfg =>
+            cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
 
         // MassTransit — use RabbitMQ when enabled, otherwise InMemory (for local dev without broker)
         var rabbit = config.GetSection("RabbitMQ");

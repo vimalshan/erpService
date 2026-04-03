@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using LoanApplication.Domain.Interfaces;
+using LoanApplication.Domain.ValueObjects;
 using LoanApplication.Infrastructure.Data;
 
 namespace LoanApplication.Infrastructure.Services;
@@ -31,8 +32,10 @@ public class LoanEligibilityService : ILoanEligibilityService
         result.ServiceYears = 2; // Mock value - should come from HRDB
 
         // Count active loans (approved or disbursed)
+        var approved = LoanApplicationStatus.Approve();
+        var disbursed = LoanApplicationStatus.Disburse();
         result.ActiveLoanCount = await _context.LoanApplications
-            .Where(x => x.EmployeeId == employeeId && (x.Status.Value == 'A' || x.Status.Value == 'D'))
+            .Where(x => x.EmployeeId == employeeId && (x.Status == approved || x.Status == disbursed))
             .CountAsync(cancellationToken);
 
         // Set default values

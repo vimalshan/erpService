@@ -19,7 +19,7 @@ public interface IEventPublisher
 /// <summary>
 /// RabbitMQ event publisher implementation
 /// </summary>
-public class RabbitMQEventPublisher : IEventPublisher, IAsyncDisposable
+public class RabbitMQEventPublisher : IEventPublisher, IAsyncDisposable, IDisposable
 {
     private readonly IConnection _connection;
     private readonly IModel _channel;
@@ -79,19 +79,17 @@ public class RabbitMQEventPublisher : IEventPublisher, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        Dispose();
+        await Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
         if (_channel is not null && _channel.IsOpen)
         {
             _channel.Close();
             _channel.Dispose();
         }
-
-        if (_connection is not null && _connection.IsOpen)
-        {
-            _connection.Close();
-            _connection.Dispose();
-        }
-
-        await Task.CompletedTask;
     }
 }
 
@@ -107,7 +105,7 @@ public interface IEventConsumer
 /// <summary>
 /// RabbitMQ event consumer implementation for loan events
 /// </summary>
-public class RabbitMQEventConsumer : IEventConsumer, IAsyncDisposable
+public class RabbitMQEventConsumer : IEventConsumer, IAsyncDisposable, IDisposable
 {
     private readonly IConnection _connection;
     private IModel? _channel;
@@ -262,13 +260,17 @@ public class RabbitMQEventConsumer : IEventConsumer, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        Dispose();
+        await Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
         Stop();
         if (_channel is not null)
         {
             _channel.Close();
             _channel.Dispose();
         }
-
-        await Task.CompletedTask;
     }
 }

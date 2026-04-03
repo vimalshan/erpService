@@ -83,15 +83,15 @@ public class DomainEventPublisher : IDomainEventPublisher
 /// </summary>
 public class DomainEventPublishingInterceptor : SaveChangesInterceptor
 {
-    private readonly IDomainEventPublisher _eventPublisher;
+    private readonly IEventPublisher? _eventPublisher;
     private readonly ILogger<DomainEventPublishingInterceptor> _logger;
 
     public DomainEventPublishingInterceptor(
-        IDomainEventPublisher eventPublisher,
-        ILogger<DomainEventPublishingInterceptor> logger)
+        ILogger<DomainEventPublishingInterceptor> logger,
+        IEventPublisher? eventPublisher = null)
     {
-        _eventPublisher = Guard.Against.Null(eventPublisher, nameof(eventPublisher));
         _logger = Guard.Against.Null(logger, nameof(logger));
+        _eventPublisher = eventPublisher;
     }
 
     public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
@@ -99,8 +99,7 @@ public class DomainEventPublishingInterceptor : SaveChangesInterceptor
         InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
-        // Publish domain events before saving changes
-        await _eventPublisher.PublishEventsAsync(cancellationToken);
+        await PublishDomainEventsAsync(eventData, cancellationToken);
         return await base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
@@ -108,8 +107,33 @@ public class DomainEventPublishingInterceptor : SaveChangesInterceptor
         DbContextEventData eventData,
         InterceptionResult<int> result)
     {
-        // For synchronous save, we'll publish async
-        _eventPublisher.PublishEventsAsync(CancellationToken.None).GetAwaiter().GetResult();
+        PublishDomainEventsAsync(eventData, CancellationToken.None).GetAwaiter().GetResult();
         return base.SavingChanges(eventData, result);
+    }
+
+    private async Task PublishDomainEventsAsync(DbContextEventData eventData, CancellationToken cancellationToken)
+    {
+        if (_eventPublisher is null || eventData.Context is null) return;
+
+        var entries = eventData.Context.ChangeTracker.Entries<Entity>()
+            .Where(e => e.Entity.GetDomainEvents().Any())
+            .ToList();
+
+        if (!entries.Any()) return;
+
+        foreach (var entry in entries)
+        {
+            var entity = entry.Entity;
+            var events = entity.GetDomainEvents().ToList();
+
+            foreach (var @event in events)
+            {
+                var eventType = @event.GetType().Name;
+                _logger.LogInformation("Publishing domain event: {EventType} for aggregate {AggregateId}", eventType, @event.AggregateId);
+                await _eventPublisher.PublishEventAsync(@event, eventType, cancellationToken);
+            }
+
+            entity.ClearDomainEvents();
+        }
     }
 }

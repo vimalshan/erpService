@@ -1,0 +1,78 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loan-application
+  namespace: loan-services
+  labels:
+    app: loan-application
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: loan-application
+  template:
+    metadata:
+      labels:
+        app: loan-application
+    spec:
+      containers:
+        - name: loan-application
+          image: loan-application:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: loan-services-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver,1433;Database=LOANDB;User Id=loan_app;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;"
+            - name: RabbitMQ__HostName
+              value: "rabbitmq"
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: loan-services-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: loan-services-secrets
+                  key: RABBITMQ_PASS
+            - name: Jwt__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: loan-services-secrets
+                  key: JWT_SECRET
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loan-application
+  namespace: loan-services
+spec:
+  selector:
+    app: loan-application
+  ports:
+    - port: 8080
+      targetPort: 8080

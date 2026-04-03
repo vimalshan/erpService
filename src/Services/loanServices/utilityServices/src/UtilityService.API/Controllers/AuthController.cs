@@ -39,7 +39,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Invalid credentials." });
         }
 
-        var token = GenerateJwtToken(request.Username, ["User"]);
+        var token = GenerateJwtToken(request.Username, ["User", "Admin"]);
         return Ok(new TokenResponse { Token = token, ExpiresIn = 3600 });
     }
 

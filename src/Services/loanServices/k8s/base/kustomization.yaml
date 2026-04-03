@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: loan-services
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - sqlserver-deployment.yaml
+  - rabbitmq-deployment.yaml
+  - loan-transaction-deployment.yaml
+  - loan-application-deployment.yaml
+  - loan-account-deployment.yaml
+  - loan-definition-deployment.yaml
+  - document-service-deployment.yaml
+  - lov-service-deployment.yaml
+  - utility-service-deployment.yaml
+  - api-gateway-deployment.yaml
+  - ingress.yaml
+  - hpa.yaml

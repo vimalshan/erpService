@@ -20,15 +20,17 @@ public record CreateLoanRequest(
 /// <summary>
 /// DTO for loan response
 /// </summary>
-public record LoanResponse(
-    long LoanNo,
-    long EmployeeId,
-    decimal PrincipalAmount,
-    decimal OutstandingAmount,
-    string Status,
-    DateTime LoanDate,
-    DateTime FirstInstallmentDate,
-    DateTime? ClosureDate);
+public record LoanResponse
+{
+    public long LoanNo { get; init; }
+    public long EmployeeId { get; init; }
+    public decimal PrincipalAmount { get; init; }
+    public decimal OutstandingAmount { get; init; }
+    public string Status { get; init; } = string.Empty;
+    public DateTime LoanDate { get; init; }
+    public DateTime FirstInstallmentDate { get; init; }
+    public DateTime? ClosureDate { get; init; }
+}
 
 /// <summary>
 /// DTO for installment request
@@ -43,15 +45,17 @@ public record CreateInstallmentRequest(
 /// <summary>
 /// DTO for installment response
 /// </summary>
-public record InstallmentResponse(
-    long InstallmentId,
-    long LoanNo,
-    long InstallmentNo,
-    decimal Amount,
-    decimal InterestRate,
-    DateTime DueDate,
-    DateTime? PaidDate,
-    bool IsPaid);
+public record InstallmentResponse
+{
+    public long InstallmentId { get; init; }
+    public long LoanNo { get; init; }
+    public long InstallmentNo { get; init; }
+    public decimal Amount { get; init; }
+    public decimal InterestRate { get; init; }
+    public DateTime DueDate { get; init; }
+    public DateTime? PaidDate { get; init; }
+    public bool IsPaid { get; init; }
+}
 
 /// <summary>
 /// DTO for EMI payment request
@@ -65,13 +69,15 @@ public record RecordEMIPaymentRequest(
 /// <summary>
 /// DTO for EMI payment response
 /// </summary>
-public record EMIPaymentResponse(
-    long InstallmentId,
-    long LoanNo,
-    decimal PrincipalPaid,
-    decimal InterestPaid,
-    DateTime PaymentDate,
-    decimal RemainingBalance);
+public record EMIPaymentResponse
+{
+    public long InstallmentId { get; init; }
+    public long LoanNo { get; init; }
+    public decimal PrincipalPaid { get; init; }
+    public decimal InterestPaid { get; init; }
+    public DateTime PaymentDate { get; init; }
+    public decimal RemainingBalance { get; init; }
+}
 
 /// <summary>
 /// DTO for interest rate request
@@ -85,13 +91,15 @@ public record SetInterestRateRequest(
 /// <summary>
 /// DTO for interest rate response
 /// </summary>
-public record InterestRateResponse(
-    long RateId,
-    long LoanNo,
-    decimal InterestRate,
-    decimal EMIAmount,
-    int InstallmentNumbers,
-    DateTime EffectiveDate);
+public record InterestRateResponse
+{
+    public long RateId { get; init; }
+    public long LoanNo { get; init; }
+    public decimal InterestRate { get; init; }
+    public decimal EMIAmount { get; init; }
+    public int InstallmentNumbers { get; init; }
+    public DateTime EffectiveDate { get; init; }
+}
 
 /// <summary>
 /// DTO for loan settlement request
@@ -105,13 +113,15 @@ public record SettleLoanRequest(
 /// <summary>
 /// DTO for loan settlement response
 /// </summary>
-public record LoanSettlementResponse(
-    long SettlementId,
-    long LoanNo,
-    string SettlementType,
-    decimal Amount,
-    DateTime SettlementDate,
-    decimal RemainingBalance);
+public record LoanSettlementResponse
+{
+    public long SettlementId { get; init; }
+    public long LoanNo { get; init; }
+    public string SettlementType { get; init; } = string.Empty;
+    public decimal Amount { get; init; }
+    public DateTime SettlementDate { get; init; }
+    public decimal RemainingBalance { get; init; }
+}
 
 /// <summary>
 /// DTO for loan approval request
@@ -124,35 +134,41 @@ public record ApproveLoanRequest(
 /// <summary>
 /// DTO for loan approval response
 /// </summary>
-public record LoanApprovalResponse(
-    long LoanNo,
-    bool IsApproved,
-    DateTime ApprovedOn,
-    string ApprovalRemarks);
+public record LoanApprovalResponse
+{
+    public long LoanNo { get; init; }
+    public bool IsApproved { get; init; }
+    public DateTime ApprovedOn { get; init; }
+    public string ApprovalRemarks { get; init; } = string.Empty;
+}
 
 /// <summary>
 /// DTO for loan ledger entry response
 /// </summary>
-public record LoanLedgerEntryResponse(
-    long LedgerId,
-    long LoanNo,
-    DateTime TransactionDate,
-    string DCFlag,
-    string Description,
-    decimal Amount,
-    string TransactionType);
+public record LoanLedgerEntryResponse
+{
+    public long LedgerId { get; init; }
+    public long LoanNo { get; init; }
+    public DateTime TransactionDate { get; init; }
+    public string DCFlag { get; init; } = string.Empty;
+    public string Description { get; init; } = string.Empty;
+    public decimal Amount { get; init; }
+    public string TransactionType { get; init; } = string.Empty;
+}
 
 /// <summary>
 /// DTO for loan query response
 /// </summary>
-public record LoanDetailsResponse(
-    long LoanNo,
-    long EmployeeId,
-    decimal PrincipalAmount,
-    decimal DisbursedAmount,
-    decimal OutstandingAmount,
-    string Status,
-    DateTime LoanDate,
-    DateTime? ClosureDate,
-    IEnumerable<InstallmentResponse> Installments,
-    IEnumerable<LoanLedgerEntryResponse> LedgerEntries);
+public record LoanDetailsResponse
+{
+    public long LoanNo { get; init; }
+    public long EmployeeId { get; init; }
+    public decimal PrincipalAmount { get; init; }
+    public decimal DisbursedAmount { get; init; }
+    public decimal OutstandingAmount { get; init; }
+    public string Status { get; init; } = string.Empty;
+    public DateTime LoanDate { get; init; }
+    public DateTime? ClosureDate { get; init; }
+    public IEnumerable<InstallmentResponse> Installments { get; init; } = Enumerable.Empty<InstallmentResponse>();
+    public IEnumerable<LoanLedgerEntryResponse> LedgerEntries { get; init; } = Enumerable.Empty<LoanLedgerEntryResponse>();
+}

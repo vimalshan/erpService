@@ -1,0 +1,387 @@
+name: loan-services
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Infrastructure first, then microservices, then gateway
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+
+  # ════════════════════════════════════════════════════════════════════════════
+  #  INFRASTRUCTURE
+  # ════════════════════════════════════════════════════════════════════════════
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: loan-sqlserver
+    environment:
+      SA_PASSWORD: "${SQL_SA_PASSWORD:-LoanERP_StrongPass!2025}"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost",
+             "-U", "sa", "-P", "${SQL_SA_PASSWORD:-LoanERP_StrongPass!2025}",
+             "-Q", "SELECT 1", "-No"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - loan-network
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: loan-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-guest}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASS:-guest}"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    networks:
+      - loan-network
+    restart: unless-stopped
+
+  # ════════════════════════════════════════════════════════════════════════════
+  #  MICROSERVICES
+  # ════════════════════════════════════════════════════════════════════════════
+  loan-transaction:
+    build:
+      context: ./loanTransactionServices
+      dockerfile: Dockerfile
+    image: loan-transaction:latest
+    container_name: loan-transaction-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: >-
+        Server=sqlserver,1433;Database=LOANDB;User Id=sa;
+        Password=${SQL_SA_PASSWORD:-LoanERP_StrongPass!2025};
+        TrustServerCertificate=True;Connection Timeout=30;
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__UserName: "${RABBITMQ_USER:-guest}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-guest}"
+      RabbitMQ__ExchangeName: loan.transaction.exchange
+      JwtSettings__Issuer: LoanTransactionAPI
+      JwtSettings__Audience: LoanTransactionClient
+      JwtSettings__SecretKey: "${JWT_SECRET:-LoanTransactionService_SuperSecret_Key_2025!@#$}"
+      JwtSettings__ExpiryMinutes: 60
+    ports:
+      - "5292:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - loan-network
+    restart: unless-stopped
+
+  loan-application:
+    build:
+      context: ./loanapplicationServices
+      dockerfile: Dockerfile
+    image: loan-application:latest
+    container_name: loan-application-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: >-
+        Server=sqlserver,1433;Database=LOANDB;User Id=sa;
+        Password=${SQL_SA_PASSWORD:-LoanERP_StrongPass!2025};
+        TrustServerCertificate=True;Connection Timeout=30;
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__UserName: "${RABBITMQ_USER:-guest}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-guest}"
+      Jwt__SecretKey: "${JWT_SECRET:-LoanTransactionService_SuperSecret_Key_2025!@#$}"
+      Jwt__Issuer: LoanApplicationAPI
+      Jwt__Audience: LoanApplicationClient
+      Jwt__ExpirationMinutes: 60
+    ports:
+      - "5282:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - loan-network
+    restart: unless-stopped
+
+  loan-account:
+    build:
+      context: ./loanaccountServices
+      dockerfile: Dockerfile
+    image: loan-account:latest
+    container_name: loan-account-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__LoanAccountDb: >-
+        Server=sqlserver,1433;Database=LOANDB;User Id=sa;
+        Password=${SQL_SA_PASSWORD:-LoanERP_StrongPass!2025};
+        TrustServerCertificate=True;Connection Timeout=30;
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: "${RABBITMQ_USER:-guest}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-guest}"
+      JwtSettings__SecretKey: "${JWT_SECRET:-LoanTransactionService_SuperSecret_Key_2025!@#$}"
+      JwtSettings__Issuer: LoanAccountService
+      JwtSettings__Audience: LoanAccountServiceApi
+      JwtSettings__ExpirationMinutes: 60
+    ports:
+      - "5150:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - loan-network
+    restart: unless-stopped
+
+  loan-definition:
+    build:
+      context: ./loandefinitionServices
+      dockerfile: Dockerfile
+    image: loan-definition:latest
+    container_name: loan-definition-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__LoanDb: >-
+        Server=sqlserver,1433;Database=LOANDB;User Id=sa;
+        Password=${SQL_SA_PASSWORD:-LoanERP_StrongPass!2025};
+        TrustServerCertificate=True;Connection Timeout=30;
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__Port: 5672
+      RabbitMq__UserName: "${RABBITMQ_USER:-guest}"
+      RabbitMq__Password: "${RABBITMQ_PASS:-guest}"
+      Jwt__Key: "${JWT_SECRET:-LoanTransactionService_SuperSecret_Key_2025!@#$}"
+      Jwt__Issuer: LoanDefinitionService
+      Jwt__Audience: LoanDefinitionClients
+      Jwt__ExpireMinutes: 60
+    ports:
+      - "5077:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - loan-network
+    restart: unless-stopped
+
+  document-service:
+    build:
+      context: ./documentServices
+      dockerfile: Dockerfile
+    image: document-service:latest
+    container_name: document-service-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: >-
+        Server=sqlserver,1433;Database=LOANDB;User Id=sa;
+        Password=${SQL_SA_PASSWORD:-LoanERP_StrongPass!2025};
+        TrustServerCertificate=True;Connection Timeout=30;
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: "${RABBITMQ_USER:-guest}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-guest}"
+      RabbitMQ__ExchangeName: document.exchange
+      Jwt__SecretKey: "${JWT_SECRET:-LoanTransactionService_SuperSecret_Key_2025!@#$}"
+      Jwt__Issuer: DocumentService
+      Jwt__Audience: DocumentServiceClients
+      Jwt__ExpiryMinutes: 60
+    ports:
+      - "5280:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - loan-network
+    restart: unless-stopped
+
+  lov-service:
+    build:
+      context: ./lovServices
+      dockerfile: Dockerfile
+    image: lov-service:latest
+    container_name: lov-service-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__LovDb: >-
+        Server=sqlserver,1433;Database=LOANDB;User Id=sa;
+        Password=${SQL_SA_PASSWORD:-LoanERP_StrongPass!2025};
+        TrustServerCertificate=True;Connection Timeout=30;
+      RabbitMQ__Enabled: "true"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Username: "${RABBITMQ_USER:-guest}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-guest}"
+      Jwt__SecretKey: "${JWT_SECRET:-LoanTransactionService_SuperSecret_Key_2025!@#$}"
+      Jwt__Issuer: LovService
+      Jwt__Audience: LovServiceClients
+    ports:
+      - "5008:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - loan-network
+    restart: unless-stopped
+
+  utility-service:
+    build:
+      context: ./utilityServices
+      dockerfile: Dockerfile
+    image: utility-service:latest
+    container_name: utility-service-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: >-
+        Server=sqlserver,1433;Database=LOANDB;User Id=sa;
+        Password=${SQL_SA_PASSWORD:-LoanERP_StrongPass!2025};
+        TrustServerCertificate=True;Connection Timeout=30;
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: "${RABBITMQ_USER:-guest}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-guest}"
+      JwtSettings__Secret: "${JWT_SECRET:-LoanTransactionService_SuperSecret_Key_2025!@#$}"
+      JwtSettings__Issuer: UtilityService
+      JwtSettings__Audience: UtilityServiceUsers
+      JwtSettings__ExpiryHours: 1
+    ports:
+      - "5143:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - loan-network
+    restart: unless-stopped
+
+  # ════════════════════════════════════════════════════════════════════════════
+  #  API GATEWAY  (depends on all microservices)
+  # ════════════════════════════════════════════════════════════════════════════
+  api-gateway:
+    build:
+      context: ./apiGateway
+      dockerfile: Dockerfile
+    image: loan-api-gateway:latest
+    container_name: loan-api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      JwtSettings__SecretKey: "${JWT_SECRET:-LoanTransactionService_SuperSecret_Key_2025!@#$}"
+      JwtSettings__Issuer: LoanTransactionAPI
+      RabbitMQ__ConnectionString: "amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/"
+      RabbitMQ__ManagementUrl: "http://rabbitmq:15672/api/healthchecks/node"
+      # Override cluster destinations to use Docker service names
+      ReverseProxy__Clusters__loan-transaction-cluster__Destinations__loan-transaction-primary__Address: "http://loan-transaction:8080/"
+      ReverseProxy__Clusters__loan-application-cluster__Destinations__loan-application-primary__Address: "http://loan-application:8080/"
+      ReverseProxy__Clusters__loan-account-cluster__Destinations__loan-account-primary__Address: "http://loan-account:8080/"
+      ReverseProxy__Clusters__loan-definition-cluster__Destinations__loan-definition-primary__Address: "http://loan-definition:8080/"
+      ReverseProxy__Clusters__document-cluster__Destinations__document-primary__Address: "http://document-service:8080/"
+      ReverseProxy__Clusters__lov-cluster__Destinations__lov-primary__Address: "http://lov-service:8080/"
+      ReverseProxy__Clusters__utility-cluster__Destinations__utility-primary__Address: "http://utility-service:8080/"
+      Services__LoanTransaction__HealthUrl: "http://loan-transaction:8080/health"
+      Services__LoanApplication__HealthUrl: "http://loan-application:8080/health"
+      Services__LoanAccount__HealthUrl: "http://loan-account:8080/health"
+      Services__LoanDefinition__HealthUrl: "http://loan-definition:8080/health"
+      Services__Document__HealthUrl: "http://document-service:8080/health"
+      Services__Lov__HealthUrl: "http://lov-service:8080/health"
+      Services__Utility__HealthUrl: "http://utility-service:8080/health"
+    ports:
+      - "6100:8080"
+    depends_on:
+      loan-transaction:
+        condition: service_healthy
+      loan-application:
+        condition: service_started
+      loan-account:
+        condition: service_started
+      loan-definition:
+        condition: service_started
+      document-service:
+        condition: service_started
+      lov-service:
+        condition: service_started
+      utility-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - loan-network
+    restart: unless-stopped
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Volumes & Networks
+# ─────────────────────────────────────────────────────────────────────────────
+volumes:
+  sqlserver-data:
+    name: loan-sqlserver-data
+  rabbitmq-data:
+    name: loan-rabbitmq-data
+
+networks:
+  loan-network:
+    name: loan-network
+    driver: bridge

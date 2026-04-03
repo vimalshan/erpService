@@ -1,28 +1,25 @@
 using LovService.Application.DTOs;
-using LovService.Domain.Entities;
-using LovService.Domain.Interfaces;
-using LovService.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
+using LovService.Application.Features.LovMaster.Queries;
+using LovService.Application.Features.LovTypeMast.Queries;
+using LovService.Application.Features.ProgramLovMast.Queries;
+using MediatR;
 
 namespace LovService.API.GraphQL;
 
 public class LovQuery
 {
-    [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<LovTypeMast> GetLovTypes([Service] LovDbContext db)
-        => db.LovTypeMasts.AsNoTracking();
+    public async Task<IEnumerable<LovTypeMastDto>> GetLovTypes([Service] IMediator mediator)
+        => await mediator.Send(new GetAllLovTypesQuery());
 
-    [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<LovMaster> GetLovMasters([Service] LovDbContext db)
-        => db.LovMasters.AsNoTracking();
+    public async Task<IEnumerable<LovMasterDto>> GetLovMasters([Service] IMediator mediator)
+        => await mediator.Send(new GetAllLovMastersQuery());
 
-    [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<ProgramLovMast> GetProgramLovs([Service] LovDbContext db)
-        => db.ProgramLovMasts.AsNoTracking();
+    public async Task<IEnumerable<ProgramLovMastDto>> GetProgramLovs([Service] IMediator mediator)
+        => await mediator.Send(new GetAllProgramLovsQuery());
 }

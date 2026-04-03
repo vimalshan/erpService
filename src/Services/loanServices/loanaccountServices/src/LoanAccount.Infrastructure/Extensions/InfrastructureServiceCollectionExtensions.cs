@@ -7,8 +7,10 @@ using LoanAccount.Infrastructure.Resilience;
 using LoanAccount.Infrastructure.Services;
 using LoanAccount.Infrastructure.UnitOfWork;
 using LoanAccount.Infrastructure.Messaging;
+using LoanAccount.Infrastructure.EventPublishing;
 using LoanAccount.Infrastructure.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http;
@@ -37,11 +39,17 @@ public static class InfrastructureServiceCollectionExtensions
         var connectionString = configuration.GetConnectionString("LoanAccountDb");
         Guard.Against.NullOrEmpty(connectionString, nameof(connectionString));
 
-        // Register DbContext
-        services.AddDbContext<LoanAccountDbContext>(options =>
+        // Register domain event publishing interceptor
+        services.AddScoped<DomainEventPublishingInterceptor>();
+
+        // Register DbContext with domain event interceptor
+        services.AddDbContext<LoanAccountDbContext>((sp, options) =>
+        {
             options.UseSqlServer(
                 connectionString,
-                sqlOptions => sqlOptions.MigrationsAssembly("LoanAccount.Infrastructure")));
+                sqlOptions => sqlOptions.MigrationsAssembly("LoanAccount.Infrastructure"));
+            options.AddInterceptors(sp.GetRequiredService<DomainEventPublishingInterceptor>());
+        });
 
         // Register Unit of Work
         services.AddScoped<ILoanUnitOfWork, LoanUnitOfWork>();

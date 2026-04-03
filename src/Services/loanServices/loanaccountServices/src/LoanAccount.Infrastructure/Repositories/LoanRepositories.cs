@@ -2,6 +2,7 @@ using Ardalis.GuardClauses;
 using Ardalis.Specification.EntityFrameworkCore;
 using LoanAccount.Domain.Entities;
 using LoanAccount.Domain.Interfaces;
+using LoanAccount.Domain.ValueObjects;
 using LoanAccount.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -66,7 +67,7 @@ public class LoanMainRepository : BaseRepository<LoanMain>, ILoanMainRepository
     public async Task<IEnumerable<LoanMain>> GetActiveLoansAsync(CancellationToken cancellationToken = default)
     {
         return await _dbContext.LoanMains
-            .Where(l => l.LoanStatus.Status == "Active")
+            .Where(l => l.LoanStatus == LoanStatus.Active)
             .ToListAsync(cancellationToken);
     }
 }

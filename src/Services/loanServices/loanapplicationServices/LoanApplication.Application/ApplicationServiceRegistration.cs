@@ -23,7 +23,10 @@ public static class ApplicationServiceRegistration
         services.AddValidatorsFromAssembly(typeof(ApplicationServiceRegistration).Assembly);
 
         // Register AutoMapper
-        services.AddAutoMapper(typeof(LoanApplicationMappingProfile));
+        services.AddAutoMapper(cfg =>
+        {
+            cfg.AddProfile<LoanApplicationMappingProfile>();
+        });
 
         return services;
     }

@@ -215,17 +215,19 @@ public class LoanApplicationService
         var installments = await _unitOfWork.InstallmentRepository.GetByLoanNoAsync(loan.LoanNo, cancellationToken);
         var ledgerEntries = await _unitOfWork.LedgerRepository.GetByLoanNoAsync(loan.LoanNo, cancellationToken);
 
-        return new LoanDetailsResponse(
-            LoanNo: loan.LoanNo,
-            EmployeeId: loan.EmpSysId,
-            PrincipalAmount: loan.PrincipalAmount.Amount,
-            DisbursedAmount: loan.DisbursedAmount.Amount,
-            OutstandingAmount: loan.PrincipalOutstanding.Amount,
-            Status: loan.LoanStatus.Status,
-            LoanDate: loan.LoanDate,
-            ClosureDate: loan.LoanClosureDate,
-            Installments: _mapper.Map<IEnumerable<InstallmentResponse>>(installments),
-            LedgerEntries: _mapper.Map<IEnumerable<LoanLedgerEntryResponse>>(ledgerEntries));
+        return new LoanDetailsResponse
+        {
+            LoanNo = loan.LoanNo,
+            EmployeeId = loan.EmpSysId,
+            PrincipalAmount = loan.PrincipalAmount.Amount,
+            DisbursedAmount = loan.DisbursedAmount.Amount,
+            OutstandingAmount = loan.PrincipalOutstanding.Amount,
+            Status = loan.LoanStatus.Status,
+            LoanDate = loan.LoanDate,
+            ClosureDate = loan.LoanClosureDate,
+            Installments = _mapper.Map<IEnumerable<InstallmentResponse>>(installments),
+            LedgerEntries = _mapper.Map<IEnumerable<LoanLedgerEntryResponse>>(ledgerEntries)
+        };
     }
 
     private static long GenerateLoanNumber()

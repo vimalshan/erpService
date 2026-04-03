@@ -3,7 +3,7 @@ namespace LovService.Application.DTOs;
 public record LovTypeMastDto(
     int LovTypeId,
     string LovTypeName,
-    char LovCategory,
+    string LovCategory,
     int LovOrgId);
 
 public record LovMasterDto(

@@ -151,7 +151,8 @@ public static class ApiServiceCollectionExtensions
         services
             .AddGraphQLServer()
             .AddQueryType<LoanAccount.API.GraphQL.Queries.LoanQuery>()
-            .AddMutationType<LoanAccount.API.GraphQL.Mutations.LoanMutation>();
+            .AddMutationType<LoanAccount.API.GraphQL.Mutations.LoanMutation>()
+            .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true);
 
         // Add CORS
         services.AddCors(options =>

@@ -11,7 +11,7 @@ public sealed class CreateLovTypeCommandValidator : AbstractValidator<CreateLovT
     {
         RuleFor(x => x.LovTypeId).GreaterThan(0);
         RuleFor(x => x.LovTypeName).NotEmpty().MaximumLength(100);
-        RuleFor(x => x.LovCategory).Must(c => c == 'F' || c == 'V')
+        RuleFor(x => x.LovCategory).Must(c => c == "F" || c == "V")
             .WithMessage("LovCategory must be 'F' (Fixed) or 'V' (Variable).");
         RuleFor(x => x.LovOrgId).GreaterThan(0);
     }
@@ -23,7 +23,7 @@ public sealed class UpdateLovTypeCommandValidator : AbstractValidator<UpdateLovT
     {
         RuleFor(x => x.LovTypeId).GreaterThan(0);
         RuleFor(x => x.LovTypeName).NotEmpty().MaximumLength(100);
-        RuleFor(x => x.LovCategory).Must(c => c == 'F' || c == 'V')
+        RuleFor(x => x.LovCategory).Must(c => c == "F" || c == "V")
             .WithMessage("LovCategory must be 'F' (Fixed) or 'V' (Variable).");
         RuleFor(x => x.LovOrgId).GreaterThan(0);
     }

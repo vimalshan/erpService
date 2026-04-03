@@ -1,0 +1,80 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: loan-services
+  labels:
+    app: api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: api-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: loan-services-config
+          env:
+            - name: JwtSettings__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: loan-services-secrets
+                  key: JWT_SECRET
+            # Override YARP cluster addresses to use K8s service DNS
+            - name: ReverseProxy__Clusters__loan-transaction-cluster__Destinations__loan-transaction-primary__Address
+              value: "http://loan-transaction:8080/"
+            - name: ReverseProxy__Clusters__loan-application-cluster__Destinations__loan-application-primary__Address
+              value: "http://loan-application:8080/"
+            - name: ReverseProxy__Clusters__loan-account-cluster__Destinations__loan-account-primary__Address
+              value: "http://loan-account:8080/"
+            - name: ReverseProxy__Clusters__loan-definition-cluster__Destinations__loan-definition-primary__Address
+              value: "http://loan-definition:8080/"
+            - name: ReverseProxy__Clusters__document-service-cluster__Destinations__document-service-primary__Address
+              value: "http://document-service:8080/"
+            - name: ReverseProxy__Clusters__lov-service-cluster__Destinations__lov-service-primary__Address
+              value: "http://lov-service:8080/"
+            - name: ReverseProxy__Clusters__utility-service-cluster__Destinations__utility-service-primary__Address
+              value: "http://utility-service:8080/"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: loan-services
+spec:
+  selector:
+    app: api-gateway
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080

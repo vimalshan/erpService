@@ -11,7 +11,7 @@ public sealed class GetLovTypeByIdQueryHandler(IUnitOfWork uow)
     {
         var e = await uow.LovTypeMasts.GetByIdAsync(q.LovTypeId, ct);
         return e == null ? null
-            : new LovTypeMastDto(e.LovTypeId, e.LovTypeName, e.LovCategory.Value, e.LovOrgId);
+            : new LovTypeMastDto(e.LovTypeId, e.LovTypeName, e.LovCategory.Value.ToString(), e.LovOrgId);
     }
 }
 
@@ -24,6 +24,6 @@ public sealed class GetAllLovTypesQueryHandler(IUnitOfWork uow)
             ? await uow.LovTypeMasts.GetByOrgIdAsync(q.OrgId.Value, ct)
             : await uow.LovTypeMasts.GetAllAsync(ct);
 
-        return items.Select(e => new LovTypeMastDto(e.LovTypeId, e.LovTypeName, e.LovCategory.Value, e.LovOrgId));
+        return items.Select(e => new LovTypeMastDto(e.LovTypeId, e.LovTypeName, e.LovCategory.Value.ToString(), e.LovOrgId));
     }
 }

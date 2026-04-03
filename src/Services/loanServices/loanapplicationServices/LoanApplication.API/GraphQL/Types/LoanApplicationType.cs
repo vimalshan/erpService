@@ -16,7 +16,7 @@ public class LoanApplicationType
     public decimal Amount { get; set; }
     public long? SubclassId { get; set; }
     public string Reason { get; set; } = string.Empty;
-    public char Status { get; set; }
+    public string Status { get; set; } = string.Empty;
     public string StatusDisplayName { get; set; } = string.Empty;
     public long GuarantorId { get; set; }
     public long? SecondGuarantorId { get; set; }
@@ -25,7 +25,7 @@ public class LoanApplicationType
     public long? ApprovedBy { get; set; }
     public DateTime? ApprovedOn { get; set; }
     public int? TenureMonths { get; set; }
-    public char? SpecialSanction { get; set; }
+    public string? SpecialSanction { get; set; }
     public DateTime CreatedAt { get; set; }
     public long CreatedBy { get; set; }
     public DateTime ModifiedAt { get; set; }
@@ -44,7 +44,7 @@ public class LoanApplicationType
             Amount = dto.Amount,
             SubclassId = dto.SubclassId,
             Reason = dto.Reason,
-            Status = dto.Status,
+            Status = dto.Status.ToString(),
             StatusDisplayName = dto.StatusDisplayName,
             GuarantorId = dto.GuarantorId,
             SecondGuarantorId = dto.SecondGuarantorId,
@@ -53,7 +53,7 @@ public class LoanApplicationType
             ApprovedBy = dto.ApprovedBy,
             ApprovedOn = dto.ApprovedOn,
             TenureMonths = dto.TenureMonths,
-            SpecialSanction = dto.SpecialSanction,
+            SpecialSanction = dto.SpecialSanction?.ToString(),
             CreatedAt = dto.CreatedAt,
             CreatedBy = dto.CreatedBy,
             ModifiedAt = dto.ModifiedAt,

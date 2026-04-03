@@ -10,13 +10,13 @@ public sealed class CreateLovTypeCommandHandler(IUnitOfWork uow)
     public async Task<LovTypeMastDto> Handle(CreateLovTypeCommand cmd, CancellationToken ct)
     {
         var entity = Domain.Entities.LovTypeMast.Create(
-            cmd.LovTypeId, cmd.LovTypeName, cmd.LovCategory, cmd.LovOrgId);
+            cmd.LovTypeId, cmd.LovTypeName, cmd.LovCategory[0], cmd.LovOrgId);
 
         await uow.LovTypeMasts.AddAsync(entity, ct);
         await uow.SaveChangesAsync(ct);
 
         return new LovTypeMastDto(
-            entity.LovTypeId, entity.LovTypeName, entity.LovCategory.Value, entity.LovOrgId);
+            entity.LovTypeId, entity.LovTypeName, entity.LovCategory.Value.ToString(), entity.LovOrgId);
     }
 }
 
@@ -28,12 +28,12 @@ public sealed class UpdateLovTypeCommandHandler(IUnitOfWork uow)
         var entity = await uow.LovTypeMasts.GetByIdAsync(cmd.LovTypeId, ct)
             ?? throw new KeyNotFoundException($"LovType {cmd.LovTypeId} not found.");
 
-        entity.Update(cmd.LovTypeName, cmd.LovCategory, cmd.LovOrgId);
+        entity.Update(cmd.LovTypeName, cmd.LovCategory[0], cmd.LovOrgId);
         await uow.LovTypeMasts.UpdateAsync(entity, ct);
         await uow.SaveChangesAsync(ct);
 
         return new LovTypeMastDto(
-            entity.LovTypeId, entity.LovTypeName, entity.LovCategory.Value, entity.LovOrgId);
+            entity.LovTypeId, entity.LovTypeName, entity.LovCategory.Value.ToString(), entity.LovOrgId);
     }
 }
 

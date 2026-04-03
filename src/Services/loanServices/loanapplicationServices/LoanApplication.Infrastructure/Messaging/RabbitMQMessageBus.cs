@@ -57,10 +57,21 @@ public class RabbitMQMessageBus : IMessageBus
 
     public async Task PublishAsync<T>(T message, string routingKey, CancellationToken cancellationToken = default) where T : class
     {
-        await InitializeAsync(cancellationToken);
+        try
+        {
+            await InitializeAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "RabbitMQ not available — skipping publish to {Exchange}/{RoutingKey}", DefaultExchange, routingKey);
+            return;
+        }
         
         if (_channel == null)
-            throw new InvalidOperationException("Channel is not initialized");
+        {
+            _logger.LogWarning("RabbitMQ channel not initialized — skipping publish to {Exchange}/{RoutingKey}", DefaultExchange, routingKey);
+            return;
+        }
 
         try
         {
@@ -86,7 +97,6 @@ public class RabbitMQMessageBus : IMessageBus
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish message to {Exchange}/{RoutingKey}", DefaultExchange, routingKey);
-            throw;
         }
     }
 

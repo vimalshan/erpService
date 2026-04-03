@@ -9,15 +9,8 @@ namespace LoanAccount.API.GraphQL.Mutations;
 /// </summary>
 public class LoanMutation
 {
-    private readonly IMediator _mediator;
-
-    public LoanMutation(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-
     [GraphQLName("createLoan")]
-    public async Task<long> CreateLoan(CreateLoanRequest input, CancellationToken cancellationToken)
+    public async Task<long> CreateLoan(CreateLoanRequest input, [Service] IMediator mediator, CancellationToken cancellationToken)
     {
         var command = new CreateLoanCommand(
             input.LoanAppId,
@@ -34,11 +27,11 @@ public class LoanMutation
             input.GuarantorId,
             GetCurrentUserId());
 
-        return await _mediator.Send(command, cancellationToken);
+        return await mediator.Send(command, cancellationToken);
     }
 
     [GraphQLName("approveLoan")]
-    public async Task<bool> ApproveLoan(long loanNo, ApproveLoanRequest input, CancellationToken cancellationToken)
+    public async Task<bool> ApproveLoan(long loanNo, ApproveLoanRequest input, [Service] IMediator mediator, CancellationToken cancellationToken)
     {
         var command = new ApproveLoanCommand(
             loanNo,
@@ -46,18 +39,18 @@ public class LoanMutation
             GetCurrentUserId(),
             input.ApprovalRemarks);
 
-        return await _mediator.Send(command, cancellationToken);
+        return await mediator.Send(command, cancellationToken);
     }
 
     [GraphQLName("disburseLoan")]
-    public async Task<bool> DisburseLoan(long loanNo, decimal amount, CancellationToken cancellationToken)
+    public async Task<bool> DisburseLoan(long loanNo, decimal amount, [Service] IMediator mediator, CancellationToken cancellationToken)
     {
         var command = new DisburseLoanCommand(loanNo, amount, GetCurrentUserId());
-        return await _mediator.Send(command, cancellationToken);
+        return await mediator.Send(command, cancellationToken);
     }
 
     [GraphQLName("recordEMIPayment")]
-    public async Task<bool> RecordEMIPayment(long loanNo, RecordEMIPaymentRequest input, CancellationToken cancellationToken)
+    public async Task<bool> RecordEMIPayment(long loanNo, RecordEMIPaymentRequest input, [Service] IMediator mediator, CancellationToken cancellationToken)
     {
         var command = new RecordEMIPaymentCommand(
             input.InstallmentId,
@@ -67,21 +60,21 @@ public class LoanMutation
             input.PaymentDate,
             GetCurrentUserId());
 
-        return await _mediator.Send(command, cancellationToken);
+        return await mediator.Send(command, cancellationToken);
     }
 
     [GraphQLName("settleLoan")]
-    public async Task<bool> SettleLoan(long loanNo, CancellationToken cancellationToken)
+    public async Task<bool> SettleLoan(long loanNo, [Service] IMediator mediator, CancellationToken cancellationToken)
     {
         var command = new SettleLoanCommand(loanNo, GetCurrentUserId());
-        return await _mediator.Send(command, cancellationToken);
+        return await mediator.Send(command, cancellationToken);
     }
 
     [GraphQLName("closeLoan")]
-    public async Task<bool> CloseLoan(long loanNo, string reason, CancellationToken cancellationToken)
+    public async Task<bool> CloseLoan(long loanNo, string reason, [Service] IMediator mediator, CancellationToken cancellationToken)
     {
         var command = new CloseLoanCommand(loanNo, reason, GetCurrentUserId());
-        return await _mediator.Send(command, cancellationToken);
+        return await mediator.Send(command, cancellationToken);
     }
 
     private static long GetCurrentUserId()
