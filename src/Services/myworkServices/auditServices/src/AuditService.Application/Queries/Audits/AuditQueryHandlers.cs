@@ -17,8 +17,8 @@ public sealed class GetAuditByIdQueryHandler : IRequestHandler<GetAuditByIdQuery
 
         return new AuditDto(
             audit.AuditId, audit.AuditName, audit.AuditUnit, audit.AuditFrom, audit.AuditTo,
-            audit.AuditDefLocation, audit.AuditStatus, audit.AuditCreatedBy, audit.AuditCreatedOn,
-            audit.AuditPlanFrom, audit.AuditPlanTo, audit.AuditCompleted, audit.AuditFirmName,
+            audit.AuditDefLocation, audit.AuditStatus.ToString(), audit.AuditCreatedBy, audit.AuditCreatedOn,
+            audit.AuditPlanFrom, audit.AuditPlanTo, audit.AuditCompleted?.ToString(), audit.AuditFirmName,
             audit.AuditProcess, audit.Observations.Count);
     }
 }
@@ -34,8 +34,8 @@ public sealed class GetAllAuditsQueryHandler : IRequestHandler<GetAllAuditsQuery
         var audits = await _auditRepository.GetAllAsync(cancellationToken);
         return audits.Select(a => new AuditDto(
             a.AuditId, a.AuditName, a.AuditUnit, a.AuditFrom, a.AuditTo,
-            a.AuditDefLocation, a.AuditStatus, a.AuditCreatedBy, a.AuditCreatedOn,
-            a.AuditPlanFrom, a.AuditPlanTo, a.AuditCompleted, a.AuditFirmName,
+            a.AuditDefLocation, a.AuditStatus.ToString(), a.AuditCreatedBy, a.AuditCreatedOn,
+            a.AuditPlanFrom, a.AuditPlanTo, a.AuditCompleted?.ToString(), a.AuditFirmName,
             a.AuditProcess, a.Observations.Count));
     }
 }
@@ -51,8 +51,8 @@ public sealed class GetAuditsByUnitQueryHandler : IRequestHandler<GetAuditsByUni
         var audits = await _auditRepository.GetByUnitAsync(request.UnitId, cancellationToken);
         return audits.Select(a => new AuditDto(
             a.AuditId, a.AuditName, a.AuditUnit, a.AuditFrom, a.AuditTo,
-            a.AuditDefLocation, a.AuditStatus, a.AuditCreatedBy, a.AuditCreatedOn,
-            a.AuditPlanFrom, a.AuditPlanTo, a.AuditCompleted, a.AuditFirmName,
+            a.AuditDefLocation, a.AuditStatus.ToString(), a.AuditCreatedBy, a.AuditCreatedOn,
+            a.AuditPlanFrom, a.AuditPlanTo, a.AuditCompleted?.ToString(), a.AuditFirmName,
             a.AuditProcess, a.Observations.Count));
     }
 }

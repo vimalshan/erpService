@@ -9,7 +9,7 @@ public sealed class BatchMappingProfile : Profile
     public BatchMappingProfile()
     {
         CreateMap<BatchMaster, BatchDto>()
-            .ForMember(d => d.BatchStatus,      o => o.MapFrom(s => s.BatchStatusChar))
+            .ForMember(d => d.BatchStatus,      o => o.MapFrom(s => s.BatchStatusChar.ToString()))
             .ForMember(d => d.BatchStatusLabel, o => o.MapFrom(s => StatusLabel(s.BatchStatusChar)));
     }
 

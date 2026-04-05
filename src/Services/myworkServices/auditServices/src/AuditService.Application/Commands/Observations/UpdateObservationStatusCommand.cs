@@ -4,6 +4,6 @@ namespace AuditService.Application.Commands.Observations;
 
 public record UpdateObservationStatusCommand(
     long ObvId,
-    char NewStatus,
+    string NewStatus,
     long ModifiedBy
 ) : IRequest<bool>;

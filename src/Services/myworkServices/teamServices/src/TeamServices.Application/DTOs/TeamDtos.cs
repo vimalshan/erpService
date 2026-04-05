@@ -26,7 +26,7 @@ public class TeamUnitMapDto
     public long MapId { get; set; }
     public long TeamId { get; set; }
     public long UnitId { get; set; }
-    public char GradeCategory { get; set; }
+    public string GradeCategory { get; set; } = string.Empty;
     public long? CadreId { get; set; }
     public long LastModifiedBy { get; set; }
     public DateTime LastModifiedOn { get; set; }

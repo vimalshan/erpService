@@ -15,15 +15,15 @@ public class GetPendingSelfAssessmentsQueryHandler(ISelfAssessmentRepository rep
         return assessments.Select(a => new SelfAssessmentDto
         {
             Id = a.Id,
-            AssessmentType = a.AssessmentType,
+            AssessmentType = a.AssessmentType.ToString(),
             TypeReferenceId = a.TypeReferenceId,
             MonitoredBy = a.MonitoredBy,
             DueDate = a.DueDate,
-            MeetingFlag = a.MeetingFlag,
-            Status = a.Status,
+            MeetingFlag = a.MeetingFlag.ToString(),
+            Status = a.Status.ToString(),
             Reason = a.Reason,
             AssessmentDate = a.AssessmentDate,
-            ApprovalStatus = a.ApprovalStatus
+            ApprovalStatus = a.ApprovalStatus.ToString()
         }).ToList();
     }
 }

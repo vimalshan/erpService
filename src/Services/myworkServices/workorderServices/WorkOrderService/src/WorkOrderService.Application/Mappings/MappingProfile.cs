@@ -10,12 +10,12 @@ public class MappingProfile : Profile
     {
         CreateMap<WorkOrder, WorkOrderDto>()
             .ForMember(d => d.WorkOrderStatus, opt => opt.MapFrom(s => s.WorkOrderStatus.Name))
-            .ForMember(d => d.WorkOrderStatusCode, opt => opt.MapFrom(s => s.WorkOrderStatus.Code))
+            .ForMember(d => d.WorkOrderStatusCode, opt => opt.MapFrom(s => s.WorkOrderStatus.Code.ToString()))
             .ForMember(d => d.CompletionPercentage, opt => opt.MapFrom(s => s.GetCompletionPercentage()))
             .ForMember(d => d.Tasks, opt => opt.MapFrom(s => s.Tasks));
 
         CreateMap<WorkTask, WorkTaskDto>()
             .ForMember(d => d.TaskStatus, opt => opt.MapFrom(s => s.TaskStatus.Name))
-            .ForMember(d => d.TaskStatusCode, opt => opt.MapFrom(s => s.TaskStatus.Code));
+            .ForMember(d => d.TaskStatusCode, opt => opt.MapFrom(s => s.TaskStatus.Code.ToString()));
     }
 }

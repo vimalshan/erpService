@@ -18,11 +18,11 @@ public sealed class GetObservationByIdQueryHandler : IRequestHandler<GetObservat
     }
 
     private static ObservationDto ToDto(AuditObservation o) => new(
-        o.ObvId, o.ObvAuditId, o.ObvTitle, o.ObvDescription, o.ObvRisk,
+        o.ObvId, o.ObvAuditId, o.ObvTitle, o.ObvDescription, o.ObvRisk.ToString(),
         o.ObvAuditee, o.ObvEsc1, o.ObvEsc2, o.ObvManComments, o.ObvImplication,
-        o.ObvStatus, o.ObvOrgDueDate, o.ObvOrgRev1Date, o.ObvOrgRev2Date,
+        o.ObvStatus.ToString(), o.ObvOrgDueDate, o.ObvOrgRev1Date, o.ObvOrgRev2Date,
         o.ObvCreatedBy, o.ObvCreatedOn, o.ObvLocation, o.ObvAuditorName,
-        o.ObvRemarks, o.ObvAppStatus);
+        o.ObvRemarks, o.ObvAppStatus?.ToString());
 }
 
 public sealed class GetObservationsByAuditQueryHandler : IRequestHandler<GetObservationsByAuditQuery, IEnumerable<ObservationDto>>
@@ -35,11 +35,11 @@ public sealed class GetObservationsByAuditQueryHandler : IRequestHandler<GetObse
     {
         var observations = await _repository.GetByAuditIdAsync(request.AuditId, cancellationToken);
         return observations.Select(o => new ObservationDto(
-            o.ObvId, o.ObvAuditId, o.ObvTitle, o.ObvDescription, o.ObvRisk,
+            o.ObvId, o.ObvAuditId, o.ObvTitle, o.ObvDescription, o.ObvRisk.ToString(),
             o.ObvAuditee, o.ObvEsc1, o.ObvEsc2, o.ObvManComments, o.ObvImplication,
-            o.ObvStatus, o.ObvOrgDueDate, o.ObvOrgRev1Date, o.ObvOrgRev2Date,
+            o.ObvStatus.ToString(), o.ObvOrgDueDate, o.ObvOrgRev1Date, o.ObvOrgRev2Date,
             o.ObvCreatedBy, o.ObvCreatedOn, o.ObvLocation, o.ObvAuditorName,
-            o.ObvRemarks, o.ObvAppStatus));
+            o.ObvRemarks, o.ObvAppStatus?.ToString()));
     }
 }
 
@@ -53,10 +53,10 @@ public sealed class GetPendingObservationsQueryHandler : IRequestHandler<GetPend
     {
         var observations = await _repository.GetPendingObservationsAsync(cancellationToken);
         return observations.Select(o => new ObservationDto(
-            o.ObvId, o.ObvAuditId, o.ObvTitle, o.ObvDescription, o.ObvRisk,
+            o.ObvId, o.ObvAuditId, o.ObvTitle, o.ObvDescription, o.ObvRisk.ToString(),
             o.ObvAuditee, o.ObvEsc1, o.ObvEsc2, o.ObvManComments, o.ObvImplication,
-            o.ObvStatus, o.ObvOrgDueDate, o.ObvOrgRev1Date, o.ObvOrgRev2Date,
+            o.ObvStatus.ToString(), o.ObvOrgDueDate, o.ObvOrgRev1Date, o.ObvOrgRev2Date,
             o.ObvCreatedBy, o.ObvCreatedOn, o.ObvLocation, o.ObvAuditorName,
-            o.ObvRemarks, o.ObvAppStatus));
+            o.ObvRemarks, o.ObvAppStatus?.ToString()));
     }
 }

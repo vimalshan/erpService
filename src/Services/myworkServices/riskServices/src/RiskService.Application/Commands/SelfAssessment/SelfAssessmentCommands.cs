@@ -7,7 +7,7 @@ namespace RiskService.Application.Commands.SelfAssessment;
 
 public record CreateSelfAssessmentCommand : IRequest<long>
 {
-    public char AssessmentType { get; init; }
+    public string AssessmentType { get; init; } = default!;
     public long TypeReferenceId { get; init; }
     public string MonitoredBy { get; init; } = default!;
     public DateTime DueDate { get; init; }
@@ -22,7 +22,7 @@ public class CreateSelfAssessmentCommandHandler(
     {
         var assessment = new RiskSelfAssessment
         {
-            AssessmentType = request.AssessmentType,
+            AssessmentType = request.AssessmentType[0],
             TypeReferenceId = request.TypeReferenceId,
             MonitoredBy = request.MonitoredBy,
             DueDate = request.DueDate,

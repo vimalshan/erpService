@@ -6,7 +6,6 @@ using BatchService.Application.Queries.GetBatchesByMonth;
 
 namespace BatchService.API.GraphQL;
 
-[QueryType]
 public sealed class BatchQuery
 {
     public async Task<IEnumerable<BatchDto>> GetBatches(

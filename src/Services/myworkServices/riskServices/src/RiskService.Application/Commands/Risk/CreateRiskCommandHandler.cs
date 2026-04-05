@@ -13,7 +13,7 @@ public class CreateRiskCommandHandler(IRiskRepository repository, IUnitOfWork un
     {
         var risk = new RiskAggregate
         {
-            ApplicableTo = request.ApplicableTo,
+            ApplicableTo = request.ApplicableTo[0],
             OrganizationId = request.OrganizationId,
             BusinessId = request.BusinessId,
             DivisionId = request.DivisionId,

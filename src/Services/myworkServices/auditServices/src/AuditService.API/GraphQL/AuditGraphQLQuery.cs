@@ -27,9 +27,11 @@ public class AuditGraphQLQuery
     public async Task<IEnumerable<GoodPracticeDto>> GetGoodPractices([Service] ISender sender, CancellationToken cancellationToken)
         => await sender.Send(new GetAllGoodPracticesQuery(), cancellationToken);
 
+    [GraphQLIgnore]
     public async Task<IEnumerable<dynamic>> GetAuditSummary([Service] AuditDapperRepository dapper, int year, CancellationToken cancellationToken)
         => (await dapper.GetAuditSummaryAsync(year, cancellationToken)).Cast<dynamic>();
 
+    [GraphQLIgnore]
     public async Task<IEnumerable<dynamic>> GetOverdueObservations([Service] AuditDapperRepository dapper, CancellationToken cancellationToken)
         => (await dapper.GetOverdueObservationsAsync(cancellationToken)).Cast<dynamic>();
 }

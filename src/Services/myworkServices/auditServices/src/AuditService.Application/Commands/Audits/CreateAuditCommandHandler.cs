@@ -31,7 +31,7 @@ public sealed class CreateAuditCommandHandler : IRequestHandler<CreateAuditComma
 
     private static AuditDto ToDto(AuditMaster a) => new(
         a.AuditId, a.AuditName, a.AuditUnit, a.AuditFrom, a.AuditTo,
-        a.AuditDefLocation, a.AuditStatus, a.AuditCreatedBy, a.AuditCreatedOn,
-        a.AuditPlanFrom, a.AuditPlanTo, a.AuditCompleted, a.AuditFirmName,
+        a.AuditDefLocation, a.AuditStatus.ToString(), a.AuditCreatedBy, a.AuditCreatedOn,
+        a.AuditPlanFrom, a.AuditPlanTo, a.AuditCompleted?.ToString(), a.AuditFirmName,
         a.AuditProcess, a.Observations.Count);
 }

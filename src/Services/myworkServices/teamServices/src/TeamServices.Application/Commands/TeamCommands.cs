@@ -17,8 +17,8 @@ public record UpdateTeamEmployeeCommand(long Id, long TeamId, long EmployeeSysId
 public record DeleteTeamEmployeeCommand(long Id) : IRequest<Unit>;
 
 // Unit Map Commands
-public record AddTeamUnitMapCommand(long MapId, long TeamId, long UnitId, char GradeCategory, long? CadreId, long ModifiedBy) : IRequest<TeamUnitMapDto>;
+public record AddTeamUnitMapCommand(long MapId, long TeamId, long UnitId, string GradeCategory, long? CadreId, long ModifiedBy) : IRequest<TeamUnitMapDto>;
 
-public record UpdateTeamUnitMapCommand(long MapId, long TeamId, long UnitId, char GradeCategory, long? CadreId, long ModifiedBy) : IRequest<TeamUnitMapDto>;
+public record UpdateTeamUnitMapCommand(long MapId, long TeamId, long UnitId, string GradeCategory, long? CadreId, long ModifiedBy) : IRequest<TeamUnitMapDto>;
 
 public record DeleteTeamUnitMapCommand(long MapId) : IRequest<Unit>;

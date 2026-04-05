@@ -7,7 +7,6 @@ using BatchService.Application.DTOs;
 
 namespace BatchService.API.GraphQL;
 
-[MutationType]
 public sealed class BatchMutation
 {
     public async Task<BatchDto> CreateBatch(

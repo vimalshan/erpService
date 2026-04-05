@@ -8,7 +8,7 @@ public record CreateObservationCommand(
     long AuditId,
     string Title,
     string Description,
-    char Risk,
+    string Risk,
     long Auditee,
     long Esc1,
     long Esc2,

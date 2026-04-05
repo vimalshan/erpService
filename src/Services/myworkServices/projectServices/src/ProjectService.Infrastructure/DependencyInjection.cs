@@ -1,3 +1,4 @@
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +47,9 @@ public static class DependencyInjection
         // RabbitMQ Consumers
         services.AddHostedService<ProjectApprovalConsumer>();
         services.AddHostedService<ProjectStatusUpdateConsumer>();
+
+        // Register domain event handlers (INotificationHandler) in this assembly with MediatR
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
 
         return services;
     }

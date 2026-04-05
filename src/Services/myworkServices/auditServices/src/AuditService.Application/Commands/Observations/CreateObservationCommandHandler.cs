@@ -20,7 +20,7 @@ public sealed class CreateObservationCommandHandler : IRequestHandler<CreateObse
     {
         var observation = AuditObservation.Create(
             request.ObvId, request.AuditId, request.Title, request.Description,
-            request.Risk, request.Auditee, request.Esc1, request.Esc2,
+            request.Risk[0], request.Auditee, request.Esc1, request.Esc2,
             request.ManComments, request.OrgDueDate, request.Location,
             request.AuditorName, request.Remarks, request.CreatedBy);
 
@@ -31,9 +31,9 @@ public sealed class CreateObservationCommandHandler : IRequestHandler<CreateObse
     }
 
     private static ObservationDto ToDto(AuditObservation o) => new(
-        o.ObvId, o.ObvAuditId, o.ObvTitle, o.ObvDescription, o.ObvRisk,
+        o.ObvId, o.ObvAuditId, o.ObvTitle, o.ObvDescription, o.ObvRisk.ToString(),
         o.ObvAuditee, o.ObvEsc1, o.ObvEsc2, o.ObvManComments, o.ObvImplication,
-        o.ObvStatus, o.ObvOrgDueDate, o.ObvOrgRev1Date, o.ObvOrgRev2Date,
+        o.ObvStatus.ToString(), o.ObvOrgDueDate, o.ObvOrgRev1Date, o.ObvOrgRev2Date,
         o.ObvCreatedBy, o.ObvCreatedOn, o.ObvLocation, o.ObvAuditorName,
-        o.ObvRemarks, o.ObvAppStatus);
+        o.ObvRemarks, o.ObvAppStatus?.ToString());
 }

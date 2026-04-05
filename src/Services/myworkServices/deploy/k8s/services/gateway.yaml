@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+  namespace: erp
+data:
+  ASPNETCORE_ENVIRONMENT: Production
+  ASPNETCORE_URLS: http://+:80
+  ReverseProxy__Clusters__audit-cluster__Destinations__audit-primary__Address: http://audit-service/
+  ReverseProxy__Clusters__batch-cluster__Destinations__batch-primary__Address: http://batch-service/
+  ReverseProxy__Clusters__csa-cluster__Destinations__csa-primary__Address: http://csa-service/
+  ReverseProxy__Clusters__project-cluster__Destinations__project-primary__Address: http://project-service/
+  ReverseProxy__Clusters__risk-cluster__Destinations__risk-primary__Address: http://risk-service/
+  ReverseProxy__Clusters__team-cluster__Destinations__team-primary__Address: http://team-service/
+  ReverseProxy__Clusters__timesheet-cluster__Destinations__timesheet-primary__Address: http://timesheet-service/
+  ReverseProxy__Clusters__workorder-cluster__Destinations__workorder-primary__Address: http://workorder-service/
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-gateway
+  namespace: erp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: erp-gateway
+  template:
+    metadata:
+      labels:
+        app: erp-gateway
+    spec:
+      containers:
+        - name: erp-gateway
+          image: erp/erp-gateway:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: gateway-config
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-gateway
+  namespace: erp
+spec:
+  selector:
+    app: erp-gateway
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer

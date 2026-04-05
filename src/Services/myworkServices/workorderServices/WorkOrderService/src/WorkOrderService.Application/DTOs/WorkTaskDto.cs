@@ -9,7 +9,7 @@ public record WorkTaskDto
     public int EstimatedHours { get; init; }
     public int? ActualHours { get; init; }
     public string TaskStatus { get; init; } = string.Empty;
-    public char TaskStatusCode { get; init; }
+    public string TaskStatusCode { get; init; } = string.Empty;
     public string? CompletionRemarks { get; init; }
     public long? CompletedBy { get; init; }
     public DateTime? CompletedOn { get; init; }

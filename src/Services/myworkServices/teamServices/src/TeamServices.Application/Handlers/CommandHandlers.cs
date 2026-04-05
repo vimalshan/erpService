@@ -157,7 +157,7 @@ public class AddTeamUnitMapCommandHandler : IRequestHandler<Commands.AddTeamUnit
     public async Task<TeamUnitMapDto> Handle(Commands.AddTeamUnitMapCommand request, CancellationToken cancellationToken)
     {
         var unitMap = new TeamUnitMap(request.MapId, request.TeamId, request.UnitId,
-            request.GradeCategory, request.CadreId, request.ModifiedBy);
+            request.GradeCategory[0], request.CadreId, request.ModifiedBy);
         await _repo.AddAsync(unitMap, cancellationToken);
         await _uow.SaveChangesAsync(cancellationToken);
         return _mapper.Map<TeamUnitMapDto>(unitMap);
@@ -182,7 +182,7 @@ public class UpdateTeamUnitMapCommandHandler : IRequestHandler<Commands.UpdateTe
         var unitMap = await _repo.GetByIdAsync(request.MapId, cancellationToken)
             ?? throw new KeyNotFoundException($"TeamUnitMap {request.MapId} not found.");
 
-        unitMap.UpdateGradeCategory(request.GradeCategory, request.ModifiedBy);
+        unitMap.UpdateGradeCategory(request.GradeCategory[0], request.ModifiedBy);
         unitMap.UpdateCadre(request.CadreId, request.ModifiedBy);
         await _repo.UpdateAsync(unitMap, cancellationToken);
         await _uow.SaveChangesAsync(cancellationToken);

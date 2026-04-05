@@ -8,7 +8,7 @@ public record WorkOrderDto
     public DateTime DueDate { get; init; }
     public long AssignedTo { get; init; }
     public string WorkOrderStatus { get; init; } = string.Empty;
-    public char WorkOrderStatusCode { get; init; }
+    public string WorkOrderStatusCode { get; init; } = string.Empty;
     public int CompletionPercentage { get; init; }
     public long CreatedBy { get; init; }
     public DateTime CreatedOn { get; init; }

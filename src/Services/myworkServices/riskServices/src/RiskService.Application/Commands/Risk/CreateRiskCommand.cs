@@ -5,7 +5,7 @@ namespace RiskService.Application.Commands.Risk;
 
 public record CreateRiskCommand : IRequest<long>
 {
-    public char ApplicableTo { get; init; }
+    public string ApplicableTo { get; init; } = default!;
     public long OrganizationId { get; init; }
     public long BusinessId { get; init; }
     public long DivisionId { get; init; }

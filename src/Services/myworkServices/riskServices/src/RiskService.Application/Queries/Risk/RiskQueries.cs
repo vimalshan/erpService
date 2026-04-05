@@ -17,7 +17,7 @@ public class GetRiskByIdQueryHandler(IRiskRepository repository)
         return new RiskDto
         {
             Id = risk.Id,
-            ApplicableTo = risk.ApplicableTo,
+            ApplicableTo = risk.ApplicableTo.ToString(),
             OrganizationId = risk.OrganizationId,
             BusinessId = risk.BusinessId,
             DivisionId = risk.DivisionId,
@@ -34,9 +34,9 @@ public class GetRiskByIdQueryHandler(IRiskRepository repository)
             ResidualProbabilityId = risk.ResidualProbabilityId,
             ResidualRatingId = risk.ResidualRatingId,
             ResponseId = risk.ResponseId,
-            MitigationFlag = risk.MitigationFlag,
+            MitigationFlag = risk.MitigationFlag.ToString(),
             OwnerId = risk.OwnerId,
-            ApprovalStatus = risk.ApprovalStatus,
+            ApprovalStatus = risk.ApprovalStatus.ToString(),
             CancelDate = risk.CancelDate,
             CancelReason = risk.CancelReason,
             CreatedBy = risk.CreatedBy,
@@ -56,11 +56,11 @@ public class GetRiskByIdQueryHandler(IRiskRepository repository)
                 DueDate = m.DueDate,
                 OwnerId = m.OwnerId,
                 ReviewerId = m.ReviewerId,
-                Status = m.Status,
+                Status = m.Status.ToString(),
                 ProbabilityReduction = m.ProbabilityReduction,
                 ImpactReduction = m.ImpactReduction,
                 Attachment = m.Attachment,
-                Actions = m.Actions.Select(a => new MitigationActionDto(a.Id, a.MitigationId, a.DueDate, a.Status, a.ApprovalStatus, a.Comments, a.CompletionDate)).ToList()
+                Actions = m.Actions.Select(a => new MitigationActionDto(a.Id, a.MitigationId, a.DueDate, a.Status.ToString(), a.ApprovalStatus.ToString(), a.Comments, a.CompletionDate)).ToList()
             }).ToList()
         };
     }
@@ -77,15 +77,15 @@ public class GetAllRisksQueryHandler(IRiskRepository repository)
         return risks.Select(risk => new RiskDto
         {
             Id = risk.Id,
-            ApplicableTo = risk.ApplicableTo,
+            ApplicableTo = risk.ApplicableTo.ToString(),
             OrganizationId = risk.OrganizationId,
             BusinessId = risk.BusinessId,
             EventTitle = risk.EventTitle,
             Description = risk.Description,
             TypeId = risk.TypeId,
             TypeName = risk.Type?.Name,
-            ApprovalStatus = risk.ApprovalStatus,
-            MitigationFlag = risk.MitigationFlag,
+            ApprovalStatus = risk.ApprovalStatus.ToString(),
+            MitigationFlag = risk.MitigationFlag.ToString(),
             OwnerId = risk.OwnerId,
             CreatedBy = risk.CreatedBy,
             CreatedOn = risk.CreatedOn

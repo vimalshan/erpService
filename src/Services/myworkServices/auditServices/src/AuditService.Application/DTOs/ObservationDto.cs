@@ -5,13 +5,13 @@ public record ObservationDto(
     long ObvAuditId,
     string ObvTitle,
     string ObvDescription,
-    char ObvRisk,
+    string ObvRisk,
     long ObvAuditee,
     long ObvEsc1,
     long ObvEsc2,
     string ObvManComments,
     string? ObvImplication,
-    char ObvStatus,
+    string ObvStatus,
     DateTime ObvOrgDueDate,
     DateTime? ObvOrgRev1Date,
     DateTime? ObvOrgRev2Date,
@@ -20,7 +20,7 @@ public record ObservationDto(
     string ObvLocation,
     string ObvAuditorName,
     string ObvRemarks,
-    char? ObvAppStatus
+    string? ObvAppStatus
 );
 
 public record CreateObservationRequest(
@@ -28,7 +28,7 @@ public record CreateObservationRequest(
     long AuditId,
     string Title,
     string Description,
-    char Risk,
+    string Risk,
     long Auditee,
     long Esc1,
     long Esc2,
@@ -41,6 +41,6 @@ public record CreateObservationRequest(
 );
 
 public record UpdateObservationStatusRequest(
-    char NewStatus,
+    string NewStatus,
     long ModifiedBy
 );

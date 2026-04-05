@@ -4,15 +4,15 @@ public record ControlDto(
     long ControlId,
     string Title,
     string? Description,
-    char? ControlType,
-    char? ControlMethod,
+    string? ControlType,
+    string? ControlMethod,
     string? Risk,
-    char? Priority,
+    string? Priority,
     long? ProcessId,
     long? SubProcessId,
-    char? Periodicity,
-    char? EvidenceFlag,
-    char? ApproverFlag,
+    string? Periodicity,
+    string? EvidenceFlag,
+    string? ApproverFlag,
     long? CreatedBy,
     DateTime? CreatedOn
 );
@@ -20,30 +20,30 @@ public record ControlDto(
 public record CreateControlDto(
     string Title,
     string? Description,
-    char? ControlType,
-    char? ControlMethod,
+    string? ControlType,
+    string? ControlMethod,
     string? Risk,
-    char? Priority,
+    string? Priority,
     long? ProcessId,
     long? SubProcessId,
-    char? Periodicity,
-    char? EvidenceFlag,
-    char? ApproverFlag
+    string? Periodicity,
+    string? EvidenceFlag,
+    string? ApproverFlag
 );
 
 public record UpdateControlDto(
     long ControlId,
     string Title,
     string? Description,
-    char? ControlType,
-    char? ControlMethod,
+    string? ControlType,
+    string? ControlMethod,
     string? Risk,
-    char? Priority,
+    string? Priority,
     long? ProcessId,
     long? SubProcessId,
-    char? Periodicity,
-    char? EvidenceFlag,
-    char? ApproverFlag
+    string? Periodicity,
+    string? EvidenceFlag,
+    string? ApproverFlag
 );
 
 public record EvidenceDto(
@@ -85,9 +85,9 @@ public record SurveyQuestionDto(
     long ApproverId,
     DateTime OriginalDueDate,
     DateTime DueDate,
-    char? AssessmentFlag,
-    char? ApprovalFlag,
-    char? RemedialFlag
+    string? AssessmentFlag,
+    string? ApprovalFlag,
+    string? RemedialFlag
 );
 
 public record SurveyFeedbackDto(

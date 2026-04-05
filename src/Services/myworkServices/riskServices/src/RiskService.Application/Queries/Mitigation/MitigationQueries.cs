@@ -21,12 +21,12 @@ public class GetMitigationsByRiskIdQueryHandler(IMitigationRepository repository
             DueDate = m.DueDate,
             OwnerId = m.OwnerId,
             ReviewerId = m.ReviewerId,
-            Status = m.Status,
+            Status = m.Status.ToString(),
             ProbabilityReduction = m.ProbabilityReduction,
             ImpactReduction = m.ImpactReduction,
             Attachment = m.Attachment,
             Actions = m.Actions.Select(a => new MitigationActionDto(
-                a.Id, a.MitigationId, a.DueDate, a.Status, a.ApprovalStatus, a.Comments, a.CompletionDate
+                a.Id, a.MitigationId, a.DueDate, a.Status.ToString(), a.ApprovalStatus.ToString(), a.Comments, a.CompletionDate
             )).ToList()
         }).ToList();
     }

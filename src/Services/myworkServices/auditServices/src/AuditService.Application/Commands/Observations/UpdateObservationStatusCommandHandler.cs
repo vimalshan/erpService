@@ -19,7 +19,7 @@ public sealed class UpdateObservationStatusCommandHandler : IRequestHandler<Upda
         var observation = await _observationRepository.GetByIdAsync(request.ObvId, cancellationToken);
         if (observation is null) return false;
 
-        observation.UpdateStatus(request.NewStatus, request.ModifiedBy);
+        observation.UpdateStatus(request.NewStatus[0], request.ModifiedBy);
         await _observationRepository.UpdateAsync(observation, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return true;

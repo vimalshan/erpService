@@ -29,7 +29,7 @@ public class TeamMutation
     }
 
     public async Task<TeamUnitMapDto> AddTeamUnitMap([Service] IMediator mediator,
-        long mapId, long teamId, long unitId, char gradeCategory, long? cadreId, long modifiedBy)
+        long mapId, long teamId, long unitId, string gradeCategory, long? cadreId, long modifiedBy)
     {
         return await mediator.Send(new AddTeamUnitMapCommand(mapId, teamId, unitId, gradeCategory, cadreId, modifiedBy));
     }

@@ -1,0 +1,255 @@
+{
+  // ─────────────────────────────────────────────────────────────────────────────
+  //  ocelot.json  –  Reference configuration for Ocelot API Gateway
+  //
+  //  This file documents how the same routing/resilience rules would be expressed
+  //  using Ocelot (https://ocelot.readthedocs.io).
+  //
+  //  The running gateway uses YARP (configured via appsettings.json → ReverseProxy).
+  //  To switch to Ocelot instead:
+  //    1. Add PackageReference "Ocelot" to ERPGateway.csproj
+  //    2. In Program.cs call  builder.Configuration.AddJsonFile("ocelot.json")
+  //                      and  app.UseOcelot().GetAwaiter().GetResult()
+  //    3. Remove app.MapReverseProxy() and the YARP DI registration
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  "Routes": [
+
+    // ── Audit Service  (port 5037) ─────────────────────────────────────────────
+    {
+      "UpstreamPathTemplate":     "/audit/{everything}",
+      "UpstreamHttpMethod":       [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate":   "/{everything}",
+      "DownstreamScheme":         "http",
+      "DownstreamHostAndPorts":   [ { "Host": "localhost", "Port": 5037 } ],
+      "Key": "audit",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKeys": [ "Bearer" ]
+      },
+      "RateLimitOptions": {
+        "ClientWhitelist":    [],
+        "EnableRateLimiting": true,
+        "Period":             "1m",
+        "PeriodTimespan":     1,
+        "Limit":              100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak":                 30000,
+        "TimeoutValue":                    30000
+      },
+      "FileCacheOptions":    { "TtlSeconds": 30, "Region": "audit" },
+      "AddHeadersToRequest": { "X-Forwarded-For": "{RemoteIpAddress}" },
+      "LoadBalancerOptions": { "Type": "RoundRobin" }
+    },
+
+    // ── Batch Service  (port 5111) ─────────────────────────────────────────────
+    {
+      "UpstreamPathTemplate":     "/batch/{everything}",
+      "UpstreamHttpMethod":       [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate":   "/{everything}",
+      "DownstreamScheme":         "http",
+      "DownstreamHostAndPorts":   [ { "Host": "localhost", "Port": 5111 } ],
+      "Key": "batch",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKeys": [ "Bearer" ]
+      },
+      "RateLimitOptions": {
+        "ClientWhitelist":    [],
+        "EnableRateLimiting": true,
+        "Period":             "1m",
+        "PeriodTimespan":     1,
+        "Limit":              100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak":                 30000,
+        "TimeoutValue":                    30000
+      },
+      "FileCacheOptions":    { "TtlSeconds": 30, "Region": "batch" },
+      "AddHeadersToRequest": { "X-Forwarded-For": "{RemoteIpAddress}" },
+      "LoadBalancerOptions": { "Type": "RoundRobin" }
+    },
+
+    // ── CSA Service  (port 5035) ───────────────────────────────────────────────
+    {
+      "UpstreamPathTemplate":     "/csa/{everything}",
+      "UpstreamHttpMethod":       [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate":   "/{everything}",
+      "DownstreamScheme":         "http",
+      "DownstreamHostAndPorts":   [ { "Host": "localhost", "Port": 5035 } ],
+      "Key": "csa",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKeys": [ "Bearer" ]
+      },
+      "RateLimitOptions": {
+        "ClientWhitelist":    [],
+        "EnableRateLimiting": true,
+        "Period":             "1m",
+        "PeriodTimespan":     1,
+        "Limit":              100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak":                 30000,
+        "TimeoutValue":                    30000
+      },
+      "FileCacheOptions":    { "TtlSeconds": 30, "Region": "csa" },
+      "AddHeadersToRequest": { "X-Forwarded-For": "{RemoteIpAddress}" },
+      "LoadBalancerOptions": { "Type": "RoundRobin" }
+    },
+
+    // ── Project Service  (port 5290) ───────────────────────────────────────────
+    {
+      "UpstreamPathTemplate":     "/project/{everything}",
+      "UpstreamHttpMethod":       [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate":   "/{everything}",
+      "DownstreamScheme":         "http",
+      "DownstreamHostAndPorts":   [ { "Host": "localhost", "Port": 5290 } ],
+      "Key": "project",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKeys": [ "Bearer" ]
+      },
+      "RateLimitOptions": {
+        "ClientWhitelist":    [],
+        "EnableRateLimiting": true,
+        "Period":             "1m",
+        "PeriodTimespan":     1,
+        "Limit":              100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak":                 30000,
+        "TimeoutValue":                    30000
+      },
+      "FileCacheOptions":    { "TtlSeconds": 30, "Region": "project" },
+      "AddHeadersToRequest": { "X-Forwarded-For": "{RemoteIpAddress}" },
+      "LoadBalancerOptions": { "Type": "RoundRobin" }
+    },
+
+    // ── Risk Service  (port 5033) ──────────────────────────────────────────────
+    {
+      "UpstreamPathTemplate":     "/risk/{everything}",
+      "UpstreamHttpMethod":       [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate":   "/{everything}",
+      "DownstreamScheme":         "http",
+      "DownstreamHostAndPorts":   [ { "Host": "localhost", "Port": 5033 } ],
+      "Key": "risk",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKeys": [ "Bearer" ]
+      },
+      "RateLimitOptions": {
+        "ClientWhitelist":    [],
+        "EnableRateLimiting": true,
+        "Period":             "1m",
+        "PeriodTimespan":     1,
+        "Limit":              100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak":                 30000,
+        "TimeoutValue":                    30000
+      },
+      "FileCacheOptions":    { "TtlSeconds": 30, "Region": "risk" },
+      "AddHeadersToRequest": { "X-Forwarded-For": "{RemoteIpAddress}" },
+      "LoadBalancerOptions": { "Type": "RoundRobin" }
+    },
+
+    // ── Team Service  (port 5183) ──────────────────────────────────────────────
+    {
+      "UpstreamPathTemplate":     "/team/{everything}",
+      "UpstreamHttpMethod":       [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate":   "/{everything}",
+      "DownstreamScheme":         "http",
+      "DownstreamHostAndPorts":   [ { "Host": "localhost", "Port": 5183 } ],
+      "Key": "team",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKeys": [ "Bearer" ]
+      },
+      "RateLimitOptions": {
+        "ClientWhitelist":    [],
+        "EnableRateLimiting": true,
+        "Period":             "1m",
+        "PeriodTimespan":     1,
+        "Limit":              100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak":                 30000,
+        "TimeoutValue":                    30000
+      },
+      "FileCacheOptions":    { "TtlSeconds": 30, "Region": "team" },
+      "AddHeadersToRequest": { "X-Forwarded-For": "{RemoteIpAddress}" },
+      "LoadBalancerOptions": { "Type": "RoundRobin" }
+    },
+
+    // ── TimeSheet Service  (port 5188) ─────────────────────────────────────────
+    {
+      "UpstreamPathTemplate":     "/timesheet/{everything}",
+      "UpstreamHttpMethod":       [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate":   "/{everything}",
+      "DownstreamScheme":         "http",
+      "DownstreamHostAndPorts":   [ { "Host": "localhost", "Port": 5188 } ],
+      "Key": "timesheet",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKeys": [ "Bearer" ]
+      },
+      "RateLimitOptions": {
+        "ClientWhitelist":    [],
+        "EnableRateLimiting": true,
+        "Period":             "1m",
+        "PeriodTimespan":     1,
+        "Limit":              100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak":                 30000,
+        "TimeoutValue":                    30000
+      },
+      "FileCacheOptions":    { "TtlSeconds": 30, "Region": "timesheet" },
+      "AddHeadersToRequest": { "X-Forwarded-For": "{RemoteIpAddress}" },
+      "LoadBalancerOptions": { "Type": "RoundRobin" }
+    },
+
+    // ── WorkOrder Service  (port 5138) ─────────────────────────────────────────
+    {
+      "UpstreamPathTemplate":     "/workorder/{everything}",
+      "UpstreamHttpMethod":       [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate":   "/{everything}",
+      "DownstreamScheme":         "http",
+      "DownstreamHostAndPorts":   [ { "Host": "localhost", "Port": 5138 } ],
+      "Key": "workorder",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKeys": [ "Bearer" ]
+      },
+      "RateLimitOptions": {
+        "ClientWhitelist":    [],
+        "EnableRateLimiting": true,
+        "Period":             "1m",
+        "PeriodTimespan":     1,
+        "Limit":              100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak":                 30000,
+        "TimeoutValue":                    30000
+      },
+      "FileCacheOptions":    { "TtlSeconds": 30, "Region": "workorder" },
+      "AddHeadersToRequest": { "X-Forwarded-For": "{RemoteIpAddress}" },
+      "LoadBalancerOptions": { "Type": "RoundRobin" }
+    }
+  ],
+
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5000",
+    "RateLimitOptions": {
+      "DisableRateLimitHeaders": false,
+      "QuotaExceededMessage":    "Rate limit exceeded. Please slow down.",
+      "HttpStatusCode":          429,
+      "ClientIdHeader":          "X-Client-ID"
+    },
+    "ServiceDiscoveryProvider": {
+      "Type": "Internal"
+    }
+  }
+}

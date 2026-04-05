@@ -18,6 +18,6 @@ public class MappingProfile : Profile
         CreateMap<TeamUnitMap, DTOs.TeamUnitMapDto>()
             .ForMember(d => d.MapId, opt => opt.MapFrom(s => s.Id))
             .ForMember(d => d.UnitId, opt => opt.MapFrom(s => s.UnitId))
-            .ForMember(d => d.GradeCategory, opt => opt.MapFrom(s => s.GradeCategory));
+            .ForMember(d => d.GradeCategory, opt => opt.MapFrom(s => s.GradeCategory.ToString()));
     }
 }

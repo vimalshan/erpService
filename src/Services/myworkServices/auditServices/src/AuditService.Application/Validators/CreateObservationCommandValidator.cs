@@ -5,7 +5,7 @@ namespace AuditService.Application.Validators;
 
 public class CreateObservationCommandValidator : AbstractValidator<CreateObservationCommand>
 {
-    private static readonly char[] ValidRisks = { 'A', 'B', 'C', 'D' };
+    private static readonly string[] ValidRisks = { "A", "B", "C", "D" };
 
     public CreateObservationCommandValidator()
     {

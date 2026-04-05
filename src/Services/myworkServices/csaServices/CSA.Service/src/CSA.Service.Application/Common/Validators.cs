@@ -12,11 +12,11 @@ public class CreateControlCommandValidator : AbstractValidator<CreateControlComm
         RuleFor(x => x.Dto.Title).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Dto.Description).MaximumLength(2000);
         RuleFor(x => x.Dto.Risk).MaximumLength(2000);
-        RuleFor(x => x.Dto.ControlType).Must(v => v is null or 'P' or 'D')
+        RuleFor(x => x.Dto.ControlType).Must(v => v is null or "P" or "D")
             .WithMessage("ControlType must be P (Preventative) or D (Detective).");
-        RuleFor(x => x.Dto.Priority).Must(v => v is null or 'H' or 'M' or 'L')
+        RuleFor(x => x.Dto.Priority).Must(v => v is null or "H" or "M" or "L")
             .WithMessage("Priority must be H, M, or L.");
-        RuleFor(x => x.Dto.Periodicity).Must(v => v is null or 'M' or 'Q' or 'A')
+        RuleFor(x => x.Dto.Periodicity).Must(v => v is null or "M" or "Q" or "A")
             .WithMessage("Periodicity must be M, Q, or A.");
     }
 }

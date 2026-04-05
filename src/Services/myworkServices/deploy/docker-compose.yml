@@ -1,0 +1,356 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ERP Microservices – docker-compose.yml
+# Copy .env.example to .env and fill in passwords before running.
+# Usage: docker compose up --build
+# ─────────────────────────────────────────────────────────────────────────────
+
+x-svc-defaults: &svc-defaults
+  restart: unless-stopped
+  networks:
+    - erp-net
+
+x-db-env: &db-env
+  ConnectionStrings__DefaultConnection: >-
+    Server=sqlserver;Database=MYWORKDB;User Id=sa;Password=${DB_SA_PASSWORD};
+    TrustServerCertificate=True;MultipleActiveResultSets=True;Command Timeout=30
+
+x-rmq-hostname-env: &rmq-hostname-env
+  RabbitMQ__HostName: rabbitmq
+  RabbitMQ__UserName: ${RABBITMQ_USER:-guest}
+  RabbitMQ__Password: ${RABBITMQ_PASS:-guest}
+  RabbitMQ__Port: "5672"
+
+x-rmq-host-env: &rmq-host-env
+  RabbitMQ__Host: rabbitmq
+  RabbitMQ__Port: "5672"
+  RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+  RabbitMQ__Password: ${RABBITMQ_PASS:-guest}
+  RabbitMQ__VirtualHost: "/"
+
+services:
+
+  # ── Infrastructure ──────────────────────────────────────────────────────────
+
+  sqlserver:
+    <<: *svc-defaults
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: ${DB_SA_PASSWORD:-YourStrong@Passw0rd}
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "${DB_SA_PASSWORD:-YourStrong@Passw0rd}" -C -Q "SELECT 1" || exit 1
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  sqlserver-init:
+    <<: *svc-defaults
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ../MYWORKDB.sql:/scripts/MYWORKDB.sql:ro
+      - ../MYWORKDB-procedures.sql:/scripts/MYWORKDB-procedures.sql:ro
+      - ./db/init-db.sql:/scripts/init-db.sql:ro
+    entrypoint: >
+      bash -c "
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P '${DB_SA_PASSWORD:-YourStrong@Passw0rd}' -C -i /scripts/init-db.sql &&
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P '${DB_SA_PASSWORD:-YourStrong@Passw0rd}' -C -i /scripts/MYWORKDB.sql &&
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P '${DB_SA_PASSWORD:-YourStrong@Passw0rd}' -C -i /scripts/MYWORKDB-procedures.sql
+      "
+    restart: "no"
+
+  rabbitmq:
+    <<: *svc-defaults
+    image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ── Microservices ───────────────────────────────────────────────────────────
+
+  audit-service:
+    <<: *svc-defaults
+    build:
+      context: ../auditServices
+      dockerfile: Dockerfile
+    image: erp/audit-service:${IMAGE_TAG:-latest}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      <<: *db-env
+      <<: *rmq-host-env
+      JwtSettings__SecretKey: "AuditService-SuperSecret-Key-2026-ERP-Microservice-Min32Chars"
+      JwtSettings__Issuer: AuditService
+      JwtSettings__Audience: AuditServiceClients
+      AzureBlobStorage__ConnectionString: ${AZURE_BLOB_CONNECTION_STRING:-}
+    ports:
+      - "5037:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  batch-service:
+    <<: *svc-defaults
+    build:
+      context: ../batchServices
+      dockerfile: Dockerfile
+    image: erp/batch-service:${IMAGE_TAG:-latest}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      <<: *db-env
+      <<: *rmq-host-env
+      Jwt__Key: "BatchService_SuperSecret_JWT_Key_2026_Min32Chars!"
+      Jwt__Issuer: BatchService
+      Jwt__Audience: BatchServiceClients
+      RabbitMQ__Exchange: batch.events
+      RabbitMQ__ConsumerQueue: batch.consumer.queue
+      AzureStorage__ConnectionString: ${AZURE_BLOB_CONNECTION_STRING:-}
+    ports:
+      - "5111:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  csa-service:
+    <<: *svc-defaults
+    build:
+      context: ../csaServices/CSA.Service
+      dockerfile: Dockerfile
+    image: erp/csa-service:${IMAGE_TAG:-latest}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__CsaDatabase: >-
+        Server=sqlserver;Database=MYWORKDB;User Id=sa;Password=${DB_SA_PASSWORD};
+        TrustServerCertificate=True;MultipleActiveResultSets=True;Application Name=CSA.Service
+      <<: *rmq-hostname-env
+      Jwt__Key: "CSA-Service-Super-Secret-Key-Min-32-Chars!!"
+      Jwt__Issuer: CSA.Service.API
+      Jwt__Audience: CSA.Service.Clients
+      AzureBlobStorage__ConnectionString: ${AZURE_BLOB_CONNECTION_STRING:-}
+    ports:
+      - "5035:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  project-service:
+    <<: *svc-defaults
+    build:
+      context: ../projectServices
+      dockerfile: Dockerfile
+    image: erp/project-service:${IMAGE_TAG:-latest}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      <<: *db-env
+      <<: *rmq-hostname-env
+      Jwt__Key: "YourSuperSecretKeyForJWT_MinLength32Chars!!"
+      Jwt__Issuer: ProjectService.API
+      Jwt__Audience: ProjectService.Clients
+      ConnectionStrings__AzureBlobStorage: ${AZURE_BLOB_CONNECTION_STRING:-}
+    ports:
+      - "5290:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  risk-service:
+    <<: *svc-defaults
+    build:
+      context: ../riskServices
+      dockerfile: Dockerfile
+    image: erp/risk-service:${IMAGE_TAG:-latest}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      <<: *db-env
+      <<: *rmq-hostname-env
+      Jwt__Key: "RiskService-SuperSecret-JWT-Key-Min32Chars!!"
+      Jwt__Issuer: RiskService.API
+      Jwt__Audience: RiskService.Clients
+      AzureBlobStorage__ConnectionString: ${AZURE_BLOB_CONNECTION_STRING:-}
+    ports:
+      - "5033:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  team-service:
+    <<: *svc-defaults
+    build:
+      context: ../teamServices
+      dockerfile: Dockerfile
+    image: erp/team-service:${IMAGE_TAG:-latest}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      <<: *db-env
+      <<: *rmq-hostname-env
+      Jwt__Key: "TeamServicesDefaultSecretKey_ChangeInProduction_32chars!"
+      Jwt__Issuer: TeamServices
+      Jwt__Audience: TeamServicesClient
+      AzureBlobStorage__ConnectionString: ${AZURE_BLOB_CONNECTION_STRING:-}
+    ports:
+      - "5183:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  timesheet-service:
+    <<: *svc-defaults
+    build:
+      context: ../timeSheetServices
+      dockerfile: Dockerfile
+    image: erp/timesheet-service:${IMAGE_TAG:-latest}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      <<: *db-env
+      <<: *rmq-hostname-env
+      JwtSettings__Secret: "YourSuperSecretKeyThatIsAtLeast32CharactersLong!@#$"
+      JwtSettings__Issuer: TimeSheetService
+      JwtSettings__Audience: TimeSheetServiceClients
+      AzureBlobStorage__ConnectionString: ${AZURE_BLOB_CONNECTION_STRING:-}
+    ports:
+      - "5188:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  workorder-service:
+    <<: *svc-defaults
+    build:
+      context: ../workorderServices/WorkOrderService
+      dockerfile: Dockerfile
+    image: erp/workorder-service:${IMAGE_TAG:-latest}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      <<: *db-env
+      <<: *rmq-hostname-env
+      JwtSettings__Secret: "YourSuperSecretKeyThatIsAtLeast32CharactersLong!@#$"
+      JwtSettings__Issuer: WorkOrderService
+      JwtSettings__Audience: WorkOrderServiceClients
+      AzureBlobStorage__ConnectionString: ${AZURE_BLOB_CONNECTION_STRING:-}
+    ports:
+      - "5138:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # ── API Gateway ─────────────────────────────────────────────────────────────
+
+  erp-gateway:
+    <<: *svc-defaults
+    build:
+      context: ../Gateway
+      dockerfile: Dockerfile
+    image: erp/erp-gateway:${IMAGE_TAG:-latest}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ReverseProxy__Clusters__audit-cluster__Destinations__audit-primary__Address: http://audit-service/
+      ReverseProxy__Clusters__batch-cluster__Destinations__batch-primary__Address: http://batch-service/
+      ReverseProxy__Clusters__csa-cluster__Destinations__csa-primary__Address: http://csa-service/
+      ReverseProxy__Clusters__project-cluster__Destinations__project-primary__Address: http://project-service/
+      ReverseProxy__Clusters__risk-cluster__Destinations__risk-primary__Address: http://risk-service/
+      ReverseProxy__Clusters__team-cluster__Destinations__team-primary__Address: http://team-service/
+      ReverseProxy__Clusters__timesheet-cluster__Destinations__timesheet-primary__Address: http://timesheet-service/
+      ReverseProxy__Clusters__workorder-cluster__Destinations__workorder-primary__Address: http://workorder-service/
+    ports:
+      - "5000:80"
+    depends_on:
+      - audit-service
+      - batch-service
+      - csa-service
+      - project-service
+      - risk-service
+      - team-service
+      - timesheet-service
+      - workorder-service
+
+volumes:
+  sqlserver_data:
+  rabbitmq_data:
+
+networks:
+  erp-net:
+    driver: bridge

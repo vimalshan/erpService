@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: batch-config
+  namespace: erp
+data:
+  ASPNETCORE_ENVIRONMENT: Production
+  ASPNETCORE_URLS: http://+:80
+  RabbitMQ__Host: rabbitmq
+  RabbitMQ__Port: "5672"
+  RabbitMQ__VirtualHost: "/"
+  RabbitMQ__Exchange: batch.events
+  RabbitMQ__ConsumerQueue: batch.consumer.queue
+  Jwt__Issuer: BatchService
+  Jwt__Audience: BatchServiceClients
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: batch-service
+  namespace: erp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: batch-service
+  template:
+    metadata:
+      labels:
+        app: batch-service
+    spec:
+      containers:
+        - name: batch-service
+          image: erp/batch-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: batch-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=MYWORKDB;User Id=sa;Password=$(DB_SA_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;Application Name=BatchService"
+            - name: DB_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: db-sa-password
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: rabbitmq-pass
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: jwt-key-batch
+            - name: AzureStorage__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: azure-blob-connection-string
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: batch-service
+  namespace: erp
+spec:
+  selector:
+    app: batch-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP

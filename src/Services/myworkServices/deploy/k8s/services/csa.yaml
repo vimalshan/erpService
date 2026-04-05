@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: csa-config
+  namespace: erp
+data:
+  ASPNETCORE_ENVIRONMENT: Production
+  ASPNETCORE_URLS: http://+:80
+  RabbitMQ__HostName: rabbitmq
+  RabbitMQ__Port: "5672"
+  Jwt__Issuer: CSA.Service.API
+  Jwt__Audience: CSA.Service.Clients
+  AzureBlobStorage__EvidenceContainer: csa-evidence
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: csa-service
+  namespace: erp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: csa-service
+  template:
+    metadata:
+      labels:
+        app: csa-service
+    spec:
+      containers:
+        - name: csa-service
+          image: erp/csa-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: csa-config
+          env:
+            - name: ConnectionStrings__CsaDatabase
+              value: "Server=sqlserver;Database=MYWORKDB;User Id=sa;Password=$(DB_SA_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=True;Application Name=CSA.Service"
+            - name: DB_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: db-sa-password
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: rabbitmq-pass
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: jwt-key-csa
+            - name: AzureBlobStorage__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: azure-blob-connection-string
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: csa-service
+  namespace: erp
+spec:
+  selector:
+    app: csa-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
