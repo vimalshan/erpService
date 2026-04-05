@@ -1,0 +1,205 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Build & Push Mainsparsh Service Docker Images to GitHub Container Registry (GHCR)
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# Triggers:
+#   - Push to main (only when relevant service files change)
+#   - Manual dispatch (workflow_dispatch) to build all or specific services
+#
+# Prerequisites (GitHub repo settings):
+#   No secrets needed — uses the built-in GITHUB_TOKEN for GHCR authentication.
+#   Ensure "Read and write permissions" is enabled under:
+#     Settings → Actions → General → Workflow permissions
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Build & Push Mainsparsh Services
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/Services/mainsparshServices/**'
+
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to build (or "all")'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - api-gateway
+          - approval-service
+          - booking-service
+          - community-service
+          - compensation-service
+          - groupmanagement-service
+          - location-service
+          - meeting-service
+          - proxy-service
+          - reimbursement-service
+          - stipend-service
+          - timesheet-service
+          - transaction-service
+          - usermanagement-service
+          - websitecontent-service
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/erp
+
+jobs:
+  # ── Detect which services changed ────────────────────────────────────────
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine changed services
+        id: set-matrix
+        run: |
+          # Service registry: name → context + dockerfile
+          declare -A SVC_CONTEXT SVC_DOCKERFILE
+          SVC_CONTEXT[api-gateway]="src/Services/mainsparshServices/apiGateway";                         SVC_DOCKERFILE[api-gateway]="Dockerfile"
+          SVC_CONTEXT[approval-service]="src/Services/mainsparshServices/approvalServices";               SVC_DOCKERFILE[approval-service]="Dockerfile"
+          SVC_CONTEXT[booking-service]="src/Services/mainsparshServices/bookingServices";                 SVC_DOCKERFILE[booking-service]="Dockerfile"
+          SVC_CONTEXT[community-service]="src/Services/mainsparshServices/communityServices";             SVC_DOCKERFILE[community-service]="Dockerfile"
+          SVC_CONTEXT[compensation-service]="src/Services/mainsparshServices/compensationServices";       SVC_DOCKERFILE[compensation-service]="Dockerfile"
+          SVC_CONTEXT[groupmanagement-service]="src/Services/mainsparshServices/groupmanagementServices"; SVC_DOCKERFILE[groupmanagement-service]="Dockerfile"
+          SVC_CONTEXT[location-service]="src/Services/mainsparshServices/locationServices";               SVC_DOCKERFILE[location-service]="Dockerfile"
+          SVC_CONTEXT[meeting-service]="src/Services/mainsparshServices/meetingServices";                 SVC_DOCKERFILE[meeting-service]="Dockerfile"
+          SVC_CONTEXT[proxy-service]="src/Services/mainsparshServices/proxyServices";                     SVC_DOCKERFILE[proxy-service]="Dockerfile"
+          SVC_CONTEXT[reimbursement-service]="src/Services/mainsparshServices/reimbursementServices";     SVC_DOCKERFILE[reimbursement-service]="Dockerfile"
+          SVC_CONTEXT[stipend-service]="src/Services/mainsparshServices/stipendservices";                 SVC_DOCKERFILE[stipend-service]="Dockerfile"
+          SVC_CONTEXT[timesheet-service]="src/Services/mainsparshServices/timesheetServices";             SVC_DOCKERFILE[timesheet-service]="Dockerfile"
+          SVC_CONTEXT[transaction-service]="src/Services/mainsparshServices/transactionServices";         SVC_DOCKERFILE[transaction-service]="Dockerfile"
+          SVC_CONTEXT[usermanagement-service]="src/Services/mainsparshServices/usermanagementServices";   SVC_DOCKERFILE[usermanagement-service]="Dockerfile"
+          SVC_CONTEXT[websitecontent-service]="src/Services/mainsparshServices/websitecontentServices";   SVC_DOCKERFILE[websitecontent-service]="Dockerfile"
+
+          # Ordered list matching the paths for change detection
+          SVC_NAMES=(api-gateway approval-service booking-service community-service compensation-service groupmanagement-service location-service meeting-service proxy-service reimbursement-service stipend-service timesheet-service transaction-service usermanagement-service websitecontent-service)
+          SVC_PATHS=(
+            "src/Services/mainsparshServices/apiGateway/"
+            "src/Services/mainsparshServices/approvalServices/"
+            "src/Services/mainsparshServices/bookingServices/"
+            "src/Services/mainsparshServices/communityServices/"
+            "src/Services/mainsparshServices/compensationServices/"
+            "src/Services/mainsparshServices/groupmanagementServices/"
+            "src/Services/mainsparshServices/locationServices/"
+            "src/Services/mainsparshServices/meetingServices/"
+            "src/Services/mainsparshServices/proxyServices/"
+            "src/Services/mainsparshServices/reimbursementServices/"
+            "src/Services/mainsparshServices/stipendservices/"
+            "src/Services/mainsparshServices/timesheetServices/"
+            "src/Services/mainsparshServices/transactionServices/"
+            "src/Services/mainsparshServices/usermanagementServices/"
+            "src/Services/mainsparshServices/websitecontentServices/"
+          )
+
+          make_entry() {
+            local n="$1"
+            echo "{\"name\":\"${n}\",\"context\":\"${SVC_CONTEXT[$n]}\",\"dockerfile\":\"${SVC_DOCKERFILE[$n]}\"}"
+          }
+
+          # If manual dispatch with a specific service, build only that
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            INPUT="${{ github.event.inputs.service }}"
+            if [[ "$INPUT" != "all" ]]; then
+              ENTRY=$(make_entry "$INPUT")
+              echo "matrix={\"include\":[${ENTRY}]}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          # For push events or "all", detect changes
+          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "src/Services/mainsparshServices/")
+          BUILD_ALL=$([[ "${{ github.event.inputs.service }}" == "all" ]] && echo "true" || echo "false")
+
+          # If shared infrastructure assets changed, rebuild all Mainsparsh services
+          if echo "$CHANGED" | grep -q "^src/Services/mainsparshServices/infrastructure/"; then
+            BUILD_ALL="true"
+          fi
+
+          # If shared Mainsparsh root files changed (outside specific service folders), rebuild all
+          NON_SERVICE_CHANGES=$(echo "$CHANGED" | grep "^src/Services/mainsparshServices/" | grep -Ev "^src/Services/mainsparshServices/(apiGateway|approvalServices|bookingServices|communityServices|compensationServices|groupmanagementServices|locationServices|meetingServices|proxyServices|reimbursementServices|stipendservices|timesheetServices|transactionServices|usermanagementServices|websitecontentServices|infrastructure)/" || true)
+          if [[ -n "$NON_SERVICE_CHANGES" ]]; then
+            BUILD_ALL="true"
+          fi
+
+          SERVICES=()
+          for i in "${!SVC_NAMES[@]}"; do
+            NAME="${SVC_NAMES[$i]}"
+            PATH_PREFIX="${SVC_PATHS[$i]}"
+            if [[ "$BUILD_ALL" == "true" ]] || echo "$CHANGED" | grep -q "^${PATH_PREFIX}"; then
+              SERVICES+=("$(make_entry "$NAME")")
+            fi
+          done
+
+          if [[ ${#SERVICES[@]} -eq 0 ]]; then
+            echo "matrix={\"include\":[]}" >> "$GITHUB_OUTPUT"
+          else
+            JSON=$(printf '%s,' "${SERVICES[@]}")
+            JSON="[${JSON%,}]"
+            echo "matrix={\"include\":${JSON}}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Print matrix
+        run: echo '${{ steps.set-matrix.outputs.matrix }}'
+
+  # ── Build & Push ─────────────────────────────────────────────────────────
+  build-and-push:
+    name: Build ${{ matrix.name }}
+    needs: changes
+    if: ${{ fromJson(needs.changes.outputs.matrix).include[0] != null }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
