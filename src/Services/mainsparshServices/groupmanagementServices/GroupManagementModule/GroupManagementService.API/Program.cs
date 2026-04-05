@@ -10,6 +10,7 @@ using GroupManagementService.API.Middleware;
 using GroupManagementService.API.Security;
 using GroupManagementService.API.Configuration;
 using GroupManagementService.API.GraphQL;
+using GroupManagementService.API.Endpoints;
 
 var corsPolicyName = "AllowAll";
 
@@ -137,8 +138,24 @@ app.UseAuthorization();
 // Map controllers
 app.MapControllers();
 
+// Minimal API
+app.MapGroupEndpoints();
+
 // GraphQL
 app.MapGraphQL("/graphql");
+
+// Auth token endpoint
+app.MapPost("/api/auth/token", (IJwtTokenGenerator tokenGenerator) =>
+{
+    var token = tokenGenerator.GenerateToken(1, "admin@test.com", ["Admin"], TimeSpan.FromHours(1));
+    return Results.Ok(new { token, expiresIn = 3600 });
+}).AllowAnonymous();
+
+// RabbitMQ test endpoint
+app.MapGet("/api/rabbitmq/test", () =>
+{
+    return Results.Ok(new { status = "Disconnected", service = "RabbitMQ" });
+}).AllowAnonymous();
 
 // Database seeding
 try

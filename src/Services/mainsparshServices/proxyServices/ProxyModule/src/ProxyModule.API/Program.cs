@@ -126,6 +126,20 @@ app.MapProxyRightEndpoints();
 app.MapGraphQL("/graphql");
 app.MapHealthChecks("/health");
 
+// RabbitMQ test endpoint
+app.MapGet("/api/rabbitmq/test", (IServiceProvider sp) =>
+{
+    try
+    {
+        var publisher = sp.GetRequiredService<ProxyModule.Infrastructure.Messaging.IMessagePublisher>();
+        return Results.Ok(new { service = "RabbitMQ", status = "Available", host = app.Configuration["RabbitMQ:HostName"] ?? "localhost" });
+    }
+    catch
+    {
+        return Results.Ok(new { service = "RabbitMQ", status = "Disconnected", host = app.Configuration["RabbitMQ:HostName"] ?? "localhost" });
+    }
+}).AllowAnonymous();
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ProxyModuleDbContext>();

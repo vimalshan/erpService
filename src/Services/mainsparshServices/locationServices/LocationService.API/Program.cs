@@ -17,6 +17,7 @@ using LocationService.Domain.Entities;
 using LocationService.API.Security;
 using LocationService.API.Middleware;
 using LocationService.API.GraphQL;
+using LocationService.API.Endpoints;
 using Azure.Storage.Blobs;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -220,7 +221,29 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapLocationEndpoints();
 app.MapGraphQL();
 app.MapHealthChecks("/health");
+
+// Auth token endpoint
+app.MapPost("/api/auth/token", (IJwtTokenService tokenService) =>
+{
+    var token = tokenService.GenerateToken(1, "admin@test.com", ["Admin"]);
+    return Results.Ok(new { token, expiresIn = 3600 });
+}).AllowAnonymous();
+
+// RabbitMQ test endpoint
+app.MapGet("/api/rabbitmq/test", (IServiceProvider sp) =>
+{
+    try
+    {
+        var connection = sp.GetRequiredService<RabbitMQ.Client.IConnection>();
+        return Results.Ok(new { service = "RabbitMQ", status = connection.IsOpen ? "Connected" : "Disconnected" });
+    }
+    catch
+    {
+        return Results.Ok(new { service = "RabbitMQ", status = "Disconnected" });
+    }
+}).AllowAnonymous();
 
 app.Run();

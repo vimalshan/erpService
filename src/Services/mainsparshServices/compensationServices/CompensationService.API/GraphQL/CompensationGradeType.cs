@@ -96,12 +96,12 @@ public class CompensationGradeMutation
     public async Task<bool> ChangeStatusAsync(
         [Service] IMediator mediator,
         long gradeId,
-        char newStatus)
+        string newStatus)
     {
         var command = new ChangeCompensationGradeStatusCommand
         {
             GradeId = gradeId,
-            NewStatus = newStatus,
+            NewStatus = newStatus[0],
             ChangedBy = 1
         };
 

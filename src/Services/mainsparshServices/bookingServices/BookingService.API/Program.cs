@@ -1,6 +1,8 @@
 using BookingService.Application;
 using BookingService.Infrastructure;
+using BookingService.Infrastructure.Messaging;
 using BookingService.Infrastructure.Persistence.Seed;
+using BookingService.Infrastructure.Security;
 using BookingService.API.GraphQL;
 using BookingService.API.HealthChecks;
 using BookingService.API.Middleware;
@@ -23,8 +25,10 @@ builder.Services.AddSwaggerGen();
 // ─── GraphQL (HotChocolate) ───────────────────────────────────────
 builder.Services
     .AddGraphQLServer()
-    .AddQueryType<BookingQuery>()
-    .AddMutationType<BookingMutation>();
+    .AddQueryType(d => d.Name("Query"))
+    .AddTypeExtension<BookingQuery>()
+    .AddMutationType(d => d.Name("Mutation"))
+    .AddTypeExtension<BookingMutation>();
 
 // ─── Health Checks ────────────────────────────────────────────────
 builder.Services.AddHealthChecks()
@@ -76,7 +80,31 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 });
 app.MapHealthChecks("/health/db", new HealthCheckOptions { Predicate = r => r.Tags.Contains("db") });
 
+// ─── Auth Token (Dev / Test only) ───────────────────────────────
+app.MapPost("/api/auth/token", (TokenRequest req, IJwtService jwtService) =>
+{
+    var token = jwtService.GenerateToken(req.UserId, req.Email, req.Roles ?? ["User"]);
+    return Results.Ok(new { token });
+}).WithTags("Auth").AllowAnonymous();
+
+// ─── RabbitMQ Test ────────────────────────────────────────────────
+app.MapGet("/api/rabbitmq/test", async (IServiceProvider sp) =>
+{
+    try
+    {
+        var publisher = sp.GetRequiredService<IMessagePublisher>();
+        await publisher.PublishAsync("booking.test", new { message = "test", timestamp = DateTime.UtcNow });
+        return Results.Ok(new { status = "connected", message = "Test message published to booking.exchange" });
+    }
+    catch (Exception ex)
+    {
+        return Results.Json(new { status = "unavailable", message = ex.Message }, statusCode: 503);
+    }
+}).WithTags("RabbitMQ").AllowAnonymous();
+
 // ─── Database Seed ────────────────────────────────────────────────
 await BookingDbContextSeed.SeedAsync(app.Services);
 
 app.Run();
+
+record TokenRequest(long UserId, string Email, string[]? Roles);

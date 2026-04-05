@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ProxyModule.Domain.Entities;
 
 namespace ProxyModule.Infrastructure.Persistence;
@@ -7,11 +8,13 @@ namespace ProxyModule.Infrastructure.Persistence;
 public class ProxyModuleDbContext : DbContext
 {
     private readonly IMediator _mediator;
+    private readonly ILogger<ProxyModuleDbContext> _logger;
 
-    public ProxyModuleDbContext(DbContextOptions<ProxyModuleDbContext> options, IMediator mediator)
+    public ProxyModuleDbContext(DbContextOptions<ProxyModuleDbContext> options, IMediator mediator, ILogger<ProxyModuleDbContext> logger)
         : base(options)
     {
         _mediator = mediator;
+        _logger = logger;
     }
 
     public DbSet<ProxyRight> ProxyRights => Set<ProxyRight>();
@@ -39,7 +42,14 @@ public class ProxyModuleDbContext : DbContext
 
         foreach (var domainEvent in domainEvents)
         {
-            await _mediator.Publish(domainEvent, cancellationToken);
+            try
+            {
+                await _mediator.Publish(domainEvent, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to publish domain event {EventType}. The entity was saved successfully.", domainEvent.GetType().Name);
+            }
         }
 
         return result;

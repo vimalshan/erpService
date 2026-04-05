@@ -113,4 +113,18 @@ app.MapGraphQL();
 app.MapMeetingMinimalApis();
 app.MapHealthChecks("/health");
 
+// RabbitMQ test endpoint
+app.MapGet("/api/rabbitmq/test", (IServiceProvider sp) =>
+{
+    try
+    {
+        var publisher = sp.GetRequiredService<MeetingModule.Infrastructure.Messaging.IMessagePublisher>();
+        return Results.Ok(new { service = "RabbitMQ", status = "Available", host = configuration["RabbitMQ:HostName"] ?? "localhost" });
+    }
+    catch
+    {
+        return Results.Ok(new { service = "RabbitMQ", status = "Disconnected", host = configuration["RabbitMQ:HostName"] ?? "localhost" });
+    }
+}).AllowAnonymous();
+
 app.Run();

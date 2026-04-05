@@ -12,13 +12,17 @@ using Azure.Storage.Blobs;
 using RabbitMQ.Client;
 
 using ApprovalService.Application.Behaviors;
+using ApprovalService.Application.CQRS.Commands;
 using ApprovalService.Application.CQRS.Handlers;
+using ApprovalService.Application.CQRS.Queries;
+using ApprovalService.Application.DTOs;
 using ApprovalService.Infrastructure.Persistence;
 using ApprovalService.Infrastructure.Repositories;
 using ApprovalService.Infrastructure.External;
 using ApprovalService.Infrastructure.Messaging;
 using ApprovalService.Application.Interfaces;
 using ApprovalService.Domain.Interfaces;
+using ApprovalService.API.GraphQL;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,10 +55,12 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IApprovalMasterRepository, ApprovalMasterRepository>();
 builder.Services.AddScoped<IApproverEmployeeRepository, ApproverEmployeeRepository>();
 
-// MediatR with Behaviors
+// MediatR with Behaviors — scan API + Application assemblies
 builder.Services.AddMediatR(cfg =>
 {
-    cfg.RegisterServicesFromAssemblies(typeof(Program).Assembly);
+    cfg.RegisterServicesFromAssemblies(
+        typeof(Program).Assembly,
+        typeof(ApprovalService.Application.CQRS.Handlers.CreateApprovalMasterHandler).Assembly);
     cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
     cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));
 });
@@ -178,6 +184,12 @@ builder.Services.AddSwaggerGen(options =>
 //     .Or<TimeoutException>()
 //     .CircuitBreaker(handledEventsAllowedBeforeBreaking: 3, durationOfBreak: TimeSpan.FromSeconds(30));
 
+// GraphQL (HotChocolate)
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType<ApprovalQuery>()
+    .AddMutationType<ApprovalMutation>();
+
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -229,6 +241,68 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 });
 
 app.MapControllers();
+
+// ==================== GraphQL ====================
+app.MapGraphQL("/graphql");
+
+// ==================== Minimal API Endpoints ====================
+var minimal = app.MapGroup("/api/minimal").WithTags("Minimal API");
+
+minimal.MapGet("/approvals", async (IMediator mediator) =>
+    Results.Ok(await mediator.Send(new GetAllApprovalsQuery())))
+    .WithName("MinimalGetAllApprovals")
+    .Produces<List<ApprovalMasterDto>>();
+
+minimal.MapGet("/approvals/{id:long}", async (long id, IMediator mediator) =>
+{
+    var result = await mediator.Send(new GetApprovalMasterByIdQuery { Id = id });
+    return result is null ? Results.NotFound() : Results.Ok(result);
+})
+    .WithName("MinimalGetApprovalById")
+    .Produces<ApprovalMasterDto>()
+    .Produces(404);
+
+minimal.MapGet("/approvals/module/{module}", async (string module, IMediator mediator) =>
+    Results.Ok(await mediator.Send(new GetApprovalsByModuleQuery { Module = module })))
+    .WithName("MinimalGetApprovalsByModule")
+    .Produces<List<ApprovalMasterDto>>();
+
+minimal.MapPost("/approvals", async (CreateApprovalMasterDto dto, IMediator mediator) =>
+{
+    var result = await mediator.Send(new CreateApprovalMasterCommand
+    {
+        Code = dto.Code,
+        Name = dto.Name,
+        Module = dto.Module,
+        Level = dto.Level,
+        UserId = 0
+    });
+    return Results.Created($"/api/minimal/approvals/{result.Id}", result);
+})
+    .WithName("MinimalCreateApproval")
+    .Produces<CreateApprovalMasterCommandResult>(201)
+    .Produces(400);
+
+// ==================== RabbitMQ Test Endpoint ====================
+app.MapGet("/api/rabbitmq/test", async (IServiceProvider sp, ILogger<Program> logger) =>
+{
+    var publisher = sp.GetService<IMessagePublisher>();
+    if (publisher is null)
+        return Results.Json(new { status = "unavailable", message = "RabbitMQ is not connected. IMessagePublisher not registered." }, statusCode: 503);
+
+    try
+    {
+        await publisher.PublishAsync("approval.test", new { Event = "TestMessage", Timestamp = DateTime.UtcNow });
+        return Results.Ok(new { status = "ok", message = "Test message published to exchange 'approval-service' with routing key 'approval.test'" });
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "RabbitMQ test publish failed");
+        return Results.Json(new { status = "error", message = ex.Message }, statusCode: 500);
+    }
+})
+    .WithName("RabbitMqTest")
+    .WithTags("RabbitMQ");
 
 app.Run();
 

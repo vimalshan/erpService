@@ -41,7 +41,7 @@ public class CompensationGradeDto
     public decimal? CalculatedHRA { get; set; }
     public decimal? CalculatedDA { get; set; }
     public decimal? TotalSalary { get; set; }
-    public char Status { get; set; }
+    public string Status { get; set; } = null!;
     public DateTime EffectiveFrom { get; set; }
     public DateTime? EffectiveTo { get; set; }
     public long CreatedBy { get; set; }
@@ -56,5 +56,5 @@ public class CompensationGradeDto
 public class ChangeGradeStatusDto
 {
     public long GradeId { get; set; }
-    public char NewStatus { get; set; }
+    public string NewStatus { get; set; } = null!;
 }

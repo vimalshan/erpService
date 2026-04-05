@@ -1,6 +1,7 @@
 using MediatR;
 using GroupManagementService.Application.Commands;
 using GroupManagementService.Application.DTOs;
+using HotChocolate;
 
 namespace GroupManagementService.API.GraphQL
 {
@@ -9,14 +10,8 @@ namespace GroupManagementService.API.GraphQL
     /// </summary>
     public class GroupMutation
     {
-        private readonly IMediator _mediator;
-
-        public GroupMutation(IMediator mediator)
-        {
-            _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        }
-
         public async Task<GroupDto> CreateGroup(
+            [Service] IMediator mediator,
             string code,
             string name,
             string? description,
@@ -25,10 +20,11 @@ namespace GroupManagementService.API.GraphQL
             CancellationToken cancellationToken)
         {
             var command = new CreateGroupCommand(code, name, description, createdBy, isAdmin);
-            return await _mediator.Send(command, cancellationToken);
+            return await mediator.Send(command, cancellationToken);
         }
 
         public async Task<GroupDto> UpdateGroup(
+            [Service] IMediator mediator,
             long groupId,
             string name,
             string? description,
@@ -36,20 +32,21 @@ namespace GroupManagementService.API.GraphQL
             CancellationToken cancellationToken)
         {
             var command = new UpdateGroupCommand(groupId, name, description, updatedBy);
-            return await _mediator.Send(command, cancellationToken);
+            return await mediator.Send(command, cancellationToken);
         }
 
-        public async Task<bool> ActivateGroup(long groupId, long updatedBy, CancellationToken cancellationToken)
+        public async Task<bool> ActivateGroup([Service] IMediator mediator, long groupId, long updatedBy, CancellationToken cancellationToken)
         {
-            return await _mediator.Send(new ActivateGroupCommand(groupId, updatedBy), cancellationToken);
+            return await mediator.Send(new ActivateGroupCommand(groupId, updatedBy), cancellationToken);
         }
 
-        public async Task<bool> DeactivateGroup(long groupId, long updatedBy, CancellationToken cancellationToken)
+        public async Task<bool> DeactivateGroup([Service] IMediator mediator, long groupId, long updatedBy, CancellationToken cancellationToken)
         {
-            return await _mediator.Send(new DeactivateGroupCommand(groupId, updatedBy), cancellationToken);
+            return await mediator.Send(new DeactivateGroupCommand(groupId, updatedBy), cancellationToken);
         }
 
         public async Task<GroupMenuMapDto> AddMenuMap(
+            [Service] IMediator mediator,
             long groupId,
             string menuCode,
             string menuName,
@@ -59,15 +56,16 @@ namespace GroupManagementService.API.GraphQL
             CancellationToken cancellationToken)
         {
             var command = new AddMenuMapCommand(groupId, menuCode, menuName, permissions, createdBy, menuSequence);
-            return await _mediator.Send(command, cancellationToken);
+            return await mediator.Send(command, cancellationToken);
         }
 
-        public async Task<bool> RemoveMenuMap(long groupId, string menuCode, long updatedBy, CancellationToken cancellationToken)
+        public async Task<bool> RemoveMenuMap([Service] IMediator mediator, long groupId, string menuCode, long updatedBy, CancellationToken cancellationToken)
         {
-            return await _mediator.Send(new RemoveMenuMapCommand(groupId, menuCode, updatedBy), cancellationToken);
+            return await mediator.Send(new RemoveMenuMapCommand(groupId, menuCode, updatedBy), cancellationToken);
         }
 
         public async Task<GroupMenuMapDto> UpdateMenuPermissions(
+            [Service] IMediator mediator,
             long groupId,
             string menuCode,
             MenuPermissionsDto permissions,
@@ -75,7 +73,7 @@ namespace GroupManagementService.API.GraphQL
             CancellationToken cancellationToken)
         {
             var command = new UpdateMenuPermissionsCommand(groupId, menuCode, permissions, updatedBy);
-            return await _mediator.Send(command, cancellationToken);
+            return await mediator.Send(command, cancellationToken);
         }
     }
 }

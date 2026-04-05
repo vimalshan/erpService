@@ -5,7 +5,7 @@ using MediatR;
 
 namespace BookingService.API.GraphQL;
 
-[MutationType]
+[ExtendObjectType("Mutation")]
 public class BookingMutation
 {
     public async Task<BookingDto> CreateBookingAsync(

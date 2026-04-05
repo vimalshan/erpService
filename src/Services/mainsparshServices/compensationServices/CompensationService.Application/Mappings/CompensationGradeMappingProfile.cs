@@ -15,7 +15,7 @@ public class CompensationGradeMappingProfile : Profile
         CreateMap<CompensationGrade, CompensationGradeDto>()
             .ForMember(dest => dest.GradeId, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.GradeCode, opt => opt.MapFrom(src => src.GradeCode.Value))
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.Value))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.Value.ToString()))
             .ForMember(dest => dest.BaseSalary, opt => opt.MapFrom(src => src.SalaryStructure.BaseSalary))
             .ForMember(dest => dest.HraPercentage, opt => opt.MapFrom(src => src.SalaryStructure.HraPercentage))
             .ForMember(dest => dest.DaPercentage, opt => opt.MapFrom(src => src.SalaryStructure.DaPercentage))

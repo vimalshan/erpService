@@ -1,6 +1,7 @@
 using MediatR;
 using GroupManagementService.Application.DTOs;
 using GroupManagementService.Application.Queries;
+using HotChocolate;
 
 namespace GroupManagementService.API.GraphQL
 {
@@ -9,18 +10,11 @@ namespace GroupManagementService.API.GraphQL
     /// </summary>
     public class GroupQuery
     {
-        private readonly IMediator _mediator;
-
-        public GroupQuery(IMediator mediator)
-        {
-            _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        }
-
-        public async Task<GroupDto?> GetGroupById(long groupId, CancellationToken cancellationToken)
+        public async Task<GroupDto?> GetGroupById([Service] IMediator mediator, long groupId, CancellationToken cancellationToken)
         {
             try
             {
-                return await _mediator.Send(new GetGroupByIdQuery(groupId), cancellationToken);
+                return await mediator.Send(new GetGroupByIdQuery(groupId), cancellationToken);
             }
             catch
             {
@@ -28,11 +22,11 @@ namespace GroupManagementService.API.GraphQL
             }
         }
 
-        public async Task<GroupDto?> GetGroupByCode(string groupCode, CancellationToken cancellationToken)
+        public async Task<GroupDto?> GetGroupByCode([Service] IMediator mediator, string groupCode, CancellationToken cancellationToken)
         {
             try
             {
-                return await _mediator.Send(new GetGroupByCodeQuery(groupCode), cancellationToken);
+                return await mediator.Send(new GetGroupByCodeQuery(groupCode), cancellationToken);
             }
             catch
             {
@@ -40,29 +34,30 @@ namespace GroupManagementService.API.GraphQL
             }
         }
 
-        public async Task<IEnumerable<GroupDto>> GetAllGroups(CancellationToken cancellationToken)
+        public async Task<IEnumerable<GroupDto>> GetAllGroups([Service] IMediator mediator, CancellationToken cancellationToken)
         {
-            return await _mediator.Send(new GetAllGroupsQuery(), cancellationToken);
+            return await mediator.Send(new GetAllGroupsQuery(), cancellationToken);
         }
 
         public async Task<IEnumerable<GroupDto>> SearchGroups(
+            [Service] IMediator mediator,
             string? searchTerm = null,
             string? status = null,
             int pageNumber = 1,
             int pageSize = 10,
             CancellationToken cancellationToken = default)
         {
-            return await _mediator.Send(new SearchGroupsQuery(searchTerm, status, pageNumber, pageSize), cancellationToken);
+            return await mediator.Send(new SearchGroupsQuery(searchTerm, status, pageNumber, pageSize), cancellationToken);
         }
 
-        public async Task<IEnumerable<GroupDto>> GetAdminGroups(CancellationToken cancellationToken)
+        public async Task<IEnumerable<GroupDto>> GetAdminGroups([Service] IMediator mediator, CancellationToken cancellationToken)
         {
-            return await _mediator.Send(new GetAdminGroupsQuery(), cancellationToken);
+            return await mediator.Send(new GetAdminGroupsQuery(), cancellationToken);
         }
 
-        public async Task<IEnumerable<GroupDto>> GetGroupsByStatus(string status, CancellationToken cancellationToken)
+        public async Task<IEnumerable<GroupDto>> GetGroupsByStatus([Service] IMediator mediator, string status, CancellationToken cancellationToken)
         {
-            return await _mediator.Send(new GetGroupsByStatusQuery(status), cancellationToken);
+            return await mediator.Send(new GetGroupsByStatusQuery(status), cancellationToken);
         }
     }
 }

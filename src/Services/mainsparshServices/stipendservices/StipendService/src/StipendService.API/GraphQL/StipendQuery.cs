@@ -7,7 +7,6 @@ namespace StipendService.API.GraphQL;
 
 public class StipendQuery
 {
-    [UseProjection]
     [UseFiltering]
     [UseSorting]
     public IQueryable<StipendMasterDto> GetStipendMasters([Service] StipendDbContext context) =>
@@ -27,7 +26,6 @@ public class StipendQuery
                 m.UpdatedBy,
                 m.UpdatedOn));
 
-    [UseProjection]
     [UseFiltering]
     [UseSorting]
     public IQueryable<StipendDisbursementDto> GetDisbursements([Service] StipendDbContext context) =>

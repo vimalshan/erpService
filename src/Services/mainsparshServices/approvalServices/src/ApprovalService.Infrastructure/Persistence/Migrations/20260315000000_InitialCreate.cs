@@ -1,12 +1,15 @@
 namespace ApprovalService.Infrastructure.Persistence.Migrations;
 
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 /// <summary>
 /// Initial migration for ApprovalService database
 /// </summary>
 #nullable disable
 
+[DbContext(typeof(ApprovalServiceDbContext))]
+[Migration("20260315000000_InitialCreate")]
 public partial class InitialCreate : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)

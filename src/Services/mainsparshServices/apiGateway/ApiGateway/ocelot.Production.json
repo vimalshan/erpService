@@ -1,0 +1,181 @@
+{
+  "GlobalConfiguration": {
+    "BaseUrl": "http://api-gateway:80",
+    "RequestIdKey": "X-Correlation-ID",
+    "RateLimitOptions": {
+      "DisableRateLimitHeaders": false,
+      "QuotaExceededMessage": "API rate limit exceeded. Please try again later.",
+      "HttpStatusCode": 429,
+      "ClientIdHeader": "X-ClientId"
+    },
+    "QoSOptions": {
+      "ExceptionsAllowedBeforeBreaking": 5,
+      "DurationOfBreak": 15000,
+      "TimeoutValue": 30000
+    },
+    "LoadBalancerOptions": {
+      "Type": "RoundRobin"
+    },
+    "HttpHandlerOptions": {
+      "AllowAutoRedirect": false,
+      "UseCookieContainer": false,
+      "UseTracing": true
+    }
+  },
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/ocelot/approval/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "approval-service", "Port": 80 } ],
+      "Key": "approval",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "approval" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/booking/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "booking-service", "Port": 80 } ],
+      "Key": "booking",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "booking" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/community/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "community-service", "Port": 80 } ],
+      "Key": "community",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "community" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/compensation/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "compensation-service", "Port": 80 } ],
+      "Key": "compensation",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "compensation" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/groupmanagement/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "groupmanagement-service", "Port": 80 } ],
+      "Key": "groupmanagement",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "groupmanagement" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/location/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "location-service", "Port": 80 } ],
+      "Key": "location",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "location" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/meeting/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "meeting-service", "Port": 80 } ],
+      "Key": "meeting",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "meeting" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/proxy/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "proxy-service", "Port": 80 } ],
+      "Key": "proxy",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "proxy" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/reimbursement/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "reimbursement-service", "Port": 80 } ],
+      "Key": "reimbursement",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "reimbursement" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/stipend/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "stipend-service", "Port": 80 } ],
+      "Key": "stipend",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "stipend" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/timesheet/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "timesheet-service", "Port": 80 } ],
+      "Key": "timesheet",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "timesheet" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/transaction/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "transaction-service", "Port": 80 } ],
+      "Key": "transaction",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "transaction" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/usermanagement/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "usermanagement-service", "Port": 80 } ],
+      "Key": "usermanagement",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "usermanagement" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/websitecontent/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "websitecontent-service", "Port": 80 } ],
+      "Key": "websitecontent",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "websitecontent" }
+    }
+  ]
+}

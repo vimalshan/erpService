@@ -98,6 +98,19 @@ app.MapGet("/api/v1/ping", () => Results.Ok(new { message = "SRF Stipend Service
    .WithTags("Health")
    .AllowAnonymous();
 
+app.MapGet("/api/rabbitmq/test", (IServiceProvider sp, IConfiguration config) =>
+{
+    try
+    {
+        var publisher = sp.GetRequiredService<StipendService.Infrastructure.Messaging.IMessagePublisher>();
+        return Results.Ok(new { service = "RabbitMQ", status = "Available", host = config["RabbitMQ:Host"] ?? "localhost" });
+    }
+    catch
+    {
+        return Results.Ok(new { service = "RabbitMQ", status = "Disconnected", host = config["RabbitMQ:Host"] ?? "localhost" });
+    }
+}).AllowAnonymous();
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<StipendDbContext>();

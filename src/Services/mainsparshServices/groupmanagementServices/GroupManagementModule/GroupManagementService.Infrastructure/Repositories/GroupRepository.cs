@@ -18,6 +18,7 @@ namespace GroupManagementService.Infrastructure.Repositories
         public async Task<Group?> GetByIdAsync(long groupId, CancellationToken cancellationToken = default)
         {
             return await _context.Groups
+                .Include(g => g.MenuMaps)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(g => g.Id == groupId, cancellationToken);
         }

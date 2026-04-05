@@ -16,6 +16,17 @@ public class DapperQueryService(string connectionString) : IDapperQueryService
 {
     private IDbConnection CreateConnection() => new SqlConnection(connectionString);
 
+    // Flat row without nested Polls — safe for Dapper construction
+    private record MeetingRow(
+        long MeetingId, long MeetTypeId, string? MeetTypeName, string MeetingTitle,
+        DateTime MeetingDate, string? MeetingLocation, int? MeetingDuration, long OrganizerId,
+        string MeetingStatus, string? Notes, long CreatedBy, DateTime CreatedOn);
+
+    private static MeetingScheduleDto ToDto(MeetingRow r, List<PollDetailDto>? polls = null) =>
+        new(r.MeetingId, r.MeetTypeId, r.MeetTypeName, r.MeetingTitle,
+            r.MeetingDate, r.MeetingLocation, r.MeetingDuration, r.OrganizerId,
+            r.MeetingStatus, r.Notes, r.CreatedBy, r.CreatedOn, polls);
+
     public async Task<IReadOnlyList<MeetingScheduleDto>> GetUpcomingMeetingsAsync(int top = 50, CancellationToken ct = default)
     {
         const string sql = """
@@ -33,8 +44,8 @@ public class DapperQueryService(string connectionString) : IDapperQueryService
             """;
 
         using var connection = CreateConnection();
-        var result = await connection.QueryAsync<MeetingScheduleDto>(sql, new { Top = top });
-        return result.ToList();
+        var result = await connection.QueryAsync<MeetingRow>(sql, new { Top = top });
+        return result.Select(r => ToDto(r)).ToList();
     }
 
     public async Task<IReadOnlyList<MeetingTypeDto>> GetMeetingTypesWithCountsAsync(CancellationToken ct = default)
@@ -77,10 +88,10 @@ public class DapperQueryService(string connectionString) : IDapperQueryService
         using var connection = CreateConnection();
         using var multi = await connection.QueryMultipleAsync(sql, new { MeetingId = meetingId });
 
-        var meeting = await multi.ReadFirstOrDefaultAsync<MeetingScheduleDto>();
-        if (meeting is null) return null;
+        var row = await multi.ReadFirstOrDefaultAsync<MeetingRow>();
+        if (row is null) return null;
 
         var polls = (await multi.ReadAsync<PollDetailDto>()).ToList();
-        return meeting with { Polls = polls };
+        return ToDto(row, polls);
     }
 }

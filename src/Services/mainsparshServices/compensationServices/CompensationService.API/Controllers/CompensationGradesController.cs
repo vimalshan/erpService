@@ -197,7 +197,7 @@ public class CompensationGradesController : ControllerBase
             var command = new ChangeCompensationGradeStatusCommand
             {
                 GradeId = dto.GradeId,
-                NewStatus = dto.NewStatus,
+                NewStatus = dto.NewStatus[0],
                 ChangedBy = 1 // TODO: Get from current user context
             };
 

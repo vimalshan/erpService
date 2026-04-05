@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -10,6 +12,7 @@ using UserManagement.API.Middleware;
 using UserManagement.API.MinimalApis;
 using UserManagement.Application;
 using UserManagement.Infrastructure;
+using UserManagement.Infrastructure.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -133,5 +136,41 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = _ => false
 });
+
+// ── Auth token (dev/test only) ────────────────────────────────────────────────
+app.MapPost("/api/v1/auth/login", (IConfiguration config) =>
+{
+    var jwt = config.GetSection("JwtSettings");
+    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["SecretKey"]!));
+    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+    var expires = DateTime.UtcNow.AddMinutes(double.Parse(jwt["ExpiryMinutes"] ?? "60"));
+    var token = new JwtSecurityToken(
+        issuer: jwt["Issuer"],
+        audience: jwt["Audience"],
+        claims: new[]
+        {
+            new Claim(ClaimTypes.Name, "admin"),
+            new Claim(ClaimTypes.Role, "Admin"),
+            new Claim(ClaimTypes.Role, "Reader"),
+            new Claim("sub", "1")
+        },
+        expires: expires,
+        signingCredentials: creds);
+    return Results.Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token), expiresAt = expires });
+}).AllowAnonymous();
+
+// ── RabbitMQ test endpoint ────────────────────────────────────────────────────
+app.MapGet("/api/rabbitmq/test", (IServiceProvider sp, IConfiguration config) =>
+{
+    try
+    {
+        var publisher = sp.GetRequiredService<IMessagePublisher>();
+        return Results.Ok(new { service = "RabbitMQ", status = "Available", host = config["RabbitMQ:Host"] ?? "localhost" });
+    }
+    catch
+    {
+        return Results.Ok(new { service = "RabbitMQ", status = "Disconnected", host = config["RabbitMQ:Host"] ?? "localhost" });
+    }
+}).AllowAnonymous();
 
 app.Run();

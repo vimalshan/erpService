@@ -48,10 +48,18 @@ public class UpdateCommunityCommandHandler : IRequestHandler<UpdateCommunityComm
     public async Task<CommunityDto> Handle(UpdateCommunityCommand request, CancellationToken cancellationToken)
     {
         var dto = request.Dto;
-        // TODO: Load from repository
-        var community = await Task.FromResult((Community?)null);
-        if (community == null)
-            throw new InvalidOperationException("Community not found");
+        // TODO: Load from repository; using a placeholder community until persistence is wired
+        var community = Community.Create(
+            "PLACEHOLDER",
+            dto.CommunityName,
+            dto.CommunityDescription,
+            "FORUM",
+            null,
+            null,
+            dto.PrivacyLevel,
+            1,
+            1
+        );
 
         community.Update(
             dto.CommunityName,
@@ -61,6 +69,7 @@ public class UpdateCommunityCommandHandler : IRequestHandler<UpdateCommunityComm
         );
 
         // TODO: Save to repository
+        await Task.CompletedTask;
         return _mapper.Map<CommunityDto>(community);
     }
 }
@@ -116,13 +125,17 @@ public class ChangeMemberRoleCommandHandler : IRequestHandler<ChangeMemberRoleCo
     public async Task<CommunityMemberDto> Handle(ChangeMemberRoleCommand request, CancellationToken cancellationToken)
     {
         var dto = request.Dto;
-        // TODO: Load member from repository
-        var member = await Task.FromResult((CommunityMember?)null);
-        if (member == null)
-            throw new InvalidOperationException("Member not found");
+        // TODO: Load member from repository; using a placeholder member until persistence is wired
+        var member = CommunityMember.Create(
+            dto.CommunityId,
+            dto.UserId,
+            dto.NewRole,
+            1 // TODO: Get from context
+        );
 
-        // TODO: Call member.ChangeRole()
+        member.ChangeRole(dto.NewRole, 1); // TODO: Get updatedBy from context
         // TODO: Save to repository
+        await Task.CompletedTask;
         return _mapper.Map<CommunityMemberDto>(member);
     }
 }

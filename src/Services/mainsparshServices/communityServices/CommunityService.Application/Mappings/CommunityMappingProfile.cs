@@ -10,18 +10,36 @@ public class CommunityMappingProfile : Profile
     {
         // Community Mappings
         CreateMap<Community, CommunityDto>()
-            .ForMember(dest => dest.CommunityId, opt => opt.MapFrom(src => src.CommunityId))
-            .ForMember(dest => dest.CommunityCode, opt => opt.MapFrom(src => src.CommunityCode.Value))
-            .ForMember(dest => dest.CommunityName, opt => opt.MapFrom(src => src.CommunityName.Value))
-            .ForMember(dest => dest.CommunityType, opt => opt.MapFrom(src => src.CommunityType.Value))
-            .ForMember(dest => dest.PrivacyLevel, opt => opt.MapFrom(src => src.PrivacyLevel.Value))
-            .ForMember(dest => dest.CommunityStatus, opt => opt.MapFrom(src => src.CommunityStatus.Value))
-            .ForMember(dest => dest.CreatedOn, opt => opt.MapFrom(src => src.AuditInfo.CreatedOn))
-            .ForMember(dest => dest.UpdatedOn, opt => opt.MapFrom(src => src.AuditInfo.UpdatedOn));
+            .ConstructUsing(src => new CommunityDto(
+                src.CommunityId,
+                src.CommunityCode.Value,
+                src.CommunityName.Value,
+                src.CommunityDescription,
+                src.CommunityType.Value,
+                src.CommunityIcon,
+                src.CommunityBanner,
+                src.PrivacyLevel.Value,
+                src.OwnerId,
+                src.ApproverId,
+                src.CommunityStatus.Value,
+                src.MemberCount,
+                src.AuditInfo.CreatedOn,
+                src.AuditInfo.UpdatedOn
+            ))
+            .ForAllMembers(opt => opt.Ignore());
 
         // CommunityMember Mappings
         CreateMap<CommunityMember, CommunityMemberDto>()
-            .ForMember(dest => dest.MemberRole, opt => opt.MapFrom(src => src.MemberRole.Value))
-            .ForMember(dest => dest.MemberStatus, opt => opt.MapFrom(src => src.MemberStatus.Value));
+            .ConstructUsing(src => new CommunityMemberDto(
+                src.MemberId,
+                src.CommunityId,
+                src.UserSysId,
+                src.MemberRole.Value,
+                src.JoinDate,
+                src.LeaveDate,
+                src.MemberStatus.Value,
+                src.ContributionCount
+            ))
+            .ForAllMembers(opt => opt.Ignore());
     }
 }

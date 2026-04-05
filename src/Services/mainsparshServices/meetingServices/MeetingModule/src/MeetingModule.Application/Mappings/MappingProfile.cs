@@ -10,10 +10,28 @@ public class MappingProfile : Profile
     {
         CreateMap<MeetingType, MeetingTypeDto>();
 
-        CreateMap<MeetingSchedule, MeetingScheduleDto>()
-            .ForMember(d => d.MeetTypeName, opt => opt.MapFrom(s => s.MeetingType != null ? s.MeetingType.MeetTypeName : null))
-            .ForMember(d => d.Polls, opt => opt.MapFrom(s => s.Polls));
+        CreateMap<PollDetail, PollDetailDto>()
+            .ConstructUsing((s, _) => new PollDetailDto(
+                s.PollId, s.MeetingId, s.PollQuestion, s.PollType, s.PollStatus,
+                s.CreatedBy, s.CreatedOn));
 
-        CreateMap<PollDetail, PollDetailDto>();
+        CreateMap<MeetingSchedule, MeetingScheduleDto>()
+            .ConstructUsing((s, ctx) => new MeetingScheduleDto(
+                s.MeetingId,
+                s.MeetTypeId,
+                s.MeetingType != null ? s.MeetingType.MeetTypeName : null,
+                s.MeetingTitle,
+                s.MeetingDate,
+                s.MeetingLocation,
+                s.MeetingDuration,
+                s.OrganizerId,
+                s.MeetingStatus,
+                s.Notes,
+                s.CreatedBy,
+                s.CreatedOn,
+                s.Polls != null && s.Polls.Count > 0
+                    ? ctx.Mapper.Map<List<PollDetailDto>>(s.Polls)
+                    : null))
+            .ForAllMembers(opt => opt.Ignore());
     }
 }

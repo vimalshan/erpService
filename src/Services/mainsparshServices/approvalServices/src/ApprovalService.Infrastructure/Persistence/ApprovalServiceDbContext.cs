@@ -81,7 +81,9 @@ public class ApprovalServiceDbContext : DbContext
             entity.HasIndex(e => e.Module)
                 .HasName("IX_APPR_MAST_MODULE");
 
-            entity.HasMany<ApproverEmployee>()
+            entity.Navigation(e => e.Approvers).HasField("_approvers");
+
+            entity.HasMany(e => e.Approvers)
                 .WithOne()
                 .HasForeignKey(e => e.ApprovalMasterId)
                 .HasConstraintName("FK_APPROVER_EMP_APPR_MAST")

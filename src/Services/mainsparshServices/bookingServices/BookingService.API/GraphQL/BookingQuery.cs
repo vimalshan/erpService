@@ -5,7 +5,7 @@ using MediatR;
 
 namespace BookingService.API.GraphQL;
 
-[QueryType]
+[ExtendObjectType("Query")]
 public class BookingQuery
 {
     public async Task<BookingDetailDto?> GetBookingByIdAsync(

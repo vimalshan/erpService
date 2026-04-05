@@ -39,10 +39,10 @@ namespace LocationService.Infrastructure.Persistence.Repositories
 
         public async Task<IReadOnlyList<LocationAggregate>> GetActiveAsync(CancellationToken cancellationToken = default)
         {
-            return await _context.Locations
+            var all = await _context.Locations
                 .Include(l => l.Rooms)
-                .Where(l => l.LocationStatus.IsActive)
                 .ToListAsync(cancellationToken);
+            return all.Where(l => l.LocationStatus.IsActive).ToList();
         }
 
         public async Task AddAsync(LocationAggregate location, CancellationToken cancellationToken = default)
@@ -102,10 +102,11 @@ namespace LocationService.Infrastructure.Persistence.Repositories
 
         public async Task<IReadOnlyList<RoomAggregate>> GetByLocationIdAndStatusAsync(long locationId, string status, CancellationToken cancellationToken = default)
         {
-            return await _context.Rooms
+            var rooms = await _context.Rooms
                 .Include(r => r.Resources)
-                .Where(r => r.LocationId == locationId && r.RoomStatus.Value == status)
+                .Where(r => r.LocationId == locationId)
                 .ToListAsync(cancellationToken);
+            return rooms.Where(r => r.RoomStatus.Value == status).ToList();
         }
 
         public async Task AddAsync(RoomAggregate room, CancellationToken cancellationToken = default)

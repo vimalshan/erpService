@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
@@ -30,7 +30,6 @@ public class JwtService(IConfiguration configuration) : IJwtService
     {
         var settings = GetSettings();
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(settings.SecretKey));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new List<Claim>
         {
@@ -40,36 +39,36 @@ public class JwtService(IConfiguration configuration) : IJwtService
         };
         claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
-        var token = new JwtSecurityToken(
-            issuer: settings.Issuer,
-            audience: settings.Audience,
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(settings.ExpiryMinutes),
-            signingCredentials: creds);
+        var descriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(claims),
+            Issuer = settings.Issuer,
+            Audience = settings.Audience,
+            Expires = DateTime.UtcNow.AddMinutes(settings.ExpiryMinutes),
+            SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
+        };
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        var handler = new JsonWebTokenHandler();
+        return handler.CreateToken(descriptor);
     }
 
     public ClaimsPrincipal? ValidateToken(string token)
     {
         var settings = GetSettings();
-        try
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(settings.SecretKey));
+        var handler = new JsonWebTokenHandler();
+        var result = handler.ValidateTokenAsync(token, new TokenValidationParameters
         {
-            var handler = new JwtSecurityTokenHandler();
-            return handler.ValidateToken(token, new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidIssuer = settings.Issuer,
-                ValidateAudience = true,
-                ValidAudience = settings.Audience,
-                ValidateLifetime = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(settings.SecretKey)),
-                ClockSkew = TimeSpan.Zero
-            }, out _);
-        }
-        catch
-        {
-            return null;
-        }
+            ValidateIssuer = true,
+            ValidIssuer = settings.Issuer,
+            ValidateAudience = true,
+            ValidAudience = settings.Audience,
+            ValidateLifetime = true,
+            IssuerSigningKey = key,
+            ClockSkew = TimeSpan.FromSeconds(30)
+        }).GetAwaiter().GetResult();
+
+        return result.IsValid ? new ClaimsPrincipal(result.ClaimsIdentity) : null;
     }
 }
+

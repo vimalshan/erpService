@@ -1,0 +1,72 @@
+{
+  "rabbit_version": "3.13",
+  "users": [
+    {
+      "name": "srfsparsh",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"]
+    }
+  ],
+  "vhosts": [
+    { "name": "/" }
+  ],
+  "permissions": [
+    {
+      "user": "srfsparsh",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    { "name": "srfsparsh.events", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "booking.exchange", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "meeting_exchange", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "user_management", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "approval.exchange", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "compensation.exchange", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "reimbursement.exchange", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "stipend.exchange", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "timesheet.exchange", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "transaction.exchange", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "community.exchange", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "location.exchange", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "proxy.exchange", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "group.exchange", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false },
+    { "name": "websitecontent.exchange", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false }
+  ],
+  "queues": [
+    { "name": "booking.events", "vhost": "/", "durable": true, "auto_delete": false },
+    { "name": "approval.events", "vhost": "/", "durable": true, "auto_delete": false },
+    { "name": "meeting.events", "vhost": "/", "durable": true, "auto_delete": false },
+    { "name": "user.events", "vhost": "/", "durable": true, "auto_delete": false },
+    { "name": "compensation.events", "vhost": "/", "durable": true, "auto_delete": false },
+    { "name": "reimbursement.events", "vhost": "/", "durable": true, "auto_delete": false },
+    { "name": "stipend.events", "vhost": "/", "durable": true, "auto_delete": false },
+    { "name": "timesheet.events", "vhost": "/", "durable": true, "auto_delete": false },
+    { "name": "transaction.events", "vhost": "/", "durable": true, "auto_delete": false },
+    { "name": "community.events", "vhost": "/", "durable": true, "auto_delete": false },
+    { "name": "location.events", "vhost": "/", "durable": true, "auto_delete": false },
+    { "name": "proxy.events", "vhost": "/", "durable": true, "auto_delete": false },
+    { "name": "group.events", "vhost": "/", "durable": true, "auto_delete": false },
+    { "name": "websitecontent.events", "vhost": "/", "durable": true, "auto_delete": false }
+  ],
+  "bindings": [
+    { "source": "booking.exchange", "vhost": "/", "destination": "booking.events", "destination_type": "queue", "routing_key": "#" },
+    { "source": "approval.exchange", "vhost": "/", "destination": "approval.events", "destination_type": "queue", "routing_key": "#" },
+    { "source": "meeting_exchange", "vhost": "/", "destination": "meeting.events", "destination_type": "queue", "routing_key": "#" },
+    { "source": "user_management", "vhost": "/", "destination": "user.events", "destination_type": "queue", "routing_key": "#" },
+    { "source": "compensation.exchange", "vhost": "/", "destination": "compensation.events", "destination_type": "queue", "routing_key": "#" },
+    { "source": "reimbursement.exchange", "vhost": "/", "destination": "reimbursement.events", "destination_type": "queue", "routing_key": "#" },
+    { "source": "stipend.exchange", "vhost": "/", "destination": "stipend.events", "destination_type": "queue", "routing_key": "#" },
+    { "source": "timesheet.exchange", "vhost": "/", "destination": "timesheet.events", "destination_type": "queue", "routing_key": "#" },
+    { "source": "transaction.exchange", "vhost": "/", "destination": "transaction.events", "destination_type": "queue", "routing_key": "#" },
+    { "source": "community.exchange", "vhost": "/", "destination": "community.events", "destination_type": "queue", "routing_key": "#" },
+    { "source": "location.exchange", "vhost": "/", "destination": "location.events", "destination_type": "queue", "routing_key": "#" },
+    { "source": "proxy.exchange", "vhost": "/", "destination": "proxy.events", "destination_type": "queue", "routing_key": "#" },
+    { "source": "group.exchange", "vhost": "/", "destination": "group.events", "destination_type": "queue", "routing_key": "#" },
+    { "source": "websitecontent.exchange", "vhost": "/", "destination": "websitecontent.events", "destination_type": "queue", "routing_key": "#" }
+  ]
+}

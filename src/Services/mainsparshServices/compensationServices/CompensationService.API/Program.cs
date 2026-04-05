@@ -7,6 +7,11 @@ using CompensationService.API.GraphQL;
 using CompensationService.Infrastructure;
 using MediatR;
 using Serilog;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using RabbitMQ.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -105,6 +110,38 @@ app.UseHealthChecksConfiguration();
 app.MapControllers();
 app.MapCompensationGradeEndpoints();
 app.MapGraphQL();
+
+// Auth token endpoint
+app.MapPost("/api/auth/token", (IConfiguration cfg) =>
+{
+    var jwtSettings = cfg.GetSection("Jwt");
+    var secureKey = Encoding.ASCII.GetBytes(jwtSettings["SecureKey"]!);
+    var tokenDescriptor = new SecurityTokenDescriptor
+    {
+        Subject = new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.Name, "testuser"),
+            new Claim(ClaimTypes.Role, "Admin")
+        }),
+        Expires = DateTime.UtcNow.AddHours(1),
+        Issuer = jwtSettings["Issuer"],
+        Audience = jwtSettings["Audience"],
+        SigningCredentials = new SigningCredentials(
+            new SymmetricSecurityKey(secureKey),
+            SecurityAlgorithms.HmacSha256Signature)
+    };
+    var tokenHandler = new JwtSecurityTokenHandler();
+    var token = tokenHandler.CreateToken(tokenDescriptor);
+    return Results.Ok(new { token = tokenHandler.WriteToken(token), expiresIn = 3600 });
+}).WithTags("Auth").AllowAnonymous();
+
+// RabbitMQ test endpoint
+app.MapGet("/api/rabbitmq/test", (HttpContext ctx) =>
+{
+    var rabbitConnection = ctx.RequestServices.GetService<IConnection>();
+    var connected = rabbitConnection?.IsOpen == true;
+    return Results.Ok(new { status = connected ? "Connected" : "Disconnected", service = "RabbitMQ" });
+}).WithTags("Infrastructure").AllowAnonymous();
 
 // Initialize database
 try

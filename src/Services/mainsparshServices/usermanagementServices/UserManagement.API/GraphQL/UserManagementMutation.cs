@@ -10,17 +10,19 @@ using UserManagement.Application.Features.WebsiteContact.Commands.UpdateWebsiteC
 namespace UserManagement.API.GraphQL;
 
 /// <summary>HotChocolate GraphQL Mutation type</summary>
-public class UserManagementMutation(IMediator mediator)
+public class UserManagementMutation
 {
     [GraphQLDescription("Create a new user policy")]
     public async Task<UserPolicyDto> CreateUserPolicy(
         CreateUserPolicyCommand input,
+        [Service] IMediator mediator,
         CancellationToken cancellationToken)
         => await mediator.Send(input, cancellationToken);
 
     [GraphQLDescription("Update an existing user policy")]
     public async Task<UserPolicyDto> UpdateUserPolicy(
         UpdateUserPolicyCommand input,
+        [Service] IMediator mediator,
         CancellationToken cancellationToken)
         => await mediator.Send(input, cancellationToken);
 
@@ -28,6 +30,7 @@ public class UserManagementMutation(IMediator mediator)
     public async Task<bool> DeleteUserPolicy(
         long policyId,
         long deletedBy,
+        [Service] IMediator mediator,
         CancellationToken cancellationToken)
     {
         await mediator.Send(new DeleteUserPolicyCommand(policyId, deletedBy), cancellationToken);
@@ -37,12 +40,14 @@ public class UserManagementMutation(IMediator mediator)
     [GraphQLDescription("Create website contact information")]
     public async Task<WebsiteContactDto> CreateWebsiteContact(
         CreateWebsiteContactCommand input,
+        [Service] IMediator mediator,
         CancellationToken cancellationToken)
         => await mediator.Send(input, cancellationToken);
 
     [GraphQLDescription("Update website contact information")]
     public async Task<WebsiteContactDto> UpdateWebsiteContact(
         UpdateWebsiteContactCommand input,
+        [Service] IMediator mediator,
         CancellationToken cancellationToken)
         => await mediator.Send(input, cancellationToken);
 }

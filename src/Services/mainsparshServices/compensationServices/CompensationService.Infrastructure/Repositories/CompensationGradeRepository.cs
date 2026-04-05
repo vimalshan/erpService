@@ -20,7 +20,6 @@ public class CompensationGradeRepository : ICompensationGradeRepository
     public async Task<CompensationGrade?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
     {
         return await _dbContext.CompensationGrades
-            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 

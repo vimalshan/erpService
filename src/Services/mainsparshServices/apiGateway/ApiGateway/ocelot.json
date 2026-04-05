@@ -1,0 +1,211 @@
+{
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5100",
+    "RequestIdKey": "X-Correlation-ID",
+    "RateLimitOptions": {
+      "DisableRateLimitHeaders": false,
+      "QuotaExceededMessage": "API rate limit exceeded. Please try again later.",
+      "HttpStatusCode": 429,
+      "ClientIdHeader": "X-ClientId"
+    },
+    "QoSOptions": {
+      "ExceptionsAllowedBeforeBreaking": 5,
+      "DurationOfBreak": 15000,
+      "TimeoutValue": 30000
+    },
+    "LoadBalancerOptions": {
+      "Type": "RoundRobin"
+    },
+    "HttpHandlerOptions": {
+      "AllowAutoRedirect": false,
+      "UseCookieContainer": false,
+      "UseTracing": true
+    }
+  },
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/ocelot/approval/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5000 }
+      ],
+      "Key": "approval",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "approval" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/booking/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5127 }
+      ],
+      "Key": "booking",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "booking" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/community/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5128 }
+      ],
+      "Key": "community",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "community" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/compensation/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5129 }
+      ],
+      "Key": "compensation",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "compensation" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/groupmanagement/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5130 }
+      ],
+      "Key": "groupmanagement",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "groupmanagement" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/location/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5131 }
+      ],
+      "Key": "location",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "location" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/meeting/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5225 }
+      ],
+      "Key": "meeting",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "meeting" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/proxy/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5237 }
+      ],
+      "Key": "proxy",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "proxy" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/reimbursement/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5202 }
+      ],
+      "Key": "reimbursement",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "reimbursement" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/stipend/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5152 }
+      ],
+      "Key": "stipend",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "stipend" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/timesheet/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5272 }
+      ],
+      "Key": "timesheet",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "timesheet" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/transaction/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5133 }
+      ],
+      "Key": "transaction",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "transaction" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/usermanagement/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5243 }
+      ],
+      "Key": "usermanagement",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "usermanagement" }
+    },
+    {
+      "UpstreamPathTemplate": "/ocelot/websitecontent/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5216 }
+      ],
+      "Key": "websitecontent",
+      "RateLimitOptions": { "ClientWhitelist": [], "EnableRateLimiting": true, "Period": "1m", "PeriodTimespan": 1, "Limit": 100 },
+      "QoSOptions": { "ExceptionsAllowedBeforeBreaking": 5, "DurationOfBreak": 15000, "TimeoutValue": 30000 },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "websitecontent" }
+    }
+  ]
+}
+
+

@@ -1,0 +1,1252 @@
+# ==========================================
+# SRF Sparsh Microservices - K8s Deployments
+# ==========================================
+
+# --- API Gateway ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: srfsparsh
+  labels:
+    app: api-gateway
+    tier: gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+        tier: gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: srfsparsh/api-gateway:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: JwtSettings__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: srfsparsh
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer
+
+---
+# --- Approval Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: approval-service
+  namespace: srfsparsh
+  labels:
+    app: approval-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: approval-service
+  template:
+    metadata:
+      labels:
+        app: approval-service
+        tier: service
+    spec:
+      containers:
+        - name: approval-service
+          image: srfsparsh/approval-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: RabbitMq__HostName
+              value: "rabbitmq"
+            - name: RabbitMq__UserName
+              value: "srfsparsh"
+            - name: RabbitMq__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: Jwt__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: approval-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: approval-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+# --- Booking Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-service
+  namespace: srfsparsh
+  labels:
+    app: booking-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: booking-service
+  template:
+    metadata:
+      labels:
+        app: booking-service
+        tier: service
+    spec:
+      containers:
+        - name: booking-service
+          image: srfsparsh/booking-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__BookingDb
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Host
+              value: "rabbitmq"
+            - name: RabbitMQ__Username
+              value: "srfsparsh"
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: JwtSettings__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: booking-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: booking-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+# --- Community Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: community-service
+  namespace: srfsparsh
+  labels:
+    app: community-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: community-service
+  template:
+    metadata:
+      labels:
+        app: community-service
+        tier: service
+    spec:
+      containers:
+        - name: community-service
+          image: srfsparsh/community-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: RabbitMq__HostName
+              value: "rabbitmq"
+            - name: RabbitMq__UserName
+              value: "srfsparsh"
+            - name: RabbitMq__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: Jwt__SigningKey
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: community-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: community-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+# --- Compensation Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compensation-service
+  namespace: srfsparsh
+  labels:
+    app: compensation-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: compensation-service
+  template:
+    metadata:
+      labels:
+        app: compensation-service
+        tier: service
+    spec:
+      containers:
+        - name: compensation-service
+          image: srfsparsh/compensation-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__HostName
+              value: "rabbitmq"
+            - name: RabbitMQ__UserName
+              value: "srfsparsh"
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: Jwt__SecureKey
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: compensation-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: compensation-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+# --- Group Management Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: groupmanagement-service
+  namespace: srfsparsh
+  labels:
+    app: groupmanagement-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: groupmanagement-service
+  template:
+    metadata:
+      labels:
+        app: groupmanagement-service
+        tier: service
+    spec:
+      containers:
+        - name: groupmanagement-service
+          image: srfsparsh/groupmanagement-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: RabbitMq__HostName
+              value: "rabbitmq"
+            - name: RabbitMq__UserName
+              value: "srfsparsh"
+            - name: RabbitMq__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: JwtSettings__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: groupmanagement-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: groupmanagement-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+# --- Location Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: location-service
+  namespace: srfsparsh
+  labels:
+    app: location-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: location-service
+  template:
+    metadata:
+      labels:
+        app: location-service
+        tier: service
+    spec:
+      containers:
+        - name: location-service
+          image: srfsparsh/location-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: ConnectionStrings__Redis
+              value: "redis:6379"
+            - name: RabbitMq__Host
+              value: "rabbitmq"
+            - name: RabbitMq__UserName
+              value: "srfsparsh"
+            - name: RabbitMq__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: JwtSettings__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+            - name: CacheSettings__UseRedis
+              value: "true"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: location-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: location-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+# --- Meeting Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meeting-service
+  namespace: srfsparsh
+  labels:
+    app: meeting-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: meeting-service
+  template:
+    metadata:
+      labels:
+        app: meeting-service
+        tier: service
+    spec:
+      containers:
+        - name: meeting-service
+          image: srfsparsh/meeting-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__HostName
+              value: "rabbitmq"
+            - name: RabbitMQ__UserName
+              value: "srfsparsh"
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: JwtSettings__Key
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meeting-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: meeting-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+# --- Proxy Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxy-service
+  namespace: srfsparsh
+  labels:
+    app: proxy-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: proxy-service
+  template:
+    metadata:
+      labels:
+        app: proxy-service
+        tier: service
+    spec:
+      containers:
+        - name: proxy-service
+          image: srfsparsh/proxy-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__HostName
+              value: "rabbitmq"
+            - name: RabbitMQ__UserName
+              value: "srfsparsh"
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: JwtSettings__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxy-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: proxy-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+# --- Reimbursement Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reimbursement-service
+  namespace: srfsparsh
+  labels:
+    app: reimbursement-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reimbursement-service
+  template:
+    metadata:
+      labels:
+        app: reimbursement-service
+        tier: service
+    spec:
+      containers:
+        - name: reimbursement-service
+          image: srfsparsh/reimbursement-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Host
+              value: "rabbitmq"
+            - name: RabbitMQ__Username
+              value: "srfsparsh"
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: RabbitMQ__UseInMemory
+              value: "false"
+            - name: JwtSettings__Key
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reimbursement-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: reimbursement-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+# --- Stipend Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stipend-service
+  namespace: srfsparsh
+  labels:
+    app: stipend-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: stipend-service
+  template:
+    metadata:
+      labels:
+        app: stipend-service
+        tier: service
+    spec:
+      containers:
+        - name: stipend-service
+          image: srfsparsh/stipend-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Host
+              value: "rabbitmq"
+            - name: RabbitMQ__Username
+              value: "srfsparsh"
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: JwtSettings__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stipend-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: stipend-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+# --- Timesheet Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timesheet-service
+  namespace: srfsparsh
+  labels:
+    app: timesheet-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: timesheet-service
+  template:
+    metadata:
+      labels:
+        app: timesheet-service
+        tier: service
+    spec:
+      containers:
+        - name: timesheet-service
+          image: srfsparsh/timesheet-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Host
+              value: "rabbitmq"
+            - name: RabbitMQ__Username
+              value: "srfsparsh"
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: JwtSettings__Key
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: timesheet-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: timesheet-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+# --- Transaction Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transaction-service
+  namespace: srfsparsh
+  labels:
+    app: transaction-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: transaction-service
+  template:
+    metadata:
+      labels:
+        app: transaction-service
+        tier: service
+    spec:
+      containers:
+        - name: transaction-service
+          image: srfsparsh/transaction-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Host
+              value: "rabbitmq"
+            - name: RabbitMQ__Username
+              value: "srfsparsh"
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: JwtSettings__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transaction-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: transaction-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+# --- User Management Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: usermanagement-service
+  namespace: srfsparsh
+  labels:
+    app: usermanagement-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: usermanagement-service
+  template:
+    metadata:
+      labels:
+        app: usermanagement-service
+        tier: service
+    spec:
+      containers:
+        - name: usermanagement-service
+          image: srfsparsh/usermanagement-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Host
+              value: "rabbitmq"
+            - name: RabbitMQ__Username
+              value: "srfsparsh"
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: JwtSettings__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: usermanagement-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: usermanagement-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+# --- Website Content Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: websitecontent-service
+  namespace: srfsparsh
+  labels:
+    app: websitecontent-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: websitecontent-service
+  template:
+    metadata:
+      labels:
+        app: websitecontent-service
+        tier: service
+    spec:
+      containers:
+        - name: websitecontent-service
+          image: srfsparsh/websitecontent-service:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: srfsparsh-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=SRFSPARSHDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__HostName
+              value: "rabbitmq"
+            - name: RabbitMQ__UserName
+              value: "srfsparsh"
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: rabbitmq-password
+            - name: Jwt__SecureKey
+              valueFrom:
+                secretKeyRef:
+                  name: srfsparsh-secrets
+                  key: jwt-secret-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: websitecontent-service
+  namespace: srfsparsh
+spec:
+  selector:
+    app: websitecontent-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP

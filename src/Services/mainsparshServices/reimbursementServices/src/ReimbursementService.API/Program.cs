@@ -36,6 +36,7 @@ var jwtKey = builder.Configuration["Jwt:Key"]
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -44,7 +45,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
         };
     });
 
@@ -99,5 +101,54 @@ app.MapGraphQL("/graphql");
 // ── Health checks ─────────────────────────────────────────────────────────────
 app.MapHealthChecks("/health");
 
+// ── Auth token endpoint (dev/test) ────────────────────────────────────────────
+app.MapPost("/api/auth/token", (Microsoft.AspNetCore.Http.HttpContext ctx,
+    IConfiguration config,
+    ReimbursementService.API.Models.TokenRequest req) =>
+{
+    var key = config["Jwt:Key"]!;
+    var issuer = config["Jwt:Issuer"]!;
+    var audience = config["Jwt:Audience"]!;
+    var expiry = int.Parse(config["Jwt:ExpiryMinutes"] ?? "60");
+
+    var claims = new List<System.Security.Claims.Claim>
+    {
+        new("sub", req.UserId.ToString()),
+        new("nameid", req.UserId.ToString()),
+        new("name", req.UserName ?? "user")
+    };
+    if (req.Roles != null)
+        foreach (var role in req.Roles)
+            claims.Add(new(System.Security.Claims.ClaimTypes.Role, role));
+
+    var secKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+    var creds = new SigningCredentials(secKey, SecurityAlgorithms.HmacSha256);
+    var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
+        issuer, audience, claims,
+        expires: DateTime.UtcNow.AddMinutes(expiry),
+        signingCredentials: creds);
+
+    return Results.Ok(new { token = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token) });
+}).AllowAnonymous();
+
+// ── RabbitMQ test endpoint ────────────────────────────────────────────────────
+app.MapGet("/api/rabbitmq/test", (IServiceProvider sp, IConfiguration config) =>
+{
+    try
+    {
+        var bus = sp.GetRequiredService<MassTransit.IBus>();
+        return Results.Ok(new { service = "RabbitMQ", status = "Available", transport = config["RabbitMQ:UseInMemory"] == "true" ? "InMemory" : "RabbitMQ" });
+    }
+    catch
+    {
+        return Results.Ok(new { service = "RabbitMQ", status = "Disconnected", transport = "Unknown" });
+    }
+}).AllowAnonymous();
+
 app.Run();
+
+namespace ReimbursementService.API.Models
+{
+    public record TokenRequest(long UserId, string? UserName, string[]? Roles);
+}
 

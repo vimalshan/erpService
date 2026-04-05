@@ -33,21 +33,16 @@ public class ExceptionHandlingMiddleware
         var response = context.Response;
         response.ContentType = "application/json";
 
-        dynamic problemDetails;
-        problemDetails = new
-        {
-            status = response.StatusCode,
-            message = exception.Message,
-            type = exception.GetType().Name
-        };
+        object problemDetails;
+        int statusCode;
 
         switch (exception)
         {
             case ValidationException validationEx:
-                response.StatusCode = (int)HttpStatusCode.BadRequest;
+                statusCode = (int)HttpStatusCode.BadRequest;
                 problemDetails = new
                 {
-                    status = response.StatusCode,
+                    status = statusCode,
                     message = "Validation failed",
                     type = "ValidationException",
                     errors = validationEx.Errors.Select(e => new { field = e.PropertyName, message = e.ErrorMessage })
@@ -55,23 +50,23 @@ public class ExceptionHandlingMiddleware
                 break;
 
             case ArgumentException:
-                response.StatusCode = (int)HttpStatusCode.BadRequest;
-                problemDetails.status = (int)HttpStatusCode.BadRequest;
+                statusCode = (int)HttpStatusCode.BadRequest;
+                problemDetails = new { status = statusCode, message = exception.Message, type = exception.GetType().Name };
                 break;
 
             case InvalidOperationException:
-                response.StatusCode = (int)HttpStatusCode.Conflict;
-                problemDetails.status = (int)HttpStatusCode.Conflict;
+                statusCode = (int)HttpStatusCode.Conflict;
+                problemDetails = new { status = statusCode, message = exception.Message, type = exception.GetType().Name };
                 break;
 
             default:
-                response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                problemDetails.status = (int)HttpStatusCode.InternalServerError;
+                statusCode = (int)HttpStatusCode.InternalServerError;
+                problemDetails = new { status = statusCode, message = exception.Message, type = exception.GetType().Name };
                 break;
         }
 
-        var json = System.Text.Json.JsonSerializer.Serialize((object)problemDetails);
-        response.ContentType = "application/json";
+        response.StatusCode = statusCode;
+        var json = System.Text.Json.JsonSerializer.Serialize(problemDetails);
         return response.WriteAsync(json);
     }
 }
