@@ -10,7 +10,7 @@ COPY ["src/ApprovalService.Infrastructure/ApprovalService.Infrastructure.csproj"
 COPY ["src/ApprovalService.API/ApprovalService.API.csproj", "src/ApprovalService.API/"]
 
 # Restore dependencies
-RUN dotnet restore
+RUN dotnet restore src/ApprovalService.API/ApprovalService.API.csproj
 
 # Copy source code
 COPY src/ApprovalService.Domain/ src/ApprovalService.Domain/
@@ -19,7 +19,7 @@ COPY src/ApprovalService.Infrastructure/ src/ApprovalService.Infrastructure/
 COPY src/ApprovalService.API/ src/ApprovalService.API/
 
 # Build application
-RUN dotnet build -c Release -o /build
+RUN dotnet build src/ApprovalService.API/ApprovalService.API.csproj -c Release -o /build
 
 # Publish
 RUN dotnet publish src/ApprovalService.API/ApprovalService.API.csproj -c Release -o /publish
