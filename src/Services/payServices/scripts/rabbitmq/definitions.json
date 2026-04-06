@@ -1,0 +1,163 @@
+{
+  "rabbit_version": "4.0",
+  "users": [
+    {
+      "name": "erp_user",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    }
+  ],
+  "vhosts": [
+    { "name": "erp" }
+  ],
+  "permissions": [
+    {
+      "user": "erp_user",
+      "vhost": "erp",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "erp.events",
+      "vhost": "erp",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false
+    },
+    {
+      "name": "erp.events.dlx",
+      "vhost": "erp",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false
+    }
+  ],
+  "queues": [
+    {
+      "name": "employee.events",
+      "vhost": "erp",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "employee.events.dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "hr.events",
+      "vhost": "erp",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "hr.events.dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "payroll.events",
+      "vhost": "erp",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "payroll.events.dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "faq.events",
+      "vhost": "erp",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "faq.events.dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "tax.events",
+      "vhost": "erp",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "tax.events.dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "paytransactional.events",
+      "vhost": "erp",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "paytransactional.events.dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "employee.events.dlq",
+      "vhost": "erp",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "hr.events.dlq",
+      "vhost": "erp",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "payroll.events.dlq",
+      "vhost": "erp",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "faq.events.dlq",
+      "vhost": "erp",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "tax.events.dlq",
+      "vhost": "erp",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "paytransactional.events.dlq",
+      "vhost": "erp",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    { "source": "erp.events", "vhost": "erp", "destination": "employee.events", "destination_type": "queue", "routing_key": "employee.#" },
+    { "source": "erp.events", "vhost": "erp", "destination": "hr.events", "destination_type": "queue", "routing_key": "hr.#" },
+    { "source": "erp.events", "vhost": "erp", "destination": "payroll.events", "destination_type": "queue", "routing_key": "payroll.#" },
+    { "source": "erp.events", "vhost": "erp", "destination": "faq.events", "destination_type": "queue", "routing_key": "faq.#" },
+    { "source": "erp.events", "vhost": "erp", "destination": "tax.events", "destination_type": "queue", "routing_key": "tax.#" },
+    { "source": "erp.events", "vhost": "erp", "destination": "paytransactional.events", "destination_type": "queue", "routing_key": "paytransactional.#" },
+    { "source": "erp.events.dlx", "vhost": "erp", "destination": "employee.events.dlq", "destination_type": "queue", "routing_key": "employee.events.dlq" },
+    { "source": "erp.events.dlx", "vhost": "erp", "destination": "hr.events.dlq", "destination_type": "queue", "routing_key": "hr.events.dlq" },
+    { "source": "erp.events.dlx", "vhost": "erp", "destination": "payroll.events.dlq", "destination_type": "queue", "routing_key": "payroll.events.dlq" },
+    { "source": "erp.events.dlx", "vhost": "erp", "destination": "faq.events.dlq", "destination_type": "queue", "routing_key": "faq.events.dlq" },
+    { "source": "erp.events.dlx", "vhost": "erp", "destination": "tax.events.dlq", "destination_type": "queue", "routing_key": "tax.events.dlq" },
+    { "source": "erp.events.dlx", "vhost": "erp", "destination": "paytransactional.events.dlq", "destination_type": "queue", "routing_key": "paytransactional.events.dlq" }
+  ]
+}

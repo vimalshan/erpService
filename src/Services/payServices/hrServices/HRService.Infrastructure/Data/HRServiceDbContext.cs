@@ -26,6 +26,9 @@ public class HRServiceDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Ignore domain event collection — not persisted via EF
+        modelBuilder.Ignore<Domain.Common.DomainEvent>();
+
         // Apply configurations
         modelBuilder.ApplyConfiguration(new DepartmentConfiguration());
         modelBuilder.ApplyConfiguration(new PositionConfiguration());

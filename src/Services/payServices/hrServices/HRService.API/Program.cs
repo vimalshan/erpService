@@ -28,7 +28,11 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // DbContext
 builder.Services.AddDbContext<HRServiceDbContext>(options =>
     options.UseSqlServer(connectionString,
-        sqlOptions => sqlOptions.CommandTimeout(300)));
+        sqlOptions =>
+        {
+            sqlOptions.CommandTimeout(300);
+            sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorNumbersToAdd: null);
+        }));
 
 // Repositories and Unit of Work
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -130,6 +134,12 @@ builder.Services.AddCors(options =>
 builder.Services.AddHealthChecks();
     // .AddDbContextCheck<HRServiceDbContext>();
 
+// GraphQL
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType<HRService.API.GraphQL.HRQuery>()
+    .AddMutationType<HRService.API.GraphQL.HRMutation>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -153,15 +163,18 @@ app.UseAuthorization();
 // Health check endpoint
 app.MapHealthChecks("/health");
 
+// GraphQL endpoint
+app.MapGraphQL("/graphql");
+
 app.MapControllers();
 
 // Minimal APIs
-app.MapGet("/api/employees/{id}", async (Guid id, IUnitOfWork unitOfWork) =>
+app.MapGet("/api/minimal/employees/{id}", async (Guid id, IUnitOfWork unitOfWork) =>
 {
     var employee = await unitOfWork.EmployeeRepository.GetByIdAsync(id);
     return employee == null ? Results.NotFound() : Results.Ok(employee);
 })
-.WithName("GetEmployeeById")
+.WithName("GetEmployeeByIdMinimal")
 .WithOpenApi();
 
 try

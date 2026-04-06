@@ -30,6 +30,7 @@ public static class AuthenticationExtensions
         })
         .AddJwtBearer(options =>
         {
+            options.MapInboundClaims = false; // keep claim names as defined in the token (e.g. "role" stays "role")
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,

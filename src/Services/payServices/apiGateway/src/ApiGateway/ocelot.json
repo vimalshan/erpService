@@ -1,0 +1,377 @@
+{
+  "Routes": [
+    // ==================== Employee Service (port 5104) ====================
+    {
+      "DownstreamPathTemplate": "/api/employees/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5104 }
+      ],
+      "UpstreamPathTemplate": "/api/employees/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "Key": "employee-api",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": {
+        "TtlSeconds": 15,
+        "Region": "employeeCache"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/auth/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5104 }
+      ],
+      "UpstreamPathTemplate": "/api/employee-auth/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "employee-auth"
+    },
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5104 }
+      ],
+      "UpstreamPathTemplate": "/graphql/employees",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "employee-graphql"
+    },
+    {
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5104 }
+      ],
+      "UpstreamPathTemplate": "/health/employee",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Key": "employee-health"
+    },
+
+    // ==================== HR Service (port 5000) ====================
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5000 }
+      ],
+      "UpstreamPathTemplate": "/api/hr/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "Key": "hr-api",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5000 }
+      ],
+      "UpstreamPathTemplate": "/health/hr",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Key": "hr-health"
+    },
+
+    // ==================== FAQ Service (port 5032) ====================
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5032 }
+      ],
+      "UpstreamPathTemplate": "/api/faq/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "Key": "faq-api",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5032 }
+      ],
+      "UpstreamPathTemplate": "/graphql/faq",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "faq-graphql"
+    },
+    {
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5032 }
+      ],
+      "UpstreamPathTemplate": "/health/faq",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Key": "faq-health"
+    },
+
+    // ==================== Payroll Service (port 5002) ====================
+    {
+      "DownstreamPathTemplate": "/api/payrolltransactions/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5002 }
+      ],
+      "UpstreamPathTemplate": "/api/payroll/transactions/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "Key": "payroll-transactions",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/payrollbatches/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5002 }
+      ],
+      "UpstreamPathTemplate": "/api/payroll/batches/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "Key": "payroll-batches"
+    },
+    {
+      "DownstreamPathTemplate": "/api/adjustments/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5002 }
+      ],
+      "UpstreamPathTemplate": "/api/payroll/adjustments/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "Key": "payroll-adjustments"
+    },
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5002 }
+      ],
+      "UpstreamPathTemplate": "/graphql/payroll",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "payroll-graphql"
+    },
+    {
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5002 }
+      ],
+      "UpstreamPathTemplate": "/health/payroll",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Key": "payroll-health"
+    },
+
+    // ==================== Tax Service (port 5010) ====================
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5010 }
+      ],
+      "UpstreamPathTemplate": "/api/tax/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "Key": "tax-api",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5010 }
+      ],
+      "UpstreamPathTemplate": "/graphql/tax",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "tax-graphql"
+    },
+    {
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5010 }
+      ],
+      "UpstreamPathTemplate": "/health/tax",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Key": "tax-health"
+    },
+
+    // ==================== Pay Transactional Service (port 5020) ====================
+    {
+      "DownstreamPathTemplate": "/api/paytransactions/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5020 }
+      ],
+      "UpstreamPathTemplate": "/api/paytransactions/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "Key": "paytransactional-transactions",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/payarrears/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5020 }
+      ],
+      "UpstreamPathTemplate": "/api/payarrears/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "Key": "paytransactional-arrears"
+    },
+    {
+      "DownstreamPathTemplate": "/api/payadjustments/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5020 }
+      ],
+      "UpstreamPathTemplate": "/api/payadjustments/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "Key": "paytransactional-adjustments"
+    },
+    {
+      "DownstreamPathTemplate": "/api/payrollbatches/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5020 }
+      ],
+      "UpstreamPathTemplate": "/api/paytransactional/batches/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "Key": "paytransactional-batches"
+    },
+    {
+      "DownstreamPathTemplate": "/api/auth/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5020 }
+      ],
+      "UpstreamPathTemplate": "/api/paytransactional-auth/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "paytransactional-auth"
+    },
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5020 }
+      ],
+      "UpstreamPathTemplate": "/graphql/paytransactional",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "paytransactional-graphql"
+    },
+    {
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5020 }
+      ],
+      "UpstreamPathTemplate": "/health/paytransactional",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Key": "paytransactional-health"
+    },
+    {
+      "DownstreamPathTemplate": "/api/summary/month/{monthYear}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5020 }
+      ],
+      "UpstreamPathTemplate": "/api/paytransactional/summary/month/{monthYear}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Key": "paytransactional-summary"
+    }
+  ],
+
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5100",
+    "RequestIdKey": "X-Correlation-ID",
+    "RateLimitOptions": {
+      "DisableRateLimitHeaders": false,
+      "QuotaExceededMessage": "Too many requests. Please try again later.",
+      "HttpStatusCode": 429,
+      "ClientIdHeader": "X-Client-Id"
+    },
+    "QoSOptions": {
+      "ExceptionsAllowedBeforeBreaking": 3,
+      "DurationOfBreak": 30000,
+      "TimeoutValue": 15000
+    },
+    "LoadBalancerOptions": {
+      "Type": "RoundRobin"
+    },
+    "HttpHandlerOptions": {
+      "AllowAutoRedirect": false,
+      "UseCookieContainer": false,
+      "UseTracing": true
+    }
+  }
+}

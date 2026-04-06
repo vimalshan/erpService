@@ -9,6 +9,7 @@ public class DepartmentConfiguration : IEntityTypeConfiguration<Department>
     public void Configure(EntityTypeBuilder<Department> builder)
     {
         builder.HasKey(x => x.Id);
+        builder.ToTable("HR_Department");
 
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.DepartmentCode).IsRequired().HasMaxLength(50);
@@ -28,6 +29,7 @@ public class PositionConfiguration : IEntityTypeConfiguration<Position>
     public void Configure(EntityTypeBuilder<Position> builder)
     {
         builder.HasKey(x => x.Id);
+        builder.ToTable("HR_Position");
 
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.PositionCode).IsRequired().HasMaxLength(50);
@@ -50,6 +52,7 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
     public void Configure(EntityTypeBuilder<Employee> builder)
     {
         builder.HasKey(x => x.Id);
+        builder.ToTable("HR_Employee");
 
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.EmployeeCode).IsRequired().HasMaxLength(50);
@@ -63,17 +66,20 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(x => x.IsActive).HasDefaultValue(true);
         builder.Property(x => x.ConcurrencyStamp).IsConcurrencyToken();
 
-        builder.OwnsOne(x => x.Email)
-            .Property(e => e.Value)
-            .HasColumnName("Email")
-            .IsRequired();
+        builder.OwnsOne(x => x.Email, email =>
+        {
+            email.Property(e => e.Value)
+                .HasColumnName("Email")
+                .HasMaxLength(256)
+                .IsRequired();
+            email.HasIndex(e => e.Value).IsUnique();
+        });
 
         builder.OwnsOne(x => x.PhoneNumber)
             .Property(p => p.Value)
             .HasColumnName("PhoneNumber");
 
         builder.HasIndex(x => x.EmployeeCode).IsUnique();
-        builder.HasIndex(x => x.Email).IsUnique();
 
         builder.HasOne<Department>()
             .WithMany()
@@ -92,6 +98,7 @@ public class LeaveTypeConfiguration : IEntityTypeConfiguration<LeaveType>
     public void Configure(EntityTypeBuilder<LeaveType> builder)
     {
         builder.HasKey(x => x.Id);
+        builder.ToTable("HR_LeaveType");
 
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.LeaveTypeName).IsRequired().HasMaxLength(100);
@@ -105,9 +112,10 @@ public class EmployeeLeaveConfiguration : IEntityTypeConfiguration<EmployeeLeave
     public void Configure(EntityTypeBuilder<EmployeeLeave> builder)
     {
         builder.HasKey(x => x.Id);
+        builder.ToTable("HR_EmployeeLeave");
 
         builder.Property(x => x.Id).ValueGeneratedNever();
-        builder.Property(x => x.Status).HasConversion<string>();
+        builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(50);
         builder.Property(x => x.Reason).HasMaxLength(500);
         builder.Property(x => x.ConcurrencyStamp).IsConcurrencyToken();
 
@@ -128,6 +136,7 @@ public class ShiftConfiguration : IEntityTypeConfiguration<Shift>
     public void Configure(EntityTypeBuilder<Shift> builder)
     {
         builder.HasKey(x => x.Id);
+        builder.ToTable("HR_Shift");
 
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.ShiftCode).IsRequired().HasMaxLength(50);
@@ -144,6 +153,7 @@ public class AttendanceConfiguration : IEntityTypeConfiguration<Attendance>
     public void Configure(EntityTypeBuilder<Attendance> builder)
     {
         builder.HasKey(x => x.Id);
+        builder.ToTable("HR_Attendance");
 
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.Status).HasConversion<string>();
@@ -169,6 +179,7 @@ public class SalaryComponentConfiguration : IEntityTypeConfiguration<SalaryCompo
     public void Configure(EntityTypeBuilder<SalaryComponent> builder)
     {
         builder.HasKey(x => x.Id);
+        builder.ToTable("HR_SalaryComponent");
 
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.ComponentName).IsRequired().HasMaxLength(100);
@@ -183,6 +194,7 @@ public class EmployeeSalaryConfiguration : IEntityTypeConfiguration<EmployeeSala
     public void Configure(EntityTypeBuilder<EmployeeSalary> builder)
     {
         builder.HasKey(x => x.Id);
+        builder.ToTable("HR_EmployeeSalary");
 
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.Status).HasConversion<string>();
@@ -201,6 +213,7 @@ public class PerformanceReviewConfiguration : IEntityTypeConfiguration<Performan
     public void Configure(EntityTypeBuilder<PerformanceReview> builder)
     {
         builder.HasKey(x => x.Id);
+        builder.ToTable("HR_PerformanceReview");
 
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.Status).HasConversion<string>();

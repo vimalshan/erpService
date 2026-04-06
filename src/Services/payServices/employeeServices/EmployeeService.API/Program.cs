@@ -25,6 +25,9 @@ builder.Services.AddScoped<EmployeeService.API.Utilities.JwtTokenGenerator>();
 // Add GraphQL
 builder.Services.AddGraphQLServices(builder.Configuration);
 
+// Add MassTransit with RabbitMQ
+builder.Services.AddMassTransitWithRabbitMQ(builder.Configuration);
+
 // Add Controllers
 builder.Services.AddControllers();
 
@@ -74,8 +77,37 @@ app.UseAuthorization();
 
 // Map endpoints
 app.MapControllers();
-app.MapHealthChecks("/health");
-app.MapHealthChecks("/health/ready");
+
+// Liveness: excludes external-dependency checks (RabbitMQ/MassTransit)
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => !check.Tags.Contains("masstransit"),
+    ResponseWriter = async (ctx, report) =>
+    {
+        ctx.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new { name = e.Key, status = e.Value.Status.ToString(), error = e.Value.Exception?.Message })
+        });
+        await ctx.Response.WriteAsync(result);
+    }
+});
+
+// Readiness: all checks including RabbitMQ/MassTransit
+app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    ResponseWriter = async (ctx, report) =>
+    {
+        ctx.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new { name = e.Key, status = e.Value.Status.ToString(), error = e.Value.Exception?.Message })
+        });
+        await ctx.Response.WriteAsync(result);
+    }
+});
 
 // Map minimal APIs for example
 app.MapEmployeeEndpoints();

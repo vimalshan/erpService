@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using PayrollServices.Infrastructure.Data;
 using PayrollServices.Infrastructure.Repositories;
+using PayrollServices.Infrastructure.Messaging;
 using PayrollServices.Domain.Interfaces;
 using MediatR;
 using AutoMapper;
@@ -101,6 +102,9 @@ public static class ServiceExtensions
         services
             .AddHealthChecks()
             .AddSqlServer(configuration.GetConnectionString("DefaultConnection") ?? "");
+
+        // RabbitMQ Message Broker
+        services.AddScoped<IMessageBrokerService, RabbitMQService>();
 
         return services;
     }

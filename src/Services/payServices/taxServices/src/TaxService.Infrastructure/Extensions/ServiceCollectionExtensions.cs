@@ -1,3 +1,4 @@
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +20,9 @@ public static IServiceCollection AddInfrastructureServices(
         string connectionString,
         IConfiguration? configuration = null)
     {
+        // Register MediatR handlers from Infrastructure (overrides Application stubs)
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly));
+
         // Register DbContext
         services.AddDbContext<TaxServiceDbContext>(options =>
             options.UseSqlServer(
@@ -36,13 +40,17 @@ public static IServiceCollection AddInfrastructureServices(
             var hostName = rabbitMQConfig["HostName"] ?? "localhost";
             var userName = rabbitMQConfig["UserName"] ?? "guest";
             var password = rabbitMQConfig["Password"] ?? "guest";
+            var port = int.TryParse(rabbitMQConfig["Port"], out var p) ? p : 5672;
+            var virtualHost = rabbitMQConfig["VirtualHost"] ?? "/";
 
             services.AddSingleton<IMessageBrokerConnection>(sp =>
                 new RabbitMQConnection(
                     sp.GetRequiredService<ILogger<RabbitMQConnection>>(),
                     hostName,
                     userName,
-                    password));
+                    password,
+                    port,
+                    virtualHost));
             services.AddSingleton<IMessageConsumer, TaxEventMessageConsumer>();
         }
 

@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paytransactional-service
+  namespace: erp-microservices
+  labels:
+    app: paytransactional-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: paytransactional-service
+  template:
+    metadata:
+      labels:
+        app: paytransactional-service
+    spec:
+      containers:
+        - name: paytransactional-service
+          image: erp/paytransactional-service:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: ASPNETCORE_ENVIRONMENT
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=$(SQL_SERVER);Database=PayTransactionalService;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;MultipleActiveResultSets=true"
+            - name: SQL_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: SQL_SERVER
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: SQL_SA_PASSWORD
+            - name: JwtSettings__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: JWT_SECRET_KEY
+            - name: RabbitMQ__Host
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: RABBITMQ_HOST
+            - name: RabbitMQ__Port
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: RABBITMQ_PORT
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: RABBITMQ_PASS
+            - name: RabbitMQ__VirtualHost
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: RABBITMQ_VHOST
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paytransactional-service
+  namespace: erp-microservices
+spec:
+  selector:
+    app: paytransactional-service
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP

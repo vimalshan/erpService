@@ -1,0 +1,351 @@
+version: "3.8"
+
+services:
+  # ============================================================
+  # Infrastructure
+  # ============================================================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: erp-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SQL_SA_PASSWORD:-YourStrong@Passw0rd!}"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./scripts/db:/docker-entrypoint-initdb.d
+    networks:
+      - erp-network
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -Q "SELECT 1" -C -b -o /dev/null
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: erp-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-erp_user}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASS:-erp_password}"
+      RABBITMQ_DEFAULT_VHOST: "erp"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./scripts/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ./scripts/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    networks:
+      - erp-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  # ============================================================
+  # Database Initialization
+  # ============================================================
+  db-init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    container_name: erp-db-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./scripts/db:/scripts
+    networks:
+      - erp-network
+    entrypoint: >
+      /bin/bash -c "
+        echo 'Waiting for SQL Server...';
+        sleep 10;
+        echo 'Running database initialization...';
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P '${SQL_SA_PASSWORD:-YourStrong@Passw0rd!}' -C -i /scripts/init-databases.sql;
+        echo 'Database initialization complete.';
+      "
+
+  # ============================================================
+  # API Gateway (port 5100)
+  # ============================================================
+  api-gateway:
+    build:
+      context: ./apiGateway
+      dockerfile: Dockerfile
+    container_name: erp-api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      JwtSettings__SecretKey: "${JWT_SECRET_KEY:-YourSuperSecretKeyForJWTTokenGeneration2026!@#$$%^&*()}"
+      JwtSettings__Issuer: "ERPMicroserviceGateway"
+      JwtSettings__Audience: "ERPMicroserviceAudience"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erp_user}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-erp_password}"
+      RabbitMQ__VirtualHost: "erp"
+    ports:
+      - "5100:80"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  # ============================================================
+  # Employee Service (port 5104)
+  # ============================================================
+  employee-service:
+    build:
+      context: ./employeeServices
+      dockerfile: Dockerfile
+    container_name: erp-employee-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=PAYDB;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStrong@Passw0rd!};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      JwtSettings__SecretKey: "${JWT_SECRET_KEY:-YourSuperSecretKeyForJWTTokenGeneration2026!@#$$%^&*()}"
+      JwtSettings__Issuer: "EmployeeService"
+      JwtSettings__Audience: "ERPMicroserviceAudience"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erp_user}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-erp_password}"
+      RabbitMQ__VirtualHost: "erp"
+    ports:
+      - "5104:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ============================================================
+  # HR Service (port 5000)
+  # ============================================================
+  hr-service:
+    build:
+      context: ./hrServices
+      dockerfile: Dockerfile
+    container_name: erp-hr-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=PAYDB;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStrong@Passw0rd!};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      JwtSettings__SecretKey: "${JWT_SECRET_KEY:-YourSuperSecretKeyForJWTTokenGeneration2026!@#$$%^&*()}"
+      JwtSettings__Issuer: "HRService"
+      JwtSettings__Audience: "ERPMicroserviceAudience"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erp_user}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-erp_password}"
+      RabbitMQ__VirtualHost: "erp"
+    ports:
+      - "5000:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ============================================================
+  # FAQ Service (port 5032)
+  # ============================================================
+  faq-service:
+    build:
+      context: ./faqServices
+      dockerfile: Dockerfile
+    container_name: erp-faq-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=PAYDB;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStrong@Passw0rd!};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      JwtSettings__SecretKey: "${JWT_SECRET_KEY:-YourSuperSecretKeyForJWTTokenGeneration2026!@#$$%^&*()}"
+      JwtSettings__Issuer: "FaqServices.API"
+      JwtSettings__Audience: "ERPMicroserviceAudience"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erp_user}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-erp_password}"
+      RabbitMQ__VirtualHost: "erp"
+    ports:
+      - "5032:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ============================================================
+  # Payroll Service (port 5002)
+  # ============================================================
+  payroll-service:
+    build:
+      context: ./payrollServices
+      dockerfile: Dockerfile
+    container_name: erp-payroll-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=PAYDB;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStrong@Passw0rd!};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      JwtSettings__SecretKey: "${JWT_SECRET_KEY:-YourSuperSecretKeyForJWTTokenGeneration2026!@#$$%^&*()}"
+      JwtSettings__Issuer: "PayrollService"
+      JwtSettings__Audience: "ERPMicroserviceAudience"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erp_user}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-erp_password}"
+      RabbitMQ__VirtualHost: "erp"
+    ports:
+      - "5002:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ============================================================
+  # Tax Service (port 5010)
+  # ============================================================
+  tax-service:
+    build:
+      context: ./taxServices
+      dockerfile: Dockerfile
+    container_name: erp-tax-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=TaxService;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStrong@Passw0rd!};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      JwtSettings__SecretKey: "${JWT_SECRET_KEY:-YourSuperSecretKeyForJWTTokenGeneration2026!@#$$%^&*()}"
+      JwtSettings__Issuer: "TaxService"
+      JwtSettings__Audience: "ERPMicroserviceAudience"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erp_user}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-erp_password}"
+      RabbitMQ__VirtualHost: "erp"
+    ports:
+      - "5010:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ============================================================
+  # Pay Transactional Service (port 5020)
+  # ============================================================
+  paytransactional-service:
+    build:
+      context: ./payTransactionalServices
+      dockerfile: Dockerfile
+    container_name: erp-paytransactional-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=PayTransactionalService;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStrong@Passw0rd!};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      JwtSettings__SecretKey: "${JWT_SECRET_KEY:-YourSuperSecretKeyForJWTTokenGeneration2026!@#$$%^&*()}"
+      JwtSettings__Issuer: "PayTransactionalService"
+      JwtSettings__Audience: "ERPMicroserviceAudience"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erp_user}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-erp_password}"
+      RabbitMQ__VirtualHost: "erp"
+    ports:
+      - "5020:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+# ============================================================
+# Volumes
+# ============================================================
+volumes:
+  sqlserver-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+
+# ============================================================
+# Networks
+# ============================================================
+networks:
+  erp-network:
+    driver: bridge
+    name: erp-microservice-network

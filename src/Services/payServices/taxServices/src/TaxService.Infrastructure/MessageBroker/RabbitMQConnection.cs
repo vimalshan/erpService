@@ -1,61 +1,118 @@
 using Microsoft.Extensions.Logging;
+using RabbitMQ.Client;
+using System.Text;
+using System.Text.Json;
 
 namespace TaxService.Infrastructure.MessageBroker;
 
 public interface IMessageBrokerConnection
 {
     bool IsConnected { get; }
-    void Connect();
-    void Disconnect();
+    Task ConnectAsync();
+    Task DisconnectAsync();
+    Task PublishAsync(string exchange, string routingKey, object message, CancellationToken cancellationToken = default);
 }
 
-public class RabbitMQConnection : IMessageBrokerConnection
+public class RabbitMQConnection : IMessageBrokerConnection, IAsyncDisposable
 {
     private readonly ILogger<RabbitMQConnection> _logger;
     private readonly string _hostName;
     private readonly string _userName;
     private readonly string _password;
+    private readonly int _port;
+    private readonly string _virtualHost;
 
-    public bool IsConnected { get; private set; }
+    private IConnection? _connection;
+    private IChannel? _channel;
+
+    public bool IsConnected => _connection?.IsOpen == true && _channel?.IsOpen == true;
 
     public RabbitMQConnection(
         ILogger<RabbitMQConnection> logger,
         string hostName,
         string userName,
-        string password)
+        string password,
+        int port = 5672,
+        string virtualHost = "/")
     {
         _logger = logger;
         _hostName = hostName;
         _userName = userName;
         _password = password;
+        _port = port;
+        _virtualHost = virtualHost;
     }
 
-    public void Connect()
+    public async Task ConnectAsync()
     {
         try
         {
-            _logger.LogInformation($"Connecting to RabbitMQ at {_hostName}");
-            IsConnected = true;
-            _logger.LogInformation("Connected to RabbitMQ");
+            _logger.LogInformation("Connecting to RabbitMQ at {HostName}:{Port}", _hostName, _port);
+
+            var factory = new ConnectionFactory
+            {
+                HostName = _hostName,
+                UserName = _userName,
+                Password = _password,
+                Port = _port,
+                VirtualHost = _virtualHost,
+                RequestedConnectionTimeout = TimeSpan.FromSeconds(5)
+            };
+
+            _connection = await factory.CreateConnectionAsync("TaxService");
+            _channel = await _connection.CreateChannelAsync();
+
+            _logger.LogInformation("Connected to RabbitMQ at {HostName}:{Port}", _hostName, _port);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Cannot connect to RabbitMQ");
-            IsConnected = false;
+            _logger.LogWarning(ex, "Cannot connect to RabbitMQ at {HostName}:{Port} — service will run without messaging", _hostName, _port);
         }
     }
 
-    public void Disconnect()
+    public async Task DisconnectAsync()
     {
         try
         {
-            _logger.LogInformation("Disconnecting from RabbitMQ");
-            IsConnected = false;
+            if (_channel?.IsOpen == true)
+                await _channel.CloseAsync();
+            if (_connection?.IsOpen == true)
+                await _connection.CloseAsync();
+
+            _logger.LogInformation("Disconnected from RabbitMQ");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error disconnecting from RabbitMQ");
         }
+    }
+
+    public async Task PublishAsync(string exchange, string routingKey, object message, CancellationToken cancellationToken = default)
+    {
+        if (!IsConnected)
+        {
+            _logger.LogWarning("RabbitMQ not connected — skipping publish to {Exchange}/{RoutingKey}", exchange, routingKey);
+            return;
+        }
+
+        try
+        {
+            var json = JsonSerializer.Serialize(message);
+            var body = Encoding.UTF8.GetBytes(json);
+            await _channel!.BasicPublishAsync(exchange, routingKey, body, cancellationToken);
+            _logger.LogDebug("Published message to {Exchange}/{RoutingKey}", exchange, routingKey);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish message to {Exchange}/{RoutingKey}", exchange, routingKey);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await DisconnectAsync();
+        _channel?.Dispose();
+        _connection?.Dispose();
     }
 }
 
@@ -80,14 +137,12 @@ public class TaxEventMessageConsumer : IMessageConsumer
 
     public void StartConsuming(string queueName)
     {
-        try
+        if (!_connection.IsConnected)
         {
-            _logger.LogInformation($"RabbitMQ consumer started for queue: {queueName}");
+            _logger.LogWarning("RabbitMQ not connected — consumer not started for queue: {Queue}", queueName);
+            return;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error starting RabbitMQ consumer for queue: {queueName}");
-        }
+        _logger.LogInformation("RabbitMQ consumer started for queue: {Queue}", queueName);
     }
 
     public void StopConsuming()

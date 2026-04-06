@@ -1,11 +1,16 @@
 using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using HRService.Infrastructure.Data;
 
 #nullable disable
 
 namespace HRService.Infrastructure.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(HRServiceDbContext))]
+    [Migration("20260317000000_InitialCreate")]
     public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
@@ -121,7 +126,7 @@ namespace HRService.Infrastructure.Migrations
                     MiddleName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     DateOfBirth = table.Column<DateTime>(type: "date", nullable: false),
                     Gender = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     SSN = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     DepartmentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -206,7 +211,7 @@ namespace HRService.Infrastructure.Migrations
                     EndDate = table.Column<DateTime>(type: "date", nullable: false),
                     NumberOfDays = table.Column<int>(type: "int", nullable: false),
                     Reason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     ApprovedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ApprovalDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
