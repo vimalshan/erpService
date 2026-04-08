@@ -1,0 +1,140 @@
+{
+  "rabbit_version": "3.13.0",
+  "users": [
+    {
+      "name": "pfuser",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"]
+    }
+  ],
+  "vhosts": [
+    { "name": "/" }
+  ],
+  "permissions": [
+    {
+      "user": "pfuser",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "pf.events",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "pf.commands",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "accounting.events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "bank.events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "contribution.events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "investment.events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "loan.events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "masterdata.events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "member.events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "pftransactional.events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "settlement.events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "trust.events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-queue-type": "quorum" }
+    }
+  ],
+  "bindings": [
+    { "source": "pf.events", "vhost": "/", "destination": "accounting.events", "destination_type": "queue", "routing_key": "accounting.#", "arguments": {} },
+    { "source": "pf.events", "vhost": "/", "destination": "bank.events", "destination_type": "queue", "routing_key": "bank.#", "arguments": {} },
+    { "source": "pf.events", "vhost": "/", "destination": "contribution.events", "destination_type": "queue", "routing_key": "contribution.#", "arguments": {} },
+    { "source": "pf.events", "vhost": "/", "destination": "investment.events", "destination_type": "queue", "routing_key": "investment.#", "arguments": {} },
+    { "source": "pf.events", "vhost": "/", "destination": "loan.events", "destination_type": "queue", "routing_key": "loan.#", "arguments": {} },
+    { "source": "pf.events", "vhost": "/", "destination": "masterdata.events", "destination_type": "queue", "routing_key": "masterdata.#", "arguments": {} },
+    { "source": "pf.events", "vhost": "/", "destination": "member.events", "destination_type": "queue", "routing_key": "member.#", "arguments": {} },
+    { "source": "pf.events", "vhost": "/", "destination": "pftransactional.events", "destination_type": "queue", "routing_key": "pftransactional.#", "arguments": {} },
+    { "source": "pf.events", "vhost": "/", "destination": "settlement.events", "destination_type": "queue", "routing_key": "settlement.#", "arguments": {} },
+    { "source": "pf.events", "vhost": "/", "destination": "trust.events", "destination_type": "queue", "routing_key": "trust.#", "arguments": {} }
+  ],
+  "policies": [
+    {
+      "vhost": "/",
+      "name": "ha-all",
+      "pattern": ".*",
+      "apply-to": "queues",
+      "definition": {
+        "ha-mode": "all",
+        "ha-sync-mode": "automatic"
+      },
+      "priority": 0
+    }
+  ]
+}

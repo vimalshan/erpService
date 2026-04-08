@@ -1,0 +1,381 @@
+version: "3.8"
+
+services:
+  # =============================================================
+  # Infrastructure
+  # =============================================================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: pf-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SA_PASSWORD:-YourStrong!Passw0rd}
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./docker/sqlserver:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - pf-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: pf-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-pfuser}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-pfpassword}
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./docker/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./docker/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - pf-network
+
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    container_name: pf-sqlserver-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./docker/sqlserver:/scripts
+      - ./PFDB.sql:/scripts/PFDB.sql:ro
+      - ./PFDB-procedures.sql:/scripts/PFDB-procedures.sql:ro
+    entrypoint: /bin/bash /scripts/init-db.sh
+    environment:
+      SA_PASSWORD: ${SA_PASSWORD:-YourStrong!Passw0rd}
+    networks:
+      - pf-network
+
+  # =============================================================
+  # API Gateway
+  # =============================================================
+  api-gateway:
+    build:
+      context: ./apiGateway
+      dockerfile: Dockerfile
+    container_name: pf-api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      Jwt__Key: ${JWT_SECRET_KEY:-YourSuperSecretKeyHereMustBeLongEnough256Bits!!}
+      Jwt__Issuer: PFApiGateway
+      Jwt__Audience: PFServiceClients
+    ports:
+      - "5800:8080"
+    depends_on:
+      - accounting-service
+      - bank-service
+      - contribution-service
+      - investment-service
+      - loan-service
+      - masterdata-service
+      - member-service
+      - pftransactional-service
+      - settlement-service
+      - trust-service
+    networks:
+      - pf-network
+    restart: unless-stopped
+
+  # =============================================================
+  # Domain Services
+  # =============================================================
+  accounting-service:
+    build:
+      context: ./accountingServices
+      dockerfile: Dockerfile
+    container_name: pf-accounting-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PFDB;User Id=sa;Password=${SA_PASSWORD:-YourStrong!Passw0rd};TrustServerCertificate=True;Encrypt=True;"
+      ConnectionStrings__AzureBlobStorage: ${AZURE_BLOB_CONNECTION:-UseDevelopmentStorage=true}
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: ${RABBITMQ_USER:-pfuser}
+      RabbitMQ__Password: ${RABBITMQ_PASS:-pfpassword}
+      RabbitMQ__VirtualHost: /
+      JwtSettings__SecretKey: ${JWT_SECRET_KEY:-AccountingService_Super$$ecret_JWT_Key_2026_PF_ERPMicroservice!}
+      JwtSettings__Issuer: AccountingService
+      JwtSettings__Audience: AccountingServiceClients
+    ports:
+      - "5068:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - pf-network
+    restart: unless-stopped
+
+  bank-service:
+    build:
+      context: ./bankServices/BankService
+      dockerfile: Dockerfile
+    container_name: pf-bank-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__BankDb: "Server=sqlserver,1433;Database=PFDB;User Id=sa;Password=${SA_PASSWORD:-YourStrong!Passw0rd};TrustServerCertificate=True;Encrypt=True;"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: ${RABBITMQ_USER:-pfuser}
+      RabbitMQ__Password: ${RABBITMQ_PASS:-pfpassword}
+      Jwt__Key: ${JWT_SECRET_KEY:-YourSuperSecretKeyHereMustBeLongEnough256Bits!!}
+      Jwt__Issuer: BankService
+      Jwt__Audience: BankServiceClients
+    ports:
+      - "5125:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - pf-network
+    restart: unless-stopped
+
+  contribution-service:
+    build:
+      context: ./contributionServices/ContributionService
+      dockerfile: Dockerfile
+    container_name: pf-contribution-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PFDB;User Id=sa;Password=${SA_PASSWORD:-YourStrong!Passw0rd};TrustServerCertificate=True;Encrypt=True;"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: ${RABBITMQ_USER:-pfuser}
+      RabbitMQ__Password: ${RABBITMQ_PASS:-pfpassword}
+      Jwt__Key: ${JWT_SECRET_KEY:-YourSuperSecretKeyHereMustBeLongEnough256Bits!!}
+      Jwt__Issuer: ContributionService
+      Jwt__Audience: ContributionServiceClients
+    ports:
+      - "5225:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - pf-network
+    restart: unless-stopped
+
+  investment-service:
+    build:
+      context: ./investmentServices/InvestmentService
+      dockerfile: Dockerfile
+    container_name: pf-investment-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__InvestmentDb: "Server=sqlserver,1433;Database=PFDB;User Id=sa;Password=${SA_PASSWORD:-YourStrong!Passw0rd};TrustServerCertificate=True;Encrypt=True;"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: ${RABBITMQ_USER:-pfuser}
+      RabbitMQ__Password: ${RABBITMQ_PASS:-pfpassword}
+      Jwt__Key: ${JWT_SECRET_KEY:-YourSuperSecretKeyHereMustBeLongEnough256Bits!!}
+      Jwt__Issuer: InvestmentService
+      Jwt__Audience: InvestmentServiceClients
+    ports:
+      - "5171:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - pf-network
+    restart: unless-stopped
+
+  loan-service:
+    build:
+      context: ./loanServices
+      dockerfile: Dockerfile
+    container_name: pf-loan-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PFDB;User Id=sa;Password=${SA_PASSWORD:-YourStrong!Passw0rd};TrustServerCertificate=True;Encrypt=True;"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: ${RABBITMQ_USER:-pfuser}
+      RabbitMQ__Password: ${RABBITMQ_PASS:-pfpassword}
+      Jwt__Key: ${JWT_SECRET_KEY:-YourSuperSecretKeyHereMustBeLongEnough256Bits!!}
+      Jwt__Issuer: LoanService
+      Jwt__Audience: LoanServiceClients
+    ports:
+      - "5004:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - pf-network
+    restart: unless-stopped
+
+  masterdata-service:
+    build:
+      context: ./masterdataServices/MasterDataService
+      dockerfile: Dockerfile
+    container_name: pf-masterdata-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PFDB;User Id=sa;Password=${SA_PASSWORD:-YourStrong!Passw0rd};TrustServerCertificate=True;Encrypt=True;"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: ${RABBITMQ_USER:-pfuser}
+      RabbitMQ__Password: ${RABBITMQ_PASS:-pfpassword}
+      Jwt__Key: ${JWT_SECRET_KEY:-YourSuperSecretKeyHereMustBeLongEnough256Bits!!}
+      Jwt__Issuer: MasterDataService
+      Jwt__Audience: MasterDataServiceClients
+    ports:
+      - "5090:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - pf-network
+    restart: unless-stopped
+
+  member-service:
+    build:
+      context: ./memberServices
+      dockerfile: Dockerfile
+    container_name: pf-member-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PFDB;User Id=sa;Password=${SA_PASSWORD:-YourStrong!Passw0rd};TrustServerCertificate=True;Encrypt=True;"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: ${RABBITMQ_USER:-pfuser}
+      RabbitMQ__Password: ${RABBITMQ_PASS:-pfpassword}
+      Jwt__Key: ${JWT_SECRET_KEY:-YourSuperSecretKeyHereMustBeLongEnough256Bits!!}
+      Jwt__Issuer: MemberService
+      Jwt__Audience: MemberServiceClients
+    ports:
+      - "5278:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - pf-network
+    restart: unless-stopped
+
+  pftransactional-service:
+    build:
+      context: ./pftransactionalServices
+      dockerfile: Dockerfile
+    container_name: pf-pftransactional-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__PFTransactionalDb: "Server=sqlserver,1433;Database=PFDB;User Id=sa;Password=${SA_PASSWORD:-YourStrong!Passw0rd};TrustServerCertificate=True;Encrypt=True;"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: ${RABBITMQ_USER:-pfuser}
+      RabbitMQ__Password: ${RABBITMQ_PASS:-pfpassword}
+      Jwt__Key: ${JWT_SECRET_KEY:-YourSuperSecretKeyHereMustBeLongEnough256Bits!!}
+      Jwt__Issuer: PFTransactionalService
+      Jwt__Audience: PFTransactionalServiceClients
+    ports:
+      - "5160:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - pf-network
+    restart: unless-stopped
+
+  settlement-service:
+    build:
+      context: ./settlementServices
+      dockerfile: Dockerfile
+    container_name: pf-settlement-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__SettlementDb: "Server=sqlserver,1433;Database=PFDB;User Id=sa;Password=${SA_PASSWORD:-YourStrong!Passw0rd};TrustServerCertificate=True;Encrypt=True;"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: ${RABBITMQ_USER:-pfuser}
+      RabbitMQ__Password: ${RABBITMQ_PASS:-pfpassword}
+      Jwt__Key: ${JWT_SECRET_KEY:-YourSuperSecretKeyHereMustBeLongEnough256Bits!!}
+      Jwt__Issuer: SettlementService
+      Jwt__Audience: SettlementServiceClients
+    ports:
+      - "5149:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - pf-network
+    restart: unless-stopped
+
+  trust-service:
+    build:
+      context: ./trustServices/TrustService
+      dockerfile: Dockerfile
+    container_name: pf-trust-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PFDB;User Id=sa;Password=${SA_PASSWORD:-YourStrong!Passw0rd};TrustServerCertificate=True;Encrypt=True;"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: ${RABBITMQ_USER:-pfuser}
+      RabbitMQ__Password: ${RABBITMQ_PASS:-pfpassword}
+      Jwt__Key: ${JWT_SECRET_KEY:-YourSuperSecretKeyHereMustBeLongEnough256Bits!!}
+      Jwt__Issuer: TrustService
+      Jwt__Audience: TrustServiceClients
+    ports:
+      - "5079:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - pf-network
+    restart: unless-stopped
+
+volumes:
+  sqlserver-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+
+networks:
+  pf-network:
+    driver: bridge

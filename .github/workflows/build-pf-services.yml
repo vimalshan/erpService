@@ -1,0 +1,193 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Build & Push PF Service Docker Images to GitHub Container Registry (GHCR)
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# Triggers:
+#   - Push to main (only when relevant service files change)
+#   - Manual dispatch (workflow_dispatch) to build all or specific services
+#
+# Prerequisites (GitHub repo settings):
+#   No secrets needed — uses the built-in GITHUB_TOKEN for GHCR authentication.
+#   Ensure "Read and write permissions" is enabled under:
+#     Settings → Actions → General → Workflow permissions
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Build & Push PF Services
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/Services/pfServices/**'
+
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to build (or "all")'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - api-gateway
+          - accounting-service
+          - bank-service
+          - contribution-service
+          - investment-service
+          - loan-service
+          - masterdata-service
+          - member-service
+          - pf-transaction-service
+          - settlement-service
+          - trust-service
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/erp
+
+jobs:
+  # ── Detect which services changed ────────────────────────────────────────
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine changed services
+        id: set-matrix
+        run: |
+          # Service registry: name → context + dockerfile
+          declare -A SVC_CONTEXT SVC_DOCKERFILE
+          SVC_CONTEXT[api-gateway]="src/Services/pfServices/apiGateway";                             SVC_DOCKERFILE[api-gateway]="Dockerfile"
+          SVC_CONTEXT[accounting-service]="src/Services/pfServices/accountingServices";               SVC_DOCKERFILE[accounting-service]="Dockerfile"
+          SVC_CONTEXT[bank-service]="src/Services/pfServices/bankServices/BankService";               SVC_DOCKERFILE[bank-service]="Dockerfile"
+          SVC_CONTEXT[contribution-service]="src/Services/pfServices/contributionServices/ContributionService"; SVC_DOCKERFILE[contribution-service]="Dockerfile"
+          SVC_CONTEXT[investment-service]="src/Services/pfServices/investmentServices/InvestmentService"; SVC_DOCKERFILE[investment-service]="Dockerfile"
+          SVC_CONTEXT[loan-service]="src/Services/pfServices/loanServices";                           SVC_DOCKERFILE[loan-service]="Dockerfile"
+          SVC_CONTEXT[masterdata-service]="src/Services/pfServices/masterdataServices/MasterDataService"; SVC_DOCKERFILE[masterdata-service]="Dockerfile"
+          SVC_CONTEXT[member-service]="src/Services/pfServices/memberServices";                       SVC_DOCKERFILE[member-service]="Dockerfile"
+          SVC_CONTEXT[pf-transaction-service]="src/Services/pfServices/pftransactionalServices";      SVC_DOCKERFILE[pf-transaction-service]="Dockerfile"
+          SVC_CONTEXT[settlement-service]="src/Services/pfServices/settlementServices";               SVC_DOCKERFILE[settlement-service]="Dockerfile"
+          SVC_CONTEXT[trust-service]="src/Services/pfServices/trustServices/TrustService";             SVC_DOCKERFILE[trust-service]="Dockerfile"
+
+          # Ordered list matching the paths for change detection
+          SVC_NAMES=(api-gateway accounting-service bank-service contribution-service investment-service loan-service masterdata-service member-service pf-transaction-service settlement-service trust-service)
+          SVC_PATHS=(
+            "src/Services/pfServices/apiGateway/"
+            "src/Services/pfServices/accountingServices/"
+            "src/Services/pfServices/bankServices/"
+            "src/Services/pfServices/contributionServices/"
+            "src/Services/pfServices/investmentServices/"
+            "src/Services/pfServices/loanServices/"
+            "src/Services/pfServices/masterdataServices/"
+            "src/Services/pfServices/memberServices/"
+            "src/Services/pfServices/pftransactionalServices/"
+            "src/Services/pfServices/settlementServices/"
+            "src/Services/pfServices/trustServices/"
+          )
+
+          make_entry() {
+            local n="$1"
+            echo "{\"name\":\"${n}\",\"context\":\"${SVC_CONTEXT[$n]}\",\"dockerfile\":\"${SVC_DOCKERFILE[$n]}\"}"
+          }
+
+          # If manual dispatch with a specific service, build only that
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            INPUT="${{ github.event.inputs.service }}"
+            if [[ "$INPUT" != "all" ]]; then
+              ENTRY=$(make_entry "$INPUT")
+              echo "matrix={\"include\":[${ENTRY}]}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          # For push events or "all", detect changes
+          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "src/Services/pfServices/")
+          BUILD_ALL=$([[ "${{ github.event.inputs.service }}" == "all" ]] && echo "true" || echo "false")
+
+          # If shared infrastructure assets changed, rebuild all PF services
+          if echo "$CHANGED" | grep -q "^src/Services/pfServices/infrastructure/"; then
+            BUILD_ALL="true"
+          fi
+
+          # If shared PF root files changed (outside specific service folders), rebuild all
+          NON_SERVICE_CHANGES=$(echo "$CHANGED" | grep "^src/Services/pfServices/" | grep -Ev "^src/Services/pfServices/(apiGateway|accountingServices|bankServices|contributionServices|investmentServices|loanServices|masterdataServices|memberServices|pftransactionalServices|settlementServices|trustServices|infrastructure)/" || true)
+          if [[ -n "$NON_SERVICE_CHANGES" ]]; then
+            BUILD_ALL="true"
+          fi
+
+          SERVICES=()
+          for i in "${!SVC_NAMES[@]}"; do
+            NAME="${SVC_NAMES[$i]}"
+            PATH_PREFIX="${SVC_PATHS[$i]}"
+            if [[ "$BUILD_ALL" == "true" ]] || echo "$CHANGED" | grep -q "^${PATH_PREFIX}"; then
+              SERVICES+=("$(make_entry "$NAME")")
+            fi
+          done
+
+          if [[ ${#SERVICES[@]} -eq 0 ]]; then
+            echo "matrix={\"include\":[]}" >> "$GITHUB_OUTPUT"
+          else
+            JSON=$(printf '%s,' "${SERVICES[@]}")
+            JSON="[${JSON%,}]"
+            echo "matrix={\"include\":${JSON}}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Print matrix
+        run: echo '${{ steps.set-matrix.outputs.matrix }}'
+
+  # ── Build & Push ─────────────────────────────────────────────────────────
+  build-and-push:
+    name: Build ${{ matrix.name }}
+    needs: changes
+    if: ${{ fromJson(needs.changes.outputs.matrix).include[0] != null }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64

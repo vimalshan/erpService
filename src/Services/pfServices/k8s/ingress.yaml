@@ -1,0 +1,99 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pf-ingress
+  namespace: pf-services
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - pf-api.example.com
+      secretName: pf-tls-secret
+  rules:
+    - host: pf-api.example.com
+      http:
+        paths:
+          # All traffic routes through the API Gateway
+          - path: /(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 80
+          # Direct service access (for internal/debug use)
+          - path: /api/accounting(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: accounting-service
+                port:
+                  number: 80
+          - path: /api/bank(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: bank-service
+                port:
+                  number: 80
+          - path: /api/contribution(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: contribution-service
+                port:
+                  number: 80
+          - path: /api/investment(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: investment-service
+                port:
+                  number: 80
+          - path: /api/loan(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: loan-service
+                port:
+                  number: 80
+          - path: /api/masterdata(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: masterdata-service
+                port:
+                  number: 80
+          - path: /api/member(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: member-service
+                port:
+                  number: 80
+          - path: /api/pftransactional(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: pftransactional-service
+                port:
+                  number: 80
+          - path: /api/settlement(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: settlement-service
+                port:
+                  number: 80
+          - path: /api/trust(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: trust-service
+                port:
+                  number: 80
