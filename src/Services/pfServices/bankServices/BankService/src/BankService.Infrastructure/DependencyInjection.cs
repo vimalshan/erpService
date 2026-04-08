@@ -34,24 +34,33 @@ public static class DependencyInjection
         services.AddScoped<IBlobStorageService, BlobStorageService>();
 
         // MassTransit + RabbitMQ
+        var rabbitEnabled = configuration.GetSection("RabbitMQ")["Enabled"] == "True";
+
         services.AddMassTransit(x =>
         {
             x.AddConsumer<ChequeIssuedConsumer>();
             x.AddConsumer<ChequeClearedConsumer>();
             x.AddConsumer<ReconciliationRequestedConsumer>();
 
-            x.UsingRabbitMq((context, cfg) =>
+            if (rabbitEnabled)
             {
-                cfg.Host(configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+                x.UsingRabbitMq((context, cfg) =>
                 {
-                    h.Username(configuration["RabbitMQ:Username"] ?? "guest");
-                    h.Password(configuration["RabbitMQ:Password"] ?? "guest");
-                });
+                    cfg.Host(configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+                    {
+                        h.Username(configuration["RabbitMQ:Username"] ?? "guest");
+                        h.Password(configuration["RabbitMQ:Password"] ?? "guest");
+                    });
 
-                cfg.ReceiveEndpoint("cheque-issued", e => e.ConfigureConsumer<ChequeIssuedConsumer>(context));
-                cfg.ReceiveEndpoint("cheque-cleared", e => e.ConfigureConsumer<ChequeClearedConsumer>(context));
-                cfg.ReceiveEndpoint("reconciliation-requested", e => e.ConfigureConsumer<ReconciliationRequestedConsumer>(context));
-            });
+                    cfg.ReceiveEndpoint("cheque-issued", e => e.ConfigureConsumer<ChequeIssuedConsumer>(context));
+                    cfg.ReceiveEndpoint("cheque-cleared", e => e.ConfigureConsumer<ChequeClearedConsumer>(context));
+                    cfg.ReceiveEndpoint("reconciliation-requested", e => e.ConfigureConsumer<ReconciliationRequestedConsumer>(context));
+                });
+            }
+            else
+            {
+                x.UsingInMemory();
+            }
         });
 
         // Health Checks

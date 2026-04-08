@@ -13,10 +13,9 @@ public class CreateContributionBatchHandler(IUnitOfWork uow, IMapper mapper)
 {
     public async Task<ContributionMainDto> Handle(CreateContributionBatchCommand request, CancellationToken ct)
     {
-        var nextBatchNo = await uow.ContributionMain.GetNextBatchNoAsync(ct);
         var entity = ContributionMain.Create(
-            nextBatchNo, request.TrustCode, request.Category, request.PayunitCode,
-            request.PayMonthStart, request.PayMonthEnd, nextBatchNo);
+            0, request.TrustCode, request.Category, request.PayunitCode,
+            request.PayMonthStart, request.PayMonthEnd, 0);
 
         await uow.ContributionMain.AddAsync(entity, ct);
         await uow.SaveChangesAsync(ct);
@@ -66,11 +65,10 @@ public class ProcessMonthlyContributionHandler(IUnitOfWork uow, IMediator mediat
         await uow.ProcessLogs.AddAsync(
             ContributionProcessLog.Create("START", $"Monthly contribution processing started for {request.MonthYear}", request.ProcessedByUserId), ct);
 
-        var nextBatchNo = await uow.ContributionMain.GetNextBatchNoAsync(ct);
         var startDate = DateTime.Parse($"{request.MonthYear}-01");
         var endDate = new DateTime(startDate.Year, startDate.Month, DateTime.DaysInMonth(startDate.Year, startDate.Month));
 
-        var batch = ContributionMain.Create(nextBatchNo, "DFL", "REG", "001", startDate, endDate, nextBatchNo);
+        var batch = ContributionMain.Create(0, "DFL", "REG", "001", startDate, endDate, 0);
         await uow.ContributionMain.AddAsync(batch, ct);
         await uow.SaveChangesAsync(ct);
 
@@ -82,7 +80,7 @@ public class ProcessMonthlyContributionHandler(IUnitOfWork uow, IMediator mediat
 
         return new ProcessContributionResultDto
         {
-            BatchNo = nextBatchNo,
+            BatchNo = batch.ContributionBatchNo,
             RowsProcessed = 1,
             Message = $"Monthly PF contribution processing completed for {request.MonthYear}"
         };

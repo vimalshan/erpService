@@ -64,6 +64,17 @@ public static class DependencyInjection
             services.AddSingleton<IBlobStorageService, NullBlobStorageService>();
         }
 
+        // RabbitMQ Consumers (hosted services)
+        services.AddSingleton<LoanPaymentConsumer>(sp =>
+            new LoanPaymentConsumer(rabbitHost, rabbitUser, rabbitPass,
+                sp.GetRequiredService<ILogger<LoanPaymentConsumer>>()));
+        services.AddHostedService(sp => sp.GetRequiredService<LoanPaymentConsumer>());
+
+        services.AddSingleton<LoanApprovalConsumer>(sp =>
+            new LoanApprovalConsumer(rabbitHost, rabbitUser, rabbitPass,
+                sp.GetRequiredService<ILogger<LoanApprovalConsumer>>()));
+        services.AddHostedService(sp => sp.GetRequiredService<LoanApprovalConsumer>());
+
         // Polly Circuit Breaker for HttpClient
         services.AddHttpClient("LoanServiceClient")
             .AddPolicyHandler(GetRetryPolicy())

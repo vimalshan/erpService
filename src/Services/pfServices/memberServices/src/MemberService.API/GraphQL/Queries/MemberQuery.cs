@@ -4,7 +4,6 @@ using MemberService.Application.Queries.GetMember;
 
 namespace MemberService.API.GraphQL.Queries;
 
-[QueryType]
 public class MemberQuery
 {
     public async Task<MemberProfileDto?> GetMemberAsync(long memberNo, [Service] IMediator mediator,

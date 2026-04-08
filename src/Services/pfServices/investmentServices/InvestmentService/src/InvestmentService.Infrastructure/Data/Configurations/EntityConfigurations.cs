@@ -10,7 +10,7 @@ public class InvestmentConfiguration : IEntityTypeConfiguration<Investment>
     {
         builder.ToTable("INV_MAIN");
         builder.HasKey(e => e.InvNo);
-        builder.Property(e => e.InvNo).HasColumnName("INV_NO");
+        builder.Property(e => e.InvNo).HasColumnName("INV_NO").ValueGeneratedNever();
         builder.Property(e => e.GroupId).HasColumnName("INV_GRPID");
         builder.Property(e => e.CategoryId).HasColumnName("INV_CATID");
         builder.Property(e => e.SubCategoryId).HasColumnName("INV_SUBCATID");
@@ -74,7 +74,7 @@ public class SaleDetailConfiguration : IEntityTypeConfiguration<SaleDetail>
     {
         builder.ToTable("INV_SALEDET");
         builder.HasKey(e => e.SaleNo);
-        builder.Property(e => e.SaleNo).HasColumnName("INV_SALENO");
+        builder.Property(e => e.SaleNo).HasColumnName("INV_SALENO").ValueGeneratedNever();
         builder.Property(e => e.InvNo).HasColumnName("INV_NO");
         builder.Property(e => e.SaleType).HasColumnName("INV_SALETYPE").HasMaxLength(1);
         builder.Property(e => e.SaleDate).HasColumnName("INV_SALEDATE");
@@ -100,7 +100,7 @@ public class ScheduleDetailConfiguration : IEntityTypeConfiguration<ScheduleDeta
     {
         builder.ToTable("INV_SCHDET");
         builder.HasKey(e => e.SchId);
-        builder.Property(e => e.SchId).HasColumnName("SCH_ID");
+        builder.Property(e => e.SchId).HasColumnName("SCH_ID").ValueGeneratedNever();
         builder.Property(e => e.InvNo).HasColumnName("SCH_INVNO");
         builder.Property(e => e.SlId).HasColumnName("SCH_SLID");
         builder.Property(e => e.ScheduleType).HasColumnName("SCH_TYPE").HasMaxLength(3);

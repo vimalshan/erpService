@@ -275,11 +275,8 @@ namespace InvestmentService.Infrastructure.Data.Migrations
             modelBuilder.Entity("InvestmentService.Domain.Entities.Investment", b =>
                 {
                     b.Property<long>("InvNo")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("INV_NO");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("InvNo"));
 
                     b.Property<decimal?>("BankCharges")
                         .HasColumnType("decimal(19,0)")
@@ -567,11 +564,8 @@ namespace InvestmentService.Infrastructure.Data.Migrations
             modelBuilder.Entity("InvestmentService.Domain.Entities.SaleDetail", b =>
                 {
                     b.Property<long>("SaleNo")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("INV_SALENO");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("SaleNo"));
 
                     b.Property<long>("EnteredBy")
                         .HasColumnType("bigint")
@@ -635,11 +629,8 @@ namespace InvestmentService.Infrastructure.Data.Migrations
             modelBuilder.Entity("InvestmentService.Domain.Entities.ScheduleDetail", b =>
                 {
                     b.Property<long>("SchId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("SCH_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("SchId"));
 
                     b.Property<decimal>("DueAmount")
                         .HasColumnType("decimal(19,0)")

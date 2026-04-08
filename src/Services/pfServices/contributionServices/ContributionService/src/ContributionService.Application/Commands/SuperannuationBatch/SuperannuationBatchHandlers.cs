@@ -11,11 +11,8 @@ public class CreateSuperannuationBatchHandler(IUnitOfWork uow, IMapper mapper)
 {
     public async Task<SuperannuationBatchDto> Handle(CreateSuperannuationBatchCommand request, CancellationToken ct)
     {
-        var all = await uow.SuperannuationBatches.GetAllAsync(ct);
-        var nextBatchNo = all.Count > 0 ? all.Max(b => b.SnBatchNo) + 1 : 1;
-
         var entity = Domain.Entities.SuperannuationBatch.Create(
-            nextBatchNo, request.TrustCode, request.Category, request.PayunitCode,
+            0, request.TrustCode, request.Category, request.PayunitCode,
             request.PayMonthStart, request.PayMonthEnd, request.ConAmt, request.PayDate);
 
         await uow.SuperannuationBatches.AddAsync(entity, ct);

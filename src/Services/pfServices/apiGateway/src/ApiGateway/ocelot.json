@@ -1,0 +1,294 @@
+{
+  "ReverseProxy": {
+    "Routes": {
+      "member-route": {
+        "ClusterId": "member-cluster",
+        "Match": {
+          "Path": "/api/member/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/member" }
+        ],
+        "Metadata": {
+          "RateLimitPolicy": "PerEndpoint"
+        }
+      },
+      "contribution-route": {
+        "ClusterId": "contribution-cluster",
+        "Match": {
+          "Path": "/api/contribution/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/contribution" }
+        ],
+        "Metadata": {
+          "RateLimitPolicy": "PerEndpoint"
+        }
+      },
+      "investment-route": {
+        "ClusterId": "investment-cluster",
+        "Match": {
+          "Path": "/api/investment/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/investment" }
+        ],
+        "Metadata": {
+          "RateLimitPolicy": "PerEndpoint"
+        }
+      },
+      "settlement-route": {
+        "ClusterId": "settlement-cluster",
+        "Match": {
+          "Path": "/api/settlement/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/settlement" }
+        ],
+        "Metadata": {
+          "RateLimitPolicy": "PerEndpoint"
+        }
+      },
+      "loan-route": {
+        "ClusterId": "loan-cluster",
+        "Match": {
+          "Path": "/api/loan/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/loan" }
+        ],
+        "Metadata": {
+          "RateLimitPolicy": "PerEndpoint"
+        }
+      },
+      "accounting-route": {
+        "ClusterId": "accounting-cluster",
+        "Match": {
+          "Path": "/api/accounting/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/accounting" }
+        ],
+        "Metadata": {
+          "RateLimitPolicy": "PerEndpoint"
+        }
+      },
+      "bank-route": {
+        "ClusterId": "bank-cluster",
+        "Match": {
+          "Path": "/api/bank/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/bank" }
+        ],
+        "Metadata": {
+          "RateLimitPolicy": "PerEndpoint"
+        }
+      },
+      "masterdata-route": {
+        "ClusterId": "masterdata-cluster",
+        "Match": {
+          "Path": "/api/masterdata/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/masterdata" }
+        ],
+        "Metadata": {
+          "RateLimitPolicy": "PerEndpoint"
+        }
+      },
+      "pftransactional-route": {
+        "ClusterId": "pftransactional-cluster",
+        "Match": {
+          "Path": "/api/pftransactional/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/pftransactional" }
+        ],
+        "Metadata": {
+          "RateLimitPolicy": "PerEndpoint"
+        }
+      },
+      "trust-route": {
+        "ClusterId": "trust-cluster",
+        "Match": {
+          "Path": "/api/trust/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/trust" }
+        ],
+        "Metadata": {
+          "RateLimitPolicy": "PerEndpoint"
+        }
+      }
+    },
+    "Clusters": {
+      "member-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:30",
+            "Timeout": "00:00:10",
+            "Path": "/health"
+          }
+        },
+        "HttpClient": {
+          "RequestHeaderEncoding": "utf-8"
+        },
+        "Metadata": {
+          "CircuitBreakerPolicy": "DefaultCircuitBreaker"
+        },
+        "Destinations": {
+          "member-d1": {
+            "Address": "http://localhost:5278/"
+          }
+        }
+      },
+      "contribution-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:30",
+            "Timeout": "00:00:10",
+            "Path": "/health"
+          }
+        },
+        "Destinations": {
+          "contribution-d1": {
+            "Address": "http://localhost:5225/"
+          }
+        }
+      },
+      "investment-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:30",
+            "Timeout": "00:00:10",
+            "Path": "/health"
+          }
+        },
+        "Destinations": {
+          "investment-d1": {
+            "Address": "http://localhost:5171/"
+          }
+        }
+      },
+      "settlement-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:30",
+            "Timeout": "00:00:10",
+            "Path": "/health"
+          }
+        },
+        "Destinations": {
+          "settlement-d1": {
+            "Address": "http://localhost:5149/"
+          }
+        }
+      },
+      "loan-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:30",
+            "Timeout": "00:00:10",
+            "Path": "/health"
+          }
+        },
+        "Destinations": {
+          "loan-d1": {
+            "Address": "http://localhost:5004/"
+          }
+        }
+      },
+      "accounting-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:30",
+            "Timeout": "00:00:10",
+            "Path": "/health"
+          }
+        },
+        "Destinations": {
+          "accounting-d1": {
+            "Address": "http://localhost:5068/"
+          }
+        }
+      },
+      "bank-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:30",
+            "Timeout": "00:00:10",
+            "Path": "/health"
+          }
+        },
+        "Destinations": {
+          "bank-d1": {
+            "Address": "http://localhost:5125/"
+          }
+        }
+      },
+      "masterdata-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:30",
+            "Timeout": "00:00:10",
+            "Path": "/health"
+          }
+        },
+        "Destinations": {
+          "masterdata-d1": {
+            "Address": "http://localhost:5090/"
+          }
+        }
+      },
+      "pftransactional-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:30",
+            "Timeout": "00:00:10",
+            "Path": "/health"
+          }
+        },
+        "Destinations": {
+          "pftransactional-d1": {
+            "Address": "http://localhost:5160/"
+          }
+        }
+      },
+      "trust-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:30",
+            "Timeout": "00:00:10",
+            "Path": "/health"
+          }
+        },
+        "Destinations": {
+          "trust-d1": {
+            "Address": "http://localhost:5079/"
+          }
+        }
+      }
+    }
+  }
+}

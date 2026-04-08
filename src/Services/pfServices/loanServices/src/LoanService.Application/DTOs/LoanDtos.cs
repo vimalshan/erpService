@@ -11,7 +11,7 @@ public record LoanDto
     public string? LoanReason { get; init; }
     public string? LoanTenure { get; init; }
     public decimal? PrincipalOutstanding { get; init; }
-    public char Status { get; init; }
+    public string Status { get; init; } = null!;
     public decimal? Rate { get; init; }
     public DateTime? ApprovalDate { get; init; }
     public DateTime? ClosureDate { get; init; }
@@ -28,7 +28,7 @@ public record RepaymentDto
     public DateTime DueDate { get; init; }
     public DateTime? PaidDate { get; init; }
     public decimal? PaidAmount { get; init; }
-    public char Status { get; init; }
+    public string Status { get; init; } = null!;
 }
 
 public record DeductionDto

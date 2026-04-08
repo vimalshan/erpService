@@ -107,8 +107,7 @@ namespace InvestmentService.Infrastructure.Data.Migrations
                 name: "INV_MAIN",
                 columns: table => new
                 {
-                    INV_NO = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    INV_NO = table.Column<long>(type: "bigint", nullable: false),
                     INV_GRPID = table.Column<int>(type: "int", nullable: true),
                     INV_CATID = table.Column<int>(type: "int", nullable: true),
                     INV_SUBCATID = table.Column<int>(type: "int", nullable: true),
@@ -258,8 +257,7 @@ namespace InvestmentService.Infrastructure.Data.Migrations
                 name: "INV_SALEDET",
                 columns: table => new
                 {
-                    INV_SALENO = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    INV_SALENO = table.Column<long>(type: "bigint", nullable: false),
                     INV_NO = table.Column<long>(type: "bigint", nullable: false),
                     INV_SALETYPE = table.Column<string>(type: "nvarchar(1)", maxLength: 1, nullable: false),
                     INV_SALEDATE = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -288,8 +286,7 @@ namespace InvestmentService.Infrastructure.Data.Migrations
                 name: "INV_SCHDET",
                 columns: table => new
                 {
-                    SCH_ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SCH_ID = table.Column<long>(type: "bigint", nullable: false),
                     SCH_INVNO = table.Column<long>(type: "bigint", nullable: false),
                     SCH_SLID = table.Column<long>(type: "bigint", nullable: false),
                     SCH_TYPE = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),

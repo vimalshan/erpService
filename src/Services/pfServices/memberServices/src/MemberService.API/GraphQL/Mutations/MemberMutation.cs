@@ -6,7 +6,6 @@ using MemberService.Application.DTOs;
 
 namespace MemberService.API.GraphQL.Mutations;
 
-[MutationType]
 public class MemberMutation
 {
     public async Task<MemberDto> CreateMemberAsync(CreateMemberCommand input,

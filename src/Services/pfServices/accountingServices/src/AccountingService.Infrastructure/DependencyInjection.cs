@@ -36,8 +36,11 @@ public static class DependencyInjection
         services.AddSingleton<IBlobStorageService, BlobStorageService>();
 
         // Messaging
-        services.AddScoped<RabbitMqConsumer>();
-        services.AddHostedService<AccountingMessageConsumerService>();
+        if (configuration.GetSection("RabbitMQ")["Enabled"] == "True")
+        {
+            services.AddScoped<RabbitMqConsumer>();
+            services.AddHostedService<AccountingMessageConsumerService>();
+        }
 
         return services;
     }

@@ -8,7 +8,7 @@ namespace ContributionService.Infrastructure.Repositories;
 public class ContributionMainRepository(ContributionDbContext context) : IContributionMainRepository
 {
     public async Task<ContributionMain?> GetByIdAsync(long batchNo, CancellationToken ct = default)
-        => await context.ContributionMain.Include(x => x.Details).FirstOrDefaultAsync(x => x.ContributionBatchNo == batchNo, ct);
+        => await context.ContributionMain.FirstOrDefaultAsync(x => x.ContributionBatchNo == batchNo, ct);
 
     public async Task<IReadOnlyList<ContributionMain>> GetAllAsync(CancellationToken ct = default)
         => await context.ContributionMain.AsNoTracking().ToListAsync(ct);

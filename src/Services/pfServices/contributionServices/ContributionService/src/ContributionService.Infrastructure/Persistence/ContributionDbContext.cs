@@ -27,7 +27,7 @@ public class ContributionDbContext : DbContext
         {
             e.ToTable("CONTRIBUTION_MAIN");
             e.HasKey(x => x.ContributionBatchNo);
-            e.Property(x => x.ContributionBatchNo).HasColumnName("CONTRIBUTION_BATCH_NO");
+            e.Property(x => x.ContributionBatchNo).HasColumnName("CONTRIBUTION_BATCH_NO").UseIdentityColumn();
             e.Property(x => x.ContributionTrustCode).HasColumnName("CONTRIBUTION_TRUST_CODE").HasMaxLength(3).IsFixedLength();
             e.Property(x => x.ContributionCategory).HasColumnName("CONTRIBUTION_CATEGORY").HasMaxLength(3).IsFixedLength();
             e.Property(x => x.ContributionPayunitCode).HasColumnName("CONTRIBUTION_PAYUNIT_CODE").HasMaxLength(3).IsFixedLength();
@@ -137,7 +137,7 @@ public class ContributionDbContext : DbContext
         {
             e.ToTable("SUPERANN_BATCH");
             e.HasKey(x => x.SnBatchNo);
-            e.Property(x => x.SnBatchNo).HasColumnName("SN_BATCH_NO");
+            e.Property(x => x.SnBatchNo).HasColumnName("SN_BATCH_NO").UseIdentityColumn();
             e.Property(x => x.SnTrustCode).HasColumnName("SN_TRUST_CODE");
             e.Property(x => x.SnCategory).HasColumnName("SN_CATEGORY").HasMaxLength(3).IsFixedLength();
             e.Property(x => x.SnPayunitCode).HasColumnName("SN_PAYUNIT_CODE").HasMaxLength(3).IsFixedLength();
