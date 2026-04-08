@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: sci-erp
+  labels:
+    app: api-gateway
+    tier: gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+        tier: gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: sci-erp/api-gateway:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: sci-erp-config
+                  key: ASPNETCORE_ENVIRONMENT
+            - name: ASPNETCORE_URLS
+              value: "http://+:80"
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: sci-erp-secrets
+                  key: jwt-secret
+            - name: Jwt__Issuer
+              valueFrom:
+                configMapKeyRef:
+                  name: sci-erp-config
+                  key: JWT_ISSUER
+            - name: Jwt__Audience
+              valueFrom:
+                configMapKeyRef:
+                  name: sci-erp-config
+                  key: JWT_AUDIENCE
+            - name: RabbitMQ__HostName
+              valueFrom:
+                configMapKeyRef:
+                  name: sci-erp-config
+                  key: RABBITMQ_HOSTNAME
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: sci-erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: sci-erp-secrets
+                  key: rabbitmq-password
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-service
+  namespace: sci-erp
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-gateway-hpa
+  namespace: sci-erp
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-gateway
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80

@@ -7,7 +7,7 @@ namespace EximManagement.Application.Commands.Products;
 
 // ─── Commands ─────────────────────────────────────────────────────────────────
 
-public record CreateProductCommand(long ProductId, string ProductName, string? OracleCode, long UpdatedBy)
+public record CreateProductCommand(string ProductName, string? OracleCode, long UpdatedBy)
     : IRequest<EximProductDto>;
 
 public record UpdateProductCommand(long ProductId, string ProductName, string? OracleCode, long UpdatedBy)
@@ -23,7 +23,7 @@ public class CreateProductCommandHandler(
 {
     public async Task<EximProductDto> Handle(CreateProductCommand cmd, CancellationToken ct)
     {
-        var product = EximProduct.Create(cmd.ProductId, cmd.ProductName, cmd.OracleCode, cmd.UpdatedBy);
+        var product = EximProduct.Create(cmd.ProductName, cmd.OracleCode, cmd.UpdatedBy);
         await repo.AddAsync(product, ct);
         await uow.SaveChangesAsync(ct);
         return MapToDto(product);
@@ -33,7 +33,7 @@ public class CreateProductCommandHandler(
     {
         ProductId = p.ProductId, ProductName = p.ProductName,
         ProductOracleCode = p.ProductOracleCode, LastUpdatedBy = p.LastUpdatedBy,
-        LastUpdatedOn = p.LastUpdatedOn, Status = p.Status
+        LastUpdatedOn = p.LastUpdatedOn, Status = p.Status.ToString()
     };
 }
 
@@ -52,7 +52,7 @@ public class UpdateProductCommandHandler(
         {
             ProductId = product.ProductId, ProductName = product.ProductName,
             ProductOracleCode = product.ProductOracleCode, LastUpdatedBy = product.LastUpdatedBy,
-            LastUpdatedOn = product.LastUpdatedOn, Status = product.Status
+            LastUpdatedOn = product.LastUpdatedOn, Status = product.Status.ToString()
         };
     }
 }

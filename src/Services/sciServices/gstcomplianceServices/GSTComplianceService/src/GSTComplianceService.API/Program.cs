@@ -88,7 +88,12 @@ builder.Services
     .AddMutationType<GSTComplianceService.API.GraphQL.GstMutation>()
     .AddProjections()
     .AddFiltering()
-    .AddSorting();
+    .AddSorting()
+    .AddType<GSTComplianceService.API.GraphQL.GstMainType>()
+    .AddType<GSTComplianceService.API.GraphQL.GstHsnDetailType>()
+    .AddType<GSTComplianceService.API.GraphQL.GstStateRegDetailType>()
+    .AddType<GSTComplianceService.API.GraphQL.GstServiceDetailType>()
+    .AddType<GSTComplianceService.API.GraphQL.GstSupplierType>();
 
 // ── Health Checks ─────────────────────────────────────────────────
 builder.Services.AddHealthChecks()

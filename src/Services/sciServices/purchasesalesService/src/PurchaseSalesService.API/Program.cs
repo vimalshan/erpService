@@ -83,7 +83,9 @@ builder.Services.AddAuthorization();
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<PurchaseSalesService.API.GraphQL.Query>()
-    .AddMutationType<PurchaseSalesService.API.GraphQL.Mutation>();
+    .AddMutationType<PurchaseSalesService.API.GraphQL.Mutation>()
+    .BindRuntimeType<char, HotChocolate.Types.StringType>()
+    .BindRuntimeType<char?, HotChocolate.Types.StringType>();
 
 // ─── Health Checks ────────────────────────────────────────────────────────────
 builder.Services

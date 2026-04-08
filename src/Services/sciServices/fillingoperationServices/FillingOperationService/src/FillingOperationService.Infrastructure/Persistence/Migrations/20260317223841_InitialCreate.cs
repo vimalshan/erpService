@@ -35,15 +35,14 @@ namespace FillingOperationService.Infrastructure.Persistence.Migrations
                 name: "FILLING_LINE_PRODUCT_MAP",
                 columns: table => new
                 {
-                    FILLING_LINE_ID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FILLING_LINE_ID = table.Column<int>(type: "int", nullable: false),
                     MAIN_PRODUCT_ID = table.Column<int>(type: "int", nullable: false),
                     SCI_USER_ID_MODIFIED = table.Column<int>(type: "int", nullable: false),
                     MODIFIED_DATE = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_FILLING_LINE_PRODUCT_MAP", x => x.FILLING_LINE_ID);
+                    table.PrimaryKey("PK_FILLING_LINE_PRODUCT_MAP", x => new { x.FILLING_LINE_ID, x.MAIN_PRODUCT_ID });
                 });
 
             migrationBuilder.CreateTable(
@@ -87,7 +86,8 @@ namespace FillingOperationService.Infrastructure.Persistence.Migrations
                 name: "FL_WORKING_SHIFT",
                 columns: table => new
                 {
-                    FL_WORKING_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: true),
+                    FL_WORKING_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     FILLINGLINE_ID = table.Column<decimal>(type: "decimal(38,0)", nullable: false),
                     SHIFT_CODE = table.Column<string>(type: "char(1)", nullable: false),
                     START_DATE = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -97,6 +97,7 @@ namespace FillingOperationService.Infrastructure.Persistence.Migrations
                 },
                 constraints: table =>
                 {
+                    table.PrimaryKey("PK_FL_WORKING_SHIFT", x => x.FL_WORKING_ID);
                 });
 
             migrationBuilder.CreateTable(

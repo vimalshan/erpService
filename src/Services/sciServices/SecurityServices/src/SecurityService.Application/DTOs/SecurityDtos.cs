@@ -8,7 +8,7 @@ public record UserDto(
     long? Phone,
     DateTime StartDate,
     DateTime? EndDate,
-    char? UserType,
+    string? UserType,
     bool IsActive);
 
 public record UserListDto(

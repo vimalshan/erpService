@@ -76,7 +76,8 @@ builder.Services
     .AddGraphQLServer()
     .AddQueryType<OrderScheduleService.API.GraphQL.Query>()
     .AddMutationType<OrderScheduleService.API.GraphQL.Mutation>()
-    .AddSubscriptionType<OrderScheduleService.API.GraphQL.Subscription>();
+    .BindRuntimeType<char, HotChocolate.Types.StringType>()
+    .BindRuntimeType<char?, HotChocolate.Types.StringType>();
 
 // Add MediatR
 var executingAssembly = typeof(Program).Assembly;

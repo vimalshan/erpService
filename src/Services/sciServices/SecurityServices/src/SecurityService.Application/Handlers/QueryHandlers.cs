@@ -16,7 +16,7 @@ public sealed class GetUserByIdHandler : IRequestHandler<GetUserByIdQuery, UserD
         var user = await _users.GetByIdAsync(request.UserId, cancellationToken);
         if (user is null) return null;
         return new(user.UserId, user.UserCode, user.UserName, user.Email?.Value,
-            user.Phone?.Value, user.StartDate, user.EndDate, user.UserType, user.IsActive);
+            user.Phone?.Value, user.StartDate, user.EndDate, user.UserType?.ToString(), user.IsActive);
     }
 }
 
@@ -30,7 +30,7 @@ public sealed class GetUserByCodeHandler : IRequestHandler<GetUserByCodeQuery, U
         var user = await _users.GetByCodeAsync(request.UserCode, cancellationToken);
         if (user is null) return null;
         return new(user.UserId, user.UserCode, user.UserName, user.Email?.Value,
-            user.Phone?.Value, user.StartDate, user.EndDate, user.UserType, user.IsActive);
+            user.Phone?.Value, user.StartDate, user.EndDate, user.UserType?.ToString(), user.IsActive);
     }
 }
 

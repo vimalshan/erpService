@@ -4,7 +4,7 @@ namespace FillingOperationService.Domain.Entities;
 
 public class FlWorkingShift : Entity
 {
-    public decimal? FlWorkingId { get; private set; }
+    public decimal FlWorkingId { get; private set; }
     public decimal FillingLineId { get; private set; }
     public char ShiftCode { get; private set; }
     public DateTime StartDate { get; private set; }

@@ -6,12 +6,12 @@ namespace DispatchPlanning.API.GraphQL;
 public class DispatchPlanMutation
 {
     public async Task<int> CreateDispatchPlanAsync(
-        char planType, DateTime planMonth, int companyUnitId, int modifiedBy,
+        string planType, DateTime planMonth, int companyUnitId, int modifiedBy,
         string? mPlus1, string? mPlus2, string? mPlus3, string? mPlus4,
         [Service] IMediator mediator,
         CancellationToken ct)
         => await mediator.Send(
-            new CreateDispatchPlanCommand(planType, planMonth, companyUnitId, modifiedBy, mPlus1, mPlus2, mPlus3, mPlus4),
+            new CreateDispatchPlanCommand(planType[0], planMonth, companyUnitId, modifiedBy, mPlus1, mPlus2, mPlus3, mPlus4),
             ct);
 
     public async Task<bool> AddDispatchPlanItemAsync(

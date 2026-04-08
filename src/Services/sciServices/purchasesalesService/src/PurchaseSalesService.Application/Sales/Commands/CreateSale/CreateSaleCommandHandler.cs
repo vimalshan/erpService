@@ -59,9 +59,9 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         s.SerialNumber, s.TrackingNumber, s.TransactionNumber,
         s.PurposeCode, s.StageCode, s.IsoNumber, s.IsoDate,
         s.ProductDescription, s.UserId, s.UserNumber,
-        s.UpdatedAt, s.CancelFlag, s.VehicleCustomer,
+        s.UpdatedAt, s.CancelFlag?.ToString(), s.VehicleCustomer,
         s.SaleSubItems.Select(sub => new SaleSubDto(
             sub.ReferenceNumber, sub.SerialNumber, sub.ProductCode,
             sub.ProductQuantity, sub.ProductGrade, sub.UserComment,
-            sub.CheckbookInvoice, sub.CancelFlag)).ToList().AsReadOnly());
+            sub.CheckbookInvoice, sub.CancelFlag?.ToString())).ToList().AsReadOnly());
 }

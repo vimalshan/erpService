@@ -3,7 +3,7 @@ namespace OrderScheduleService.Application.DTOs;
 public class CreateScheduleDetailDto
 {
     public DateTime FillingDate { get; set; }
-    public char FillingShift { get; set; }
+    public string FillingShift { get; set; } = null!;
     public string StartTime { get; set; } = null!;
     public string EndTime { get; set; } = null!;
     public decimal FillQuantity { get; set; }
@@ -28,7 +28,7 @@ public class ScheduleDetailDto
     public long Id { get; set; }
     public long ScheduleId { get; set; }
     public DateTime? FillingDate { get; set; }
-    public char? FillingShift { get; set; }
+    public string? FillingShift { get; set; }
     public string? StartTime { get; set; }
     public string? EndTime { get; set; }
     public decimal? FillQuantity { get; set; }

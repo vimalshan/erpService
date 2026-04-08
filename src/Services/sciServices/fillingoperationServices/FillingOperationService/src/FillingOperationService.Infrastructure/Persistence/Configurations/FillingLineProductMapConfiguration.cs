@@ -9,7 +9,7 @@ public class FillingLineProductMapConfiguration : IEntityTypeConfiguration<Filli
     public void Configure(EntityTypeBuilder<FillingLineProductMap> builder)
     {
         builder.ToTable("FILLING_LINE_PRODUCT_MAP");
-        builder.HasKey(x => x.FillingLineId);
+        builder.HasKey(x => new { x.FillingLineId, x.MainProductId });
         builder.Property(x => x.FillingLineId).HasColumnName("FILLING_LINE_ID");
         builder.Property(x => x.MainProductId).HasColumnName("MAIN_PRODUCT_ID").IsRequired();
         builder.Property(x => x.SciUserIdModified).HasColumnName("SCI_USER_ID_MODIFIED").IsRequired();

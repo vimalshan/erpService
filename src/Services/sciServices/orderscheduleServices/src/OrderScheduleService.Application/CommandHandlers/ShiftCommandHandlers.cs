@@ -20,7 +20,7 @@ public class CreateShiftCommandHandler : IRequestHandler<CreateShiftCommand, boo
     public async Task<bool> Handle(CreateShiftCommand request, CancellationToken cancellationToken)
     {
         var shift = new Shift(
-            request.Shift.ShiftCode,
+            request.Shift.ShiftCode[0],
             request.Shift.ShiftDescription,
             request.Shift.CompanyUnitId,
             request.Shift.StartTime,

@@ -1,0 +1,546 @@
+version: '3.8'
+
+services:
+  # ============================================================
+  # Infrastructure Services
+  # ============================================================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: scidb-sqlserver
+    environment:
+      SA_PASSWORD: "SciDb@Str0ngP@ss!"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - sci-network
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "SciDb@Str0ngP@ss!" -Q "SELECT 1" -C -b -o /dev/null
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: sci-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: sci_admin
+      RABBITMQ_DEFAULT_PASS: "SciRabbit@2026!"
+      RABBITMQ_DEFAULT_VHOST: sci_vhost
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - sci-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  # ============================================================
+  # API Gateway
+  # ============================================================
+  api-gateway:
+    build:
+      context: ./ApiGateway
+      dockerfile: Dockerfile
+    container_name: sci-api-gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - Jwt__Key=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - Jwt__Issuer=ERPMicroservice
+      - Jwt__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5200:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # Security Service (Port 5009)
+  # ============================================================
+  security-service:
+    build:
+      context: ./SecurityServices
+      dockerfile: Dockerfile
+    container_name: sci-security-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5009:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # Vehicle Tracking Service (Port 5102)
+  # ============================================================
+  vehicle-tracking-service:
+    build:
+      context: ./vechicletrackingServices
+      dockerfile: Dockerfile
+    container_name: sci-vehicle-tracking
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5102:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # Dispatch Planning Service (Port 5255)
+  # ============================================================
+  dispatch-planning-service:
+    build:
+      context: ./dispatchplanningServices
+      dockerfile: Dockerfile
+    container_name: sci-dispatch-planning
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5255:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # Order Schedule Service (Port 5160)
+  # ============================================================
+  order-schedule-service:
+    build:
+      context: ./orderscheduleServices
+      dockerfile: Dockerfile
+    container_name: sci-order-schedule
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5160:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # Filling Operation Service (Port 5058)
+  # ============================================================
+  filling-operation-service:
+    build:
+      context: ./fillingoperationServices
+      dockerfile: Dockerfile
+    container_name: sci-filling-operation
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5058:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # EXIM Management Service (Port 5085)
+  # ============================================================
+  exim-management-service:
+    build:
+      context: ./eximmanagementServices
+      dockerfile: Dockerfile
+    container_name: sci-exim-management
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5085:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # GST Compliance Service (Port 5282)
+  # ============================================================
+  gst-compliance-service:
+    build:
+      context: ./gstcomplianceServices
+      dockerfile: Dockerfile
+    container_name: sci-gst-compliance
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5282:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # Inventory Management Service (Port 5097)
+  # ============================================================
+  inventory-management-service:
+    build:
+      context: ./inventorymanagementServices
+      dockerfile: Dockerfile
+    container_name: sci-inventory-management
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5097:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # Production Management Service (Port 5087)
+  # ============================================================
+  production-management-service:
+    build:
+      context: ./productionmanagementServices
+      dockerfile: Dockerfile
+    container_name: sci-production-management
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5087:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # MAM Allocation Service (Port 5140)
+  # ============================================================
+  mam-allocation-service:
+    build:
+      context: ./mamallocationServices
+      dockerfile: Dockerfile
+    container_name: sci-mam-allocation
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5140:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # Purchase Sales Service (Port 5170)
+  # ============================================================
+  purchase-sales-service:
+    build:
+      context: ./purchasesalesService
+      dockerfile: Dockerfile
+    container_name: sci-purchase-sales
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5170:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # Master Data Service (Port 5180)
+  # ============================================================
+  master-data-service:
+    build:
+      context: ./masterdataServices
+      dockerfile: Dockerfile
+    container_name: sci-master-data
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5180:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # Strategic Stock Service (Port 5045)
+  # ============================================================
+  strategic-stock-service:
+    build:
+      context: ./strategicstockServices
+      dockerfile: Dockerfile
+    container_name: sci-strategic-stock
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5045:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # Error Logging Service (Port 5292)
+  # ============================================================
+  error-logging-service:
+    build:
+      context: ./errorloggingServices
+      dockerfile: Dockerfile
+    container_name: sci-error-logging
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5292:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+  # ============================================================
+  # SCI Transactional Service (Port 5150)
+  # ============================================================
+  sci-transactional-service:
+    build:
+      context: ./scitransactionalServices
+      dockerfile: Dockerfile
+    container_name: sci-transactional
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SCIDB;User Id=sa;Password=SciDb@Str0ngP@ss!;TrustServerCertificate=true
+      - JwtSettings__Secret=YourSuperSecretKeyThatIsAtLeast32Characters!
+      - JwtSettings__Issuer=ERPMicroservice
+      - JwtSettings__Audience=ERPMicroservice
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=sci_admin
+      - RabbitMQ__Password=SciRabbit@2026!
+      - RabbitMQ__VirtualHost=sci_vhost
+    ports:
+      - "5150:80"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sci-network
+    restart: unless-stopped
+
+# ============================================================
+# Volumes
+# ============================================================
+volumes:
+  sqlserver-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+
+# ============================================================
+# Networks
+# ============================================================
+networks:
+  sci-network:
+    driver: bridge
+    name: sci-erp-network

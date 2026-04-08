@@ -2,7 +2,7 @@ namespace DispatchPlanning.Application.DTOs;
 
 public record DispatchPlanHeaderDto(
     int DispatchPlanHeaderId,
-    char PlanType,
+    string PlanType,
     DateTime PlanMonth,
     string? PlanMPlus1,
     string? PlanMPlus2,
@@ -51,8 +51,8 @@ public record DispatchPlanDetailDto(
 public record MainGroupDto(
     int MainGroupId,
     string MainGroupName,
-    char GroupType,
-    char ProductSummary,
+    string GroupType,
+    string ProductSummary,
     string TotalDisplayName,
     int MgDisplayOrder,
     int CompanyUnitId
@@ -64,7 +64,7 @@ public record SubGroupDto(
     string SubGroupName,
     int? ProductId,
     int? SgDisplayOrder,
-    char CaptureTotalDirectly
+    string CaptureTotalDirectly
 );
 
 public record BreakupItemDto(

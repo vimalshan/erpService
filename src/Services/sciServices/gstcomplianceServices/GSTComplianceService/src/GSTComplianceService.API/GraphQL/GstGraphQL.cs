@@ -4,11 +4,11 @@ using GSTComplianceService.Domain.Interfaces;
 using GSTComplianceService.Infrastructure.Persistence;
 using HotChocolate;
 using HotChocolate.Data;
+using HotChocolate.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace GSTComplianceService.API.GraphQL;
 
-[QueryType]
 public class GstQuery
 {
     [UseProjection]
@@ -24,12 +24,11 @@ public class GstQuery
         => await repo.GetByPanNoAsync(panNo, ct);
 }
 
-[MutationType]
 public class GstMutation
 {
     public async Task<long> RegisterGst(
         [Service] MediatR.IMediator mediator,
-        string panNo, char? type, string? email, long? mobile, long registeredBy,
+        string panNo, string? type, string? email, string? mobile, long registeredBy,
         CancellationToken ct)
     {
         return await mediator.Send(
@@ -40,5 +39,45 @@ public class GstMutation
     {
         await mediator.Send(new Application.Features.GstMain.Commands.ActivateGstCommand(gstId), ct);
         return true;
+    }
+}
+
+public class GstMainType : ObjectType<GstMain>
+{
+    protected override void Configure(IObjectTypeDescriptor<GstMain> descriptor)
+    {
+        descriptor.Field(f => f.DomainEvents).Ignore();
+    }
+}
+
+public class GstHsnDetailType : ObjectType<GSTComplianceService.Domain.Entities.GstHsnDetail>
+{
+    protected override void Configure(IObjectTypeDescriptor<GSTComplianceService.Domain.Entities.GstHsnDetail> descriptor)
+    {
+        descriptor.Field(f => f.DomainEvents).Ignore();
+    }
+}
+
+public class GstStateRegDetailType : ObjectType<GSTComplianceService.Domain.Entities.GstStateRegDetail>
+{
+    protected override void Configure(IObjectTypeDescriptor<GSTComplianceService.Domain.Entities.GstStateRegDetail> descriptor)
+    {
+        descriptor.Field(f => f.DomainEvents).Ignore();
+    }
+}
+
+public class GstServiceDetailType : ObjectType<GSTComplianceService.Domain.Entities.GstServiceDetail>
+{
+    protected override void Configure(IObjectTypeDescriptor<GSTComplianceService.Domain.Entities.GstServiceDetail> descriptor)
+    {
+        descriptor.Field(f => f.DomainEvents).Ignore();
+    }
+}
+
+public class GstSupplierType : ObjectType<GSTComplianceService.Domain.Entities.GstSupplier>
+{
+    protected override void Configure(IObjectTypeDescriptor<GSTComplianceService.Domain.Entities.GstSupplier> descriptor)
+    {
+        descriptor.Field(f => f.DomainEvents).Ignore();
     }
 }

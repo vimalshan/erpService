@@ -1,0 +1,208 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Build & Push SCI Service Docker Images to GitHub Container Registry (GHCR)
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# Triggers:
+#   - Push to main (only when relevant service files change)
+#   - Manual dispatch (workflow_dispatch) to build all or specific services
+#
+# Prerequisites (GitHub repo settings):
+#   No secrets needed — uses the built-in GITHUB_TOKEN for GHCR authentication.
+#   Ensure "Read and write permissions" is enabled under:
+#     Settings → Actions → General → Workflow permissions
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Build & Push SCI Services
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/Services/sciServices/**'
+
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to build (or "all")'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - api-gateway
+          - dispatchplanning-service
+          - errorlogging-service
+          - eximmanagement-service
+          - fillingoperation-service
+          - gstcompliance-service
+          - inventorymanagement-service
+          - mamallocation-service
+          - masterdata-service
+          - orderschedule-service
+          - productionmanagement-service
+          - purchasesales-service
+          - sci-transaction-service
+          - security-service
+          - strategicstock-service
+          - vechicletracking-service
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/erp
+
+jobs:
+  # ── Detect which services changed ────────────────────────────────────────
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine changed services
+        id: set-matrix
+        run: |
+          # Service registry: name → context + dockerfile
+          declare -A SVC_CONTEXT SVC_DOCKERFILE
+          SVC_CONTEXT[api-gateway]="src/Services/sciServices/ApiGateway";                                         SVC_DOCKERFILE[api-gateway]="Dockerfile"
+          SVC_CONTEXT[dispatchplanning-service]="src/Services/sciServices/dispatchplanningServices";               SVC_DOCKERFILE[dispatchplanning-service]="Dockerfile"
+          SVC_CONTEXT[errorlogging-service]="src/Services/sciServices/errorloggingServices";                       SVC_DOCKERFILE[errorlogging-service]="Dockerfile"
+          SVC_CONTEXT[eximmanagement-service]="src/Services/sciServices/eximmanagementServices";                   SVC_DOCKERFILE[eximmanagement-service]="Dockerfile"
+          SVC_CONTEXT[fillingoperation-service]="src/Services/sciServices/fillingoperationServices";               SVC_DOCKERFILE[fillingoperation-service]="Dockerfile"
+          SVC_CONTEXT[gstcompliance-service]="src/Services/sciServices/gstcomplianceServices";                     SVC_DOCKERFILE[gstcompliance-service]="Dockerfile"
+          SVC_CONTEXT[inventorymanagement-service]="src/Services/sciServices/inventorymanagementServices";         SVC_DOCKERFILE[inventorymanagement-service]="Dockerfile"
+          SVC_CONTEXT[mamallocation-service]="src/Services/sciServices/mamallocationServices";                     SVC_DOCKERFILE[mamallocation-service]="Dockerfile"
+          SVC_CONTEXT[masterdata-service]="src/Services/sciServices/masterdataServices";                           SVC_DOCKERFILE[masterdata-service]="Dockerfile"
+          SVC_CONTEXT[orderschedule-service]="src/Services/sciServices/orderscheduleServices";                     SVC_DOCKERFILE[orderschedule-service]="Dockerfile"
+          SVC_CONTEXT[productionmanagement-service]="src/Services/sciServices/productionmanagementServices";       SVC_DOCKERFILE[productionmanagement-service]="Dockerfile"
+          SVC_CONTEXT[purchasesales-service]="src/Services/sciServices/purchasesalesService";                      SVC_DOCKERFILE[purchasesales-service]="Dockerfile"
+          SVC_CONTEXT[sci-transaction-service]="src/Services/sciServices/scitransactionalServices";                SVC_DOCKERFILE[sci-transaction-service]="Dockerfile"
+          SVC_CONTEXT[security-service]="src/Services/sciServices/SecurityServices";                               SVC_DOCKERFILE[security-service]="Dockerfile"
+          SVC_CONTEXT[strategicstock-service]="src/Services/sciServices/strategicstockServices";                   SVC_DOCKERFILE[strategicstock-service]="Dockerfile"
+          SVC_CONTEXT[vechicletracking-service]="src/Services/sciServices/vechicletrackingServices";               SVC_DOCKERFILE[vechicletracking-service]="Dockerfile"
+
+          # Ordered list matching the paths for change detection
+          SVC_NAMES=(api-gateway dispatchplanning-service errorlogging-service eximmanagement-service fillingoperation-service gstcompliance-service inventorymanagement-service mamallocation-service masterdata-service orderschedule-service productionmanagement-service purchasesales-service sci-transaction-service security-service strategicstock-service vechicletracking-service)
+          SVC_PATHS=(
+            "src/Services/sciServices/ApiGateway/"
+            "src/Services/sciServices/dispatchplanningServices/"
+            "src/Services/sciServices/errorloggingServices/"
+            "src/Services/sciServices/eximmanagementServices/"
+            "src/Services/sciServices/fillingoperationServices/"
+            "src/Services/sciServices/gstcomplianceServices/"
+            "src/Services/sciServices/inventorymanagementServices/"
+            "src/Services/sciServices/mamallocationServices/"
+            "src/Services/sciServices/masterdataServices/"
+            "src/Services/sciServices/orderscheduleServices/"
+            "src/Services/sciServices/productionmanagementServices/"
+            "src/Services/sciServices/purchasesalesService/"
+            "src/Services/sciServices/scitransactionalServices/"
+            "src/Services/sciServices/SecurityServices/"
+            "src/Services/sciServices/strategicstockServices/"
+            "src/Services/sciServices/vechicletrackingServices/"
+          )
+
+          make_entry() {
+            local n="$1"
+            echo "{\"name\":\"${n}\",\"context\":\"${SVC_CONTEXT[$n]}\",\"dockerfile\":\"${SVC_DOCKERFILE[$n]}\"}"
+          }
+
+          # If manual dispatch with a specific service, build only that
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            INPUT="${{ github.event.inputs.service }}"
+            if [[ "$INPUT" != "all" ]]; then
+              ENTRY=$(make_entry "$INPUT")
+              echo "matrix={\"include\":[${ENTRY}]}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          # For push events or "all", detect changes
+          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "src/Services/sciServices/")
+          BUILD_ALL=$([[ "${{ github.event.inputs.service }}" == "all" ]] && echo "true" || echo "false")
+
+          # If shared infrastructure assets changed, rebuild all SCI services
+          if echo "$CHANGED" | grep -q "^src/Services/sciServices/k8s/\|^src/Services/sciServices/scripts/"; then
+            BUILD_ALL="true"
+          fi
+
+          # If shared SCI root files changed (outside specific service folders), rebuild all
+          NON_SERVICE_CHANGES=$(echo "$CHANGED" | grep "^src/Services/sciServices/" | grep -Ev "^src/Services/sciServices/(ApiGateway|dispatchplanningServices|errorloggingServices|eximmanagementServices|fillingoperationServices|gstcomplianceServices|inventorymanagementServices|mamallocationServices|masterdataServices|orderscheduleServices|productionmanagementServices|purchasesalesService|scitransactionalServices|SecurityServices|strategicstockServices|vechicletrackingServices|k8s|scripts)/" || true)
+          if [[ -n "$NON_SERVICE_CHANGES" ]]; then
+            BUILD_ALL="true"
+          fi
+
+          SERVICES=()
+          for i in "${!SVC_NAMES[@]}"; do
+            NAME="${SVC_NAMES[$i]}"
+            PATH_PREFIX="${SVC_PATHS[$i]}"
+            if [[ "$BUILD_ALL" == "true" ]] || echo "$CHANGED" | grep -q "^${PATH_PREFIX}"; then
+              SERVICES+=("$(make_entry "$NAME")")
+            fi
+          done
+
+          if [[ ${#SERVICES[@]} -eq 0 ]]; then
+            echo "matrix={\"include\":[]}" >> "$GITHUB_OUTPUT"
+          else
+            JSON=$(printf '%s,' "${SERVICES[@]}")
+            JSON="[${JSON%,}]"
+            echo "matrix={\"include\":${JSON}}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Print matrix
+        run: echo '${{ steps.set-matrix.outputs.matrix }}'
+
+  # ── Build & Push ─────────────────────────────────────────────────────────
+  build-and-push:
+    name: Build ${{ matrix.name }}
+    needs: changes
+    if: ${{ fromJson(needs.changes.outputs.matrix).include[0] != null }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64

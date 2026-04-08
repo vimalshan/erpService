@@ -9,7 +9,7 @@ public sealed class LogSaleMainConfiguration : IEntityTypeConfiguration<LogSaleM
     public void Configure(EntityTypeBuilder<LogSaleMain> builder)
     {
         builder.ToTable("LOG_SALE_MAIN");
-        builder.HasNoKey();
+        builder.HasKey(x => x.SerialNumber);
 
         builder.Property(x => x.SerialNumber).HasColumnName("SL_SER_NUM").IsRequired();
         builder.Property(x => x.TrackingNumber).HasColumnName("SL_TRC_NUM").IsRequired();

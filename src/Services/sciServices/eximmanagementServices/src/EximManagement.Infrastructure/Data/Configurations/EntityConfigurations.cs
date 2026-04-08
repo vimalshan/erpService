@@ -34,7 +34,7 @@ public class EximProductConfiguration : IEntityTypeConfiguration<EximProduct>
     {
         builder.ToTable("EXIM_PRODUCT");
         builder.HasKey(e => e.ProductId);
-        builder.Property(e => e.ProductId).HasColumnName("PRODUCT_ID");
+        builder.Property(e => e.ProductId).HasColumnName("PRODUCT_ID").ValueGeneratedOnAdd();
         builder.Property(e => e.ProductName).HasColumnName("PRODUCT_NAME").HasMaxLength(100).IsRequired();
         builder.Property(e => e.ProductOracleCode).HasColumnName("PRODUCT_ORACLE_CODE").HasMaxLength(50);
         builder.Property(e => e.LastUpdatedBy).HasColumnName("LAST_UPDATED_BY");

@@ -12,7 +12,7 @@ public sealed record SaleMainDto(
     string UserId,
     long UserNumber,
     DateTime UpdatedAt,
-    char? CancelFlag,
+    string? CancelFlag,
     string? VehicleCustomer,
     IReadOnlyCollection<SaleSubDto> SubItems
 );
@@ -25,5 +25,5 @@ public sealed record SaleSubDto(
     string? ProductGrade,
     string? UserComment,
     string? CheckbookInvoice,
-    char? CancelFlag
+    string? CancelFlag
 );

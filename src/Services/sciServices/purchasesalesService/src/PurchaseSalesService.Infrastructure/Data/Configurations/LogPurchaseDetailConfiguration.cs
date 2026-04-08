@@ -9,7 +9,7 @@ public sealed class LogPurchaseDetailConfiguration : IEntityTypeConfiguration<Lo
     public void Configure(EntityTypeBuilder<LogPurchaseDetail> builder)
     {
         builder.ToTable("LOG_PURCHASE_DETAILS");
-        builder.HasNoKey();
+        builder.HasKey(x => x.SerialNumber);
 
         builder.Property(x => x.SerialNumber).HasColumnName("PD_SRL_NUM").IsRequired();
         builder.Property(x => x.TrackingNumber).HasColumnName("PD_TRC_NUM").IsRequired();

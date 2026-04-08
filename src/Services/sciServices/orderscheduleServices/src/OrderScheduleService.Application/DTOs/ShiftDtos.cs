@@ -2,7 +2,7 @@ namespace OrderScheduleService.Application.DTOs;
 
 public class CreateShiftDto
 {
-    public char ShiftCode { get; set; }
+    public string ShiftCode { get; set; } = null!;
     public string ShiftDescription { get; set; } = null!;
     public decimal CompanyUnitId { get; set; }
     public string StartTime { get; set; } = null!;
@@ -13,7 +13,7 @@ public class CreateShiftDto
 
 public class ShiftDto
 {
-    public char ShiftCode { get; set; }
+    public string ShiftCode { get; set; } = null!;
     public string ShiftDescription { get; set; } = null!;
     public decimal CompanyUnitId { get; set; }
     public string StartTime { get; set; } = null!;

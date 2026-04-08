@@ -5,13 +5,11 @@ using HotChocolate.Authorization;
 
 namespace EximManagement.API.GraphQL;
 
-public class EximQuery(
-    IEximProductRepository productRepo,
-    IEximDataFileRepository fileRepo,
-    EximDapperService dapperService)
+public class EximQuery
 {
     [Authorize]
-    public async Task<IEnumerable<EximProductDto>> GetProducts(CancellationToken ct)
+    public async Task<IEnumerable<EximProductDto>> GetProducts(
+        [Service] IEximProductRepository productRepo, CancellationToken ct)
     {
         var products = await productRepo.GetAllAsync(ct);
         return products.Select(p => new EximProductDto
@@ -21,12 +19,13 @@ public class EximQuery(
             ProductOracleCode = p.ProductOracleCode,
             LastUpdatedBy = p.LastUpdatedBy,
             LastUpdatedOn = p.LastUpdatedOn,
-            Status = p.Status
+            Status = p.Status.ToString()
         });
     }
 
     [Authorize]
-    public async Task<EximProductDto?> GetProductById(long productId, CancellationToken ct)
+    public async Task<EximProductDto?> GetProductById(
+        long productId, [Service] IEximProductRepository productRepo, CancellationToken ct)
     {
         var p = await productRepo.GetByIdAsync(productId, ct);
         if (p is null) return null;
@@ -34,12 +33,14 @@ public class EximQuery(
         {
             ProductId = p.ProductId, ProductName = p.ProductName,
             ProductOracleCode = p.ProductOracleCode, LastUpdatedBy = p.LastUpdatedBy,
-            LastUpdatedOn = p.LastUpdatedOn, Status = p.Status
+            LastUpdatedOn = p.LastUpdatedOn, Status = p.Status.ToString()
         };
     }
 
     [Authorize]
-    public async Task<IEnumerable<EximDataFileDto>> GetDataFiles([GraphQLType(typeof(string))] string? fileType, CancellationToken ct)
+    public async Task<IEnumerable<EximDataFileDto>> GetDataFiles(
+        [GraphQLType(typeof(string))] string? fileType,
+        [Service] IEximDataFileRepository fileRepo, CancellationToken ct)
     {
         var files = fileType is null
             ? await fileRepo.GetAllAsync(ct)
@@ -55,30 +56,33 @@ public class EximQuery(
     }
 
     [Authorize]
-    public async Task<IEnumerable<EximDataExportDto>> GetExportData(DateTime from, DateTime to)
+    public async Task<IEnumerable<EximDataExportDto>> GetExportData(
+        DateTime from, DateTime to, [Service] EximDapperService dapperService)
         => await dapperService.GetEximExportDataAsync(from, to);
 
     [Authorize]
-    public async Task<IEnumerable<EximDataImportDto>> GetImportData(DateTime from, DateTime to)
+    public async Task<IEnumerable<EximDataImportDto>> GetImportData(
+        DateTime from, DateTime to, [Service] EximDapperService dapperService)
         => await dapperService.GetEximImportDataAsync(from, to);
 }
 
-public class EximMutation(
-    IEximProductRepository productRepo,
-    Application.Interfaces.IUnitOfWork uow)
+public class EximMutation
 {
     [Authorize]
     public async Task<EximProductDto> CreateProduct(
-        long productId, string productName, string? oracleCode, long updatedBy, CancellationToken ct)
+        string productName, string? oracleCode, long updatedBy,
+        [Service] IEximProductRepository productRepo,
+        [Service] Application.Interfaces.IUnitOfWork uow,
+        CancellationToken ct)
     {
-        var product = Domain.Entities.EximProduct.Create(productId, productName, oracleCode, updatedBy);
+        var product = Domain.Entities.EximProduct.Create(productName, oracleCode, updatedBy);
         await productRepo.AddAsync(product, ct);
         await uow.SaveChangesAsync(ct);
         return new EximProductDto
         {
             ProductId = product.ProductId, ProductName = product.ProductName,
             ProductOracleCode = product.ProductOracleCode, LastUpdatedBy = product.LastUpdatedBy,
-            LastUpdatedOn = product.LastUpdatedOn, Status = product.Status
+            LastUpdatedOn = product.LastUpdatedOn, Status = product.Status.ToString()
         };
     }
 }

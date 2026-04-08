@@ -36,7 +36,7 @@ public class TiedOrderDto
     public string CustomerCode { get; set; } = null!;
     public DateTime OrderedDate { get; set; }
     public decimal CompanyUnitId { get; set; }
-    public char RecordStatus { get; set; }
+    public string RecordStatus { get; set; } = null!;
     public DateTime? ModifiedDate { get; set; }
     public List<TiedOrderDetailDto> Details { get; set; } = new();
 }

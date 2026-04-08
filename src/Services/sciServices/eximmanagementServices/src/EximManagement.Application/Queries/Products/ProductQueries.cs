@@ -28,7 +28,7 @@ public class GetProductByIdQueryHandler(IEximProductRepository repo)
         {
             ProductId = p.ProductId, ProductName = p.ProductName,
             ProductOracleCode = p.ProductOracleCode, LastUpdatedBy = p.LastUpdatedBy,
-            LastUpdatedOn = p.LastUpdatedOn, Status = p.Status
+            LastUpdatedOn = p.LastUpdatedOn, Status = p.Status.ToString()
         };
     }
 }
@@ -43,7 +43,7 @@ public class GetAllProductsQueryHandler(IEximProductRepository repo)
         {
             ProductId = p.ProductId, ProductName = p.ProductName,
             ProductOracleCode = p.ProductOracleCode, LastUpdatedBy = p.LastUpdatedBy,
-            LastUpdatedOn = p.LastUpdatedOn, Status = p.Status
+            LastUpdatedOn = p.LastUpdatedOn, Status = p.Status.ToString()
         });
     }
 }

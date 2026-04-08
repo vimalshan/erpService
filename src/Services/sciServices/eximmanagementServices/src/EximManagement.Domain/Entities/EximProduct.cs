@@ -18,14 +18,13 @@ public class EximProduct : BaseEntity
 
     private EximProduct() { }
 
-    public static EximProduct Create(long productId, string productName, string? oracleCode, long updatedBy)
+    public static EximProduct Create(string productName, string? oracleCode, long updatedBy)
     {
         if (string.IsNullOrWhiteSpace(productName))
             throw new ArgumentException("Product name is required.", nameof(productName));
 
         var product = new EximProduct
         {
-            ProductId = productId,
             ProductName = productName,
             ProductOracleCode = oracleCode,
             LastUpdatedBy = updatedBy,

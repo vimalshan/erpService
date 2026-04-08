@@ -35,12 +35,11 @@ public class EximProductDto
     public string? ProductOracleCode { get; set; }
     public long LastUpdatedBy { get; set; }
     public DateTime LastUpdatedOn { get; set; }
-    public char Status { get; set; }
+    public string Status { get; set; } = default!;
 }
 
 public class CreateEximProductDto
 {
-    public long ProductId { get; set; }
     public string ProductName { get; set; } = default!;
     public string? OracleCode { get; set; }
     public long UpdatedBy { get; set; }
@@ -52,7 +51,7 @@ public class EximProductGroupDto
     public string GroupName { get; set; } = default!;
     public long LastUpdatedBy { get; set; }
     public DateTime LastUpdatedOn { get; set; }
-    public char Status { get; set; }
+    public string Status { get; set; } = default!;
 }
 
 public class EximDataExportDto

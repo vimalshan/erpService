@@ -23,7 +23,7 @@ public sealed class CreateUserHandler : IRequestHandler<CreateUserCommand, UserD
         var user = User.Create(
             request.UserId, request.UserCode, request.UserName,
             request.Email, request.Phone, request.StartDate,
-            request.UserType, request.CreatedBy);
+            request.UserType?[0], request.CreatedBy);
 
         await _users.AddAsync(user, cancellationToken);
 
@@ -36,7 +36,7 @@ public sealed class CreateUserHandler : IRequestHandler<CreateUserCommand, UserD
 
     private static UserDto MapToDto(User u) => new(
         u.UserId, u.UserCode, u.UserName, u.Email?.Value,
-        u.Phone?.Value, u.StartDate, u.EndDate, u.UserType, u.IsActive);
+        u.Phone?.Value, u.StartDate, u.EndDate, u.UserType?.ToString(), u.IsActive);
 }
 
 public sealed class UpdateUserHandler : IRequestHandler<UpdateUserCommand, UserDto>
@@ -50,13 +50,13 @@ public sealed class UpdateUserHandler : IRequestHandler<UpdateUserCommand, UserD
         var user = await _users.GetByIdAsync(request.UserId, cancellationToken)
             ?? throw new UserNotFoundException(request.UserId);
 
-        user.Update(request.UserName, request.Email, request.Phone, request.UserType,
+        user.Update(request.UserName, request.Email, request.Phone, request.UserType?[0],
             request.UpdatedBy, request.UpdatedByNum);
 
         await _users.UpdateAsync(user, cancellationToken);
 
         return new(user.UserId, user.UserCode, user.UserName, user.Email?.Value,
-            user.Phone?.Value, user.StartDate, user.EndDate, user.UserType, user.IsActive);
+            user.Phone?.Value, user.StartDate, user.EndDate, user.UserType?.ToString(), user.IsActive);
     }
 }
 

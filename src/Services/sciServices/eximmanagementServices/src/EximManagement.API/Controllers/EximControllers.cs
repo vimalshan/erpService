@@ -65,7 +65,7 @@ public class EximProductsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateEximProductDto dto, CancellationToken ct)
     {
         var result = await mediator.Send(new CreateProductCommand(
-            dto.ProductId, dto.ProductName, dto.OracleCode, dto.UpdatedBy), ct);
+            dto.ProductName, dto.OracleCode, dto.UpdatedBy), ct);
         return CreatedAtAction(nameof(GetById), new { productId = result.ProductId }, result);
     }
 

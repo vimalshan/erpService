@@ -56,6 +56,7 @@ builder.Services.AddOpenApi(opts =>
 // ── GraphQL (HotChocolate) ────────────────────────────────────────────────────
 builder.Services
     .AddGraphQLServer()
+    .AddAuthorization()
     .AddQueryType<EximQuery>()
     .AddMutationType<EximMutation>();
 

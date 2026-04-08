@@ -14,6 +14,6 @@ public class DuplicatePanException : Exception
 
 public class InvalidGstStatusTransitionException : Exception
 {
-    public InvalidGstStatusTransitionException(char from, char to)
+    public InvalidGstStatusTransitionException(string from, string to)
         : base($"Cannot transition GST status from '{from}' to '{to}'.") { }
 }

@@ -13,5 +13,5 @@ public sealed record PurchaseDetailDto(
     string? UserId,
     long? UserNumber,
     DateTime UpdatedAt,
-    char? CancelFlag
+    string? CancelFlag
 );

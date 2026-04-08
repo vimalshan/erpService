@@ -34,7 +34,7 @@ public class CreateScheduleCommandHandler : IRequestHandler<CreateScheduleComman
         {
             schedule.AddScheduleDetail(
                 detail.FillingDate,
-                detail.FillingShift,
+                detail.FillingShift[0],
                 detail.StartTime,
                 detail.EndTime,
                 detail.FillQuantity,

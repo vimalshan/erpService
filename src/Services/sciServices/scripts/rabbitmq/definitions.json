@@ -1,0 +1,253 @@
+{
+  "rabbit_version": "3.13.0",
+  "users": [
+    {
+      "name": "sci_admin",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"]
+    }
+  ],
+  "vhosts": [
+    { "name": "sci_vhost" }
+  ],
+  "permissions": [
+    {
+      "user": "sci_admin",
+      "vhost": "sci_vhost",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "queues": [
+    {
+      "name": "security.user.created",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "security.user.updated",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "security.role.changed",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "vehicle.tracking.updated",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "vehicle.location.changed",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "dispatch.plan.created",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "dispatch.plan.updated",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "order.schedule.created",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "order.schedule.updated",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "filling.operation.completed",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "exim.license.updated",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "gst.compliance.filed",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "inventory.stock.changed",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "inventory.adjustment.created",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "production.batch.started",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "production.batch.completed",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "mam.allocation.created",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "purchase.order.created",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "sales.order.created",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "masterdata.updated",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "strategic.stock.updated",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "error.logged",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 604800000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "transactional.record.created",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 86400000, "x-dead-letter-exchange": "sci.dlx" }
+    },
+    {
+      "name": "sci.dlq",
+      "vhost": "sci_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-message-ttl": 604800000 }
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "sci.events",
+      "vhost": "sci_vhost",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "sci.commands",
+      "vhost": "sci_vhost",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "sci.fanout",
+      "vhost": "sci_vhost",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "sci.dlx",
+      "vhost": "sci_vhost",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "security.user.created", "destination_type": "queue", "routing_key": "security.user.created", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "security.user.updated", "destination_type": "queue", "routing_key": "security.user.updated", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "security.role.changed", "destination_type": "queue", "routing_key": "security.role.changed", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "vehicle.tracking.updated", "destination_type": "queue", "routing_key": "vehicle.tracking.*", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "vehicle.location.changed", "destination_type": "queue", "routing_key": "vehicle.location.*", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "dispatch.plan.created", "destination_type": "queue", "routing_key": "dispatch.plan.created", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "dispatch.plan.updated", "destination_type": "queue", "routing_key": "dispatch.plan.updated", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "order.schedule.created", "destination_type": "queue", "routing_key": "order.schedule.created", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "order.schedule.updated", "destination_type": "queue", "routing_key": "order.schedule.updated", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "filling.operation.completed", "destination_type": "queue", "routing_key": "filling.operation.*", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "exim.license.updated", "destination_type": "queue", "routing_key": "exim.license.*", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "gst.compliance.filed", "destination_type": "queue", "routing_key": "gst.compliance.*", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "inventory.stock.changed", "destination_type": "queue", "routing_key": "inventory.stock.*", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "inventory.adjustment.created", "destination_type": "queue", "routing_key": "inventory.adjustment.*", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "production.batch.started", "destination_type": "queue", "routing_key": "production.batch.started", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "production.batch.completed", "destination_type": "queue", "routing_key": "production.batch.completed", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "mam.allocation.created", "destination_type": "queue", "routing_key": "mam.allocation.*", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "purchase.order.created", "destination_type": "queue", "routing_key": "purchase.order.*", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "sales.order.created", "destination_type": "queue", "routing_key": "sales.order.*", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "masterdata.updated", "destination_type": "queue", "routing_key": "masterdata.*", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "strategic.stock.updated", "destination_type": "queue", "routing_key": "strategic.stock.*", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "error.logged", "destination_type": "queue", "routing_key": "error.#", "arguments": {} },
+    { "source": "sci.events", "vhost": "sci_vhost", "destination": "transactional.record.created", "destination_type": "queue", "routing_key": "transactional.*", "arguments": {} },
+    { "source": "sci.dlx", "vhost": "sci_vhost", "destination": "sci.dlq", "destination_type": "queue", "routing_key": "", "arguments": {} }
+  ]
+}

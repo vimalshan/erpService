@@ -12,7 +12,7 @@ public class DispatchPlanMappingProfile : Profile
         CreateMap<DispatchPlanAggregate, DispatchPlanHeaderDto>()
             .ConstructUsing(src => new DispatchPlanHeaderDto(
                 src.DispatchPlanHeaderId,
-                src.PlanType.Value,
+                src.PlanType.Value.ToString(),
                 src.PlanMonth,
                 src.PlanMPlus1,
                 src.PlanMPlus2,
@@ -27,8 +27,8 @@ public class DispatchPlanMappingProfile : Profile
             .ConstructUsing(src => new MainGroupDto(
                 src.MainGroupId,
                 src.MainGroupName,
-                src.GroupType,
-                src.ProductSummary,
+                src.GroupType.ToString(),
+                src.ProductSummary.ToString(),
                 src.TotalDisplayName,
                 src.MgDisplayOrder,
                 src.CompanyUnitId));
@@ -40,7 +40,7 @@ public class DispatchPlanMappingProfile : Profile
                 src.SubGroupName,
                 src.ProductId,
                 src.SgDisplayOrder,
-                src.CaptureTotalDirectly));
+                src.CaptureTotalDirectly.ToString()));
 
         CreateMap<DispatchPlanBreakupItem, BreakupItemDto>()
             .ConstructUsing(src => new BreakupItemDto(

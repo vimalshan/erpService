@@ -67,6 +67,14 @@ public class RequestLoggingMiddleware
     {
         _logger.LogInformation($"Incoming request: {context.Request.Method} {context.Request.Path}");
 
+        // Skip response body buffering for GraphQL — HotChocolate manages its own response stream
+        if (context.Request.Path.StartsWithSegments("/graphql"))
+        {
+            await _next(context);
+            _logger.LogInformation($"Outgoing response: {context.Response.StatusCode}");
+            return;
+        }
+
         var originalBodyStream = context.Response.Body;
         using (var responseBody = new MemoryStream())
         {
@@ -76,6 +84,7 @@ public class RequestLoggingMiddleware
 
             _logger.LogInformation($"Outgoing response: {context.Response.StatusCode}");
 
+            responseBody.Seek(0, SeekOrigin.Begin);
             await responseBody.CopyToAsync(originalBodyStream);
         }
     }

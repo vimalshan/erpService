@@ -13,11 +13,11 @@ public static class SeedData
         {
             var products = new[]
             {
-                Domain.Entities.EximProduct.Create(1001, "Steel Rods", "ORR-001", 1),
-                Domain.Entities.EximProduct.Create(1002, "Wheat Grain", "ORR-002", 1),
-                Domain.Entities.EximProduct.Create(1003, "Cotton Yarn", "ORR-003", 1),
-                Domain.Entities.EximProduct.Create(1004, "Pharmaceutical Tablets", "ORR-004", 1),
-                Domain.Entities.EximProduct.Create(1005, "Electronic Components", "ORR-005", 1)
+                Domain.Entities.EximProduct.Create("Steel Rods", "ORR-001", 1),
+                Domain.Entities.EximProduct.Create("Wheat Grain", "ORR-002", 1),
+                Domain.Entities.EximProduct.Create("Cotton Yarn", "ORR-003", 1),
+                Domain.Entities.EximProduct.Create("Pharmaceutical Tablets", "ORR-004", 1),
+                Domain.Entities.EximProduct.Create("Electronic Components", "ORR-005", 1)
             };
 
             foreach (var p in products)

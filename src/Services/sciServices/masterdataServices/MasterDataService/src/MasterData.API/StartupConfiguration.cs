@@ -88,8 +88,9 @@ namespace MasterData.API
             // Register GraphQL
             builder.Services
                 .AddGraphQLServer()
-                .AddQueryType()
-                .AddMutationType();
+                .AddQueryType<MasterData.API.GraphQL.Query>()
+                .AddMutationType<MasterData.API.GraphQL.Mutation>()
+                .RegisterService<MediatR.IMediator>();
 
             // Register Swagger/OpenAPI
             builder.Services.AddEndpointsApiExplorer();

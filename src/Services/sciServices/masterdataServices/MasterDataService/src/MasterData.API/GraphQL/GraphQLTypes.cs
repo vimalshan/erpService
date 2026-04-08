@@ -14,146 +14,119 @@ using MasterData.Application.DTOs;
 
 namespace MasterData.API.GraphQL
 {
-    [QueryType]
     public class Query
     {
-        private readonly IMediator _mediator;
-
-        public Query(IMediator mediator)
+        public async Task<IReadOnlyList<CompanyUnitDto>> GetCompanyUnits(IMediator mediator)
         {
-            _mediator = mediator;
+            return await mediator.Send(new GetAllCompanyUnitsQuery());
         }
 
-        [GraphQLType(typeof(NonNullType<ListType<NonNullType<ObjectType<CompanyUnitDto>>>>))]
-        public async Task<IReadOnlyList<CompanyUnitDto>> GetCompanyUnits()
+        public async Task<CompanyUnitDto?> GetCompanyUnit(int id, IMediator mediator)
         {
-            return await _mediator.Send(new GetAllCompanyUnitsQuery());
+            return await mediator.Send(new GetCompanyUnitByIdQuery(id));
         }
 
-        [GraphQLType(typeof(ObjectType<CompanyUnitDto>))]
-        public async Task<CompanyUnitDto?> GetCompanyUnit(int id)
+        public async Task<IReadOnlyList<LocationDto>> GetLocations(IMediator mediator)
         {
-            return await _mediator.Send(new GetCompanyUnitByIdQuery(id));
+            return await mediator.Send(new GetAllLocationsQuery());
         }
 
-        [GraphQLType(typeof(NonNullType<ListType<NonNullType<ObjectType<LocationDto>>>>))]
-        public async Task<IReadOnlyList<LocationDto>> GetLocations()
+        public async Task<LocationDto?> GetLocation(int id, IMediator mediator)
         {
-            return await _mediator.Send(new GetAllLocationsQuery());
+            return await mediator.Send(new GetLocationByIdQuery(id));
         }
 
-        [GraphQLType(typeof(ObjectType<LocationDto>))]
-        public async Task<LocationDto?> GetLocation(int id)
+        public async Task<IReadOnlyList<SupplierDto>> GetSuppliers(IMediator mediator)
         {
-            return await _mediator.Send(new GetLocationByIdQuery(id));
+            return await mediator.Send(new GetAllSuppliersQuery());
         }
 
-        [GraphQLType(typeof(NonNullType<ListType<NonNullType<ObjectType<SupplierDto>>>>))]
-        public async Task<IReadOnlyList<SupplierDto>> GetSuppliers()
+        public async Task<SupplierDto?> GetSupplier(string code, IMediator mediator)
         {
-            return await _mediator.Send(new GetAllSuppliersQuery());
+            return await mediator.Send(new GetSupplierByCodeQuery(code));
         }
 
-        [GraphQLType(typeof(ObjectType<SupplierDto>))]
-        public async Task<SupplierDto?> GetSupplier(string code)
+        public async Task<IReadOnlyList<StateDto>> GetStates(IMediator mediator)
         {
-            return await _mediator.Send(new GetSupplierByCodeQuery(code));
+            return await mediator.Send(new GetAllStatesQuery());
         }
 
-        [GraphQLType(typeof(NonNullType<ListType<NonNullType<ObjectType<StateDto>>>>))]
-        public async Task<IReadOnlyList<StateDto>> GetStates()
+        public async Task<StateDto?> GetState(string code, IMediator mediator)
         {
-            return await _mediator.Send(new GetAllStatesQuery());
+            return await mediator.Send(new GetStateByCodeQuery(code));
         }
 
-        [GraphQLType(typeof(ObjectType<StateDto>))]
-        public async Task<StateDto?> GetState(string code)
+        public async Task<IReadOnlyList<CityDto>> GetCities(IMediator mediator)
         {
-            return await _mediator.Send(new GetStateByCodeQuery(code));
+            return await mediator.Send(new GetAllCitiesQuery());
         }
 
-        [GraphQLType(typeof(NonNullType<ListType<NonNullType<ObjectType<CityDto>>>>))]
-        public async Task<IReadOnlyList<CityDto>> GetCities()
+        public async Task<CityDto?> GetCity(string code, IMediator mediator)
         {
-            return await _mediator.Send(new GetAllCitiesQuery());
+            return await mediator.Send(new GetCityByCodeQuery(code));
         }
 
-        [GraphQLType(typeof(ObjectType<CityDto>))]
-        public async Task<CityDto?> GetCity(string code)
+        public async Task<IReadOnlyList<CityDto>> GetCitiesByState(string stateCode, IMediator mediator)
         {
-            return await _mediator.Send(new GetCityByCodeQuery(code));
-        }
-
-        [GraphQLType(typeof(NonNullType<ListType<NonNullType<ObjectType<CityDto>>>>))]
-        public async Task<IReadOnlyList<CityDto>> GetCitiesByState(string stateCode)
-        {
-            return await _mediator.Send(new GetCitiesByStateCodeQuery(stateCode));
+            return await mediator.Send(new GetCitiesByStateCodeQuery(stateCode));
         }
     }
 
-    [MutationType]
     public class Mutation
     {
-        private readonly IMediator _mediator;
-
-        public Mutation(IMediator mediator)
+        public async Task<int> CreateCompanyUnit(string code, string name, IMediator mediator)
         {
-            _mediator = mediator;
+            return await mediator.Send(new CreateCompanyUnitCommand(code, name));
         }
 
-        public async Task<int> CreateCompanyUnit(string code, string name)
+        public async Task<bool> UpdateCompanyUnit(int id, string code, string name, IMediator mediator)
         {
-            return await _mediator.Send(new CreateCompanyUnitCommand(code, name));
+            return await mediator.Send(new UpdateCompanyUnitCommand(id, code, name));
         }
 
-        public async Task<bool> UpdateCompanyUnit(int id, string code, string name)
+        public async Task<bool> DeleteCompanyUnit(int id, IMediator mediator)
         {
-            return await _mediator.Send(new UpdateCompanyUnitCommand(id, code, name));
+            return await mediator.Send(new DeleteCompanyUnitCommand(id));
         }
 
-        public async Task<bool> DeleteCompanyUnit(int id)
+        public async Task<int> CreateLocation(string name, IMediator mediator)
         {
-            return await _mediator.Send(new DeleteCompanyUnitCommand(id));
+            return await mediator.Send(new CreateLocationCommand(name));
         }
 
-        public async Task<int> CreateLocation(string name)
+        public async Task<bool> UpdateLocation(int id, string name, IMediator mediator)
         {
-            return await _mediator.Send(new CreateLocationCommand(name));
+            return await mediator.Send(new UpdateLocationCommand(id, name));
         }
 
-        public async Task<bool> UpdateLocation(int id, string name)
+        public async Task<bool> DeleteLocation(int id, IMediator mediator)
         {
-            return await _mediator.Send(new UpdateLocationCommand(id, name));
+            return await mediator.Send(new DeleteLocationCommand(id));
         }
 
-        public async Task<bool> DeleteLocation(int id)
+        public async Task<string> CreateSupplier(string code, string name, string? details, string entryId, decimal entryNumber, IMediator mediator)
         {
-            return await _mediator.Send(new DeleteLocationCommand(id));
+            return await mediator.Send(new CreateSupplierCommand(code, name, details, entryId, entryNumber));
         }
 
-        public async Task<string> CreateSupplier(string code, string name, string? details, string entryId, decimal entryNumber)
+        public async Task<bool> UpdateSupplier(string code, string name, string? details, IMediator mediator)
         {
-            return await _mediator.Send(new CreateSupplierCommand(code, name, details, entryId, entryNumber));
+            return await mediator.Send(new UpdateSupplierCommand(code, name, details));
         }
 
-        public async Task<bool> UpdateSupplier(string code, string name, string? details)
+        public async Task<bool> DeleteSupplier(string code, IMediator mediator)
         {
-            return await _mediator.Send(new UpdateSupplierCommand(code, name, details));
+            return await mediator.Send(new DeleteSupplierCommand(code));
         }
 
-        public async Task<bool> DeleteSupplier(string code)
+        public async Task<string> CreateState(string code, string name, IMediator mediator)
         {
-            return await _mediator.Send(new DeleteSupplierCommand(code));
+            return await mediator.Send(new CreateStateCommand(code, name));
         }
 
-        public async Task<string> CreateState(string code, string name)
+        public async Task<string> CreateCity(string code, string name, string stateCode, IMediator mediator)
         {
-            return await _mediator.Send(new CreateStateCommand(code, name));
-        }
-
-        public async Task<string> CreateCity(string code, string name, string stateCode)
-        {
-            return await _mediator.Send(new CreateCityCommand(code, name, stateCode));
+            return await mediator.Send(new CreateCityCommand(code, name, stateCode));
         }
     }
 }

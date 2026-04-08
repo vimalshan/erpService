@@ -9,8 +9,8 @@ public sealed record GstRegisteredEvent(
 
 public sealed record GstStatusChangedEvent(
     long GstId,
-    char? PreviousStatus,
-    char NewStatus,
+    string? PreviousStatus,
+    string NewStatus,
     DateTime OccurredOn) : IDomainEvent;
 
 public sealed record GstHsnAddedEvent(

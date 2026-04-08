@@ -9,9 +9,9 @@ namespace GSTComplianceService.Application.Features.GstMain.Commands;
 // ── Register GST ──────────────────────────────────────────────────
 public record RegisterGstCommand(
     string PanNo,
-    char? Type,
+    string? Type,
     string? Email,
-    long? Mobile,
+    string? Mobile,
     long RegisteredBy) : IRequest<long>;
 
 public class RegisterGstCommandValidator : AbstractValidator<RegisterGstCommand>

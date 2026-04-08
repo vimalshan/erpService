@@ -1,0 +1,577 @@
+{
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/api/security/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/v1/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5009 }
+      ],
+      "Key": "security-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "security" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/security/auth/{everything}",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/api/auth/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5009 }
+      ],
+      "Key": "security-auth",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 20
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/vehicle-tracking/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5102 }
+      ],
+      "Key": "vehicle-tracking-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "vehicle-tracking" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/dispatch-planning/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5255 }
+      ],
+      "Key": "dispatch-planning-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "dispatch-planning" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/order-schedule/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5160 }
+      ],
+      "Key": "order-schedule-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "order-schedule" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/filling-operation/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5058 }
+      ],
+      "Key": "filling-operation-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "filling-operation" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/exim-management/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5085 }
+      ],
+      "Key": "exim-management-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "exim-management" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/gst-compliance/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/v1/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5282 }
+      ],
+      "Key": "gst-compliance-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "gst-compliance" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/inventory-management/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5097 }
+      ],
+      "Key": "inventory-management-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "inventory-management" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/production-management/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5087 }
+      ],
+      "Key": "production-management-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "production-management" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/mam-allocation/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5140 }
+      ],
+      "Key": "mam-allocation-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "mam-allocation" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/purchase-sales/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5170 }
+      ],
+      "Key": "purchase-sales-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "purchase-sales" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/master-data/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5180 }
+      ],
+      "Key": "master-data-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 200
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 60, "Region": "master-data" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/strategic-stock/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5045 }
+      ],
+      "Key": "strategic-stock-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "strategic-stock" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/error-logging/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5292 }
+      ],
+      "Key": "error-logging-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/sci-transactional/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5150 }
+      ],
+      "Key": "sci-transactional-service",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 30000,
+        "TimeoutValue": 10000
+      },
+      "FileCacheOptions": { "TtlSeconds": 30, "Region": "sci-transactional" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/sci-transactional/auth/{everything}",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/api/auth/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5150 }
+      ],
+      "Key": "sci-transactional-auth",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 20
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/security",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5009 }
+      ],
+      "Key": "security-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/vehicle-tracking",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5102 }
+      ],
+      "Key": "vehicle-tracking-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/dispatch-planning",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5255 }
+      ],
+      "Key": "dispatch-planning-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/order-schedule",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5160 }
+      ],
+      "Key": "order-schedule-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/filling-operation",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5058 }
+      ],
+      "Key": "filling-operation-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/exim-management",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5085 }
+      ],
+      "Key": "exim-management-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/gst-compliance",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5282 }
+      ],
+      "Key": "gst-compliance-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/inventory-management",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5097 }
+      ],
+      "Key": "inventory-management-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/production-management",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5087 }
+      ],
+      "Key": "production-management-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/mam-allocation",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5140 }
+      ],
+      "Key": "mam-allocation-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/purchase-sales",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5170 }
+      ],
+      "Key": "purchase-sales-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/master-data",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5180 }
+      ],
+      "Key": "master-data-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/strategic-stock",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5045 }
+      ],
+      "Key": "strategic-stock-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/error-logging",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5292 }
+      ],
+      "Key": "error-logging-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/graphql/sci-transactional",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5150 }
+      ],
+      "Key": "sci-transactional-graphql",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/health/{serviceName}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5009 }
+      ],
+      "Key": "service-health"
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5200",
+    "RateLimitOptions": {
+      "DisableRateLimitHeaders": false,
+      "QuotaExceededMessage": "Too many requests. Please try again later.",
+      "HttpStatusCode": 429,
+      "ClientIdHeader": "X-Client-Id"
+    },
+    "QoSOptions": {
+      "ExceptionsAllowedBeforeBreaking": 3,
+      "DurationOfBreak": 30000,
+      "TimeoutValue": 15000
+    },
+    "LoadBalancerOptions": {
+      "Type": "RoundRobin"
+    },
+    "HttpHandlerOptions": {
+      "AllowAutoRedirect": false,
+      "UseCookieContainer": false,
+      "UseTracing": true
+    }
+  }
+}

@@ -50,3 +50,43 @@ public class NormsMainType : ObjectType<NormsMain>
         descriptor.Ignore(f => f.DomainEvents);
     }
 }
+
+public class ProductionPlanEntryType : ObjectType<ProductionPlanEntry>
+{
+    protected override void Configure(IObjectTypeDescriptor<ProductionPlanEntry> descriptor)
+    {
+        descriptor.Ignore(f => f.DomainEvents);
+    }
+}
+
+public class NormsMasterType2 : ObjectType<NormsMaster>
+{
+    protected override void Configure(IObjectTypeDescriptor<NormsMaster> descriptor)
+    {
+        descriptor.Ignore(f => f.DomainEvents);
+    }
+}
+
+public class ProductionPlantProductMapType : ObjectType<ProductionPlantProductMap>
+{
+    protected override void Configure(IObjectTypeDescriptor<ProductionPlantProductMap> descriptor)
+    {
+        descriptor.Ignore(f => f.DomainEvents);
+    }
+}
+
+public class MamProductionDetType : ObjectType<MamProductionDet>
+{
+    protected override void Configure(IObjectTypeDescriptor<MamProductionDet> descriptor)
+    {
+        descriptor.Ignore(f => f.DomainEvents);
+    }
+}
+
+public class MamProductionMapType : ObjectType<MamProductionMap>
+{
+    protected override void Configure(IObjectTypeDescriptor<MamProductionMap> descriptor)
+    {
+        descriptor.Ignore(f => f.DomainEvents);
+    }
+}

@@ -9,8 +9,8 @@ public class FlWorkingShiftConfiguration : IEntityTypeConfiguration<FlWorkingShi
     public void Configure(EntityTypeBuilder<FlWorkingShift> builder)
     {
         builder.ToTable("FL_WORKING_SHIFT");
-        builder.HasNoKey();
-        builder.Property(x => x.FlWorkingId).HasColumnName("FL_WORKING_ID").HasColumnType("decimal(38,0)");
+        builder.HasKey(x => x.FlWorkingId);
+        builder.Property(x => x.FlWorkingId).HasColumnName("FL_WORKING_ID").HasColumnType("decimal(38,0)").ValueGeneratedOnAdd();
         builder.Property(x => x.FillingLineId).HasColumnName("FILLINGLINE_ID").HasColumnType("decimal(38,0)").IsRequired();
         builder.Property(x => x.ShiftCode).HasColumnName("SHIFT_CODE").HasColumnType("char(1)").IsRequired();
         builder.Property(x => x.StartDate).HasColumnName("START_DATE").IsRequired();

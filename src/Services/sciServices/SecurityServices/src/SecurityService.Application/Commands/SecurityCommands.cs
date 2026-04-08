@@ -11,7 +11,7 @@ public record CreateUserCommand(
     string? Email,
     long? Phone,
     DateTime StartDate,
-    char? UserType,
+    string? UserType,
     string? CreatedBy) : IRequest<UserDto>;
 
 // ── Update User ──────────────────────────────────────────────
@@ -20,7 +20,7 @@ public record UpdateUserCommand(
     string? UserName,
     string? Email,
     long? Phone,
-    char? UserType,
+    string? UserType,
     string UpdatedBy,
     long UpdatedByNum) : IRequest<UserDto>;
 

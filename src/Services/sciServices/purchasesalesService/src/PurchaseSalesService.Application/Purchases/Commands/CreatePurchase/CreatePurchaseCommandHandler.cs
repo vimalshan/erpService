@@ -59,5 +59,5 @@ public sealed class CreatePurchaseCommandHandler : IRequestHandler<CreatePurchas
         p.SerialNumber, p.TrackingNumber, p.TransactionNumber,
         p.PurposeCode, p.StageCode, p.OracleMerchandise,
         p.SupplierCode, p.TonNumLoaded, p.TonNumUnloaded,
-        p.UserId, p.UserNumber, p.UpdatedAt, p.CancelFlag);
+        p.UserId, p.UserNumber, p.UpdatedAt, p.CancelFlag?.ToString());
 }

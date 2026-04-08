@@ -93,9 +93,16 @@ builder.Services
     .AddType<ProductionPlantType>()
     .AddType<ProductionPlanType>()
     .AddType<NormsMainType>()
+    .AddType<ProductionPlanEntryType>()
+    .AddType<NormsMasterType2>()
+    .AddType<ProductionPlantProductMapType>()
+    .AddType<MamProductionDetType>()
+    .AddType<MamProductionMapType>()
     .AddProjections()
-    .AddFiltering()
+    .AddFiltering(c => c.AddDefaults().BindRuntimeType<char, HotChocolate.Data.Filters.StringOperationFilterInputType>().BindRuntimeType<char?, HotChocolate.Data.Filters.StringOperationFilterInputType>())
     .AddSorting()
+    .BindRuntimeType<char, HotChocolate.Types.StringType>()
+    .BindRuntimeType<char?, HotChocolate.Types.StringType>()
     .RegisterDbContextFactory<ProductionManagementDbContext>();
 
 // Circuit Breaker with Polly

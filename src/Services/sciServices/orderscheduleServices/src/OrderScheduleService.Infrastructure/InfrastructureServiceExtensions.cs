@@ -12,19 +12,21 @@ public static class InfrastructureServiceExtensions
         this IServiceCollection services,
         string connectionString)
     {
-        // Add DbContext
+        // Add DbContext (Transient to support HotChocolate parallel resolver execution)
         services.AddDbContext<OrderScheduleDbContext>(options =>
             options.UseSqlServer(connectionString,
                 sqlOptions =>
                 {
                     sqlOptions.MigrationsAssembly("OrderScheduleService.Infrastructure");
                     sqlOptions.EnableRetryOnFailure();
-                }));
+                }),
+            ServiceLifetime.Transient,
+            ServiceLifetime.Transient);
 
         // Register Repositories
-        services.AddScoped<ITiedOrderRepository, TiedOrderRepository>();
-        services.AddScoped<IScheduleRepository, ScheduleRepository>();
-        services.AddScoped<IShiftRepository, ShiftRepository>();
+        services.AddTransient<ITiedOrderRepository, TiedOrderRepository>();
+        services.AddTransient<IScheduleRepository, ScheduleRepository>();
+        services.AddTransient<IShiftRepository, ShiftRepository>();
 
         return services;
     }

@@ -127,11 +127,8 @@ namespace FillingOperationService.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("FillingOperationService.Domain.Entities.FillingLineProductMap", b =>
                 {
                     b.Property<int>("FillingLineId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasColumnName("FILLING_LINE_ID");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FillingLineId"));
 
                     b.Property<int>("MainProductId")
                         .HasColumnType("int")
@@ -145,7 +142,7 @@ namespace FillingOperationService.Infrastructure.Persistence.Migrations
                         .HasColumnType("int")
                         .HasColumnName("SCI_USER_ID_MODIFIED");
 
-                    b.HasKey("FillingLineId");
+                    b.HasKey("FillingLineId", "MainProductId");
 
                     b.ToTable("FILLING_LINE_PRODUCT_MAP", (string)null);
                 });
@@ -292,6 +289,13 @@ namespace FillingOperationService.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("FillingOperationService.Domain.Entities.FlWorkingShift", b =>
                 {
+                    b.Property<decimal>("FlWorkingId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(38,0)")
+                        .HasColumnName("FL_WORKING_ID");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<decimal>("FlWorkingId"));
+
                     b.Property<DateTime?>("CloseDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CLOSE_DATE");
@@ -299,10 +303,6 @@ namespace FillingOperationService.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("FillingLineId")
                         .HasColumnType("decimal(38,0)")
                         .HasColumnName("FILLINGLINE_ID");
-
-                    b.Property<decimal?>("FlWorkingId")
-                        .HasColumnType("decimal(38,0)")
-                        .HasColumnName("FL_WORKING_ID");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2")
@@ -320,6 +320,8 @@ namespace FillingOperationService.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("START_DATE");
+
+                    b.HasKey("FlWorkingId");
 
                     b.ToTable("FL_WORKING_SHIFT", (string)null);
                 });

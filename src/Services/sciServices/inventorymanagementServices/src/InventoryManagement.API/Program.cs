@@ -75,7 +75,9 @@ builder.Services
     .AddGraphQLServer()
     .AddQueryType<InventoryQuery>()
     .AddMutationType<InventoryMutation>()
-    .AddAuthorization();
+    .AddAuthorization()
+    .BindRuntimeType<char, HotChocolate.Types.StringType>()
+    .BindRuntimeType<char?, HotChocolate.Types.StringType>();
 
 // CORS
 builder.Services.AddCors(opts =>

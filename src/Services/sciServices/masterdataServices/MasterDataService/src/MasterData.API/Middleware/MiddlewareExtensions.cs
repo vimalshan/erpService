@@ -80,6 +80,14 @@ namespace MasterData.API.Middleware
 
             _logger.LogInformation($"Processing request: {requestMethod} {requestPath}");
 
+            // Skip response body buffering for GraphQL — HotChocolate manages its own response stream
+            if (requestPath != null && requestPath.StartsWith("/graphql", StringComparison.OrdinalIgnoreCase))
+            {
+                await _next(context);
+                _logger.LogInformation($"Response status: {context.Response.StatusCode} for {requestMethod} {requestPath}");
+                return;
+            }
+
             var originalBodyStream = context.Response.Body;
 
             using (var responseBody = new MemoryStream())
