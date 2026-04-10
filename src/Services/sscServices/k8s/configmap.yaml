@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ssc-config
+  namespace: ssc-services
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  RabbitMQ__Host: "rabbitmq-service"
+  RabbitMQ__Port: "5672"
+  RabbitMQ__VirtualHost: "/"
+  RabbitMQ__HostName: "rabbitmq-service"
+  JwtSettings__Issuer: "SSCServices"
+  JwtSettings__ExpiryHours: "8"

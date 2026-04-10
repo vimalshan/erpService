@@ -21,7 +21,7 @@ public class ApprovalGroupMapDto
     public int MapBuSpecific { get; set; }
     public long MapMainCat { get; set; }
     public long MapSubCat { get; set; }
-    public char? MapCurrency { get; set; }
+    public string? MapCurrency { get; set; }
     public long MapCreatedBy { get; set; }
     public DateTime MapCreatedOn { get; set; }
     public List<ApprovalGroupUnitMapDto> UnitMaps { get; set; } = new();
@@ -66,7 +66,7 @@ public class PullMatrixDetailDto
     public long MatId { get; set; }
     public long MatUnitId { get; set; }
     public string MatPayBy { get; set; } = string.Empty;
-    public char MatFlag { get; set; }
+    public string MatFlag { get; set; } = string.Empty;
     public long MatMainCat { get; set; }
     public long MatEmpSysId { get; set; }
     public long MatMaxNos { get; set; }

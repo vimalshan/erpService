@@ -24,6 +24,12 @@ public class Mutation
         return await mediator.Send(new ApproveHRDocumentCommand(docId, approvedBy), ct);
     }
 
+    public async Task<bool> SubmitDocument(
+        [Service] IMediator mediator, long docId, CancellationToken ct)
+    {
+        return await mediator.Send(new SubmitHRDocumentCommand(docId), ct);
+    }
+
     public async Task<bool> RejectDocument(
         [Service] IMediator mediator, long docId, decimal rejectedBy, string rejectRemarks, CancellationToken ct)
     {

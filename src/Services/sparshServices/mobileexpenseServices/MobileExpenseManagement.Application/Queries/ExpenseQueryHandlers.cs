@@ -121,6 +121,36 @@ public class SearchExpensesByDateRangeQueryHandler : IRequestHandler<SearchExpen
 }
 
 /// <summary>
+/// Handler for GetTripExpenseSummaryQuery
+/// </summary>
+public class GetTripExpenseSummaryQueryHandler : IRequestHandler<GetTripExpenseSummaryQuery, TripExpenseSummaryDto?>
+{
+    private readonly IExpenseRepository _expenseRepository;
+    private readonly IMapper _mapper;
+
+    public GetTripExpenseSummaryQueryHandler(IExpenseRepository expenseRepository, IMapper mapper)
+    {
+        _expenseRepository = expenseRepository;
+        _mapper = mapper;
+    }
+
+    public async Task<TripExpenseSummaryDto?> Handle(GetTripExpenseSummaryQuery request, CancellationToken cancellationToken)
+    {
+        var expenses = await _expenseRepository.GetByTripIdAsync(request.TripId, cancellationToken);
+        if (expenses.Count == 0)
+            return null;
+
+        return new TripExpenseSummaryDto
+        {
+            TripId = request.TripId,
+            TotalExpenseAmount = expenses.Sum(e => e.Amount),
+            ExpenseCount = expenses.Count,
+            Expenses = _mapper.Map<List<ExpenseDto>>(expenses)
+        };
+    }
+}
+
+/// <summary>
 /// Handler for GetExpenseStatisticsQuery
 /// </summary>
 public class GetExpenseStatisticsQueryHandler : IRequestHandler<GetExpenseStatisticsQuery, ExpenseStatisticsDto>

@@ -1,0 +1,265 @@
+{
+  "rabbit_version": "3.13",
+  "vhosts": [
+    { "name": "/" }
+  ],
+  "permissions": [
+    {
+      "user": "ssc_user",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "transaction.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "batch.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "envelope.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "document.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "invoice.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "approval.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "filing.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "hr-document.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "integration.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "master-data.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "club-membership.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "user.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "ssc.deadletter.exchange",
+      "vhost": "/",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "transaction.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "ssc.deadletter.exchange",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "batch.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "ssc.deadletter.exchange",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "envelope.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "ssc.deadletter.exchange",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "document.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "ssc.deadletter.exchange",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "invoice.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "ssc.deadletter.exchange",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "approval.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "ssc.deadletter.exchange",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "filing.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "ssc.deadletter.exchange",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "hr-document.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "ssc.deadletter.exchange",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "integration.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "ssc.deadletter.exchange",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "master-data.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "ssc.deadletter.exchange",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "club-membership.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "ssc.deadletter.exchange",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "user.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "ssc.deadletter.exchange",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "ssc.deadletter.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    { "source": "transaction.exchange", "vhost": "/", "destination": "transaction.queue", "destination_type": "queue", "routing_key": "#", "arguments": {} },
+    { "source": "batch.exchange", "vhost": "/", "destination": "batch.queue", "destination_type": "queue", "routing_key": "#", "arguments": {} },
+    { "source": "envelope.exchange", "vhost": "/", "destination": "envelope.queue", "destination_type": "queue", "routing_key": "#", "arguments": {} },
+    { "source": "document.exchange", "vhost": "/", "destination": "document.queue", "destination_type": "queue", "routing_key": "#", "arguments": {} },
+    { "source": "invoice.exchange", "vhost": "/", "destination": "invoice.queue", "destination_type": "queue", "routing_key": "#", "arguments": {} },
+    { "source": "approval.exchange", "vhost": "/", "destination": "approval.queue", "destination_type": "queue", "routing_key": "#", "arguments": {} },
+    { "source": "filing.exchange", "vhost": "/", "destination": "filing.queue", "destination_type": "queue", "routing_key": "#", "arguments": {} },
+    { "source": "hr-document.exchange", "vhost": "/", "destination": "hr-document.queue", "destination_type": "queue", "routing_key": "#", "arguments": {} },
+    { "source": "integration.exchange", "vhost": "/", "destination": "integration.queue", "destination_type": "queue", "routing_key": "#", "arguments": {} },
+    { "source": "master-data.exchange", "vhost": "/", "destination": "master-data.queue", "destination_type": "queue", "routing_key": "#", "arguments": {} },
+    { "source": "club-membership.exchange", "vhost": "/", "destination": "club-membership.queue", "destination_type": "queue", "routing_key": "#", "arguments": {} },
+    { "source": "user.exchange", "vhost": "/", "destination": "user.queue", "destination_type": "queue", "routing_key": "#", "arguments": {} },
+    { "source": "ssc.deadletter.exchange", "vhost": "/", "destination": "ssc.deadletter.queue", "destination_type": "queue", "routing_key": "", "arguments": {} }
+  ]
+}

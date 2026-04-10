@@ -5,7 +5,7 @@ namespace ProblemManagement.Application.Queries;
 
 public record GetProblemByIdQuery(long PrId) : IRequest<ProblemDto?>;
 
-public record GetProblemsByStatusQuery(char Status) : IRequest<IReadOnlyList<ProblemDto>>;
+public record GetProblemsByStatusQuery(string Status) : IRequest<IReadOnlyList<ProblemDto>>;
 
 public record GetAllProblemsQuery : IRequest<IReadOnlyList<ProblemDto>>;
 

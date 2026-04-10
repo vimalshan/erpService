@@ -21,7 +21,7 @@ public class ApproveProblemValidator : AbstractValidator<ApproveProblemCommand>
     {
         RuleFor(x => x.ProblemId).GreaterThan(0);
         RuleFor(x => x.ApprovedBy).GreaterThan(0);
-        RuleFor(x => x.Status).Must(s => s is 'A' or 'R').WithMessage("Status must be A or R.");
+        RuleFor(x => x.Status).Must(s => s is "A" or "R").WithMessage("Status must be A or R.");
     }
 }
 

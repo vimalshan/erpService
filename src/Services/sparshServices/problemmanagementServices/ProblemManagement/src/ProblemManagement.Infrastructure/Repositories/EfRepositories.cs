@@ -16,7 +16,7 @@ public class ProblemRepository(ProblemManagementDbContext context) : IProblemRep
             .Include(p => p.Audiences)
             .FirstOrDefaultAsync(p => p.PrId == id, ct);
 
-    public async Task<IReadOnlyList<ProblemMain>> GetByStatusAsync(char status, CancellationToken ct = default) =>
+    public async Task<IReadOnlyList<ProblemMain>> GetByStatusAsync(string status, CancellationToken ct = default) =>
         await context.Problems
             .Where(p => p.PrStatus == status)
             .OrderByDescending(p => p.PrEnteredOn)

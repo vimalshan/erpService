@@ -70,11 +70,18 @@ public static class DependencyInjection
             services.AddSingleton<IMessagePublisher>(sp =>
             {
                 var factory = sp.GetRequiredService<IConnectionFactory>();
-                var connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
-                return new RabbitMqPublisher(connection);
+                try
+                {
+                    var connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
+                    return new RabbitMqPublisher(connection);
+                }
+                catch (Exception)
+                {
+                    return new NoOpMessagePublisher();
+                }
             });
 
-            // RabbitMQ Consumers
+            // RabbitMQ Consumers (resilient — retry if RabbitMQ is unavailable)
             services.AddHostedService<ProblemCreatedConsumer>();
             services.AddHostedService<SolutionApprovedConsumer>();
         }

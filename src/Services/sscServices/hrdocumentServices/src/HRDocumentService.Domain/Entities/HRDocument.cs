@@ -135,6 +135,12 @@ public class HRDocument : AggregateRoot
         DocRemarks = remarks;
     }
 
+    public void UpdateRefInfo(string? refNo, string? refName)
+    {
+        DocRefNo = refNo;
+        DocRefName = refName;
+    }
+
     public void SetFilePath(string filePath)
     {
         DocFilePath = filePath;

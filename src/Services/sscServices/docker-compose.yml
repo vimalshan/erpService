@@ -1,0 +1,433 @@
+version: "3.8"
+
+services:
+  # ─── Infrastructure ─────────────────────────────────────────────────────────
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ssc-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD:-SSCAdmin@2026!}"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - ssc-network
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: ssc-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-ssc_user}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASS:-ssc_password}"
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    networks:
+      - ssc-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: ssc-azurite
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - azurite-data:/data
+    networks:
+      - ssc-network
+
+  # ─── Application Services ──────────────────────────────────────────────────
+
+  ssc-transactional:
+    build:
+      context: ./ssctransactionalServices
+      dockerfile: Dockerfile
+    container_name: ssc-transactional
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SSCDB;User Id=sa;Password=${SA_PASSWORD:-SSCAdmin@2026!};TrustServerCertificate=True
+      - ConnectionStrings__AzureBlobStorage=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-ssc_user}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-ssc_password}
+      - RabbitMQ__VirtualHost=/
+      - JwtSettings__Secret=${JWT_SECRET:-SSCMicroservicesSuperSecretKey2026!@#Prod}
+      - JwtSettings__Issuer=SSCTransactionalService
+      - JwtSettings__Audience=SSCTransactionalServiceClients
+    ports:
+      - "8080:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ssc-network
+    restart: unless-stopped
+
+  batch-and-envelope:
+    build:
+      context: ./batchandenvelopeServices
+      dockerfile: Dockerfile
+    container_name: ssc-batch-envelope
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SSCDB;User Id=sa;Password=${SA_PASSWORD:-SSCAdmin@2026!};TrustServerCertificate=True
+      - ConnectionStrings__AzureBlobStorage=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-ssc_user}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-ssc_password}
+      - RabbitMQ__VirtualHost=/
+      - JwtSettings__Secret=${JWT_SECRET:-SSCMicroservicesSuperSecretKey2026!@#Prod}
+      - JwtSettings__Issuer=BatchAndEnvelopeService
+      - JwtSettings__Audience=BatchAndEnvelopeServiceClients
+    ports:
+      - "8081:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ssc-network
+    restart: unless-stopped
+
+  category-and-vendor:
+    build:
+      context: ./categoryandvendorServices
+      dockerfile: Dockerfile
+    container_name: ssc-category-vendor
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SSCDB_CategoryVendor;User Id=sa;Password=${SA_PASSWORD:-SSCAdmin@2026!};TrustServerCertificate=True
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=${RABBITMQ_USER:-ssc_user}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-ssc_password}
+      - Jwt__Key=${JWT_SECRET:-SSCMicroservicesSuperSecretKey2026!@#Prod}
+      - Jwt__Issuer=CategoryAndVendorService
+      - Jwt__Audience=CategoryAndVendorServiceClients
+      - AzureBlobStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1
+    ports:
+      - "8082:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ssc-network
+    restart: unless-stopped
+
+  club-membership:
+    build:
+      context: ./clubmembershipServices
+      dockerfile: Dockerfile
+    container_name: ssc-club-membership
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SSCDB;User Id=sa;Password=${SA_PASSWORD:-SSCAdmin@2026!};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-ssc_user}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-ssc_password}
+      - RabbitMQ__VirtualHost=/
+      - JwtSettings__Secret=${JWT_SECRET:-SSCMicroservicesSuperSecretKey2026!@#Prod}
+      - JwtSettings__Issuer=ClubMembershipService
+      - JwtSettings__Audience=ClubMembershipServiceClients
+    ports:
+      - "8083:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ssc-network
+    restart: unless-stopped
+
+  filing-and-archive:
+    build:
+      context: ./fillingandarchiveServices
+      dockerfile: Dockerfile
+    container_name: ssc-filing-archive
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SSCDB;User Id=sa;Password=${SA_PASSWORD:-SSCAdmin@2026!};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-ssc_user}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-ssc_password}
+      - RabbitMQ__VirtualHost=/
+      - JwtSettings__Secret=${JWT_SECRET:-SSCMicroservicesSuperSecretKey2026!@#Prod}
+      - JwtSettings__Issuer=FilingAndArchiveService
+      - JwtSettings__Audience=FilingAndArchiveServiceClients
+    ports:
+      - "8084:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ssc-network
+    restart: unless-stopped
+
+  hr-document:
+    build:
+      context: ./hrdocumentServices
+      dockerfile: Dockerfile
+    container_name: ssc-hr-document
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SSCDB;User Id=sa;Password=${SA_PASSWORD:-SSCAdmin@2026!};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-ssc_user}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-ssc_password}
+      - RabbitMQ__VirtualHost=/
+      - JwtSettings__Secret=${JWT_SECRET:-SSCMicroservicesSuperSecretKey2026!@#Prod}
+      - JwtSettings__Issuer=HRDocumentService
+      - JwtSettings__Audience=HRDocumentServiceClients
+    ports:
+      - "8085:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ssc-network
+    restart: unless-stopped
+
+  integration-service:
+    build:
+      context: ./integrationServices/IntegrationService
+      dockerfile: Dockerfile
+    container_name: ssc-integration
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SSCDB;User Id=sa;Password=${SA_PASSWORD:-SSCAdmin@2026!};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-ssc_user}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-ssc_password}
+      - RabbitMQ__VirtualHost=/
+      - JwtSettings__Secret=${JWT_SECRET:-SSCMicroservicesSuperSecretKey2026!@#Prod}
+      - JwtSettings__Issuer=IntegrationService
+      - JwtSettings__Audience=IntegrationServiceClients
+    ports:
+      - "8086:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ssc-network
+    restart: unless-stopped
+
+  invoice-processing:
+    build:
+      context: ./invoiceprocessingServices/InvoiceProcessing.Service
+      dockerfile: Dockerfile
+    container_name: ssc-invoice-processing
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SSCDB_InvoiceProcessing;User Id=sa;Password=${SA_PASSWORD:-SSCAdmin@2026!};TrustServerCertificate=True
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER:-ssc_user}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-ssc_password}
+      - Jwt__Key=${JWT_SECRET:-SSCMicroservicesSuperSecretKey2026!@#Prod}
+      - Jwt__Issuer=InvoiceProcessing.API
+      - Jwt__Audience=InvoiceProcessing.Clients
+      - AzureBlobStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1
+    ports:
+      - "8087:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ssc-network
+    restart: unless-stopped
+
+  master-data:
+    build:
+      context: ./masterdataServices/MasterDataService
+      dockerfile: Dockerfile
+    container_name: ssc-master-data
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SSCDB;User Id=sa;Password=${SA_PASSWORD:-SSCAdmin@2026!};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-ssc_user}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-ssc_password}
+      - RabbitMQ__VirtualHost=/
+      - JwtSettings__Secret=${JWT_SECRET:-SSCMicroservicesSuperSecretKey2026!@#Prod}
+      - JwtSettings__Issuer=MasterDataService
+      - JwtSettings__Audience=MasterDataServiceClients
+    ports:
+      - "8088:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ssc-network
+    restart: unless-stopped
+
+  menu-and-security:
+    build:
+      context: ./menuandsecurityServices
+      dockerfile: Dockerfile
+    container_name: ssc-menu-security
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SSCDB;User Id=sa;Password=${SA_PASSWORD:-SSCAdmin@2026!};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-ssc_user}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-ssc_password}
+      - RabbitMQ__VirtualHost=/
+      - JwtSettings__Secret=${JWT_SECRET:-SSCMicroservicesSuperSecretKey2026!@#Prod}
+      - JwtSettings__Issuer=MenuAndSecurityService
+      - JwtSettings__Audience=MenuAndSecurityServiceClients
+    ports:
+      - "8089:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ssc-network
+    restart: unless-stopped
+
+  approval-group:
+    build:
+      context: ./approvalgroupServices
+      dockerfile: Dockerfile
+    container_name: ssc-approval-group
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SSCDB;User Id=sa;Password=${SA_PASSWORD:-SSCAdmin@2026!};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-ssc_user}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-ssc_password}
+      - RabbitMQ__VirtualHost=/
+      - JwtSettings__Secret=${JWT_SECRET:-SSCMicroservicesSuperSecretKey2026!@#Prod}
+      - JwtSettings__Issuer=ApprovalGroupService
+      - JwtSettings__Audience=ApprovalGroupServiceClients
+    ports:
+      - "8090:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ssc-network
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ./menuServices/01_USER_MODULE
+      dockerfile: Dockerfile
+    container_name: ssc-user-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SSCDB;User Id=sa;Password=${SA_PASSWORD:-SSCAdmin@2026!};TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_USER:-ssc_user}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-ssc_password}
+      - RabbitMQ__VirtualHost=/
+      - JwtSettings__Secret=${JWT_SECRET:-SSCMicroservicesSuperSecretKey2026!@#Prod}
+      - JwtSettings__Issuer=UserService
+      - JwtSettings__Audience=UserServiceClients
+    ports:
+      - "8091:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ssc-network
+    restart: unless-stopped
+
+  # ─── API Gateway ───────────────────────────────────────────────────────────
+
+  api-gateway:
+    build:
+      context: ./apigateway
+      dockerfile: Dockerfile
+    container_name: ssc-api-gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - JwtSettings__Secret=${JWT_SECRET:-SSCMicroservicesSuperSecretKey2026!@#Prod}
+      - JwtSettings__Issuer=SSCServices
+      - JwtSettings__Audience=SSCClients
+      - HealthCheckEndpoints__SqlServer=Server=sqlserver;Database=SSCDB;User Id=sa;Password=${SA_PASSWORD:-SSCAdmin@2026!};TrustServerCertificate=True
+      - HealthCheckEndpoints__RabbitMQ=amqp://${RABBITMQ_USER:-ssc_user}:${RABBITMQ_PASS:-ssc_password}@rabbitmq:5672/
+      - ServiceUrls__SSCTransactional=http://ssc-transactional:8080
+      - ServiceUrls__BatchAndEnvelope=http://batch-and-envelope:8080
+      - ServiceUrls__CategoryAndVendor=http://category-and-vendor:8080
+      - ServiceUrls__ClubMembership=http://club-membership:8080
+      - ServiceUrls__FilingAndArchive=http://filing-and-archive:8080
+      - ServiceUrls__HRDocument=http://hr-document:8080
+      - ServiceUrls__IntegrationService=http://integration-service:8080
+      - ServiceUrls__InvoiceProcessing=http://invoice-processing:8080
+      - ServiceUrls__MasterData=http://master-data:8080
+      - ServiceUrls__MenuAndSecurity=http://menu-and-security:8080
+      - ServiceUrls__ApprovalGroup=http://approval-group:8080
+      - ServiceUrls__UserService=http://user-service:8080
+    ports:
+      - "5000:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ssc-network
+    restart: unless-stopped
+
+volumes:
+  sqlserver-data:
+  rabbitmq-data:
+  azurite-data:
+
+networks:
+  ssc-network:
+    driver: bridge

@@ -35,7 +35,7 @@ public class ProblemMainConfiguration : IEntityTypeConfiguration<ProblemMain>
         builder.ToTable("PROBLEM_MAIN");
         builder.HasKey(e => e.PrId);
 
-        builder.Property(e => e.PrId).HasColumnName("PR_ID");
+        builder.Property(e => e.PrId).HasColumnName("PR_ID").UseIdentityColumn();
         builder.Property(e => e.PrOwner).HasColumnName("PR_OWNER");
         builder.Property(e => e.PrEnteredBy).HasColumnName("PR_ENTEREDBY");
         builder.Property(e => e.PrDescription).HasColumnName("PR_DESCRIPTION").HasMaxLength(255).IsRequired();
@@ -79,7 +79,7 @@ public class ProblemAttachmentConfiguration : IEntityTypeConfiguration<ProblemAt
     {
         builder.ToTable("PROBLEM_ATTACHMENT");
         builder.HasKey(e => e.PratId);
-        builder.Property(e => e.PratId).HasColumnName("PRAT_ID");
+        builder.Property(e => e.PratId).HasColumnName("PRAT_ID").UseIdentityColumn();
         builder.Property(e => e.PratPrId).HasColumnName("PRAT_PRID");
         builder.Property(e => e.PratFileName).HasColumnName("PRAT_FILENAME").HasMaxLength(2000);
         builder.Property(e => e.PratEnteredOn).HasColumnName("PRAT_ENTEREDON");
@@ -94,7 +94,7 @@ public class ProblemSolutionConfiguration : IEntityTypeConfiguration<ProblemSolu
     {
         builder.ToTable("PROBLEM_SOLUTION");
         builder.HasKey(e => e.SolId);
-        builder.Property(e => e.SolId).HasColumnName("SOL_ID");
+        builder.Property(e => e.SolId).HasColumnName("SOL_ID").UseIdentityColumn();
         builder.Property(e => e.SolPrId).HasColumnName("SOL_PRID");
         builder.Property(e => e.SolDescription).HasColumnName("SOL_DESCRIPTION").HasMaxLength(255);
         builder.Property(e => e.SolImplementation).HasColumnName("SOL_IMPLEMENTATION").HasColumnType("char(1)");
@@ -118,7 +118,7 @@ public class ProblemApprovalConfiguration : IEntityTypeConfiguration<ProblemAppr
     {
         builder.ToTable("PROBLEM_APP");
         builder.HasKey(e => e.PrAppId);
-        builder.Property(e => e.PrAppId).HasColumnName("PRAPP_ID");
+        builder.Property(e => e.PrAppId).HasColumnName("PRAPP_ID").UseIdentityColumn();
         builder.Property(e => e.PrAppPrId).HasColumnName("PRAPP_PRID");
         builder.Property(e => e.PrAppBy).HasColumnName("PRAPP_BY");
         builder.Property(e => e.PrAppOn).HasColumnName("PRAPP_ON");
@@ -137,7 +137,7 @@ public class ProblemAppAudienceConfiguration : IEntityTypeConfiguration<ProblemA
     {
         builder.ToTable("PROBLEM_APPAUDIENCE");
         builder.HasKey(e => e.PrAudId);
-        builder.Property(e => e.PrAudId).HasColumnName("PRAUD_ID");
+        builder.Property(e => e.PrAudId).HasColumnName("PRAUD_ID").UseIdentityColumn();
         builder.Property(e => e.PrAudPrId).HasColumnName("PRAUD_PRID");
         builder.Property(e => e.PrAudUnitId).HasColumnName("PRAUD_UNITID");
         builder.HasIndex(e => e.PrAudPrId).HasDatabaseName("IX_PROBLEM_APPAUDIENCE_PRID");
@@ -151,7 +151,7 @@ public class SolutionApprovalConfiguration : IEntityTypeConfiguration<SolutionAp
     {
         builder.ToTable("SOLUTION_APP");
         builder.HasKey(e => e.SolAppId);
-        builder.Property(e => e.SolAppId).HasColumnName("SOLAPP_ID");
+        builder.Property(e => e.SolAppId).HasColumnName("SOLAPP_ID").UseIdentityColumn();
         builder.Property(e => e.SolAppSolId).HasColumnName("SOLAPP_SOLID");
         builder.Property(e => e.SolAppBy).HasColumnName("SOLAPP_BY");
         builder.Property(e => e.SolAppOn).HasColumnName("SOLAPP_ON");
@@ -170,7 +170,7 @@ public class SolutionCommentConfiguration : IEntityTypeConfiguration<SolutionCom
     {
         builder.ToTable("SOLUTION_COMMENT");
         builder.HasKey(e => e.SolCommentId);
-        builder.Property(e => e.SolCommentId).HasColumnName("SOLCOMMENT_ID");
+        builder.Property(e => e.SolCommentId).HasColumnName("SOLCOMMENT_ID").UseIdentityColumn();
         builder.Property(e => e.SolCommentSolId).HasColumnName("SOLCOMMENT_SOLID");
         builder.Property(e => e.SolCommentText).HasColumnName("SOLCOMMENT_TEXT").HasMaxLength(500).IsRequired();
         builder.Property(e => e.SolCommentBy).HasColumnName("SOLCOMMENT_BY");

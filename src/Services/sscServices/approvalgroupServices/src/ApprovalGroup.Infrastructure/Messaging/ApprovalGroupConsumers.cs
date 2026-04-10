@@ -63,7 +63,8 @@ public class ApprovalGroupCreatedConsumer : BackgroundService
         catch (OperationCanceledException) { /* graceful shutdown */ }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in {ConsumerName}", nameof(ApprovalGroupCreatedConsumer));
+            _logger.LogWarning(ex, "[Consumer] {ConsumerName} could not connect to RabbitMQ broker. Consumer will not run.",
+                nameof(ApprovalGroupCreatedConsumer));
         }
     }
 

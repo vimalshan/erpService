@@ -40,9 +40,18 @@ public static class DependencyInjection
         // RabbitMQ Publisher
         services.AddSingleton<IMessagePublisher>(sp =>
         {
-            var config = sp.GetRequiredService<IConfiguration>();
-            var logger = sp.GetRequiredService<ILogger<RabbitMqPublisher>>();
-            return RabbitMqPublisher.CreateAsync(config, logger).GetAwaiter().GetResult();
+            try
+            {
+                var config = sp.GetRequiredService<IConfiguration>();
+                var logger = sp.GetRequiredService<ILogger<RabbitMqPublisher>>();
+                return RabbitMqPublisher.CreateAsync(config, logger).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                var logger = sp.GetRequiredService<ILogger<NullMessagePublisher>>();
+                logger.LogWarning(ex, "RabbitMQ unavailable. Using NullMessagePublisher.");
+                return new NullMessagePublisher(logger);
+            }
         });
 
         // RabbitMQ Consumers

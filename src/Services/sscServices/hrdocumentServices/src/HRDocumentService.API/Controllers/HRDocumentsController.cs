@@ -69,6 +69,13 @@ public class HRDocumentsController(IMediator mediator) : ControllerBase
         return result ? NoContent() : NotFound();
     }
 
+    [HttpPost("{id:long}/submit")]
+    public async Task<IActionResult> Submit(long id, CancellationToken ct)
+    {
+        var result = await mediator.Send(new SubmitHRDocumentCommand(id), ct);
+        return result ? NoContent() : NotFound();
+    }
+
     [HttpPost("{id:long}/reject")]
     public async Task<IActionResult> Reject(long id, [FromBody] RejectRequest request, CancellationToken ct)
     {

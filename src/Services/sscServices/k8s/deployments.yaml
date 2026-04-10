@@ -1,0 +1,1114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ssc-transactional
+  namespace: ssc-services
+  labels:
+    app: ssc-transactional
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ssc-transactional
+  template:
+    metadata:
+      labels:
+        app: ssc-transactional
+    spec:
+      containers:
+        - name: ssc-transactional
+          image: ${REGISTRY}/ssc-transactional:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ssc-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: SSCDB_CONNECTION
+            - name: ConnectionStrings__AzureBlobStorage
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: AZURE_BLOB_CONNECTION
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_PASS
+            - name: JwtSettings__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: JWT_SECRET
+            - name: JwtSettings__Issuer
+              value: "SSCTransactionalService"
+            - name: JwtSettings__Audience
+              value: "SSCTransactionalServiceClients"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ssc-transactional-service
+  namespace: ssc-services
+spec:
+  selector:
+    app: ssc-transactional
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: batch-and-envelope
+  namespace: ssc-services
+  labels:
+    app: batch-and-envelope
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: batch-and-envelope
+  template:
+    metadata:
+      labels:
+        app: batch-and-envelope
+    spec:
+      containers:
+        - name: batch-and-envelope
+          image: ${REGISTRY}/batch-and-envelope:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ssc-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: SSCDB_CONNECTION
+            - name: ConnectionStrings__AzureBlobStorage
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: AZURE_BLOB_CONNECTION
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_PASS
+            - name: JwtSettings__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: JWT_SECRET
+            - name: JwtSettings__Issuer
+              value: "BatchAndEnvelopeService"
+            - name: JwtSettings__Audience
+              value: "BatchAndEnvelopeServiceClients"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: batch-and-envelope-service
+  namespace: ssc-services
+spec:
+  selector:
+    app: batch-and-envelope
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: category-and-vendor
+  namespace: ssc-services
+  labels:
+    app: category-and-vendor
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: category-and-vendor
+  template:
+    metadata:
+      labels:
+        app: category-and-vendor
+    spec:
+      containers:
+        - name: category-and-vendor
+          image: ${REGISTRY}/category-and-vendor:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ssc-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: SSCDB_CATVENDOR_CONNECTION
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_PASS
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: JWT_SECRET
+            - name: Jwt__Issuer
+              value: "CategoryAndVendorService"
+            - name: Jwt__Audience
+              value: "CategoryAndVendorServiceClients"
+            - name: AzureBlobStorage__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: AZURE_BLOB_CONNECTION
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: category-and-vendor-service
+  namespace: ssc-services
+spec:
+  selector:
+    app: category-and-vendor
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: club-membership
+  namespace: ssc-services
+  labels:
+    app: club-membership
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: club-membership
+  template:
+    metadata:
+      labels:
+        app: club-membership
+    spec:
+      containers:
+        - name: club-membership
+          image: ${REGISTRY}/club-membership:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ssc-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: SSCDB_CONNECTION
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_PASS
+            - name: JwtSettings__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: JWT_SECRET
+            - name: JwtSettings__Issuer
+              value: "ClubMembershipService"
+            - name: JwtSettings__Audience
+              value: "ClubMembershipServiceClients"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: club-membership-service
+  namespace: ssc-services
+spec:
+  selector:
+    app: club-membership
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: filing-and-archive
+  namespace: ssc-services
+  labels:
+    app: filing-and-archive
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: filing-and-archive
+  template:
+    metadata:
+      labels:
+        app: filing-and-archive
+    spec:
+      containers:
+        - name: filing-and-archive
+          image: ${REGISTRY}/filing-and-archive:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ssc-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: SSCDB_CONNECTION
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_PASS
+            - name: JwtSettings__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: JWT_SECRET
+            - name: JwtSettings__Issuer
+              value: "FilingAndArchiveService"
+            - name: JwtSettings__Audience
+              value: "FilingAndArchiveServiceClients"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: filing-and-archive-service
+  namespace: ssc-services
+spec:
+  selector:
+    app: filing-and-archive
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hr-document
+  namespace: ssc-services
+  labels:
+    app: hr-document
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hr-document
+  template:
+    metadata:
+      labels:
+        app: hr-document
+    spec:
+      containers:
+        - name: hr-document
+          image: ${REGISTRY}/hr-document:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ssc-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: SSCDB_CONNECTION
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_PASS
+            - name: JwtSettings__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: JWT_SECRET
+            - name: JwtSettings__Issuer
+              value: "HRDocumentService"
+            - name: JwtSettings__Audience
+              value: "HRDocumentServiceClients"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hr-document-service
+  namespace: ssc-services
+spec:
+  selector:
+    app: hr-document
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: integration-service
+  namespace: ssc-services
+  labels:
+    app: integration-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: integration-service
+  template:
+    metadata:
+      labels:
+        app: integration-service
+    spec:
+      containers:
+        - name: integration-service
+          image: ${REGISTRY}/integration-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ssc-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: SSCDB_CONNECTION
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_PASS
+            - name: JwtSettings__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: JWT_SECRET
+            - name: JwtSettings__Issuer
+              value: "IntegrationService"
+            - name: JwtSettings__Audience
+              value: "IntegrationServiceClients"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: integration-service-svc
+  namespace: ssc-services
+spec:
+  selector:
+    app: integration-service
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: invoice-processing
+  namespace: ssc-services
+  labels:
+    app: invoice-processing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: invoice-processing
+  template:
+    metadata:
+      labels:
+        app: invoice-processing
+    spec:
+      containers:
+        - name: invoice-processing
+          image: ${REGISTRY}/invoice-processing:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ssc-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: SSCDB_INVOICE_CONNECTION
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_PASS
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: JWT_SECRET
+            - name: Jwt__Issuer
+              value: "InvoiceProcessing.API"
+            - name: Jwt__Audience
+              value: "InvoiceProcessing.Clients"
+            - name: AzureBlobStorage__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: AZURE_BLOB_CONNECTION
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: invoice-processing-service
+  namespace: ssc-services
+spec:
+  selector:
+    app: invoice-processing
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: master-data
+  namespace: ssc-services
+  labels:
+    app: master-data
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: master-data
+  template:
+    metadata:
+      labels:
+        app: master-data
+    spec:
+      containers:
+        - name: master-data
+          image: ${REGISTRY}/master-data:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ssc-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: SSCDB_CONNECTION
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_PASS
+            - name: JwtSettings__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: JWT_SECRET
+            - name: JwtSettings__Issuer
+              value: "MasterDataService"
+            - name: JwtSettings__Audience
+              value: "MasterDataServiceClients"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: master-data-service
+  namespace: ssc-services
+spec:
+  selector:
+    app: master-data
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: menu-and-security
+  namespace: ssc-services
+  labels:
+    app: menu-and-security
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: menu-and-security
+  template:
+    metadata:
+      labels:
+        app: menu-and-security
+    spec:
+      containers:
+        - name: menu-and-security
+          image: ${REGISTRY}/menu-and-security:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ssc-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: SSCDB_CONNECTION
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_PASS
+            - name: JwtSettings__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: JWT_SECRET
+            - name: JwtSettings__Issuer
+              value: "MenuAndSecurityService"
+            - name: JwtSettings__Audience
+              value: "MenuAndSecurityServiceClients"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: menu-and-security-service
+  namespace: ssc-services
+spec:
+  selector:
+    app: menu-and-security
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: approval-group
+  namespace: ssc-services
+  labels:
+    app: approval-group
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: approval-group
+  template:
+    metadata:
+      labels:
+        app: approval-group
+    spec:
+      containers:
+        - name: approval-group
+          image: ${REGISTRY}/approval-group:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ssc-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: SSCDB_CONNECTION
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_PASS
+            - name: JwtSettings__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: JWT_SECRET
+            - name: JwtSettings__Issuer
+              value: "ApprovalGroupService"
+            - name: JwtSettings__Audience
+              value: "ApprovalGroupServiceClients"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: approval-group-service
+  namespace: ssc-services
+spec:
+  selector:
+    app: approval-group
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: ssc-services
+  labels:
+    app: user-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: ${REGISTRY}/user-service:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ssc-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: SSCDB_CONNECTION
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_PASS
+            - name: JwtSettings__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: JWT_SECRET
+            - name: JwtSettings__Issuer
+              value: "UserService"
+            - name: JwtSettings__Audience
+              value: "UserServiceClients"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service-svc
+  namespace: ssc-services
+spec:
+  selector:
+    app: user-service
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+# ─── API Gateway ─────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: ssc-services
+  labels:
+    app: api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: ${REGISTRY}/ssc-api-gateway:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ssc-config
+          env:
+            - name: JwtSettings__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: JWT_SECRET
+            - name: HealthCheckEndpoints__SqlServer
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: SSCDB_CONNECTION
+            - name: HealthCheckEndpoints__RabbitMQ
+              valueFrom:
+                secretKeyRef:
+                  name: ssc-secrets
+                  key: RABBITMQ_CONNECTION
+            - name: ServiceUrls__SSCTransactional
+              value: "http://ssc-transactional-service:80"
+            - name: ServiceUrls__BatchAndEnvelope
+              value: "http://batch-and-envelope-service:80"
+            - name: ServiceUrls__CategoryAndVendor
+              value: "http://category-and-vendor-service:80"
+            - name: ServiceUrls__ClubMembership
+              value: "http://club-membership-service:80"
+            - name: ServiceUrls__FilingAndArchive
+              value: "http://filing-and-archive-service:80"
+            - name: ServiceUrls__HRDocument
+              value: "http://hr-document-service:80"
+            - name: ServiceUrls__IntegrationService
+              value: "http://integration-service-svc:80"
+            - name: ServiceUrls__InvoiceProcessing
+              value: "http://invoice-processing-service:80"
+            - name: ServiceUrls__MasterData
+              value: "http://master-data-service:80"
+            - name: ServiceUrls__MenuAndSecurity
+              value: "http://menu-and-security-service:80"
+            - name: ServiceUrls__ApprovalGroup
+              value: "http://approval-group-service:80"
+            - name: ServiceUrls__UserService
+              value: "http://user-service-svc:80"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-service
+  namespace: ssc-services
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP

@@ -31,40 +31,62 @@ public class DeviceRegistrationConsumer : BackgroundService
             Port = int.TryParse(_configuration["RabbitMQ:Port"], out var port) ? port : 5672
         };
 
-        _connection = await factory.CreateConnectionAsync(stoppingToken);
-        _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
-
-        await _channel.ExchangeDeclareAsync("mobile-app", ExchangeType.Topic, durable: true,
-            cancellationToken: stoppingToken);
-        await _channel.QueueDeclareAsync("device-registration-queue", durable: true, exclusive: false,
-            autoDelete: false, cancellationToken: stoppingToken);
-        await _channel.QueueBindAsync("device-registration-queue", "mobile-app", "device.registered",
-            cancellationToken: stoppingToken);
-
-        var consumer = new AsyncEventingBasicConsumer(_channel);
-        consumer.ReceivedAsync += async (_, ea) =>
+        while (!stoppingToken.IsCancellationRequested)
         {
-            var body = Encoding.UTF8.GetString(ea.Body.ToArray());
-            _logger.LogInformation("Received device registration event: {Message}", body);
-
             try
             {
-                // Process the message
-                await ProcessDeviceRegistrationAsync(body, stoppingToken);
-                await _channel.BasicAckAsync(ea.DeliveryTag, false, stoppingToken);
+                _connection = await factory.CreateConnectionAsync(stoppingToken);
+                _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
+
+                await _channel.ExchangeDeclareAsync("mobile-app", ExchangeType.Topic, durable: true,
+                    cancellationToken: stoppingToken);
+                await _channel.QueueDeclareAsync("device-registration-queue", durable: true, exclusive: false,
+                    autoDelete: false, cancellationToken: stoppingToken);
+                await _channel.QueueBindAsync("device-registration-queue", "mobile-app", "device.registered",
+                    cancellationToken: stoppingToken);
+
+                var consumer = new AsyncEventingBasicConsumer(_channel);
+                consumer.ReceivedAsync += async (_, ea) =>
+                {
+                    var body = Encoding.UTF8.GetString(ea.Body.ToArray());
+                    _logger.LogInformation("Received device registration event: {Message}", body);
+
+                    try
+                    {
+                        await ProcessDeviceRegistrationAsync(body, stoppingToken);
+                        await _channel.BasicAckAsync(ea.DeliveryTag, false, stoppingToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error processing device registration message");
+                        await _channel.BasicNackAsync(ea.DeliveryTag, false, true, stoppingToken);
+                    }
+                };
+
+                await _channel.BasicConsumeAsync("device-registration-queue", false, consumer,
+                    cancellationToken: stoppingToken);
+
+                _logger.LogInformation("DeviceRegistrationConsumer started listening on queue: device-registration-queue");
+
+                // Keep running until cancellation
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("DeviceRegistrationConsumer stopping.");
+                break;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing device registration message");
-                await _channel.BasicNackAsync(ea.DeliveryTag, false, true, stoppingToken);
+                _logger.LogWarning(ex, "DeviceRegistrationConsumer could not connect to RabbitMQ. Retrying in 30 seconds...");
+
+                if (_channel is { IsOpen: true }) await _channel.CloseAsync(stoppingToken);
+                if (_connection is { IsOpen: true }) await _connection.CloseAsync(stoppingToken);
+
+                try { await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken); }
+                catch (OperationCanceledException) { break; }
             }
-        };
-
-        await _channel.BasicConsumeAsync("device-registration-queue", false, consumer,
-            cancellationToken: stoppingToken);
-
-        while (!stoppingToken.IsCancellationRequested)
-            await Task.Delay(1000, stoppingToken);
+        }
     }
 
     private Task ProcessDeviceRegistrationAsync(string message, CancellationToken ct)

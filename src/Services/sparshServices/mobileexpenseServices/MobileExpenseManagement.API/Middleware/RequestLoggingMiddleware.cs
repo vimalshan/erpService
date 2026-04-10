@@ -35,6 +35,7 @@ public class RequestLoggingMiddleware
                 _logger.LogInformation(
                     $"HTTP {context.Request.Method} {context.Request.Path.Value} COMPLETED - Status: {context.Response.StatusCode} - Duration: {stopwatch.ElapsedMilliseconds}ms");
 
+                responseBody.Position = 0;
                 await responseBody.CopyToAsync(originalBodyStream);
             }
         }

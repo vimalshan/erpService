@@ -10,4 +10,5 @@ public interface IEnvelopeRepository
     Task AddAsync(EnvelopeAggregate envelope, CancellationToken ct = default);
     Task UpdateAsync(EnvelopeAggregate envelope, CancellationToken ct = default);
     Task<long> GetNextIdAsync(CancellationToken ct = default);
+    Task<long> GetNextDetailIdAsync(CancellationToken ct = default);
 }

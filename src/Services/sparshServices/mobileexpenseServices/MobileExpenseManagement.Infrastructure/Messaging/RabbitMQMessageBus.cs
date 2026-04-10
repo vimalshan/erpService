@@ -42,15 +42,14 @@ public class RabbitMQMessageBus : IMessageBus
                 channel.BasicPublish(exchange: exchangeName, routingKey: routingKey ?? queueName, 
                     basicProperties: properties, body: messageBytes);
 
-                _logger.LogInformation($"Message published: {typeof(T).Name} to {exchangeName}");
+                _logger.LogInformation("Message published: {MessageType} to {Exchange}", typeof(T).Name, exchangeName);
             }
 
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error publishing message: {typeof(T).Name}");
-            throw;
+            _logger.LogWarning(ex, "RabbitMQ unavailable. Message not published: {MessageType}", typeof(T).Name);
         }
     }
 
@@ -78,26 +77,25 @@ public class RabbitMQMessageBus : IMessageBus
                         {
                             await handler(message);
                             channel.BasicAck(ea.DeliveryTag, false);
-                            _logger.LogInformation($"Message processed: {typeof(T).Name}");
+                            _logger.LogInformation("Message processed: {MessageType}", typeof(T).Name);
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, $"Error processing message: {typeof(T).Name}");
+                        _logger.LogError(ex, "Error processing message: {MessageType}", typeof(T).Name);
                         channel.BasicNack(ea.DeliveryTag, false, true);
                     }
                 };
 
                 channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
-                _logger.LogInformation($"Subscription registered for: {typeof(T).Name}");
+                _logger.LogInformation("Subscription registered for: {MessageType}", typeof(T).Name);
             }
 
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error subscribing to messages: {typeof(T).Name}");
-            throw;
+            _logger.LogWarning(ex, "RabbitMQ unavailable. Could not subscribe to: {MessageType}", typeof(T).Name);
         }
     }
 }
@@ -112,17 +110,30 @@ public interface IRabbitMQConnection : IDisposable
 
 public class RabbitMQConnection : IRabbitMQConnection
 {
-    private readonly IConnection _connection;
+    private readonly IConnectionFactory _connectionFactory;
     private readonly ILogger<RabbitMQConnection> _logger;
+    private IConnection? _connection;
 
     public RabbitMQConnection(IConnectionFactory connectionFactory, ILogger<RabbitMQConnection> logger)
     {
+        _connectionFactory = connectionFactory;
         _logger = logger;
-        _connection = connectionFactory.CreateConnection();
     }
 
     public IModel CreateModel()
     {
+        if (_connection is null || !_connection.IsOpen)
+        {
+            try
+            {
+                _connection = _connectionFactory.CreateConnection();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not connect to RabbitMQ. Messaging will be unavailable.");
+                throw;
+            }
+        }
         return _connection.CreateModel();
     }
 

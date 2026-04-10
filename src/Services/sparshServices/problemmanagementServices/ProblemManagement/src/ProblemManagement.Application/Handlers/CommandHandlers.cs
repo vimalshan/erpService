@@ -83,7 +83,7 @@ public class ApproveProblemHandler(
 
         await approvalRepo.AddAsync(approval, ct);
 
-        if (request.Status == 'A')
+        if (request.Status == "A")
             problem.Approve(request.ApprovedBy, request.Reason, request.AudienceFlag);
         else
             problem.Reject(request.ApprovedBy, request.Reason);

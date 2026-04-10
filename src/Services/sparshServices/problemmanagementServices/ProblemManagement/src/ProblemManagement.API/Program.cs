@@ -1,6 +1,8 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using HotChocolate.Types;
+using HotChocolate.Data.Filters;
 using Serilog;
 using ProblemManagement.Application;
 using ProblemManagement.Infrastructure;
@@ -56,9 +58,12 @@ builder.Services
     .AddGraphQLServer()
     .AddQueryType<ProblemQuery>()
     .AddMutationType<ProblemMutation>()
+    .TryAddTypeInterceptor<IgnoreDomainEventsTypeInterceptor>()
     .AddProjections()
     .AddFiltering()
-    .AddSorting();
+    .AddSorting()
+    .BindRuntimeType<char, StringType>()
+    .BindRuntimeType<char?, StringType>();
 
 // Health Checks
 builder.Services.AddHealthChecks()

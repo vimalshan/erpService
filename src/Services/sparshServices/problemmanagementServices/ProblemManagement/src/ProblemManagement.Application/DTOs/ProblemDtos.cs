@@ -7,14 +7,14 @@ public record ProblemDto
     public long PrEnteredBy { get; init; }
     public string PrDescription { get; init; } = string.Empty;
     public DateTime? PrRespExpBy { get; init; }
-    public char? PrCategory { get; init; }
+    public string? PrCategory { get; init; }
     public long? PrSpecialization { get; init; }
     public string? PrImpact { get; init; }
     public string? PrExpResult { get; init; }
     public DateTime? PrEnteredOn { get; init; }
-    public char PrStatus { get; init; }
+    public string PrStatus { get; init; }
     public string? PrStatement { get; init; }
-    public char? PrType { get; init; }
+    public string? PrType { get; init; }
     public long PrUnitId { get; init; }
     public long PrSiteId { get; init; }
     public DateTime PrModOn { get; init; }
@@ -28,7 +28,7 @@ public record ProblemSolutionDto
     public long SolId { get; init; }
     public long SolPrId { get; init; }
     public string? SolDescription { get; init; }
-    public char? SolImplementation { get; init; }
+    public string? SolImplementation { get; init; }
     public long SolEnteredBy { get; init; }
     public DateTime SolEnteredOn { get; init; }
     public string? SolAttach { get; init; }
@@ -42,9 +42,9 @@ public record ProblemApprovalDto
     public long PrAppPrId { get; init; }
     public long PrAppBy { get; init; }
     public DateTime PrAppOn { get; init; }
-    public char PrAppStatus { get; init; }
+    public string PrAppStatus { get; init; }
     public string? PrAppReason { get; init; }
-    public char PrAppAudFlag { get; init; }
+    public string PrAppAudFlag { get; init; }
 }
 
 public record ProblemAttachmentDto
@@ -61,7 +61,7 @@ public record SolutionApprovalDto
     public long SolAppSolId { get; init; }
     public long SolAppBy { get; init; }
     public DateTime SolAppOn { get; init; }
-    public char SolAppStatus { get; init; }
+    public string SolAppStatus { get; init; }
     public string? SolAppReason { get; init; }
 }
 

@@ -28,13 +28,22 @@ public class GetActivitiesQueryHandler :
     public async Task<IEnumerable<ActivityDto>> Handle(GetAllActivitiesQuery request, CancellationToken ct)
     {
         var items = await _repo.GetAllAsync(ct);
-        return items.Select(a => MapDto(a, null));
+        var clubIds = items.Select(a => a.ClubId).Distinct();
+        var clubs = new Dictionary<long, string>();
+        foreach (var cid in clubIds)
+        {
+            var club = await _clubRepo.GetByIdAsync(cid, ct);
+            if (club is not null) clubs[cid] = club.ClubName;
+        }
+        return items.Select(a => MapDto(a, clubs.GetValueOrDefault(a.ClubId)));
     }
 
     public async Task<ActivityDto?> Handle(GetActivityByIdQuery request, CancellationToken ct)
     {
         var a = await _repo.GetByIdAsync(request.ActivityId, ct);
-        return a is null ? null : MapDto(a, null);
+        if (a is null) return null;
+        var club = await _clubRepo.GetByIdAsync(a.ClubId, ct);
+        return MapDto(a, club?.ClubName);
     }
 
     private static ActivityDto MapDto(Domain.Entities.ClubActivity a, string? clubName) =>

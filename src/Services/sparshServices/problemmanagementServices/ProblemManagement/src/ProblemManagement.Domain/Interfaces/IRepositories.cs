@@ -5,7 +5,7 @@ namespace ProblemManagement.Domain.Interfaces;
 public interface IProblemRepository
 {
     Task<ProblemMain?> GetByIdAsync(long id, CancellationToken ct = default);
-    Task<IReadOnlyList<ProblemMain>> GetByStatusAsync(char status, CancellationToken ct = default);
+    Task<IReadOnlyList<ProblemMain>> GetByStatusAsync(string status, CancellationToken ct = default);
     Task<IReadOnlyList<ProblemMain>> GetAllAsync(CancellationToken ct = default);
     Task<ProblemMain> AddAsync(ProblemMain problem, CancellationToken ct = default);
     Task UpdateAsync(ProblemMain problem, CancellationToken ct = default);

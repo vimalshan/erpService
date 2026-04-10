@@ -7,7 +7,7 @@ public record CreateProblemCommand : IRequest<ProblemDto>
 {
     public long Owner { get; init; }
     public string Description { get; init; } = string.Empty;
-    public char? Category { get; init; }
+    public string? Category { get; init; }
     public string? Impact { get; init; }
     public string? ExpectedResult { get; init; }
     public long UnitId { get; init; }
@@ -31,9 +31,9 @@ public record ApproveProblemCommand : IRequest<ProblemApprovalDto>
 {
     public long ProblemId { get; init; }
     public long ApprovedBy { get; init; }
-    public char Status { get; init; }
+    public string Status { get; init; }
     public string? Reason { get; init; }
-    public char AudienceFlag { get; init; }
+    public string AudienceFlag { get; init; }
 }
 
 public record RecordSolutionCommand : IRequest<ProblemSolutionDto>
@@ -47,9 +47,9 @@ public record ApproveSolutionCommand : IRequest<SolutionApprovalDto>
 {
     public long SolutionId { get; init; }
     public long ApprovedBy { get; init; }
-    public char Status { get; init; }
+    public string Status { get; init; }
     public string? Reason { get; init; }
-    public char? AudienceFlag { get; init; }
+    public string? AudienceFlag { get; init; }
 }
 
 public record AddSolutionCommentCommand : IRequest<SolutionCommentDto>

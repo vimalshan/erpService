@@ -60,7 +60,7 @@ public class EnvelopeCreatedConsumer : BackgroundService
         catch (OperationCanceledException) { /* shutting down */ }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[Consumer] EnvelopeCreatedConsumer fatal error");
+            _logger.LogWarning(ex, "[Consumer] EnvelopeCreatedConsumer could not connect to RabbitMQ broker. Consumer will not run.");
         }
     }
 

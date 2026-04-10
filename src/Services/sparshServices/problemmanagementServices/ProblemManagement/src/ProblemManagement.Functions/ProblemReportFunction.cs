@@ -14,9 +14,9 @@ public class ProblemReportFunction(
         logger.LogInformation("Weekly problem report function triggered at: {Time}", DateTime.UtcNow);
 
         var allProblems = await problemRepository.GetAllAsync(ct);
-        var posted = allProblems.Count(p => p.PrStatus == 'P');
-        var accepted = allProblems.Count(p => p.PrStatus == 'A');
-        var rejected = allProblems.Count(p => p.PrStatus == 'R');
+        var posted = allProblems.Count(p => p.PrStatus == "P");
+        var accepted = allProblems.Count(p => p.PrStatus == "A");
+        var rejected = allProblems.Count(p => p.PrStatus == "R");
 
         logger.LogInformation(
             "Weekly Report - Total: {Total}, Posted: {Posted}, Accepted: {Accepted}, Rejected: {Rejected}",

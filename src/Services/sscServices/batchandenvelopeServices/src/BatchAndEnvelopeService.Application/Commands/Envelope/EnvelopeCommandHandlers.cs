@@ -22,10 +22,10 @@ public class CreateEnvelopeCommandHandler : IRequestHandler<CreateEnvelopeComman
         var id = await _envelopeRepository.GetNextIdAsync(cancellationToken);
         var envelope = EnvelopeAggregate.Create(id, request.EnvelopeType, request.CreatedBy, request.LocationId);
 
-        long detId = 1;
-        foreach (var (docId, type) in request.Documents)
+        long detId = await _envelopeRepository.GetNextDetailIdAsync(cancellationToken);
+        foreach (var doc in request.Documents)
         {
-            var detail = EnvelopeDetail.Create(detId++, id, type, docId, request.CreatedBy);
+            var detail = EnvelopeDetail.Create(detId++, id, doc.Type, doc.DocumentId, request.CreatedBy);
             envelope.AddDetail(detail);
         }
 

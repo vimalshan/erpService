@@ -1,0 +1,287 @@
+version: "3.9"
+
+services:
+  # ===========================================
+  # Infrastructure Services
+  # ===========================================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sparsh-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SQL_SA_PASSWORD:-Sparsh@2026!Secure}"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./docker/db-init:/docker-entrypoint-initdb.d
+    networks:
+      - sparsh-network
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" -b
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: sparsh-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-sparsh_user}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD:-Sparsh@RMQ2026}"
+      RABBITMQ_DEFAULT_VHOST: "sparsh"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./docker/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./docker/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    networks:
+      - sparsh-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  db-init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    container_name: sparsh-db-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./docker/db-init:/scripts
+    entrypoint: /bin/bash
+    command: >
+      -c "
+      echo 'Waiting for SQL Server...' &&
+      sleep 10 &&
+      /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P '${SQL_SA_PASSWORD:-Sparsh@2026!Secure}' -C -i /scripts/01_init_databases.sql &&
+      echo 'Database initialization complete!'
+      "
+    networks:
+      - sparsh-network
+
+  # ===========================================
+  # API Gateway
+  # ===========================================
+  api-gateway:
+    build:
+      context: ./apigateway/SparshApiGateway
+      dockerfile: Dockerfile
+    container_name: sparsh-api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      JwtSettings__SecretKey: "${JWT_SECRET_KEY:-SparshApiGateway_SuperSecret_Key_2026_Minimum32Chars!!}"
+    ports:
+      - "5200:8080"
+    depends_on:
+      employee-pride-api:
+        condition: service_healthy
+      mobile-app-api:
+        condition: service_healthy
+      mobile-expense-api:
+        condition: service_healthy
+      problem-api:
+        condition: service_healthy
+      transactional-api:
+        condition: service_healthy
+    networks:
+      - sparsh-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  # ===========================================
+  # Employee Pride Management Service
+  # ===========================================
+  employee-pride-api:
+    build:
+      context: ./employeepridemanagementServices
+      dockerfile: Dockerfile
+    container_name: sparsh-employee-pride-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=SPARSHDB;User Id=sa;Password=${SQL_SA_PASSWORD:-Sparsh@2026!Secure};Encrypt=True;TrustServerCertificate=True;Command Timeout=30"
+      JwtSettings__Secret: "${JWT_SECRET_KEY:-SparshApiGateway_SuperSecret_Key_2026_Minimum32Chars!!}"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: "${RABBITMQ_USER:-sparsh_user}"
+      RabbitMQ__Password: "${RABBITMQ_PASSWORD:-Sparsh@RMQ2026}"
+    ports:
+      - "5082:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - sparsh-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ===========================================
+  # Mobile App Management Service
+  # ===========================================
+  mobile-app-api:
+    build:
+      context: ./mobileappmanagementServices
+      dockerfile: Dockerfile
+    container_name: sparsh-mobile-app-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=SPARSHDB;User Id=sa;Password=${SQL_SA_PASSWORD:-Sparsh@2026!Secure};Encrypt=True;TrustServerCertificate=True;Command Timeout=30"
+      Jwt__Key: "${JWT_SECRET_KEY:-SparshApiGateway_SuperSecret_Key_2026_Minimum32Chars!!}"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: "${RABBITMQ_USER:-sparsh_user}"
+      RabbitMQ__Password: "${RABBITMQ_PASSWORD:-Sparsh@RMQ2026}"
+    ports:
+      - "5154:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - sparsh-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ===========================================
+  # Mobile Expense Management Service
+  # ===========================================
+  mobile-expense-api:
+    build:
+      context: ./mobileexpenseServices
+      dockerfile: Dockerfile
+    container_name: sparsh-mobile-expense-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=SPARSHDB;User Id=sa;Password=${SQL_SA_PASSWORD:-Sparsh@2026!Secure};Encrypt=True;TrustServerCertificate=True;Command Timeout=30"
+      Jwt__SecretKey: "${JWT_SECRET_KEY:-SparshApiGateway_SuperSecret_Key_2026_Minimum32Chars!!}"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Username: "${RABBITMQ_USER:-sparsh_user}"
+      RabbitMQ__Password: "${RABBITMQ_PASSWORD:-Sparsh@RMQ2026}"
+    ports:
+      - "5000:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - sparsh-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ===========================================
+  # Problem Management Service
+  # ===========================================
+  problem-api:
+    build:
+      context: ./problemmanagementServices/ProblemManagement
+      dockerfile: Dockerfile
+    container_name: sparsh-problem-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ProblemManagementDb;User Id=sa;Password=${SQL_SA_PASSWORD:-Sparsh@2026!Secure};Encrypt=True;TrustServerCertificate=True;Command Timeout=30"
+      JwtSettings__SecretKey: "${JWT_SECRET_KEY:-SparshApiGateway_SuperSecret_Key_2026_Minimum32Chars!!}"
+      Features__EnableRabbitMq: "true"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: "${RABBITMQ_USER:-sparsh_user}"
+      RabbitMQ__Password: "${RABBITMQ_PASSWORD:-Sparsh@RMQ2026}"
+    ports:
+      - "5165:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - sparsh-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ===========================================
+  # Sparsh Transactional Service
+  # ===========================================
+  transactional-api:
+    build:
+      context: ./sparshtransactionalServices/SparshTransactional
+      dockerfile: Dockerfile
+    container_name: sparsh-transactional-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=SparshTransactionalDb;User Id=sa;Password=${SQL_SA_PASSWORD:-Sparsh@2026!Secure};Encrypt=True;TrustServerCertificate=True;Command Timeout=30"
+      JwtSettings__SecretKey: "${JWT_SECRET_KEY:-SparshApiGateway_SuperSecret_Key_2026_Minimum32Chars!!}"
+      Features__EnableRabbitMq: "true"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: "${RABBITMQ_USER:-sparsh_user}"
+      RabbitMQ__Password: "${RABBITMQ_PASSWORD:-Sparsh@RMQ2026}"
+    ports:
+      - "5170:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - sparsh-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  sqlserver-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+
+networks:
+  sparsh-network:
+    driver: bridge
+    name: sparsh-network

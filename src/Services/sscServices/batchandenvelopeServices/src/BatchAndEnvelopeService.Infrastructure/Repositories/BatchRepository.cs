@@ -43,4 +43,10 @@ public class BatchRepository : IBatchRepository
         var max = await _context.Batches.MaxAsync(b => (long?)b.Id, ct) ?? 0;
         return max + 1;
     }
+
+    public async Task<int> GetNextDetailIdAsync(CancellationToken ct = default)
+    {
+        var max = await _context.BatchDetails.MaxAsync(d => (int?)d.Id, ct) ?? 0;
+        return max + 1;
+    }
 }

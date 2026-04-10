@@ -43,4 +43,10 @@ public class EnvelopeRepository : IEnvelopeRepository
         var max = await _context.Envelopes.MaxAsync(e => (long?)e.Id, ct) ?? 0;
         return max + 1;
     }
+
+    public async Task<long> GetNextDetailIdAsync(CancellationToken ct = default)
+    {
+        var max = await _context.EnvelopeDetails.MaxAsync(d => (long?)d.Id, ct) ?? 0;
+        return max + 1;
+    }
 }

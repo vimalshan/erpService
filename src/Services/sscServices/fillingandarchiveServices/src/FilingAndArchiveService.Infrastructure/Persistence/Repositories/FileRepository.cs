@@ -11,7 +11,7 @@ public class FileRepository : IFileRepository
     public FileRepository(ApplicationDbContext context) => _context = context;
 
     public Task<FileMaster?> GetByIdAsync(long fileId, CancellationToken cancellationToken = default)
-        => _context.FileMasters.AsNoTracking().FirstOrDefaultAsync(f => f.FileId == fileId, cancellationToken);
+        => _context.FileMasters.FirstOrDefaultAsync(f => f.FileId == fileId, cancellationToken);
 
     public Task<FileMaster?> GetByFileNoAsync(string orgId, string fileNo, CancellationToken cancellationToken = default)
         => _context.FileMasters.AsNoTracking()

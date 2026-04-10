@@ -35,35 +35,61 @@ public abstract class RabbitMqConsumerBase<TMessage> : BackgroundService where T
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var factory = _serviceProvider.GetRequiredService<IConnectionFactory>();
-        _connection = await factory.CreateConnectionAsync(stoppingToken);
-        _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
-        await _channel.ExchangeDeclareAsync(_exchange, ExchangeType.Topic, durable: true, cancellationToken: stoppingToken);
-        await _channel.QueueDeclareAsync(_queueName, durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
-        await _channel.QueueBindAsync(_queueName, _exchange, _routingKey, cancellationToken: stoppingToken);
-
-        var consumer = new AsyncEventingBasicConsumer(_channel);
-        consumer.ReceivedAsync += async (_, ea) =>
+        while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                var body = Encoding.UTF8.GetString(ea.Body.Span);
-                var message = JsonSerializer.Deserialize<TMessage>(body);
-                if (message is not null)
+                _connection = await factory.CreateConnectionAsync(stoppingToken);
+                _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
+
+                await _channel.ExchangeDeclareAsync(_exchange, ExchangeType.Topic, durable: true, cancellationToken: stoppingToken);
+                await _channel.QueueDeclareAsync(_queueName, durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
+                await _channel.QueueBindAsync(_queueName, _exchange, _routingKey, cancellationToken: stoppingToken);
+
+                var consumer = new AsyncEventingBasicConsumer(_channel);
+                consumer.ReceivedAsync += async (_, ea) =>
                 {
-                    using var scope = _serviceProvider.CreateScope();
-                    await HandleMessageAsync(message, scope.ServiceProvider, stoppingToken);
-                }
-                await _channel.BasicAckAsync(ea.DeliveryTag, false, stoppingToken);
+                    try
+                    {
+                        var body = Encoding.UTF8.GetString(ea.Body.Span);
+                        var message = JsonSerializer.Deserialize<TMessage>(body);
+                        if (message is not null)
+                        {
+                            using var scope = _serviceProvider.CreateScope();
+                            await HandleMessageAsync(message, scope.ServiceProvider, stoppingToken);
+                        }
+                        await _channel.BasicAckAsync(ea.DeliveryTag, false, stoppingToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error processing message from queue {Queue}", _queueName);
+                        await _channel.BasicNackAsync(ea.DeliveryTag, false, true, stoppingToken);
+                    }
+                };
+
+                await _channel.BasicConsumeAsync(_queueName, autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
+
+                _logger.LogInformation("Consumer started listening on queue: {Queue}", _queueName);
+
+                // Keep running until cancellation
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing message from queue {Queue}", _queueName);
-                await _channel.BasicNackAsync(ea.DeliveryTag, false, true, stoppingToken);
-            }
-        };
+                _logger.LogWarning(ex, "Consumer for {Queue} could not connect to RabbitMQ. Retrying in 30 seconds...", _queueName);
 
-        await _channel.BasicConsumeAsync(_queueName, autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
+                if (_channel is { IsOpen: true }) await _channel.CloseAsync(stoppingToken);
+                if (_connection is { IsOpen: true }) await _connection.CloseAsync(stoppingToken);
+
+                try { await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken); }
+                catch (OperationCanceledException) { break; }
+            }
+        }
     }
 
     protected abstract Task HandleMessageAsync(TMessage message, IServiceProvider serviceProvider, CancellationToken ct);

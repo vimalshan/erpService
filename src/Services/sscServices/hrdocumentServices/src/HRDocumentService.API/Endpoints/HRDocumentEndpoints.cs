@@ -42,6 +42,12 @@ public static class HRDocumentEndpoints
             return result ? Results.NoContent() : Results.NotFound();
         }).WithName("ApproveDocumentV2");
 
+        group.MapPost("/{id:long}/submit", async (long id, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new SubmitHRDocumentCommand(id), ct);
+            return result ? Results.NoContent() : Results.NotFound();
+        }).WithName("SubmitDocumentV2");
+
         group.MapPost("/{id:long}/reject", async (long id, string rejectRemarks, decimal rejectedBy, IMediator mediator, CancellationToken ct) =>
         {
             var result = await mediator.Send(new RejectHRDocumentCommand(id, rejectedBy, rejectRemarks), ct);

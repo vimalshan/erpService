@@ -62,6 +62,36 @@ public class UserRepository : IUserRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<User>> GetByRoleAsync(long roleId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .Where(u => u.RoleMappings.Any(r => r.RoleId == roleId))
+            .Include(u => u.RoleMappings)
+            .Include(u => u.OrganizationMappings)
+            .Include(u => u.LocationMappings)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<User>> GetByOrganizationAsync(string businessUnitId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .Where(u => u.OrganizationMappings.Any(o => o.BusinessUnitId == businessUnitId))
+            .Include(u => u.RoleMappings)
+            .Include(u => u.OrganizationMappings)
+            .Include(u => u.LocationMappings)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<User>> GetByLocationAsync(int locationId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .Where(u => u.LocationMappings.Any(l => l.LocationId == locationId))
+            .Include(u => u.RoleMappings)
+            .Include(u => u.OrganizationMappings)
+            .Include(u => u.LocationMappings)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
         await _context.Users.AddAsync(user, cancellationToken);

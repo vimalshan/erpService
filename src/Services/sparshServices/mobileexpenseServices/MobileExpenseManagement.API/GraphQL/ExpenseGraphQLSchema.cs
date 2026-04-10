@@ -11,43 +11,37 @@ namespace MobileExpenseManagement.API.GraphQL;
 /// </summary>
 public class Query
 {
-    private readonly IMediator _mediator;
-
-    public Query(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-
     [GraphQLType(typeof(ExpenseDto))]
-    public async Task<ExpenseDto?> GetExpenseById(decimal expenseId)
+    public async Task<ExpenseDto?> GetExpenseById([Service] IMediator mediator, decimal expenseId)
     {
         var query = new GetExpenseByIdQuery { ExpenseId = expenseId };
-        return await _mediator.Send(query);
+        return await mediator.Send(query);
     }
 
     [GraphQLType(typeof(List<ExpenseDto>))]
-    public async Task<List<ExpenseDto>> GetExpensesByTrip(decimal tripId)
+    public async Task<List<ExpenseDto>> GetExpensesByTrip([Service] IMediator mediator, decimal tripId)
     {
         var query = new GetExpensesByTripQuery { TripId = tripId };
-        return await _mediator.Send(query);
+        return await mediator.Send(query);
     }
 
     [GraphQLType(typeof(TripExpenseSummaryDto))]
-    public async Task<TripExpenseSummaryDto?> GetTripSummary(decimal tripId)
+    public async Task<TripExpenseSummaryDto?> GetTripSummary([Service] IMediator mediator, decimal tripId)
     {
         var query = new GetTripExpenseSummaryQuery { TripId = tripId };
-        return await _mediator.Send(query);
+        return await mediator.Send(query);
     }
 
     [GraphQLType(typeof(List<ExpenseFileDto>))]
-    public async Task<List<ExpenseFileDto>> GetExpenseFiles(decimal expenseId)
+    public async Task<List<ExpenseFileDto>> GetExpenseFiles([Service] IMediator mediator, decimal expenseId)
     {
         var query = new GetExpenseFilesQuery { ExpenseId = expenseId };
-        return await _mediator.Send(query);
+        return await mediator.Send(query);
     }
 
     [GraphQLType(typeof(ExpenseStatisticsDto))]
     public async Task<ExpenseStatisticsDto> GetExpenseStatistics(
+        [Service] IMediator mediator,
         DateTime startDate, 
         DateTime endDate, 
         decimal? tripId = null)
@@ -58,7 +52,7 @@ public class Query
             EndDate = endDate,
             TripId = tripId
         };
-        return await _mediator.Send(query);
+        return await mediator.Send(query);
     }
 }
 
@@ -67,15 +61,9 @@ public class Query
 /// </summary>
 public class Mutation
 {
-    private readonly IMediator _mediator;
-
-    public Mutation(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-
     [GraphQLType(typeof(ExpenseDto))]
     public async Task<ExpenseDto> CreateExpense(
+        [Service] IMediator mediator,
         decimal tripId,
         decimal categoryId,
         DateTime expenseDate,
@@ -95,11 +83,12 @@ public class Mutation
             EnteredBy = enteredBy
         };
 
-        return await _mediator.Send(command);
+        return await mediator.Send(command);
     }
 
     [GraphQLType(typeof(ExpenseDto))]
     public async Task<ExpenseDto> UpdateExpense(
+        [Service] IMediator mediator,
         decimal expenseId,
         string comment,
         decimal amount,
@@ -115,13 +104,13 @@ public class Mutation
             ModifiedBy = modifiedBy
         };
 
-        return await _mediator.Send(command);
+        return await mediator.Send(command);
     }
 
     [GraphQLType(typeof(bool))]
-    public async Task<bool> DeleteExpense(decimal expenseId, decimal deletedBy = 0)
+    public async Task<bool> DeleteExpense([Service] IMediator mediator, decimal expenseId, decimal deletedBy = 0)
     {
         var command = new DeleteExpenseCommand { ExpenseId = expenseId, DeletedBy = deletedBy };
-        return await _mediator.Send(command);
+        return await mediator.Send(command);
     }
 }

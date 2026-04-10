@@ -145,7 +145,29 @@ public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, IEnumer
             HrEmpSysId = user.HrEmpSysId,
             EffectiveDate = user.EffectiveDate,
             ClosureDate = user.ClosureDate,
-            IsActive = user.IsActive
+            IsActive = user.IsActive,
+            RoleMappings = user.RoleMappings.Select(r => new UserRoleMappingDto
+            {
+                RoleMapId = r.Id,
+                UserId = r.UserId,
+                RoleId = r.RoleId,
+                IsDefault = r.IsDefault,
+                CreatedDate = r.CreatedDate
+            }).ToList(),
+            OrganizationMappings = user.OrganizationMappings.Select(o => new UserOrganizationMappingDto
+            {
+                OrgMapId = o.Id,
+                UserId = o.UserId,
+                BusinessUnitId = o.BusinessUnitId,
+                CreatedDate = o.CreatedDate
+            }).ToList(),
+            LocationMappings = user.LocationMappings.Select(l => new UserLocationMappingDto
+            {
+                LocationMapId = l.Id,
+                UserId = l.UserId,
+                LocationId = l.LocationId,
+                CreatedDate = l.CreatedDate
+            }).ToList()
         };
     }
 }
@@ -179,7 +201,197 @@ public class GetActiveUsersQueryHandler : IRequestHandler<GetActiveUsersQuery, I
             HrEmpSysId = user.HrEmpSysId,
             EffectiveDate = user.EffectiveDate,
             ClosureDate = user.ClosureDate,
-            IsActive = user.IsActive
+            IsActive = user.IsActive,
+            RoleMappings = user.RoleMappings.Select(r => new UserRoleMappingDto
+            {
+                RoleMapId = r.Id,
+                UserId = r.UserId,
+                RoleId = r.RoleId,
+                IsDefault = r.IsDefault,
+                CreatedDate = r.CreatedDate
+            }).ToList(),
+            OrganizationMappings = user.OrganizationMappings.Select(o => new UserOrganizationMappingDto
+            {
+                OrgMapId = o.Id,
+                UserId = o.UserId,
+                BusinessUnitId = o.BusinessUnitId,
+                CreatedDate = o.CreatedDate
+            }).ToList(),
+            LocationMappings = user.LocationMappings.Select(l => new UserLocationMappingDto
+            {
+                LocationMapId = l.Id,
+                UserId = l.UserId,
+                LocationId = l.LocationId,
+                CreatedDate = l.CreatedDate
+            }).ToList()
+        };
+    }
+}
+
+/// <summary>
+/// Handler for GetUsersByRoleQuery
+/// </summary>
+public class GetUsersByRoleQueryHandler : IRequestHandler<GetUsersByRoleQuery, IEnumerable<UserDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public GetUsersByRoleQueryHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<IEnumerable<UserDto>> Handle(GetUsersByRoleQuery request, CancellationToken cancellationToken)
+    {
+        var users = await _unitOfWork.Users.GetByRoleAsync(request.RoleId, cancellationToken);
+        return users.Select(MapToDto);
+    }
+
+    private static UserDto MapToDto(Domain.Entities.User user)
+    {
+        return new UserDto
+        {
+            UserId = user.Id,
+            UserName = user.Name,
+            EmailId = user.EmailId,
+            SparchUserId = user.SparchUserId,
+            HrEmpSysId = user.HrEmpSysId,
+            EffectiveDate = user.EffectiveDate,
+            ClosureDate = user.ClosureDate,
+            IsActive = user.IsActive,
+            RoleMappings = user.RoleMappings.Select(r => new UserRoleMappingDto
+            {
+                RoleMapId = r.Id,
+                UserId = r.UserId,
+                RoleId = r.RoleId,
+                IsDefault = r.IsDefault,
+                CreatedDate = r.CreatedDate
+            }).ToList(),
+            OrganizationMappings = user.OrganizationMappings.Select(o => new UserOrganizationMappingDto
+            {
+                OrgMapId = o.Id,
+                UserId = o.UserId,
+                BusinessUnitId = o.BusinessUnitId,
+                CreatedDate = o.CreatedDate
+            }).ToList(),
+            LocationMappings = user.LocationMappings.Select(l => new UserLocationMappingDto
+            {
+                LocationMapId = l.Id,
+                UserId = l.UserId,
+                LocationId = l.LocationId,
+                CreatedDate = l.CreatedDate
+            }).ToList()
+        };
+    }
+}
+
+/// <summary>
+/// Handler for GetUsersByOrganizationQuery
+/// </summary>
+public class GetUsersByOrganizationQueryHandler : IRequestHandler<GetUsersByOrganizationQuery, IEnumerable<UserDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public GetUsersByOrganizationQueryHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<IEnumerable<UserDto>> Handle(GetUsersByOrganizationQuery request, CancellationToken cancellationToken)
+    {
+        var users = await _unitOfWork.Users.GetByOrganizationAsync(request.BusinessUnitId, cancellationToken);
+        return users.Select(MapToDto);
+    }
+
+    private static UserDto MapToDto(Domain.Entities.User user)
+    {
+        return new UserDto
+        {
+            UserId = user.Id,
+            UserName = user.Name,
+            EmailId = user.EmailId,
+            SparchUserId = user.SparchUserId,
+            HrEmpSysId = user.HrEmpSysId,
+            EffectiveDate = user.EffectiveDate,
+            ClosureDate = user.ClosureDate,
+            IsActive = user.IsActive,
+            RoleMappings = user.RoleMappings.Select(r => new UserRoleMappingDto
+            {
+                RoleMapId = r.Id,
+                UserId = r.UserId,
+                RoleId = r.RoleId,
+                IsDefault = r.IsDefault,
+                CreatedDate = r.CreatedDate
+            }).ToList(),
+            OrganizationMappings = user.OrganizationMappings.Select(o => new UserOrganizationMappingDto
+            {
+                OrgMapId = o.Id,
+                UserId = o.UserId,
+                BusinessUnitId = o.BusinessUnitId,
+                CreatedDate = o.CreatedDate
+            }).ToList(),
+            LocationMappings = user.LocationMappings.Select(l => new UserLocationMappingDto
+            {
+                LocationMapId = l.Id,
+                UserId = l.UserId,
+                LocationId = l.LocationId,
+                CreatedDate = l.CreatedDate
+            }).ToList()
+        };
+    }
+}
+
+/// <summary>
+/// Handler for GetUsersByLocationQuery
+/// </summary>
+public class GetUsersByLocationQueryHandler : IRequestHandler<GetUsersByLocationQuery, IEnumerable<UserDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public GetUsersByLocationQueryHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<IEnumerable<UserDto>> Handle(GetUsersByLocationQuery request, CancellationToken cancellationToken)
+    {
+        var users = await _unitOfWork.Users.GetByLocationAsync(request.LocationId, cancellationToken);
+        return users.Select(MapToDto);
+    }
+
+    private static UserDto MapToDto(Domain.Entities.User user)
+    {
+        return new UserDto
+        {
+            UserId = user.Id,
+            UserName = user.Name,
+            EmailId = user.EmailId,
+            SparchUserId = user.SparchUserId,
+            HrEmpSysId = user.HrEmpSysId,
+            EffectiveDate = user.EffectiveDate,
+            ClosureDate = user.ClosureDate,
+            IsActive = user.IsActive,
+            RoleMappings = user.RoleMappings.Select(r => new UserRoleMappingDto
+            {
+                RoleMapId = r.Id,
+                UserId = r.UserId,
+                RoleId = r.RoleId,
+                IsDefault = r.IsDefault,
+                CreatedDate = r.CreatedDate
+            }).ToList(),
+            OrganizationMappings = user.OrganizationMappings.Select(o => new UserOrganizationMappingDto
+            {
+                OrgMapId = o.Id,
+                UserId = o.UserId,
+                BusinessUnitId = o.BusinessUnitId,
+                CreatedDate = o.CreatedDate
+            }).ToList(),
+            LocationMappings = user.LocationMappings.Select(l => new UserLocationMappingDto
+            {
+                LocationMapId = l.Id,
+                UserId = l.UserId,
+                LocationId = l.LocationId,
+                CreatedDate = l.CreatedDate
+            }).ToList()
         };
     }
 }

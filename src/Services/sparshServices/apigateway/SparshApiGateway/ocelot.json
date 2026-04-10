@@ -1,0 +1,267 @@
+{
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/employee-pride/health",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5082 }
+      ],
+      "Key": "employee-pride-health",
+      "Priority": 1
+    },
+    {
+      "UpstreamPathTemplate": "/employee-pride/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5082 }
+      ],
+      "Key": "employee-pride-graphql",
+      "Priority": 1
+    },
+    {
+      "UpstreamPathTemplate": "/employee-pride/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5082 }
+      ],
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "FileCacheOptions": {
+        "TtlSeconds": 30,
+        "Region": "employeepride"
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      },
+      "Key": "employee-pride-api",
+      "Priority": 0
+    },
+
+    {
+      "UpstreamPathTemplate": "/mobile-app/health",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5154 }
+      ],
+      "Key": "mobile-app-health",
+      "Priority": 1
+    },
+    {
+      "UpstreamPathTemplate": "/mobile-app/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5154 }
+      ],
+      "Key": "mobile-app-graphql",
+      "Priority": 1
+    },
+    {
+      "UpstreamPathTemplate": "/mobile-app/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5154 }
+      ],
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "FileCacheOptions": {
+        "TtlSeconds": 30,
+        "Region": "mobileapp"
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      },
+      "Key": "mobile-app-api",
+      "Priority": 0
+    },
+
+    {
+      "UpstreamPathTemplate": "/mobile-expense/health",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5000 }
+      ],
+      "Key": "mobile-expense-health",
+      "Priority": 1
+    },
+    {
+      "UpstreamPathTemplate": "/mobile-expense/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5000 }
+      ],
+      "Key": "mobile-expense-graphql",
+      "Priority": 1
+    },
+    {
+      "UpstreamPathTemplate": "/mobile-expense/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5000 }
+      ],
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "FileCacheOptions": {
+        "TtlSeconds": 30,
+        "Region": "mobileexpense"
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      },
+      "Key": "mobile-expense-api",
+      "Priority": 0
+    },
+
+    {
+      "UpstreamPathTemplate": "/problem/health",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5165 }
+      ],
+      "Key": "problem-health",
+      "Priority": 1
+    },
+    {
+      "UpstreamPathTemplate": "/problem/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5165 }
+      ],
+      "Key": "problem-graphql",
+      "Priority": 1
+    },
+    {
+      "UpstreamPathTemplate": "/problem/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5165 }
+      ],
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "FileCacheOptions": {
+        "TtlSeconds": 30,
+        "Region": "problem"
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      },
+      "Key": "problem-api",
+      "Priority": 0
+    },
+
+    {
+      "UpstreamPathTemplate": "/transactional/health",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5170 }
+      ],
+      "Key": "transactional-health",
+      "Priority": 1
+    },
+    {
+      "UpstreamPathTemplate": "/transactional/graphql",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5170 }
+      ],
+      "Key": "transactional-graphql",
+      "Priority": 1
+    },
+    {
+      "UpstreamPathTemplate": "/transactional/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 5170 }
+      ],
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "FileCacheOptions": {
+        "TtlSeconds": 30,
+        "Region": "transactional"
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      },
+      "Key": "transactional-api",
+      "Priority": 0
+    }
+  ],
+
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5200",
+    "RequestIdKey": "X-Correlation-Id",
+    "RateLimitOptions": {
+      "DisableRateLimitHeaders": false,
+      "QuotaExceededMessage": "Too many requests. Please retry after {RetryAfter} seconds.",
+      "HttpStatusCode": 429,
+      "ClientIdHeader": "X-Client-Id"
+    },
+    "QoSOptions": {
+      "ExceptionsAllowedBeforeBreaking": 3,
+      "DurationOfBreak": 10000,
+      "TimeoutValue": 30000
+    },
+    "LoadBalancerOptions": {
+      "Type": "RoundRobin"
+    }
+  }
+}

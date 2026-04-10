@@ -32,45 +32,63 @@ public class PrideMomentCreatedConsumer : BackgroundService
             Port = int.Parse(_configuration["RabbitMQ:Port"] ?? "5672")
         };
 
-        try
+        while (!stoppingToken.IsCancellationRequested)
         {
-            _connection = await factory.CreateConnectionAsync(stoppingToken);
-            _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
-
-            await _channel.QueueDeclareAsync(
-                queue: QueueName,
-                durable: true,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null,
-                cancellationToken: stoppingToken);
-
-            var consumer = new AsyncEventingBasicConsumer(_channel);
-            consumer.ReceivedAsync += async (_, ea) =>
+            try
             {
-                var body = ea.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
+                _connection = await factory.CreateConnectionAsync(stoppingToken);
+                _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
-                _logger.LogInformation("Received pride-moment-created message: {Message}", message);
+                await _channel.QueueDeclareAsync(
+                    queue: QueueName,
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null,
+                    cancellationToken: stoppingToken);
 
-                // Process the message (e.g., send notifications, update analytics)
-                await _channel.BasicAckAsync(ea.DeliveryTag, false, stoppingToken);
-            };
+                var consumer = new AsyncEventingBasicConsumer(_channel);
+                consumer.ReceivedAsync += async (_, ea) =>
+                {
+                    var body = ea.Body.ToArray();
+                    var message = Encoding.UTF8.GetString(body);
 
-            await _channel.BasicConsumeAsync(QueueName, false, consumer, stoppingToken);
+                    _logger.LogInformation("Received pride-moment-created message: {Message}", message);
 
-            _logger.LogInformation("PrideMomentCreatedConsumer started listening on queue: {Queue}", QueueName);
+                    // Process the message (e.g., send notifications, update analytics)
+                    await _channel.BasicAckAsync(ea.DeliveryTag, false, stoppingToken);
+                };
 
-            // Keep running until cancellation
-            await Task.Delay(Timeout.Infinite, stoppingToken);
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogInformation("PrideMomentCreatedConsumer stopping.");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in PrideMomentCreatedConsumer");
+                await _channel.BasicConsumeAsync(QueueName, false, consumer, stoppingToken);
+
+                _logger.LogInformation("PrideMomentCreatedConsumer started listening on queue: {Queue}", QueueName);
+
+                // Keep running until cancellation
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("PrideMomentCreatedConsumer stopping.");
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "PrideMomentCreatedConsumer could not connect to RabbitMQ. Retrying in 30 seconds...");
+
+                if (_channel is { IsOpen: true })
+                    await _channel.CloseAsync(stoppingToken);
+                if (_connection is { IsOpen: true })
+                    await _connection.CloseAsync(stoppingToken);
+
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
         }
     }
 

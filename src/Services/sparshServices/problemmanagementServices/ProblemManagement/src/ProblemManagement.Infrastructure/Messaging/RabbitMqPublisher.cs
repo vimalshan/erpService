@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using ProblemManagement.Domain.Interfaces;
 using RabbitMQ.Client;
 
@@ -18,18 +19,25 @@ public class RabbitMqPublisher : IMessagePublisher, IAsyncDisposable
 
     public async Task PublishAsync<T>(string exchange, string routingKey, T message, CancellationToken ct = default) where T : class
     {
-        await _channel.ExchangeDeclareAsync(exchange, ExchangeType.Topic, durable: true, cancellationToken: ct);
-
-        var json = JsonSerializer.Serialize(message);
-        var body = Encoding.UTF8.GetBytes(json);
-
-        var properties = new BasicProperties
+        try
         {
-            ContentType = "application/json",
-            DeliveryMode = DeliveryModes.Persistent
-        };
+            await _channel.ExchangeDeclareAsync(exchange, ExchangeType.Topic, durable: true, cancellationToken: ct);
 
-        await _channel.BasicPublishAsync(exchange, routingKey, false, properties, body, ct);
+            var json = JsonSerializer.Serialize(message);
+            var body = Encoding.UTF8.GetBytes(json);
+
+            var properties = new BasicProperties
+            {
+                ContentType = "application/json",
+                DeliveryMode = DeliveryModes.Persistent
+            };
+
+            await _channel.BasicPublishAsync(exchange, routingKey, false, properties, body, ct);
+        }
+        catch (Exception)
+        {
+            // Swallow publish failures when RabbitMQ is unavailable
+        }
     }
 
     public async ValueTask DisposeAsync()

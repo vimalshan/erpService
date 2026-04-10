@@ -1,0 +1,63 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sparsh-ingress
+  namespace: sparsh
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: sparsh.local
+      http:
+        paths:
+          # API Gateway - main entry point
+          - path: /(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: api-gateway-svc
+                port:
+                  number: 80
+    - host: api.sparsh.local
+      http:
+        paths:
+          # Direct access to individual services (bypass gateway)
+          - path: /employee-pride(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: employee-pride-api-svc
+                port:
+                  number: 80
+          - path: /mobile-app(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: mobile-app-api-svc
+                port:
+                  number: 80
+          - path: /mobile-expense(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: mobile-expense-api-svc
+                port:
+                  number: 80
+          - path: /problem(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: problem-api-svc
+                port:
+                  number: 80
+          - path: /transactional(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: transactional-api-svc
+                port:
+                  number: 80

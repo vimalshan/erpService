@@ -61,7 +61,7 @@ public class BatchCreatedConsumer : BackgroundService
         catch (OperationCanceledException) { /* shutting down */ }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[Consumer] BatchCreatedConsumer fatal error");
+            _logger.LogWarning(ex, "[Consumer] BatchCreatedConsumer could not connect to RabbitMQ broker. Consumer will not run.");
         }
     }
 

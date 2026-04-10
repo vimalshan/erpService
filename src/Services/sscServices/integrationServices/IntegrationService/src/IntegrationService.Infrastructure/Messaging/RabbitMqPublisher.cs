@@ -37,19 +37,26 @@ public class RabbitMqPublisher : IMessagePublisher, IAsyncDisposable
 
     public async Task PublishAsync<T>(string exchange, string routingKey, T message, CancellationToken cancellationToken = default) where T : class
     {
-        var json = JsonSerializer.Serialize(message);
-        var body = Encoding.UTF8.GetBytes(json);
-
-        await _channel.ExchangeDeclareAsync(exchange, ExchangeType.Topic, durable: true, cancellationToken: cancellationToken);
-
-        var properties = new BasicProperties
+        try
         {
-            ContentType = "application/json",
-            DeliveryMode = DeliveryModes.Persistent
-        };
+            var json = JsonSerializer.Serialize(message);
+            var body = Encoding.UTF8.GetBytes(json);
 
-        await _channel.BasicPublishAsync(exchange, routingKey, mandatory: false, properties, body, cancellationToken);
-        _logger.LogInformation("Published message to {Exchange}/{RoutingKey}", exchange, routingKey);
+            await _channel.ExchangeDeclareAsync(exchange, ExchangeType.Topic, durable: true, cancellationToken: cancellationToken);
+
+            var properties = new BasicProperties
+            {
+                ContentType = "application/json",
+                DeliveryMode = DeliveryModes.Persistent
+            };
+
+            await _channel.BasicPublishAsync(exchange, routingKey, mandatory: false, properties, body, cancellationToken);
+            _logger.LogInformation("Published message to {Exchange}/{RoutingKey}", exchange, routingKey);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish message to {Exchange}/{RoutingKey}. Message will not be retried.", exchange, routingKey);
+        }
     }
 
     public async ValueTask DisposeAsync()

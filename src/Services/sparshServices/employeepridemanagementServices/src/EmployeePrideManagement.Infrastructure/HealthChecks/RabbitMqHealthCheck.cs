@@ -28,11 +28,11 @@ public class RabbitMqHealthCheck : IHealthCheck
             using var connection = await factory.CreateConnectionAsync(cancellationToken);
             return connection.IsOpen
                 ? HealthCheckResult.Healthy("RabbitMQ connection is healthy.")
-                : HealthCheckResult.Unhealthy("RabbitMQ is not reachable.");
+                : HealthCheckResult.Degraded("RabbitMQ is not reachable.");
         }
         catch (Exception ex)
         {
-            return HealthCheckResult.Unhealthy("RabbitMQ health check failed.", ex);
+            return HealthCheckResult.Degraded("RabbitMQ health check failed.", ex);
         }
     }
 }

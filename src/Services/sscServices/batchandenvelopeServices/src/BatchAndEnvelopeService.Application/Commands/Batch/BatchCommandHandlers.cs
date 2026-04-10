@@ -22,7 +22,7 @@ public class CreateBatchCommandHandler : IRequestHandler<CreateBatchCommand, Bat
         var id = await _batchRepository.GetNextIdAsync(cancellationToken);
         var batch = BatchAggregate.Create(id, request.CreatedBy, request.LocationId, request.ReceivedBy, request.PodNo, request.CourierName);
 
-        int detId = 1;
+        int detId = await _batchRepository.GetNextDetailIdAsync(cancellationToken);
         foreach (var envId in request.EnvelopeIds)
         {
             var detail = BatchDetail.Create(detId++, id, envId, request.CreatedBy);

@@ -7,7 +7,7 @@ public class ProblemSolution : BaseEntity
     public long SolId { get; set; }
     public long SolPrId { get; set; }
     public string? SolDescription { get; set; }
-    public char? SolImplementation { get; set; }
+    public string? SolImplementation { get; set; }
     public long SolEnteredBy { get; set; }
     public DateTime SolEnteredOn { get; set; }
     public string? SolAttach { get; set; }

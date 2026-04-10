@@ -9,13 +9,15 @@ namespace ClubMembershipService.Infrastructure.Messaging;
 public class RabbitMqPublisher : IAsyncDisposable
 {
     private readonly ILogger<RabbitMqPublisher> _logger;
+    private readonly ConnectionFactory _factory;
     private IConnection? _connection;
     private IChannel? _channel;
+    private bool _connectionFailed;
 
     public RabbitMqPublisher(IConfiguration configuration, ILogger<RabbitMqPublisher> logger)
     {
         _logger = logger;
-        var factory = new ConnectionFactory
+        _factory = new ConnectionFactory
         {
             HostName = configuration["RabbitMQ:Host"] ?? "localhost",
             Port = int.Parse(configuration["RabbitMQ:Port"] ?? "5672"),
@@ -23,18 +25,28 @@ public class RabbitMqPublisher : IAsyncDisposable
             Password = configuration["RabbitMQ:Password"] ?? "guest",
             VirtualHost = configuration["RabbitMQ:VirtualHost"] ?? "/"
         };
-        InitializeAsync(factory).GetAwaiter().GetResult();
     }
 
-    private async Task InitializeAsync(ConnectionFactory factory)
+    private async Task EnsureConnectedAsync()
     {
-        _connection = await factory.CreateConnectionAsync();
-        _channel = await _connection.CreateChannelAsync();
-        await _channel.ExchangeDeclareAsync("club_membership_exchange", ExchangeType.Topic, durable: true);
+        if (_channel is not null || _connectionFailed) return;
+        try
+        {
+            _connection = await _factory.CreateConnectionAsync();
+            _channel = await _connection.CreateChannelAsync();
+            await _channel.ExchangeDeclareAsync("club_membership_exchange", ExchangeType.Topic, durable: true);
+            _logger.LogInformation("RabbitMQ publisher connected to {Host}:{Port}", _factory.HostName, _factory.Port);
+        }
+        catch (Exception ex)
+        {
+            _connectionFailed = true;
+            _logger.LogWarning(ex, "RabbitMQ publisher connection failed. Publishing will be skipped.");
+        }
     }
 
     public async Task PublishAsync<T>(string routingKey, T message)
     {
+        await EnsureConnectedAsync();
         if (_channel is null) return;
         var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
         var props = new BasicProperties { Persistent = true, ContentType = "application/json" };

@@ -21,7 +21,7 @@ public static class ProblemEndpoints
             return result is null ? Results.NotFound() : Results.Ok(result);
         });
 
-        group.MapGet("/status/{status}", async (char status, IMediator mediator, CancellationToken ct) =>
+        group.MapGet("/status/{status}", async (string status, IMediator mediator, CancellationToken ct) =>
             Results.Ok(await mediator.Send(new GetProblemsByStatusQuery(status), ct)));
 
         group.MapPost("/", async (CreateProblemCommand command, IMediator mediator, CancellationToken ct) =>

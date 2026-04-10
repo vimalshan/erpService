@@ -10,4 +10,5 @@ public interface IBatchRepository
     Task AddAsync(BatchAggregate batch, CancellationToken ct = default);
     Task UpdateAsync(BatchAggregate batch, CancellationToken ct = default);
     Task<long> GetNextIdAsync(CancellationToken ct = default);
+    Task<int> GetNextDetailIdAsync(CancellationToken ct = default);
 }

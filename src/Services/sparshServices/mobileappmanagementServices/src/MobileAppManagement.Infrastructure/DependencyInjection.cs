@@ -33,30 +33,26 @@ public static class DependencyInjection
         // Blob Storage
         services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
 
-        // RabbitMQ Publisher (lazy initialization to avoid blocking on startup)
-        // Registered as singleton factory, actual async init deferred to first usage
+        // RabbitMQ Publisher (stub-fallback when RabbitMQ is unavailable)
         services.AddSingleton<IMessagePublisher>(sp =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RabbitMqPublisher>>();
-            // For production, use lazy initialization or background startup
-            // For now, catch connection errors to prevent startup failure
+            var logger = sp.GetRequiredService<ILogger<RabbitMqPublisher>>();
             try
             {
                 return RabbitMqPublisher.CreateAsync(config, logger).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to connect to RabbitMQ at startup. Using stub publisher.");
-                var stubLogger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StubMessagePublisher>>();
+                logger.LogWarning(ex, "RabbitMQ unavailable at startup. Using stub publisher.");
+                var stubLogger = sp.GetRequiredService<ILogger<StubMessagePublisher>>();
                 return new StubMessagePublisher(stubLogger);
             }
         });
 
-        // RabbitMQ Consumers (commented out for testing without RabbitMQ)
-        // TODO: Enable when RabbitMQ is available in your environment
-        // services.AddHostedService<DeviceRegistrationConsumer>();
-        // services.AddHostedService<LoginEventConsumer>();
+        // RabbitMQ Consumers (resilient — retry every 30s if RabbitMQ is unavailable)
+        services.AddHostedService<DeviceRegistrationConsumer>();
+        services.AddHostedService<LoginEventConsumer>();
 
         return services;
     }

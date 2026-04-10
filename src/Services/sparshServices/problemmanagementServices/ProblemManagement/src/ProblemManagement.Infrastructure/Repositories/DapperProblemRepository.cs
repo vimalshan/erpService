@@ -8,7 +8,7 @@ namespace ProblemManagement.Infrastructure.Repositories;
 
 public interface IDapperProblemRepository
 {
-    Task<IEnumerable<ProblemDto>> GetProblemsByStatusAsync(char status);
+    Task<IEnumerable<ProblemDto>> GetProblemsByStatusAsync(string status);
     Task<IEnumerable<ProblemSolutionDto>> GetSolutionsByProblemIdAsync(long problemId);
     Task<ProblemDto?> GetProblemByIdAsync(long id);
 }
@@ -25,7 +25,7 @@ public class DapperProblemRepository : IDapperProblemRepository
 
     private IDbConnection CreateConnection() => new SqlConnection(_connectionString);
 
-    public async Task<IEnumerable<ProblemDto>> GetProblemsByStatusAsync(char status)
+    public async Task<IEnumerable<ProblemDto>> GetProblemsByStatusAsync(string status)
     {
         using var connection = CreateConnection();
         const string sql = """

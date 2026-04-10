@@ -1,0 +1,161 @@
+{
+  "rabbit_version": "3.13",
+  "users": [
+    {
+      "name": "sparsh_user",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    }
+  ],
+  "vhosts": [
+    { "name": "sparsh" }
+  ],
+  "permissions": [
+    {
+      "user": "sparsh_user",
+      "vhost": "sparsh",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "sparsh.events",
+      "vhost": "sparsh",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "sparsh.commands",
+      "vhost": "sparsh",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "sparsh.deadletter",
+      "vhost": "sparsh",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "employee-pride.events",
+      "vhost": "sparsh",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "sparsh.deadletter",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "mobile-app.events",
+      "vhost": "sparsh",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "sparsh.deadletter",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "mobile-expense.events",
+      "vhost": "sparsh",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "sparsh.deadletter",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "problem.events",
+      "vhost": "sparsh",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "sparsh.deadletter",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "transactional.events",
+      "vhost": "sparsh",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "sparsh.deadletter",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "sparsh.deadletter.queue",
+      "vhost": "sparsh",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "sparsh.events",
+      "vhost": "sparsh",
+      "destination": "employee-pride.events",
+      "destination_type": "queue",
+      "routing_key": "employee-pride.#",
+      "arguments": {}
+    },
+    {
+      "source": "sparsh.events",
+      "vhost": "sparsh",
+      "destination": "mobile-app.events",
+      "destination_type": "queue",
+      "routing_key": "mobile-app.#",
+      "arguments": {}
+    },
+    {
+      "source": "sparsh.events",
+      "vhost": "sparsh",
+      "destination": "mobile-expense.events",
+      "destination_type": "queue",
+      "routing_key": "mobile-expense.#",
+      "arguments": {}
+    },
+    {
+      "source": "sparsh.events",
+      "vhost": "sparsh",
+      "destination": "problem.events",
+      "destination_type": "queue",
+      "routing_key": "problem.#",
+      "arguments": {}
+    },
+    {
+      "source": "sparsh.events",
+      "vhost": "sparsh",
+      "destination": "transactional.events",
+      "destination_type": "queue",
+      "routing_key": "transactional.#",
+      "arguments": {}
+    },
+    {
+      "source": "sparsh.deadletter",
+      "vhost": "sparsh",
+      "destination": "sparsh.deadletter.queue",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    }
+  ]
+}

@@ -12,6 +12,7 @@ public sealed class UpdateHRDocumentHandler(IUnitOfWork unitOfWork)
         if (document is null) return false;
 
         document.UpdateRemarks(request.DocRemarks);
+        document.UpdateRefInfo(request.DocRefNo, request.DocRefName);
         unitOfWork.HRDocuments.Update(document);
         await unitOfWork.SaveChangesAsync(ct);
         return true;

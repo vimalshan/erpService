@@ -2,6 +2,7 @@ using AutoMapper;
 using CategoryAndVendorService.Application.DTOs;
 using CategoryAndVendorService.Domain.Entities;
 using CategoryAndVendorService.Domain.Interfaces;
+using FluentValidation;
 using MediatR;
 
 namespace CategoryAndVendorService.Application.SupportDocuments.Commands;
@@ -12,6 +13,14 @@ public record CreateSupportDocumentCommand(
     string DocStatus, string? DocKey = null, string? PbgNo = null,
     DateTime? PbgStart = null, DateTime? PbgExpDate = null,
     long? Amount = null, long? RecDue = null) : IRequest<SupportDocumentDto>;
+
+public class CreateSupportDocumentCommandValidator : AbstractValidator<CreateSupportDocumentCommand>
+{
+    public CreateSupportDocumentCommandValidator()
+    {
+        RuleFor(x => x.DocStatus).NotEmpty().MaximumLength(2);
+    }
+}
 
 public class CreateSupportDocumentCommandHandler : IRequestHandler<CreateSupportDocumentCommand, SupportDocumentDto>
 {

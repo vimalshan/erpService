@@ -10,19 +10,19 @@ public class ProblemMain : BaseEntity
     public long PrEnteredBy { get; set; }
     public string PrDescription { get; set; } = string.Empty;
     public DateTime? PrRespExpBy { get; set; }
-    public char? PrCategory { get; set; }
+    public string? PrCategory { get; set; }
     public long? PrSpecialization { get; set; }
     public string? PrImpact { get; set; }
     public string? PrExpResult { get; set; }
     public DateTime? PrEnteredOn { get; set; }
-    public char PrStatus { get; set; } = 'P';
+    public string PrStatus { get; set; } = "P";
     public long? PrAppId { get; set; }
     public string? PrStatement { get; set; }
-    public char? PrType { get; set; }
+    public string? PrType { get; set; }
     public string? PrAttach { get; set; }
-    public char? PrPrbFlag { get; set; }
+    public string? PrPrbFlag { get; set; }
     public string? PrPrbDescription { get; set; }
-    public char? PrPostFlag { get; set; }
+    public string? PrPostFlag { get; set; }
     public string? PrQuestion { get; set; }
     public long PrUnitId { get; set; }
     public long PrSiteId { get; set; }
@@ -37,7 +37,7 @@ public class ProblemMain : BaseEntity
     public ICollection<ProblemAppAudience> Audiences { get; set; } = [];
 
     public static ProblemMain Create(long owner, long enteredBy, string description,
-        char? category, string? impact, string? expectedResult, long unitId, long siteId)
+        string? category, string? impact, string? expectedResult, long unitId, long siteId)
     {
         var problem = new ProblemMain
         {
@@ -48,7 +48,7 @@ public class ProblemMain : BaseEntity
             PrImpact = impact,
             PrExpResult = expectedResult,
             PrEnteredOn = DateTime.UtcNow,
-            PrStatus = 'P',
+            PrStatus = "P",
             PrUnitId = unitId,
             PrSiteId = siteId,
             PrModBy = enteredBy,
@@ -59,9 +59,9 @@ public class ProblemMain : BaseEntity
         return problem;
     }
 
-    public void Approve(long approvedBy, string? reason, char audienceFlag)
+    public void Approve(long approvedBy, string? reason, string audienceFlag)
     {
-        PrStatus = 'A';
+        PrStatus = "A";
         PrModBy = approvedBy;
         PrModOn = DateTime.UtcNow;
         AddDomainEvent(new ProblemApprovedEvent(this, approvedBy, reason));
@@ -69,7 +69,7 @@ public class ProblemMain : BaseEntity
 
     public void Reject(long rejectedBy, string? reason)
     {
-        PrStatus = 'R';
+        PrStatus = "R";
         PrModBy = rejectedBy;
         PrModOn = DateTime.UtcNow;
         AddDomainEvent(new ProblemRejectedEvent(this, rejectedBy, reason));

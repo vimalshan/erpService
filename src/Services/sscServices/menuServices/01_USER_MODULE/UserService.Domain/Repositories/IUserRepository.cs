@@ -12,6 +12,9 @@ public interface IUserRepository
     Task<User?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default);
     Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<User>> GetActiveUsersAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<User>> GetByRoleAsync(long roleId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<User>> GetByOrganizationAsync(string businessUnitId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<User>> GetByLocationAsync(int locationId, CancellationToken cancellationToken = default);
     Task AddAsync(User user, CancellationToken cancellationToken = default);
     Task UpdateAsync(User user, CancellationToken cancellationToken = default);
     Task DeleteAsync(long userId, CancellationToken cancellationToken = default);

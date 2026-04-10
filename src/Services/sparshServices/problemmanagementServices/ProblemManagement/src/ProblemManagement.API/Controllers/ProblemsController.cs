@@ -31,7 +31,7 @@ public class ProblemsController(IMediator mediator) : ControllerBase
 
     [HttpGet("status/{status}")]
     [ProducesResponseType(typeof(IReadOnlyList<ProblemDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetByStatus(char status, CancellationToken ct)
+    public async Task<IActionResult> GetByStatus(string status, CancellationToken ct)
     {
         var result = await mediator.Send(new GetProblemsByStatusQuery(status), ct);
         return Ok(result);
