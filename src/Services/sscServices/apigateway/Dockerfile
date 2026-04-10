@@ -1,8 +1,8 @@
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS base
 WORKDIR /app
 EXPOSE 8080
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
 WORKDIR /src
 COPY ["src/SSC.ApiGateway/SSC.ApiGateway.csproj", "src/SSC.ApiGateway/"]
 RUN dotnet restore "src/SSC.ApiGateway/SSC.ApiGateway.csproj"
