@@ -1,0 +1,425 @@
+# ══════════════════════════════════════════════════════════
+#  ERP Microservices — Docker Compose
+# ══════════════════════════════════════════════════════════
+#  Usage:
+#    cp deploy/.env.example .env   # edit with real values
+#    docker compose up -d
+# ══════════════════════════════════════════════════════════
+
+services:
+
+  # ─── Infrastructure ───────────────────────────────────
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: erp-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SQL_SA_PASSWORD}
+      MSSQL_PID: ${MSSQL_PID:-Express}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./deploy/db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" -b
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: erp-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./deploy/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./deploy/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ─── Database Init ────────────────────────────────────
+
+  db-init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    container_name: erp-db-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./deploy/db:/scripts:ro
+    entrypoint: >
+      /bin/bash -c "
+        echo 'Waiting for SQL Server...' &&
+        sleep 5 &&
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P '${SQL_SA_PASSWORD}' -C -i /scripts/init-db.sql &&
+        echo 'Database initialized successfully!'
+      "
+    networks:
+      - erp-network
+
+  # ─── API Gateway ──────────────────────────────────────
+
+  api-gateway:
+    build:
+      context: ./apiGateway
+      dockerfile: Dockerfile
+    container_name: erp-api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Jwt__Key: ${JWT_SECRET_KEY}
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASS}
+    ports:
+      - "5000:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      lookup-service:
+        condition: service_healthy
+      task-service:
+        condition: service_healthy
+      transactional-service:
+        condition: service_healthy
+      complaint-service:
+        condition: service_healthy
+      energy-service:
+        condition: service_healthy
+      unit-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/gateway/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ─── Lookup Service ──────────────────────────────────
+
+  lookup-service:
+    build:
+      context: ./lookupServices
+      dockerfile: Dockerfile
+    container_name: erp-lookup-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=TASKDB;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;Application Name=LookupService;Command Timeout=30"
+      Jwt__Key: ${JWT_SECRET_KEY}
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASS}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  lookup-functions:
+    build:
+      context: ./lookupServices
+      dockerfile: Dockerfile.functions
+    container_name: erp-lookup-functions
+    environment:
+      DOTNET_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=TASKDB;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;Application Name=LookupFunctions;Command Timeout=30"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASS}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ─── Task Service ────────────────────────────────────
+
+  task-service:
+    build:
+      context: ./taskServices
+      dockerfile: Dockerfile
+    container_name: erp-task-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__TaskDb: "Server=sqlserver;Database=TASKDB;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;Application Name=TaskServices;Command Timeout=30"
+      Jwt__Key: ${JWT_SECRET_KEY}
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASS}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  task-functions:
+    build:
+      context: ./taskServices
+      dockerfile: Dockerfile.functions
+    container_name: erp-task-functions
+    environment:
+      DOTNET_ENVIRONMENT: Production
+      ConnectionStrings__TaskDb: "Server=sqlserver;Database=TASKDB;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;Application Name=TaskFunctions;Command Timeout=30"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASS}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ─── Transactional Service ───────────────────────────
+
+  transactional-service:
+    build:
+      context: ./taskTransactionalServices
+      dockerfile: Dockerfile
+    container_name: erp-transactional-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=TASKDB;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;Application Name=TaskTransactional;Command Timeout=30"
+      Jwt__Key: ${JWT_SECRET_KEY}
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASS}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  transactional-functions:
+    build:
+      context: ./taskTransactionalServices
+      dockerfile: Dockerfile.functions
+    container_name: erp-transactional-functions
+    environment:
+      DOTNET_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=TASKDB;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;Application Name=TransactionalFunctions;Command Timeout=30"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASS}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ─── Complaint Service ───────────────────────────────
+
+  complaint-service:
+    build:
+      context: ./complaintServices
+      dockerfile: Dockerfile
+    container_name: erp-complaint-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__TaskDb: "Server=sqlserver;Database=TASKDB;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;Application Name=ComplaintService;Command Timeout=30"
+      Jwt__Key: ${JWT_SECRET_KEY}
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__UserName: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASS}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  complaint-functions:
+    build:
+      context: ./complaintServices
+      dockerfile: Dockerfile.functions
+    container_name: erp-complaint-functions
+    environment:
+      DOTNET_ENVIRONMENT: Production
+      ConnectionStrings__TaskDb: "Server=sqlserver;Database=TASKDB;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;Application Name=ComplaintFunctions;Command Timeout=30"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__UserName: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASS}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ─── Energy Service ──────────────────────────────────
+
+  energy-service:
+    build:
+      context: ./energyServices
+      dockerfile: Dockerfile
+    container_name: erp-energy-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__EnergyDb: "Server=sqlserver;Database=TASKDB;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;Application Name=EnergyService;Command Timeout=30"
+      JwtSettings__Secret: ${JWT_SECRET_KEY}
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_USER}
+      RabbitMq__Password: ${RABBITMQ_PASS}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  energy-functions:
+    build:
+      context: ./energyServices
+      dockerfile: Dockerfile.functions
+    container_name: erp-energy-functions
+    environment:
+      DOTNET_ENVIRONMENT: Production
+      ConnectionStrings__EnergyDb: "Server=sqlserver;Database=TASKDB;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;Application Name=EnergyFunctions;Command Timeout=30"
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_USER}
+      RabbitMq__Password: ${RABBITMQ_PASS}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ─── Unit Service ────────────────────────────────────
+
+  unit-service:
+    build:
+      context: ./unitServices
+      dockerfile: Dockerfile
+    container_name: erp-unit-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=TASKDB;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;Application Name=UnitService;Command Timeout=30"
+      JwtSettings__Secret: ${JWT_SECRET_KEY}
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASS}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  unit-functions:
+    build:
+      context: ./unitServices
+      dockerfile: Dockerfile.functions
+    container_name: erp-unit-functions
+    environment:
+      DOTNET_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=TASKDB;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;Application Name=UnitFunctions;Command Timeout=30"
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASS}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+# ─── Volumes ──────────────────────────────────────────
+
+volumes:
+  sqlserver-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+
+# ─── Networks ─────────────────────────────────────────
+
+networks:
+  erp-network:
+    driver: bridge
+    name: erp-microservices

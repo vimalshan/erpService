@@ -1,0 +1,237 @@
+{
+  "rabbit_version": "4.0",
+  "users": [
+    {
+      "name": "erp_admin",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"]
+    }
+  ],
+  "vhosts": [
+    { "name": "/" },
+    { "name": "erp" }
+  ],
+  "permissions": [
+    {
+      "user": "erp_admin",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "erp_admin",
+      "vhost": "erp",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "erp.events",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "erp.events.dlx",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "complaint.created",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "dlx.complaint.created",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "complaint.updated",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "dlx.complaint.updated",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "task.mail.created",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "dlx.task.mail.created",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "task.mail.updated",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "dlx.task.mail.updated",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "energy.reading.created",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "dlx.energy.reading.created",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "unit.updated",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "dlx.unit.updated",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "lookup.changed",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "dlx.lookup.changed",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "transactional.complaint.submitted",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.events.dlx",
+        "x-dead-letter-routing-key": "dlx.transactional.complaint.submitted",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "dlx.complaint.created",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dlx.task.mail.created",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "erp.events",
+      "vhost": "/",
+      "destination": "complaint.created",
+      "destination_type": "queue",
+      "routing_key": "complaint.created",
+      "arguments": {}
+    },
+    {
+      "source": "erp.events",
+      "vhost": "/",
+      "destination": "complaint.updated",
+      "destination_type": "queue",
+      "routing_key": "complaint.updated",
+      "arguments": {}
+    },
+    {
+      "source": "erp.events",
+      "vhost": "/",
+      "destination": "task.mail.created",
+      "destination_type": "queue",
+      "routing_key": "task.mail.created",
+      "arguments": {}
+    },
+    {
+      "source": "erp.events",
+      "vhost": "/",
+      "destination": "task.mail.updated",
+      "destination_type": "queue",
+      "routing_key": "task.mail.updated",
+      "arguments": {}
+    },
+    {
+      "source": "erp.events",
+      "vhost": "/",
+      "destination": "energy.reading.created",
+      "destination_type": "queue",
+      "routing_key": "energy.reading.created",
+      "arguments": {}
+    },
+    {
+      "source": "erp.events",
+      "vhost": "/",
+      "destination": "unit.updated",
+      "destination_type": "queue",
+      "routing_key": "unit.updated",
+      "arguments": {}
+    },
+    {
+      "source": "erp.events",
+      "vhost": "/",
+      "destination": "lookup.changed",
+      "destination_type": "queue",
+      "routing_key": "lookup.changed",
+      "arguments": {}
+    },
+    {
+      "source": "erp.events",
+      "vhost": "/",
+      "destination": "transactional.complaint.submitted",
+      "destination_type": "queue",
+      "routing_key": "transactional.complaint.submitted",
+      "arguments": {}
+    },
+    {
+      "source": "erp.events.dlx",
+      "vhost": "/",
+      "destination": "dlx.complaint.created",
+      "destination_type": "queue",
+      "routing_key": "dlx.complaint.created",
+      "arguments": {}
+    },
+    {
+      "source": "erp.events.dlx",
+      "vhost": "/",
+      "destination": "dlx.task.mail.created",
+      "destination_type": "queue",
+      "routing_key": "dlx.task.mail.created",
+      "arguments": {}
+    }
+  ]
+}

@@ -1,0 +1,147 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: complaint-service
+  namespace: erp-microservices
+  labels:
+    app: complaint-service
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: complaint-service
+  template:
+    metadata:
+      labels:
+        app: complaint-service
+        tier: backend
+    spec:
+      containers:
+        - name: complaint-service
+          image: ${REGISTRY}/complaint-service:${TAG}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: ASPNETCORE_ENVIRONMENT
+            - name: ConnectionStrings__TaskDb
+              value: "Server=sqlserver-service;Database=TASKDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True;Application Name=ComplaintService;Command Timeout=30"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: sql-sa-password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: jwt-secret-key
+            - name: RabbitMQ__Host
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: RABBITMQ_HOST
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: complaint-service
+  namespace: erp-microservices
+spec:
+  selector:
+    app: complaint-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: complaint-functions
+  namespace: erp-microservices
+  labels:
+    app: complaint-functions
+    tier: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: complaint-functions
+  template:
+    metadata:
+      labels:
+        app: complaint-functions
+        tier: worker
+    spec:
+      containers:
+        - name: complaint-functions
+          image: ${REGISTRY}/complaint-functions:${TAG}
+          env:
+            - name: DOTNET_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: DOTNET_ENVIRONMENT
+            - name: ConnectionStrings__TaskDb
+              value: "Server=sqlserver-service;Database=TASKDB;User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True;Application Name=ComplaintFunctions;Command Timeout=30"
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__Host
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: RABBITMQ_HOST
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"

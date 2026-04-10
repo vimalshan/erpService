@@ -1,0 +1,167 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lookup-service
+  namespace: erp-microservices
+  labels:
+    app: lookup-service
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: lookup-service
+  template:
+    metadata:
+      labels:
+        app: lookup-service
+        tier: backend
+    spec:
+      containers:
+        - name: lookup-service
+          image: ${REGISTRY}/lookup-service:${TAG}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: ASPNETCORE_ENVIRONMENT
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=$(SQL_SERVER);Database=$(SQL_DATABASE);User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True;Application Name=LookupService;Command Timeout=30"
+            - name: SQL_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: SQL_SERVER
+            - name: SQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: SQL_DATABASE
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: sql-sa-password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: jwt-secret-key
+            - name: RabbitMQ__HostName
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: RABBITMQ_HOST
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lookup-service
+  namespace: erp-microservices
+spec:
+  selector:
+    app: lookup-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lookup-functions
+  namespace: erp-microservices
+  labels:
+    app: lookup-functions
+    tier: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lookup-functions
+  template:
+    metadata:
+      labels:
+        app: lookup-functions
+        tier: worker
+    spec:
+      containers:
+        - name: lookup-functions
+          image: ${REGISTRY}/lookup-functions:${TAG}
+          env:
+            - name: DOTNET_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: DOTNET_ENVIRONMENT
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=$(SQL_SERVER);Database=$(SQL_DATABASE);User Id=sa;Password=$(SQL_SA_PASSWORD);Encrypt=True;TrustServerCertificate=True;Application Name=LookupFunctions;Command Timeout=30"
+            - name: SQL_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: SQL_SERVER
+            - name: SQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: SQL_DATABASE
+            - name: SQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: sql-sa-password
+            - name: RabbitMQ__HostName
+              valueFrom:
+                configMapKeyRef:
+                  name: erp-config
+                  key: RABBITMQ_HOST
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: rabbitmq-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: erp-secrets
+                  key: rabbitmq-pass
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"

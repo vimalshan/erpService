@@ -1,0 +1,385 @@
+-- ══════════════════════════════════════════════════════════
+-- ERP Microservices — Database Initialization Script
+-- Run against SQL Server to create TASKDB and all objects
+-- ══════════════════════════════════════════════════════════
+-- Usage (Docker): mounted at /scripts/init-db.sql
+-- Usage (Manual): sqlcmd -S <server> -U sa -P <pass> -i init-db.sql
+-- ══════════════════════════════════════════════════════════
+
+-- ─── 1. Create Database ──────────────────────────────
+
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'TASKDB')
+BEGIN
+    CREATE DATABASE [TASKDB];
+    PRINT 'Database TASKDB created.';
+END
+ELSE
+    PRINT 'Database TASKDB already exists.';
+GO
+
+USE [TASKDB];
+GO
+
+-- ─── 2. Create EF Migrations History Table ──────────
+
+IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] NVARCHAR(150) NOT NULL,
+        [ProductVersion] NVARCHAR(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+    PRINT 'EF Migrations history table created.';
+END
+GO
+
+-- ══════════════════════════════════════════════════════════
+-- 3. COMPLAINT TABLES (01)
+-- ══════════════════════════════════════════════════════════
+
+-- COMPL_GROUP
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'COMPL_GROUP')
+BEGIN
+    CREATE TABLE [COMPL_GROUP] (
+        [CM_UNIT_CODE] VARCHAR(3) NOT NULL,
+        [CM_GROUP_ID] VARCHAR(20) NOT NULL,
+        [CM_GROUP_NAME] VARCHAR(100) NULL,
+        [CM_GROUP_DESC] VARCHAR(500) NULL,
+        [CM_GROUP_SRC] DECIMAL(38) NULL,
+        [CM_BEHALF_FLG] CHAR(1) NULL,
+        [CM_BEHALF_PIN] DECIMAL(38) NULL,
+        [CM_REG_PIN] DECIMAL(38) NULL,
+        [CM_SHIFT] CHAR(1) NULL,
+        [CM_MAIL] VARCHAR(200) NULL,
+        [CM_SUBMIT] CHAR(1) NULL,
+        [CM_REG_DATE] DATETIME2(3) NULL,
+        [CM_UPDATED_BY] DECIMAL(38) NULL,
+        [CM_UPDATED_ON] DATETIME2(3) NULL,
+        CONSTRAINT [PK_COMPL_GROUP] PRIMARY KEY ([CM_UNIT_CODE], [CM_GROUP_ID])
+    );
+    PRINT 'Table COMPL_GROUP created.';
+END
+GO
+
+-- COMPL_DETAIL
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'COMPL_DETAIL')
+BEGIN
+    CREATE TABLE [COMPL_DETAIL] (
+        [CD_UNIT_CODE] VARCHAR(3) NOT NULL,
+        [CD_GROUP_ID] VARCHAR(20) NOT NULL,
+        [CD_TASK_NUM] DECIMAL(38) NOT NULL,
+        [CD_TYP_CODE] VARCHAR(10) NULL,
+        [CD_CAT_CODE] VARCHAR(10) NULL,
+        [CD_SUB_CODE] VARCHAR(10) NULL,
+        [CD_PRI_CODE] VARCHAR(10) NULL,
+        [CD_STATUS] VARCHAR(10) NULL,
+        [CD_SUBJECT] VARCHAR(300) NULL,
+        [CD_DESC] VARCHAR(4000) NULL,
+        [CD_LOC_CODE] VARCHAR(10) NULL,
+        [CD_LOC_DESC] VARCHAR(300) NULL,
+        [CD_EQUIP_CODE] VARCHAR(20) NULL,
+        [CD_TAG_NUM] VARCHAR(50) NULL,
+        [CD_DUE_DATE] DATETIME2(3) NULL,
+        [CD_RESP_PIN] DECIMAL(38) NULL,
+        [CD_RESP_NAME] VARCHAR(200) NULL,
+        [CD_REMARKS] VARCHAR(4000) NULL,
+        [CD_ATTACH_FLG] CHAR(1) NULL,
+        [CD_CLOSE_FLG] CHAR(1) NULL,
+        [CD_CLOSE_DATE] DATETIME2(3) NULL,
+        [CD_CLOSE_BY] DECIMAL(38) NULL,
+        [CD_REG_PIN] DECIMAL(38) NULL,
+        [CD_REG_DATE] DATETIME2(3) NULL,
+        [CD_UPDATED_BY] DECIMAL(38) NULL,
+        [CD_UPDATED_ON] DATETIME2(3) NULL,
+        CONSTRAINT [PK_COMPL_DETAIL] PRIMARY KEY ([CD_UNIT_CODE], [CD_GROUP_ID], [CD_TASK_NUM])
+    );
+    PRINT 'Table COMPL_DETAIL created.';
+END
+GO
+
+-- COMPL_ACTION
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'COMPL_ACTION')
+BEGIN
+    CREATE TABLE [COMPL_ACTION] (
+        [CA_ACTION_NUM] DECIMAL(38) NOT NULL,
+        [CA_TASK_NUM] DECIMAL(38) NOT NULL,
+        [CA_PRM_RESP] VARCHAR(300) NULL,
+        [CA_PRM_ACTBY] DECIMAL(38) NULL,
+        [CA_PRM_ACTDATE] DATETIME2(3) NULL,
+        [CA_PRM_SOLUTION] VARCHAR(4000) NULL,
+        [CA_SEC_ESCHRS] DECIMAL(38) NULL,
+        [CA_SEC_RESP] VARCHAR(300) NULL,
+        [CA_SEC_ACTBY] DECIMAL(38) NULL,
+        [CA_SEC_ACTDATE] DATETIME2(3) NULL,
+        [CA_SEC_SOLUTION] VARCHAR(4000) NULL,
+        [CA_FWD_REMARKS] VARCHAR(4000) NULL,
+        [CA_FWD_RESP] VARCHAR(300) NULL,
+        [CA_FWD_ACTBY] DECIMAL(38) NULL,
+        [CA_FWD_ACTDATE] DATETIME2(3) NULL,
+        [CA_FWD_SOLUTION] VARCHAR(4000) NULL,
+        [CA_CUR_ESCLEVEL] DECIMAL(38) NULL,
+        [CA_CORR_ACTREQ] CHAR(1) NULL,
+        [CA_CORR_REMARKS] VARCHAR(4000) NULL,
+        [CA_CORR_RESP] VARCHAR(300) NULL,
+        [CA_CORR_ACTBY] DECIMAL(38) NULL,
+        [CA_CORR_ACTDATE] DATETIME2(3) NULL,
+        [CA_CORR_SOLUTION] VARCHAR(4000) NULL,
+        [CA_UPD_DATE] DATETIME2(3) NULL,
+        [CA_UPD_BY] DECIMAL(38) NULL,
+        CONSTRAINT [PK_COMPL_ACTION] PRIMARY KEY ([CA_ACTION_NUM], [CA_TASK_NUM])
+    );
+    PRINT 'Table COMPL_ACTION created.';
+END
+GO
+
+-- COMPL_ATTACH
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'COMPL_ATTACH')
+BEGIN
+    CREATE TABLE [COMPL_ATTACH] (
+        [CAT_UNIT_CODE] VARCHAR(3) NOT NULL,
+        [CAT_GROUP_ID] VARCHAR(20) NOT NULL,
+        [CAT_TASK_NUM] DECIMAL(38) NOT NULL,
+        [CAT_ATTACH_NUM] DECIMAL(38) NOT NULL,
+        [CAT_FILE_NAME] VARCHAR(300) NULL,
+        [CAT_FILE_PATH] VARCHAR(500) NULL,
+        [CAT_FILE_TYPE] VARCHAR(50) NULL,
+        [CAT_FILE_SIZE] DECIMAL(38) NULL,
+        [CAT_UPLOAD_BY] DECIMAL(38) NULL,
+        [CAT_UPLOAD_DATE] DATETIME2(3) NULL,
+        CONSTRAINT [PK_COMPL_ATTACH] PRIMARY KEY ([CAT_UNIT_CODE], [CAT_GROUP_ID], [CAT_TASK_NUM], [CAT_ATTACH_NUM])
+    );
+    PRINT 'Table COMPL_ATTACH created.';
+END
+GO
+
+-- ══════════════════════════════════════════════════════════
+-- 4. ENERGY TABLES (02)
+-- ══════════════════════════════════════════════════════════
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'ENERGY_METER')
+BEGIN
+    CREATE TABLE [ENERGY_METER] (
+        [EM_UNIT_CODE] VARCHAR(3) NOT NULL,
+        [EM_METER_ID] VARCHAR(20) NOT NULL,
+        [EM_METER_NAME] VARCHAR(100) NULL,
+        [EM_METER_TYPE] VARCHAR(10) NULL,
+        [EM_LOCATION] VARCHAR(100) NULL,
+        [EM_STATUS] CHAR(1) NULL,
+        [EM_INSTALL_DATE] DATETIME2(3) NULL,
+        [EM_MULTIPLIER] DECIMAL(10,4) NULL,
+        [EM_REMARKS] VARCHAR(500) NULL,
+        [EM_REG_BY] DECIMAL(38) NULL,
+        [EM_REG_DATE] DATETIME2(3) NULL,
+        [EM_UPD_BY] DECIMAL(38) NULL,
+        [EM_UPD_DATE] DATETIME2(3) NULL,
+        CONSTRAINT [PK_ENERGY_METER] PRIMARY KEY ([EM_UNIT_CODE], [EM_METER_ID])
+    );
+    PRINT 'Table ENERGY_METER created.';
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'ENERGY_READING')
+BEGIN
+    CREATE TABLE [ENERGY_READING] (
+        [ER_UNIT_CODE] VARCHAR(3) NOT NULL,
+        [ER_METER_ID] VARCHAR(20) NOT NULL,
+        [ER_READING_NUM] DECIMAL(38) NOT NULL,
+        [ER_READING_DATE] DATETIME2(3) NULL,
+        [ER_READING_VALUE] DECIMAL(18,4) NULL,
+        [ER_PREV_VALUE] DECIMAL(18,4) NULL,
+        [ER_CONSUMPTION] DECIMAL(18,4) NULL,
+        [ER_READING_TYPE] VARCHAR(10) NULL,
+        [ER_REMARKS] VARCHAR(500) NULL,
+        [ER_REG_BY] DECIMAL(38) NULL,
+        [ER_REG_DATE] DATETIME2(3) NULL,
+        CONSTRAINT [PK_ENERGY_READING] PRIMARY KEY ([ER_UNIT_CODE], [ER_METER_ID], [ER_READING_NUM])
+    );
+    PRINT 'Table ENERGY_READING created.';
+END
+GO
+
+-- ══════════════════════════════════════════════════════════
+-- 5. UNIT TABLES (03)
+-- ══════════════════════════════════════════════════════════
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'UNIT_MASTER')
+BEGIN
+    CREATE TABLE [UNIT_MASTER] (
+        [UM_UNIT_CODE] VARCHAR(3) NOT NULL,
+        [UM_UNIT_NAME] VARCHAR(100) NULL,
+        [UM_UNIT_DESC] VARCHAR(500) NULL,
+        [UM_UNIT_TYPE] VARCHAR(10) NULL,
+        [UM_STATUS] CHAR(1) NULL,
+        [UM_COUNTRY] VARCHAR(50) NULL,
+        [UM_CITY] VARCHAR(50) NULL,
+        [UM_ADDRESS] VARCHAR(500) NULL,
+        [UM_PHONE] VARCHAR(20) NULL,
+        [UM_EMAIL] VARCHAR(100) NULL,
+        [UM_REG_BY] DECIMAL(38) NULL,
+        [UM_REG_DATE] DATETIME2(3) NULL,
+        [UM_UPD_BY] DECIMAL(38) NULL,
+        [UM_UPD_DATE] DATETIME2(3) NULL,
+        CONSTRAINT [PK_UNIT_MASTER] PRIMARY KEY ([UM_UNIT_CODE])
+    );
+    PRINT 'Table UNIT_MASTER created.';
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'UNIT_DEPT')
+BEGIN
+    CREATE TABLE [UNIT_DEPT] (
+        [UD_UNIT_CODE] VARCHAR(3) NOT NULL,
+        [UD_DEPT_CODE] VARCHAR(10) NOT NULL,
+        [UD_DEPT_NAME] VARCHAR(100) NULL,
+        [UD_DEPT_DESC] VARCHAR(500) NULL,
+        [UD_PARENT_CODE] VARCHAR(10) NULL,
+        [UD_STATUS] CHAR(1) NULL,
+        [UD_REG_BY] DECIMAL(38) NULL,
+        [UD_REG_DATE] DATETIME2(3) NULL,
+        CONSTRAINT [PK_UNIT_DEPT] PRIMARY KEY ([UD_UNIT_CODE], [UD_DEPT_CODE])
+    );
+    PRINT 'Table UNIT_DEPT created.';
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'UNIT_EMPLOYEE')
+BEGIN
+    CREATE TABLE [UNIT_EMPLOYEE] (
+        [UE_UNIT_CODE] VARCHAR(3) NOT NULL,
+        [UE_EMP_PIN] DECIMAL(38) NOT NULL,
+        [UE_EMP_NAME] VARCHAR(200) NULL,
+        [UE_DEPT_CODE] VARCHAR(10) NULL,
+        [UE_POSITION] VARCHAR(100) NULL,
+        [UE_EMAIL] VARCHAR(100) NULL,
+        [UE_PHONE] VARCHAR(20) NULL,
+        [UE_STATUS] CHAR(1) NULL,
+        [UE_JOIN_DATE] DATETIME2(3) NULL,
+        CONSTRAINT [PK_UNIT_EMPLOYEE] PRIMARY KEY ([UE_UNIT_CODE], [UE_EMP_PIN])
+    );
+    PRINT 'Table UNIT_EMPLOYEE created.';
+END
+GO
+
+-- ══════════════════════════════════════════════════════════
+-- 6. LOOKUP TABLES (04)
+-- ══════════════════════════════════════════════════════════
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'LOV_TYPE')
+BEGIN
+    CREATE TABLE [LOV_TYPE] (
+        [LOV_TYPE_CODE] VARCHAR(10) NOT NULL,
+        [LOV_TYPE_NAME] VARCHAR(100) NULL,
+        CONSTRAINT [PK_LOV_TYPE] PRIMARY KEY ([LOV_TYPE_CODE])
+    );
+    PRINT 'Table LOV_TYPE created.';
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'LOV_DEFINITION')
+BEGIN
+    CREATE TABLE [LOV_DEFINITION] (
+        [LOV_DEF_TYPE] VARCHAR(10) NOT NULL,
+        [LOV_DEF_CODE] VARCHAR(10) NOT NULL,
+        [LOV_DEF_NAME] VARCHAR(100) NULL,
+        [LOV_DEF_NAME_AR] NVARCHAR(100) NULL,
+        [LOV_DEF_DESC] VARCHAR(500) NULL,
+        [LOV_DEF_CATEGORY] VARCHAR(1) NULL,
+        [LOV_DEF_SORT] DECIMAL(38) NULL,
+        [LOV_DEF_STATUS] CHAR(1) NULL,
+        CONSTRAINT [PK_LOV_DEFINITION] PRIMARY KEY ([LOV_DEF_TYPE], [LOV_DEF_CODE])
+    );
+    PRINT 'Table LOV_DEFINITION created.';
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'LOAN_DEFINITION')
+BEGIN
+    CREATE TABLE [LOAN_DEFINITION] (
+        [LOAN_UNIT_CODE] VARCHAR(3) NOT NULL,
+        [LOAN_CODE] VARCHAR(10) NOT NULL,
+        [LOAN_NAME] VARCHAR(100) NULL,
+        [LOAN_DESC] VARCHAR(500) NULL,
+        [LOAN_STATUS] CHAR(1) NULL,
+        CONSTRAINT [PK_LOAN_DEFINITION] PRIMARY KEY ([LOAN_UNIT_CODE], [LOAN_CODE])
+    );
+    PRINT 'Table LOAN_DEFINITION created.';
+END
+GO
+
+-- ══════════════════════════════════════════════════════════
+-- 7. TASK TABLES (05)
+-- ══════════════════════════════════════════════════════════
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'TASK_MAIL')
+BEGIN
+    CREATE TABLE [TASK_MAIL] (
+        [MID] DECIMAL(38) NOT NULL,
+        [SYSID] DECIMAL(38) NULL,
+        [MFROM] VARCHAR(200) NULL,
+        [MTO] VARCHAR(200) NULL,
+        [MTYPE] VARCHAR(10) NULL,
+        [MSUBJECT] VARCHAR(500) NULL,
+        [MBODY] VARCHAR(4000) NULL,
+        [MSTATUS] VARCHAR(10) NULL,
+        [MDATE] DATETIME2(3) NULL,
+        [MREAD] CHAR(1) NULL,
+        [MREAD_DATE] DATETIME2(3) NULL,
+        [MATTACH] CHAR(1) NULL,
+        [MPRIORITY] VARCHAR(10) NULL,
+        [MREF_TYPE] VARCHAR(10) NULL,
+        [MREF_ID] VARCHAR(50) NULL,
+        [MUNIT_CODE] VARCHAR(3) NULL,
+        CONSTRAINT [PK_TASK_MAIL] PRIMARY KEY ([MID])
+    );
+    PRINT 'Table TASK_MAIL created.';
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'TASK_MAIL_ATTACH')
+BEGIN
+    CREATE TABLE [TASK_MAIL_ATTACH] (
+        [TMA_MID] DECIMAL(38) NOT NULL,
+        [TMA_ATTACH_NUM] DECIMAL(38) NOT NULL,
+        [TMA_FILE_NAME] VARCHAR(300) NULL,
+        [TMA_FILE_PATH] VARCHAR(500) NULL,
+        [TMA_FILE_TYPE] VARCHAR(50) NULL,
+        [TMA_FILE_SIZE] DECIMAL(38) NULL,
+        [TMA_UPLOAD_DATE] DATETIME2(3) NULL,
+        CONSTRAINT [PK_TASK_MAIL_ATTACH] PRIMARY KEY ([TMA_MID], [TMA_ATTACH_NUM])
+    );
+    PRINT 'Table TASK_MAIL_ATTACH created.';
+END
+GO
+
+-- ══════════════════════════════════════════════════════════
+-- 8. SEED DATA — Lookup Types
+-- ══════════════════════════════════════════════════════════
+
+IF NOT EXISTS (SELECT 1 FROM [LOV_TYPE] WHERE [LOV_TYPE_CODE] = 'CAT')
+BEGIN
+    INSERT INTO [LOV_TYPE] ([LOV_TYPE_CODE], [LOV_TYPE_NAME]) VALUES
+        ('CAT', 'Category'),
+        ('DEP', 'Department'),
+        ('LOC', 'Location'),
+        ('PRI', 'Priority'),
+        ('STA', 'Status');
+    PRINT 'Seed data: LOV_TYPE rows inserted.';
+END
+GO
+
+-- ══════════════════════════════════════════════════════════
+-- 9. SEED DATA — Unit Master
+-- ══════════════════════════════════════════════════════════
+
+IF NOT EXISTS (SELECT 1 FROM [UNIT_MASTER] WHERE [UM_UNIT_CODE] = '001')
+BEGIN
+    INSERT INTO [UNIT_MASTER] ([UM_UNIT_CODE], [UM_UNIT_NAME], [UM_STATUS])
+    VALUES ('001', 'Main Unit', 'A'), ('002', 'Branch Unit', 'A');
+    PRINT 'Seed data: UNIT_MASTER rows inserted.';
+END
+GO
+
+PRINT '══════════════════════════════════════════════════';
+PRINT ' TASKDB initialization complete.';
+PRINT '══════════════════════════════════════════════════';
+GO

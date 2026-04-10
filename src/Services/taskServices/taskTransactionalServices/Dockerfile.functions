@@ -1,0 +1,20 @@
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS base
+WORKDIR /app
+EXPOSE 8080
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+WORKDIR /src
+COPY src/TaskTransactional.Domain/TaskTransactional.Domain.csproj src/TaskTransactional.Domain/
+COPY src/TaskTransactional.Application/TaskTransactional.Application.csproj src/TaskTransactional.Application/
+COPY src/TaskTransactional.Infrastructure/TaskTransactional.Infrastructure.csproj src/TaskTransactional.Infrastructure/
+COPY src/TaskTransactional.Functions/TaskTransactional.Functions.csproj src/TaskTransactional.Functions/
+RUN dotnet restore src/TaskTransactional.Functions/TaskTransactional.Functions.csproj
+COPY . .
+WORKDIR /src/src/TaskTransactional.Functions
+RUN dotnet publish -c Release -o /app/publish --no-restore
+
+FROM base AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENV DOTNET_ENVIRONMENT=Production
+ENTRYPOINT ["dotnet", "TaskTransactional.Functions.dll"]
