@@ -61,12 +61,12 @@ jobs:
         run: |
           # Service registry: name → context + dockerfile
           declare -A SVC_CONTEXT SVC_DOCKERFILE
-          SVC_CONTEXT[api-gateway]="src/Services/sparshServices/apigateway";                                       SVC_DOCKERFILE[api-gateway]="Dockerfile"
+          SVC_CONTEXT[api-gateway]="src/Services/sparshServices/apigateway/SparshApiGateway";                         SVC_DOCKERFILE[api-gateway]="Dockerfile"
           SVC_CONTEXT[employeepridemanagement-service]="src/Services/sparshServices/employeepridemanagementServices"; SVC_DOCKERFILE[employeepridemanagement-service]="Dockerfile"
           SVC_CONTEXT[mobileappmanagement-service]="src/Services/sparshServices/mobileappmanagementServices";       SVC_DOCKERFILE[mobileappmanagement-service]="Dockerfile"
           SVC_CONTEXT[mobileexpense-service]="src/Services/sparshServices/mobileexpenseServices";                   SVC_DOCKERFILE[mobileexpense-service]="Dockerfile"
-          SVC_CONTEXT[problemmanagement-service]="src/Services/sparshServices/problemmanagementServices";           SVC_DOCKERFILE[problemmanagement-service]="Dockerfile"
-          SVC_CONTEXT[sparsh-transaction-service]="src/Services/sparshServices/sparshtransactionalServices";        SVC_DOCKERFILE[sparsh-transaction-service]="Dockerfile"
+          SVC_CONTEXT[problemmanagement-service]="src/Services/sparshServices/problemmanagementServices/ProblemManagement"; SVC_DOCKERFILE[problemmanagement-service]="Dockerfile"
+          SVC_CONTEXT[sparsh-transaction-service]="src/Services/sparshServices/sparshtransactionalServices/SparshTransactional"; SVC_DOCKERFILE[sparsh-transaction-service]="Dockerfile"
 
           # Ordered list matching the paths for change detection
           SVC_NAMES=(api-gateway employeepridemanagement-service mobileappmanagement-service mobileexpense-service problemmanagement-service sparsh-transaction-service)
