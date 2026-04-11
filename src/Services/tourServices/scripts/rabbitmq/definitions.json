@@ -1,0 +1,290 @@
+{
+  "rabbit_version": "3.13",
+  "users": [
+    {
+      "name": "tour_user",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "tour_vhost"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "tour_user",
+      "vhost": "tour_vhost",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "tour-erp-exchange",
+      "vhost": "tour_vhost",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false
+    },
+    {
+      "name": "tour-erp-fanout",
+      "vhost": "tour_vhost",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false
+    },
+    {
+      "name": "tour-erp-dlx",
+      "vhost": "tour_vhost",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false
+    },
+    {
+      "name": "tourplan_exchange",
+      "vhost": "tour_vhost",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false
+    }
+  ],
+  "queues": [
+    {
+      "name": "admin-events",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "tour-erp-dlx",
+        "x-dead-letter-routing-key": "admin-events-dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "booking-events",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "tour-erp-dlx",
+        "x-dead-letter-routing-key": "booking-events-dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "config-events",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "tour-erp-dlx",
+        "x-dead-letter-routing-key": "config-events-dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "tourplan-events",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "tour-erp-dlx",
+        "x-dead-letter-routing-key": "tourplan-events-dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "tour-events",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "tour-erp-dlx",
+        "x-dead-letter-routing-key": "tour-events-dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "transaction-events",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "tour-erp-dlx",
+        "x-dead-letter-routing-key": "transaction-events-dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "travel-events",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "tour-erp-dlx",
+        "x-dead-letter-routing-key": "travel-events-dlq",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "admin-events-dlq",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "booking-events-dlq",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "config-events-dlq",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "tourplan-events-dlq",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "tour-events-dlq",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "transaction-events-dlq",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "travel-events-dlq",
+      "vhost": "tour_vhost",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "tour-erp-exchange",
+      "vhost": "tour_vhost",
+      "destination": "admin-events",
+      "destination_type": "queue",
+      "routing_key": "admin.#"
+    },
+    {
+      "source": "tour-erp-exchange",
+      "vhost": "tour_vhost",
+      "destination": "booking-events",
+      "destination_type": "queue",
+      "routing_key": "booking.#"
+    },
+    {
+      "source": "tour-erp-exchange",
+      "vhost": "tour_vhost",
+      "destination": "config-events",
+      "destination_type": "queue",
+      "routing_key": "config.#"
+    },
+    {
+      "source": "tour-erp-exchange",
+      "vhost": "tour_vhost",
+      "destination": "tourplan-events",
+      "destination_type": "queue",
+      "routing_key": "tourplan.#"
+    },
+    {
+      "source": "tour-erp-exchange",
+      "vhost": "tour_vhost",
+      "destination": "tour-events",
+      "destination_type": "queue",
+      "routing_key": "tour.#"
+    },
+    {
+      "source": "tour-erp-exchange",
+      "vhost": "tour_vhost",
+      "destination": "transaction-events",
+      "destination_type": "queue",
+      "routing_key": "transaction.#"
+    },
+    {
+      "source": "tour-erp-exchange",
+      "vhost": "tour_vhost",
+      "destination": "travel-events",
+      "destination_type": "queue",
+      "routing_key": "travel.#"
+    },
+    {
+      "source": "tour-erp-dlx",
+      "vhost": "tour_vhost",
+      "destination": "admin-events-dlq",
+      "destination_type": "queue",
+      "routing_key": "admin-events-dlq"
+    },
+    {
+      "source": "tour-erp-dlx",
+      "vhost": "tour_vhost",
+      "destination": "booking-events-dlq",
+      "destination_type": "queue",
+      "routing_key": "booking-events-dlq"
+    },
+    {
+      "source": "tour-erp-dlx",
+      "vhost": "tour_vhost",
+      "destination": "config-events-dlq",
+      "destination_type": "queue",
+      "routing_key": "config-events-dlq"
+    },
+    {
+      "source": "tour-erp-dlx",
+      "vhost": "tour_vhost",
+      "destination": "tourplan-events-dlq",
+      "destination_type": "queue",
+      "routing_key": "tourplan-events-dlq"
+    },
+    {
+      "source": "tour-erp-dlx",
+      "vhost": "tour_vhost",
+      "destination": "tour-events-dlq",
+      "destination_type": "queue",
+      "routing_key": "tour-events-dlq"
+    },
+    {
+      "source": "tour-erp-dlx",
+      "vhost": "tour_vhost",
+      "destination": "transaction-events-dlq",
+      "destination_type": "queue",
+      "routing_key": "transaction-events-dlq"
+    },
+    {
+      "source": "tour-erp-dlx",
+      "vhost": "tour_vhost",
+      "destination": "travel-events-dlq",
+      "destination_type": "queue",
+      "routing_key": "travel-events-dlq"
+    },
+    {
+      "source": "tourplan_exchange",
+      "vhost": "tour_vhost",
+      "destination": "tourplan-events",
+      "destination_type": "queue",
+      "routing_key": "tourplan.#"
+    }
+  ]
+}

@@ -1,7 +1,6 @@
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
-using RabbitMQ.Client;
 using TravelService.API.GraphQL;
 using TravelService.API.Middleware;
 using TravelService.API.Services;
@@ -60,21 +59,6 @@ builder.Services
     .AddMutationType<TravelMutationType>()
     .AddAuthorization()
     .ModifyOptions(o => o.EnableOneOf = false);
-
-// ─── RabbitMQ IConnection singleton for health check ────────────────────────
-// Only register if RabbitMQ is reachable (non-blocking)
-builder.Services.AddSingleton<IConnection>(sp =>
-{
-    var factory = new ConnectionFactory
-    {
-        HostName = builder.Configuration["RabbitMQ:Host"] ?? "localhost",
-        Port     = int.Parse(builder.Configuration["RabbitMQ:Port"] ?? "5672"),
-        UserName = builder.Configuration["RabbitMQ:Username"] ?? "guest",
-        Password = builder.Configuration["RabbitMQ:Password"] ?? "guest"
-    };
-    try { return factory.CreateConnectionAsync().GetAwaiter().GetResult(); }
-    catch { return null!; }
-});
 
 // ─── Health Checks ──────────────────────────────────────────────────────────
 builder.Services

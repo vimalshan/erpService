@@ -13,8 +13,14 @@ public class BookingMessageConsumer(
     string password,
     ILogger<BookingMessageConsumer> logger) : BackgroundService
 {
+    private const int MaxRetryDelaySeconds = 60;
+    private IConnection? _connection;
+    private IChannel? _channel;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var retryDelay = TimeSpan.FromSeconds(5);
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -27,8 +33,11 @@ public class BookingMessageConsumer(
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "RabbitMQ connection failed. Retrying in 30 seconds...");
-                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                logger.LogWarning(ex, "RabbitMQ consumer connection failed. Retrying in {Delay}s...", retryDelay.TotalSeconds);
+                await CleanupAsync();
+                try { await Task.Delay(retryDelay, stoppingToken); }
+                catch (OperationCanceledException) { break; }
+                retryDelay = TimeSpan.FromSeconds(Math.Min(retryDelay.TotalSeconds * 2, MaxRetryDelaySeconds));
             }
         }
     }
@@ -36,30 +45,53 @@ public class BookingMessageConsumer(
     private async Task ConnectAndConsumeAsync(CancellationToken stoppingToken)
     {
         var factory = new ConnectionFactory { HostName = hostName, UserName = userName, Password = password };
-        var connection = await factory.CreateConnectionAsync(stoppingToken);
-        var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
+        _connection = await factory.CreateConnectionAsync(stoppingToken);
+        _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
-        await channel.ExchangeDeclareAsync(exchange: "booking.events", type: ExchangeType.Topic, durable: true, cancellationToken: stoppingToken);
-        var queueDeclareResult = await channel.QueueDeclareAsync(queue: "booking.notifications", durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
-        await channel.QueueBindAsync(queue: queueDeclareResult.QueueName, exchange: "booking.events", routingKey: "booking.*", cancellationToken: stoppingToken);
+        await _channel.ExchangeDeclareAsync(exchange: "booking.events", type: ExchangeType.Topic, durable: true, cancellationToken: stoppingToken);
+        var queueDeclareResult = await _channel.QueueDeclareAsync(queue: "booking.notifications", durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
+        await _channel.QueueBindAsync(queue: queueDeclareResult.QueueName, exchange: "booking.events", routingKey: "booking.*", cancellationToken: stoppingToken);
 
-        var consumer = new AsyncEventingBasicConsumer(channel);
+        var consumer = new AsyncEventingBasicConsumer(_channel);
         consumer.ReceivedAsync += async (_, ea) =>
         {
-            var body = ea.Body.ToArray();
-            var message = Encoding.UTF8.GetString(body);
-            logger.LogInformation("Received booking event [{RoutingKey}]: {Message}", ea.RoutingKey, message);
+            try
+            {
+                var body = ea.Body.ToArray();
+                var message = Encoding.UTF8.GetString(body);
+                logger.LogInformation("Received booking event [{RoutingKey}]: {Message}", ea.RoutingKey, message);
 
-            // Process the message based on routing key
-            await ProcessMessage(ea.RoutingKey, message);
+                await ProcessMessage(ea.RoutingKey, message);
 
-            await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error processing message from booking.notifications");
+                await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+            }
         };
 
-        await channel.BasicConsumeAsync(queue: queueDeclareResult.QueueName, autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
+        await _channel.BasicConsumeAsync(queue: queueDeclareResult.QueueName, autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
+        logger.LogInformation("Started consuming from booking.notifications");
 
         // Keep alive until cancellation
         await Task.Delay(Timeout.Infinite, stoppingToken);
+    }
+
+    private async Task CleanupAsync()
+    {
+        try { if (_channel is not null) await _channel.CloseAsync(); } catch { /* best-effort */ }
+        try { if (_connection is not null) await _connection.CloseAsync(); } catch { /* best-effort */ }
+        _channel = null;
+        _connection = null;
+    }
+
+    public override async Task StopAsync(CancellationToken cancellationToken)
+    {
+        logger.LogInformation("BookingMessageConsumer stopping...");
+        await base.StopAsync(cancellationToken);
+        await CleanupAsync();
     }
 
     private Task ProcessMessage(string routingKey, string message)

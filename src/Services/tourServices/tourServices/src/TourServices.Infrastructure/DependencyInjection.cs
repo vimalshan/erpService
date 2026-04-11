@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Extensions.Http;
-using RabbitMQ.Client;
 using TourServices.Application.Common.Interfaces;
 using TourServices.Infrastructure.DapperRepositories;
 using TourServices.Infrastructure.Messaging;
@@ -55,31 +54,8 @@ public static class DependencyInjection
 
     private static void AddRabbitMq(IServiceCollection services, IConfiguration configuration)
     {
-        var rabbitEnabled = configuration.GetValue<bool>("RabbitMQ:Enabled", true);
+        var rabbitEnabled = configuration.GetValue<bool>("RabbitMQ:Enabled", false);
         if (!rabbitEnabled) return;
-
-        services.AddSingleton<IConnection>(sp =>
-        {
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MessagePublisher>>();
-            try
-            {
-                var factory = new ConnectionFactory
-                {
-                    HostName = configuration["RabbitMQ:Host"] ?? "localhost",
-                    UserName = configuration["RabbitMQ:Username"] ?? "guest",
-                    Password = configuration["RabbitMQ:Password"] ?? "guest",
-                    Port = int.Parse(configuration["RabbitMQ:Port"] ?? "5672"),
-                    VirtualHost = configuration["RabbitMQ:VirtualHost"] ?? "/",
-                    RequestedConnectionTimeout = TimeSpan.FromSeconds(5)
-                };
-                return factory.CreateConnectionAsync().GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "RabbitMQ is unavailable. Messaging features are disabled.");
-                throw;
-            }
-        });
 
         services.AddSingleton<MessagePublisher>();
         services.AddHostedService<TourPackageCreatedConsumer>();

@@ -35,8 +35,10 @@ public static class DependencyInjection
         services.AddScoped<IBlobStorageService, BlobStorageService>();
 
         // Messaging
+        var rabbitEnabled = configuration.GetValue("RabbitMQ:Enabled", false);
         services.AddSingleton<IMessagePublisher, RabbitMqMessagePublisher>();
-        services.AddHostedService<TourPlanEventConsumer>();
+        if (rabbitEnabled)
+            services.AddHostedService<TourPlanEventConsumer>();
 
         // JWT Authentication
         var jwtSection = configuration.GetSection("Jwt");

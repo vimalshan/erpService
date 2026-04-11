@@ -1,6 +1,6 @@
 using MediatR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using RabbitMQ.Client;
 using TourServices.Application.TourPackages.Commands.ChangeTourStatus;
 
 namespace TourServices.Infrastructure.Messaging.Consumers;
@@ -15,8 +15,8 @@ public sealed class TourPackageCreatedConsumer : BaseMessageConsumer<TourPackage
     protected override string ExchangeName => "tour.events";
     protected override string RoutingKey => "tour.package.created";
 
-    public TourPackageCreatedConsumer(IConnection connection, IMediator mediator,
-        ILogger<TourPackageCreatedConsumer> logger) : base(connection, logger)
+    public TourPackageCreatedConsumer(IConfiguration configuration, IMediator mediator,
+        ILogger<TourPackageCreatedConsumer> logger) : base(configuration, logger)
     {
         _mediator = mediator;
     }

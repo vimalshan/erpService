@@ -25,7 +25,34 @@ public abstract class RabbitMqConsumerBase<T> : BackgroundService
         _logger = logger;
     }
 
+    private const int MaxRetryDelaySeconds = 60;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        var retryDelay = TimeSpan.FromSeconds(5);
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                await ConnectAndConsumeAsync(stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "RabbitMQ consumer for {Queue} failed to connect. Retrying in {Delay}s...", QueueName, retryDelay.TotalSeconds);
+                await CleanupChannelAsync();
+                try { await Task.Delay(retryDelay, stoppingToken); }
+                catch (OperationCanceledException) { break; }
+                retryDelay = TimeSpan.FromSeconds(Math.Min(retryDelay.TotalSeconds * 2, MaxRetryDelaySeconds));
+            }
+        }
+    }
+
+    private async Task ConnectAndConsumeAsync(CancellationToken stoppingToken)
     {
         var factory = new ConnectionFactory
         {
@@ -64,16 +91,23 @@ public abstract class RabbitMqConsumerBase<T> : BackgroundService
         await _channel.BasicConsumeAsync(queue: QueueName, autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
         _logger.LogInformation("Started consuming from {Queue}", QueueName);
 
-        // Keep the background service running
+        // Keep the background service running until cancelled
         await Task.Delay(Timeout.Infinite, stoppingToken);
+    }
+
+    private async Task CleanupChannelAsync()
+    {
+        try { if (_channel is not null) await _channel.CloseAsync(); } catch { /* best-effort */ }
+        try { if (_connection is not null) await _connection.CloseAsync(); } catch { /* best-effort */ }
+        _channel = null;
+        _connection = null;
     }
 
     protected abstract Task HandleMessageAsync(T message, CancellationToken ct);
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        if (_channel is not null) await _channel.CloseAsync(cancellationToken);
-        if (_connection is not null) await _connection.CloseAsync(cancellationToken);
+        await CleanupChannelAsync();
         await base.StopAsync(cancellationToken);
     }
 }

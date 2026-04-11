@@ -1,0 +1,306 @@
+version: "3.8"
+
+services:
+  # ═══════════════════════════════════════════════
+  # Infrastructure
+  # ═══════════════════════════════════════════════
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: tourdb-sqlserver
+    environment:
+      SA_PASSWORD: "TourERP@Str0ngP@ss!"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./scripts/db:/docker-entrypoint-initdb.d
+    networks:
+      - tour-network
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "TourERP@Str0ngP@ss!" -C -Q "SELECT 1" || exit 1
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: tourdb-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: tour_user
+      RABBITMQ_DEFAULT_PASS: "TourRMQ@2026!"
+      RABBITMQ_DEFAULT_VHOST: tour_vhost
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./scripts/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./scripts/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    networks:
+      - tour-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    container_name: tourdb-azurite
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - azurite-data:/data
+    networks:
+      - tour-network
+
+  # ═══════════════════════════════════════════════
+  # Microservices
+  # ═══════════════════════════════════════════════
+  admin-service:
+    build:
+      context: ./adminServices
+      dockerfile: Dockerfile
+    container_name: admin-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=TOURDB;User Id=sa;Password=TourERP@Str0ngP@ss!;TrustServerCertificate=True;
+      - Jwt__Key=${JWT_KEY:-TourERP-Shared-Super-Secret-JWT-Key-2026-Production!}
+      - Jwt__Issuer=TourERP.Gateway
+      - Jwt__Audience=TourERP.Clients
+      - RabbitMQ__Enabled=true
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=tour_user
+      - RabbitMQ__Password=TourRMQ@2026!
+      - RabbitMQ__VirtualHost=tour_vhost
+      - AzureBlobStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    ports:
+      - "5016:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - tour-network
+    restart: unless-stopped
+
+  booking-service:
+    build:
+      context: ./bookingServices/BookingService
+      dockerfile: Dockerfile
+    container_name: booking-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=TOURDB;User Id=sa;Password=TourERP@Str0ngP@ss!;TrustServerCertificate=True;
+      - Jwt__Key=${JWT_KEY:-TourERP-Shared-Super-Secret-JWT-Key-2026-Production!}
+      - Jwt__Issuer=TourERP.Gateway
+      - Jwt__Audience=TourERP.Clients
+      - RabbitMQ__Enabled=true
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=tour_user
+      - RabbitMQ__Password=TourRMQ@2026!
+      - RabbitMQ__VirtualHost=tour_vhost
+      - AzureBlobStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    ports:
+      - "5045:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - tour-network
+    restart: unless-stopped
+
+  config-service:
+    build:
+      context: ./configServices
+      dockerfile: Dockerfile
+    container_name: config-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=TOURDB;User Id=sa;Password=TourERP@Str0ngP@ss!;TrustServerCertificate=True;
+      - Jwt__Key=${JWT_KEY:-TourERP-Shared-Super-Secret-JWT-Key-2026-Production!}
+      - Jwt__Issuer=TourERP.Gateway
+      - Jwt__Audience=TourERP.Clients
+      - RabbitMQ__Enabled=true
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=tour_user
+      - RabbitMQ__Password=TourRMQ@2026!
+      - RabbitMQ__VirtualHost=tour_vhost
+      - AzureBlobStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    ports:
+      - "5057:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - tour-network
+    restart: unless-stopped
+
+  tourplan-service:
+    build:
+      context: ./tourplanServices
+      dockerfile: Dockerfile
+    container_name: tourplan-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__TourPlanDb=Server=sqlserver;Database=TOURDB;User Id=sa;Password=TourERP@Str0ngP@ss!;TrustServerCertificate=True;
+      - Jwt__Key=${JWT_KEY:-TourERP-Shared-Super-Secret-JWT-Key-2026-Production!}
+      - Jwt__Issuer=TourERP.Gateway
+      - Jwt__Audience=TourERP.Clients
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=tour_user
+      - RabbitMQ__Password=TourRMQ@2026!
+      - RabbitMQ__VirtualHost=tour_vhost
+      - ExternalApiBaseUrl=http://config-service:8080
+      - AzureBlobStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    ports:
+      - "5143:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - tour-network
+    restart: unless-stopped
+
+  tour-service:
+    build:
+      context: ./tourServices
+      dockerfile: Dockerfile
+    container_name: tour-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__TourDb=Server=sqlserver;Database=TOURDB;User Id=sa;Password=TourERP@Str0ngP@ss!;TrustServerCertificate=True;
+      - Jwt__Key=${JWT_KEY:-TourERP-Shared-Super-Secret-JWT-Key-2026-Production!}
+      - Jwt__Issuer=TourERP.Gateway
+      - Jwt__Audience=TourERP.Clients
+      - RabbitMQ__Enabled=true
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=tour_user
+      - RabbitMQ__Password=TourRMQ@2026!
+      - RabbitMQ__VirtualHost=tour_vhost
+      - AzureBlobStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    ports:
+      - "5188:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - tour-network
+    restart: unless-stopped
+
+  transaction-service:
+    build:
+      context: ./transactionServices
+      dockerfile: Dockerfile
+    container_name: transaction-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__TransactionDb=Server=sqlserver;Database=TOURDB;User Id=sa;Password=TourERP@Str0ngP@ss!;TrustServerCertificate=True;
+      - Jwt__Key=${JWT_KEY:-TourERP-Shared-Super-Secret-JWT-Key-2026-Production!}
+      - Jwt__Issuer=TourERP.Gateway
+      - Jwt__Audience=TourERP.Clients
+      - RabbitMQ__Enabled=true
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=tour_user
+      - RabbitMQ__Password=TourRMQ@2026!
+      - RabbitMQ__VirtualHost=tour_vhost
+      - AzureBlobStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    ports:
+      - "5192:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - tour-network
+    restart: unless-stopped
+
+  travel-service:
+    build:
+      context: ./travelServices
+      dockerfile: Dockerfile
+    container_name: travel-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__TravelDb=Server=sqlserver;Database=TOURDB;User Id=sa;Password=TourERP@Str0ngP@ss!;TrustServerCertificate=True;
+      - Jwt__Key=${JWT_KEY:-TourERP-Shared-Super-Secret-JWT-Key-2026-Production!}
+      - Jwt__Issuer=TourERP.Gateway
+      - Jwt__Audience=TourERP.Clients
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=tour_user
+      - RabbitMQ__Password=TourRMQ@2026!
+      - RabbitMQ__VirtualHost=tour_vhost
+      - AzureBlobStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    ports:
+      - "5200:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - tour-network
+    restart: unless-stopped
+
+  # ═══════════════════════════════════════════════
+  # API Gateway
+  # ═══════════════════════════════════════════════
+  api-gateway:
+    build:
+      context: ./apiGateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - Jwt__Key=${JWT_KEY:-TourERP-Shared-Super-Secret-JWT-Key-2026-Production!}
+      - Jwt__Issuer=TourERP.Gateway
+      - Jwt__Audience=TourERP.Clients
+    ports:
+      - "5000:8080"
+    depends_on:
+      - admin-service
+      - booking-service
+      - config-service
+      - tourplan-service
+      - tour-service
+      - transaction-service
+      - travel-service
+    networks:
+      - tour-network
+    restart: unless-stopped
+
+volumes:
+  sqlserver-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+  azurite-data:
+    driver: local
+
+networks:
+  tour-network:
+    driver: bridge
+    name: tour-erp-network

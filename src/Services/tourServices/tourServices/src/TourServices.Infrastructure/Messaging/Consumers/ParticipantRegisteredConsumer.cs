@@ -1,5 +1,5 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using RabbitMQ.Client;
 
 namespace TourServices.Infrastructure.Messaging.Consumers;
 
@@ -12,7 +12,7 @@ public sealed class ParticipantRegisteredConsumer : BaseMessageConsumer<Particip
     protected override string RoutingKey => "tour.participant.registered";
 
     public ParticipantRegisteredConsumer(
-        IConnection connection, ILogger<ParticipantRegisteredConsumer> logger) : base(connection, logger) { }
+        IConfiguration configuration, ILogger<ParticipantRegisteredConsumer> logger) : base(configuration, logger) { }
 
     protected override async Task HandleMessageAsync(
         ParticipantRegisteredMessage message, CancellationToken cancellationToken)

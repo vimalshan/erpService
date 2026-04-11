@@ -11,7 +11,7 @@ public class VendorRepository(ConfigDbContext context) : EfRepository<Vendor, st
             .FirstOrDefaultAsync(v => v.Id == id, ct);
 
     public async Task<IReadOnlyList<Vendor>> GetActiveVendorsAsync(CancellationToken ct = default) =>
-        await DbSet.AsNoTracking().Where(v => v.ActiveStatus == "Active").ToListAsync(ct);
+        await DbSet.AsNoTracking().Where(v => v.ActiveStatus == "Y" || v.ActiveStatus == "Active").ToListAsync(ct);
 }
 
 public class GradeCatExpenseRuleRepository(ConfigDbContext context) : EfRepository<GradeCatExpenseRule, string>(context), IGradeCatExpenseRuleRepository
