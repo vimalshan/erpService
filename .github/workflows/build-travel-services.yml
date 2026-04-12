@@ -33,11 +33,11 @@ on:
           - admin-service
           - agens-service
           - booking-service
-          - expense-service
-          - finance-service
+          - travelexpense-service
+          - travelfinance-service
           - insurance-service
           - masterdata-service
-          - travel-request-service
+          - travelrequest-service
           - travel-transaction-service
 
 permissions:
@@ -69,15 +69,15 @@ jobs:
           SVC_CONTEXT[admin-service]="src/Services/travelServices/adminServices";                                     SVC_DOCKERFILE[admin-service]="Dockerfile"
           SVC_CONTEXT[agens-service]="src/Services/travelServices/agensService";                                      SVC_DOCKERFILE[agens-service]="Dockerfile"
           SVC_CONTEXT[booking-service]="src/Services/travelServices/bookingServices";                                 SVC_DOCKERFILE[booking-service]="Dockerfile"
-          SVC_CONTEXT[expense-service]="src/Services/travelServices/expenseServices";                                 SVC_DOCKERFILE[expense-service]="Dockerfile"
-          SVC_CONTEXT[finance-service]="src/Services/travelServices/financeServices";                                 SVC_DOCKERFILE[finance-service]="Dockerfile"
+          SVC_CONTEXT[travelexpense-service]="src/Services/travelServices/expenseServices";                            SVC_DOCKERFILE[travelexpense-service]="Dockerfile"
+          SVC_CONTEXT[travelfinance-service]="src/Services/travelServices/financeServices";                            SVC_DOCKERFILE[travelfinance-service]="Dockerfile"
           SVC_CONTEXT[insurance-service]="src/Services/travelServices/insuranceServices";                             SVC_DOCKERFILE[insurance-service]="Dockerfile"
           SVC_CONTEXT[masterdata-service]="src/Services/travelServices/masterdataServices";                           SVC_DOCKERFILE[masterdata-service]="Dockerfile"
-          SVC_CONTEXT[travel-request-service]="src/Services/travelServices/travelRequestServices";                    SVC_DOCKERFILE[travel-request-service]="Dockerfile"
+          SVC_CONTEXT[travelrequest-service]="src/Services/travelServices/travelRequestServices";                     SVC_DOCKERFILE[travelrequest-service]="Dockerfile"
           SVC_CONTEXT[travel-transaction-service]="src/Services/travelServices/traveltransactionServices";            SVC_DOCKERFILE[travel-transaction-service]="Dockerfile"
 
           # Ordered list matching the paths for change detection
-          SVC_NAMES=(api-gateway admin-service agens-service booking-service expense-service finance-service insurance-service masterdata-service travel-request-service travel-transaction-service)
+          SVC_NAMES=(api-gateway admin-service agens-service booking-service travelexpense-service travelfinance-service insurance-service masterdata-service travelrequest-service travel-transaction-service)
           SVC_PATHS=(
             "src/Services/travelServices/ApiGateway/"
             "src/Services/travelServices/adminServices/"
