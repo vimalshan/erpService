@@ -1,0 +1,803 @@
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/travelrequests/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-request-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/travelrequests/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "Key": "travel-requests-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "FileCacheOptions": { "TtlSeconds": 15, "Region": "travelrequests" },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/travelrequests",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-request-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/travelrequests",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "travel-requests-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/traveladvances/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-request-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/traveladvances/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "travel-advances-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/traveladvances",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-request-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/traveladvances",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "travel-advances-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/blobstorage/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-request-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/travelrequest-blobstorage/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "DELETE" ],
+      "Key": "travel-blob",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/vendors/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-transaction-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/vendors/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "vendors-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/vendors",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-transaction-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/vendors",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "vendors-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/taxmasters/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-transaction-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/taxmasters/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "taxmasters-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/taxmasters",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-transaction-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/taxmasters",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "taxmasters-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/jaiinterfacelines/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-transaction-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/jaiinterfacelines/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "jai-lines-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/jaiinterfacelines",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-transaction-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/jaiinterfacelines",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "jai-lines-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/transactionlookups/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-transaction-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/transactionlookups/{everything}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Key": "transaction-lookups",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "FileCacheOptions": { "TtlSeconds": 60, "Region": "lookups" }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/bookings/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "booking-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/bookings/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "bookings-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/bookings",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "booking-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/bookings",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "bookings-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/expenses/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "expense-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/expenses/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "expenses-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/expenses",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "expense-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/expenses",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "expenses-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/conveyances/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "expense-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/conveyances/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "conveyances-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/conveyances",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "expense-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/conveyances",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "conveyances-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/da/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "expense-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/da/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "da-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/da",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "expense-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/da",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "da-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/settlements/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "expense-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/settlements/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "settlements-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/settlements",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "expense-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/settlements",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "settlements-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/blob/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "expense-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/expense-blob/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "DELETE" ],
+      "Key": "expense-blob",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/invoices/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "finance-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/invoices/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "invoices-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/invoices",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "finance-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/invoices",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "invoices-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/batches/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "finance-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/batches/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "batches-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/batches",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "finance-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/batches",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "batches-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/payments/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "finance-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/payments/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "payments-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/payments",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "finance-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/payments",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "payments-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/insurance/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "insurance-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/insurance/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "insurance-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/insurance",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "insurance-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/insurance",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "insurance-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/areas/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "masterdata-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/areas/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "areas-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "FileCacheOptions": { "TtlSeconds": 120, "Region": "masterdata" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/areas",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "masterdata-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/areas",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "areas-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "FileCacheOptions": { "TtlSeconds": 120, "Region": "masterdata" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/guesthouses/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "masterdata-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/guesthouses/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "guesthouses-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "FileCacheOptions": { "TtlSeconds": 120, "Region": "masterdata" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/guesthouses",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "masterdata-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/guesthouses",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "guesthouses-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "FileCacheOptions": { "TtlSeconds": 120, "Region": "masterdata" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/lookups/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "masterdata-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/lookups/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "lookups-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "FileCacheOptions": { "TtlSeconds": 300, "Region": "lookups" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/lookups",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "masterdata-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/lookups",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "lookups-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "FileCacheOptions": { "TtlSeconds": 300, "Region": "lookups" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/routes/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "masterdata-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/routes/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "routes-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "FileCacheOptions": { "TtlSeconds": 120, "Region": "masterdata" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/routes",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "masterdata-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/routes",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "routes-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "FileCacheOptions": { "TtlSeconds": 120, "Region": "masterdata" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/blobstorage/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "masterdata-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/masterdata-blobstorage/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "DELETE" ],
+      "Key": "masterdata-blob",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/agency/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "agency-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/agency/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "agency-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/agency",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "agency-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/agency",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "agency-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 30000
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/airline/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "agency-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/airline/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "airline-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/airline",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "agency-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/airline",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "airline-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/vendor/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "agency-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/agencyvendor/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "agency-vendor-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/vendor",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "agency-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/agencyvendor",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "agency-vendor-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/adminunits/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "admin-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/adminunits/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "adminunits-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/adminunits",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "admin-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/adminunits",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "adminunits-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/financeunits/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "admin-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/financeunits/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Key": "financeunits-crud",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/api/financeunits",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "admin-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/financeunits",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "Key": "financeunits-base",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/auth/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-request-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/api/auth/{everything}",
+      "UpstreamHttpMethod": [ "POST" ],
+      "Key": "auth-route",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 20
+      }
+    },
+
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-request-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/graphql/travelrequests",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "Key": "graphql-travelrequest",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "travel-transaction-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/graphql/transactions",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "Key": "graphql-transactions",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "booking-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/graphql/bookings",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "Key": "graphql-bookings",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "expense-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/graphql/expenses",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "Key": "graphql-expenses",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "finance-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/graphql/finance",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "Key": "graphql-finance",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "insurance-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/graphql/insurance",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "Key": "graphql-insurance",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "masterdata-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/graphql/masterdata",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "Key": "graphql-masterdata",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "agency-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/graphql/agency",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "Key": "graphql-agency",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "DownstreamPathTemplate": "/graphql",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [{ "Host": "admin-api", "Port": 8080 }],
+      "UpstreamPathTemplate": "/graphql/admin",
+      "UpstreamHttpMethod": [ "POST", "GET" ],
+      "Key": "graphql-admin",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    }
+  ],
+
+  "GlobalConfiguration": {
+    "BaseUrl": "http://api-gateway:8080",
+    "RequestIdKey": "X-Correlation-ID",
+    "RateLimitOptions": {
+      "DisableRateLimitHeaders": false,
+      "QuotaExceededMessage": "Too many requests. Please try again later.",
+      "HttpStatusCode": 429,
+      "ClientIdHeader": "X-ClientId"
+    },
+    "QoSOptions": {
+      "ExceptionsAllowedBeforeBreaking": 3,
+      "DurationOfBreak": 10000,
+      "TimeoutValue": 30000
+    },
+    "LoadBalancerOptions": {
+      "Type": "RoundRobin"
+    },
+    "HttpHandlerOptions": {
+      "AllowAutoRedirect": false,
+      "UseCookieContainer": false,
+      "UseTracing": true
+    }
+  }
+}

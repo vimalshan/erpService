@@ -1,6 +1,7 @@
 using MediatR;
 using BookingService.Domain.Common;
 using BookingService.Domain.Events;
+using BookingService.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace BookingService.Application.EventHandlers;
@@ -15,45 +16,63 @@ public record BookingCancelledNotification(BookingCancelledEvent DomainEvent) : 
 public class BookingCreatedEventHandler : INotificationHandler<BookingCreatedNotification>
 {
     private readonly ILogger<BookingCreatedEventHandler> _logger;
-    public BookingCreatedEventHandler(ILogger<BookingCreatedEventHandler> logger) => _logger = logger;
+    private readonly IMessagePublisher _publisher;
 
-    public Task Handle(BookingCreatedNotification notification, CancellationToken cancellationToken)
+    public BookingCreatedEventHandler(ILogger<BookingCreatedEventHandler> logger, IMessagePublisher publisher)
+    {
+        _logger = logger;
+        _publisher = publisher;
+    }
+
+    public async Task Handle(BookingCreatedNotification notification, CancellationToken cancellationToken)
     {
         var ev = notification.DomainEvent;
         _logger.LogInformation(
             "Booking created: #{BookingNumber} by {UserCode} for {BookingType} from {From} to {To}",
             ev.BookingNumber, ev.UserCode, ev.BookingType,
             ev.TravelDates.From, ev.TravelDates.To);
-        return Task.CompletedTask;
+        await _publisher.PublishAsync("booking.created", ev, cancellationToken);
     }
 }
 
 public class BookingConfirmedEventHandler : INotificationHandler<BookingConfirmedNotification>
 {
     private readonly ILogger<BookingConfirmedEventHandler> _logger;
-    public BookingConfirmedEventHandler(ILogger<BookingConfirmedEventHandler> logger) => _logger = logger;
+    private readonly IMessagePublisher _publisher;
 
-    public Task Handle(BookingConfirmedNotification notification, CancellationToken cancellationToken)
+    public BookingConfirmedEventHandler(ILogger<BookingConfirmedEventHandler> logger, IMessagePublisher publisher)
+    {
+        _logger = logger;
+        _publisher = publisher;
+    }
+
+    public async Task Handle(BookingConfirmedNotification notification, CancellationToken cancellationToken)
     {
         var ev = notification.DomainEvent;
         _logger.LogInformation(
             "Booking #{BookingNumber} confirmed with confirmation #{ConfirmationNumber}",
             ev.BookingNumber, ev.ConfirmationNumber);
-        return Task.CompletedTask;
+        await _publisher.PublishAsync("booking.confirmed", ev, cancellationToken);
     }
 }
 
 public class BookingCancelledEventHandler : INotificationHandler<BookingCancelledNotification>
 {
     private readonly ILogger<BookingCancelledEventHandler> _logger;
-    public BookingCancelledEventHandler(ILogger<BookingCancelledEventHandler> logger) => _logger = logger;
+    private readonly IMessagePublisher _publisher;
 
-    public Task Handle(BookingCancelledNotification notification, CancellationToken cancellationToken)
+    public BookingCancelledEventHandler(ILogger<BookingCancelledEventHandler> logger, IMessagePublisher publisher)
+    {
+        _logger = logger;
+        _publisher = publisher;
+    }
+
+    public async Task Handle(BookingCancelledNotification notification, CancellationToken cancellationToken)
     {
         var ev = notification.DomainEvent;
         _logger.LogInformation(
             "Booking #{BookingNumber} cancelled by {CancelledBy}: {Remarks}",
             ev.BookingNumber, ev.CancelledBy, ev.Remarks);
-        return Task.CompletedTask;
+        await _publisher.PublishAsync("booking.cancelled", ev, cancellationToken);
     }
 }

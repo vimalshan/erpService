@@ -28,4 +28,5 @@ public interface ICouponRepository
 public interface IUnitOfWork
 {
     Task<int> SaveChangesAsync(CancellationToken ct = default);
+    void AddDomainEvents(IEnumerable<Common.IDomainEvent> events);
 }

@@ -128,9 +128,6 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<AgencyDbContext>();
-        // In development, drop + recreate so EF schema is always up-to-date
-        if (app.Environment.IsDevelopment())
-            await dbContext.Database.EnsureDeletedAsync();
         await dbContext.Database.EnsureCreatedAsync();
         
         var seedService = scope.ServiceProvider.GetRequiredService<SeedDataService>();

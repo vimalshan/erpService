@@ -1,0 +1,180 @@
+-- =============================================
+-- 09-Transaction Stored Procedures
+-- Travel Transaction Service
+-- =============================================
+
+-- Get All Vendors
+IF OBJECT_ID('dbo.sp_GetAllVendors', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetAllVendors;
+GO
+CREATE PROCEDURE dbo.sp_GetAllVendors
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT VENDOR_ID, NAME, ADDRESS_LINE1, ADDRESS_LINE2, ADDRESS_LINE3,
+           CITY_CODE, IT_PAN_NUMBER, PHONE_NUMBER, ACCOUNT_NUMBER, BANK_NAME, CATEGORY_TYPE
+    FROM VENDOR_MASTER
+    ORDER BY VENDOR_ID;
+END
+GO
+
+-- Get Vendor By Id
+IF OBJECT_ID('dbo.sp_GetVendorById', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetVendorById;
+GO
+CREATE PROCEDURE dbo.sp_GetVendorById
+    @VendorId NUMERIC(15,0)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT VENDOR_ID, NAME, ADDRESS_LINE1, ADDRESS_LINE2, ADDRESS_LINE3,
+           CITY_CODE, IT_PAN_NUMBER, PHONE_NUMBER, ACCOUNT_NUMBER, BANK_NAME, CATEGORY_TYPE
+    FROM VENDOR_MASTER
+    WHERE VENDOR_ID = @VendorId;
+END
+GO
+
+-- Create Vendor
+IF OBJECT_ID('dbo.sp_CreateVendor', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_CreateVendor;
+GO
+CREATE PROCEDURE dbo.sp_CreateVendor
+    @VendorId       NUMERIC(15,0),
+    @Name           VARCHAR(240),
+    @CategoryType   VARCHAR(1) = 'V',
+    @AddressLine1   VARCHAR(240) = NULL,
+    @PhoneNumber    VARCHAR(20) = NULL,
+    @ItPanNumber    VARCHAR(20) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO VENDOR_MASTER (VENDOR_ID, NAME, CATEGORY_TYPE, ADDRESS_LINE1, PHONE_NUMBER, IT_PAN_NUMBER)
+    VALUES (@VendorId, @Name, @CategoryType, @AddressLine1, @PhoneNumber, @ItPanNumber);
+
+    SELECT VENDOR_ID, NAME, ADDRESS_LINE1, ADDRESS_LINE2, ADDRESS_LINE3,
+           CITY_CODE, IT_PAN_NUMBER, PHONE_NUMBER, ACCOUNT_NUMBER, BANK_NAME, CATEGORY_TYPE
+    FROM VENDOR_MASTER
+    WHERE VENDOR_ID = @VendorId;
+END
+GO
+
+-- Get All Tax Masters
+IF OBJECT_ID('dbo.sp_GetAllTaxMasters', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetAllTaxMasters;
+GO
+CREATE PROCEDURE dbo.sp_GetAllTaxMasters
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT TAX_VENDOR_ID, TAX_TYPE, TAX_RATE, TAX_EFFECTIVE_DATE, TAX_CLOSE_DATE,
+           CREATED_BY, CREATION_DATE, LAST_UPDATED_BY, LAST_UPDATE_DATE
+    FROM TAX_MASTER
+    ORDER BY TAX_TYPE;
+END
+GO
+
+-- Get Tax Master By Type
+IF OBJECT_ID('dbo.sp_GetTaxMasterByType', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetTaxMasterByType;
+GO
+CREATE PROCEDURE dbo.sp_GetTaxMasterByType
+    @TaxType VARCHAR(10)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT TAX_VENDOR_ID, TAX_TYPE, TAX_RATE, TAX_EFFECTIVE_DATE, TAX_CLOSE_DATE,
+           CREATED_BY, CREATION_DATE, LAST_UPDATED_BY, LAST_UPDATE_DATE
+    FROM TAX_MASTER
+    WHERE TAX_TYPE = @TaxType;
+END
+GO
+
+-- Update Tax Rate
+IF OBJECT_ID('dbo.sp_UpdateTaxRate', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_UpdateTaxRate;
+GO
+CREATE PROCEDURE dbo.sp_UpdateTaxRate
+    @TaxType       VARCHAR(10),
+    @NewRate        NUMERIC(5,2),
+    @ModifiedBy     NUMERIC(15,0)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE TAX_MASTER
+    SET TAX_RATE = @NewRate,
+        LAST_UPDATED_BY = @ModifiedBy,
+        LAST_UPDATE_DATE = GETDATE()
+    WHERE TAX_TYPE = @TaxType;
+END
+GO
+
+-- Get All JAI Interface Lines
+IF OBJECT_ID('dbo.sp_GetAllJaiInterfaceLines', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetAllJaiInterfaceLines;
+GO
+CREATE PROCEDURE dbo.sp_GetAllJaiInterfaceLines
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT INTERFACE_LINE_ID, ORG_ID, PARTY_ID, PARTY_SITE_ID, IMPORT_MODULE,
+           TRANSACTION_NUM, TRANSACTION_LINE_NUM, ERROR_FLAG, IMPORT_STATUS,
+           BATCH_ID, INVOICE_ID, TYPE, SGST_AMOUNT, CGST_AMOUNT, IGST_AMOUNT, JV_NUMBER
+    FROM JAI_INTERFACE_LINES_ALL
+    ORDER BY CREATION_DATE DESC;
+END
+GO
+
+-- Update GST Amounts
+IF OBJECT_ID('dbo.sp_UpdateGstAmounts', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_UpdateGstAmounts;
+GO
+CREATE PROCEDURE dbo.sp_UpdateGstAmounts
+    @InterfaceLineId NUMERIC(15,0),
+    @SgstAmount      NUMERIC(15,2),
+    @CgstAmount      NUMERIC(15,2),
+    @IgstAmount      NUMERIC(15,2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE JAI_INTERFACE_LINES_ALL
+    SET SGST_AMOUNT = @SgstAmount,
+        CGST_AMOUNT = @CgstAmount,
+        IGST_AMOUNT = @IgstAmount,
+        LAST_UPDATE_DATE = GETDATE()
+    WHERE INTERFACE_LINE_ID = @InterfaceLineId;
+END
+GO
+
+-- Get All Account Masters (Dapper)
+IF OBJECT_ID('dbo.sp_GetAllAccountMasters', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetAllAccountMasters;
+GO
+CREATE PROCEDURE dbo.sp_GetAllAccountMasters
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT COMPANY_CODE, ED_CODE, ACCOUNT_CODE, GRADE_TYPE,
+           DEBIT_CREDIT_FLAG, SUB_CODE, ACCOUNT_DESCRIPTION
+    FROM ACC_MASTER
+    ORDER BY COMPANY_CODE, ACCOUNT_CODE;
+END
+GO
+
+-- Get All GL Code Combinations (Dapper)
+IF OBJECT_ID('dbo.sp_GetAllGlCodeCombinations', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetAllGlCodeCombinations;
+GO
+CREATE PROCEDURE dbo.sp_GetAllGlCodeCombinations
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT ROWID, CODE_COMBINATION_ID, CHART_OF_ACCOUNTS_ID, CONCATENATED_SEGMENTS,
+           GL_ACCOUNT_TYPE, ENABLED_FLAG, SEGMENT1, SEGMENT2, SEGMENT3, DESCRIPTION
+    FROM GL_CODE_COMBINATIONS_KFV
+    ORDER BY CODE_COMBINATION_ID;
+END
+GO
+
+-- Get Travel AP Params By Id
+IF OBJECT_ID('dbo.sp_GetTravelApParamsById', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetTravelApParamsById;
+GO
+CREATE PROCEDURE dbo.sp_GetTravelApParamsById
+    @ApUnitId NUMERIC(15,0)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT AP_UNIT_ID, ACCOUNT_STATUS, ACCOUNT_CODE, CONTROL_COMB_ID
+    FROM TRAVEL_AP_PARAMS
+    WHERE AP_UNIT_ID = @ApUnitId;
+END
+GO

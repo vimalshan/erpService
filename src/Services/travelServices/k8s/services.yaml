@@ -1,0 +1,935 @@
+# ============================================================
+# Travel Request Service
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: travel-request-api
+  namespace: erp-travel
+  labels:
+    app: travel-request-api
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: travel-request-api
+  template:
+    metadata:
+      labels:
+        app: travel-request-api
+        tier: backend
+    spec:
+      containers:
+      - name: travel-request-api
+        image: ${REGISTRY}/travel-request-api:${IMAGE_TAG}
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: erp-config
+        env:
+        - name: ConnectionStrings__TravelDb
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: traveldb-connection
+        - name: Jwt__Key
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: key
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: username
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: password
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: travel-request-api
+  namespace: erp-travel
+spec:
+  selector:
+    app: travel-request-api
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: travel-request-api-hpa
+  namespace: erp-travel
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: travel-request-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+# ============================================================
+# Travel Transaction Service
+# ============================================================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: travel-transaction-api
+  namespace: erp-travel
+  labels:
+    app: travel-transaction-api
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: travel-transaction-api
+  template:
+    metadata:
+      labels:
+        app: travel-transaction-api
+        tier: backend
+    spec:
+      containers:
+      - name: travel-transaction-api
+        image: ${REGISTRY}/travel-transaction-api:${IMAGE_TAG}
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: erp-config
+        env:
+        - name: ConnectionStrings__TravelDb
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: traveldb-connection
+        - name: Jwt__Key
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: key
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: username
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: password
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: travel-transaction-api
+  namespace: erp-travel
+spec:
+  selector:
+    app: travel-transaction-api
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: travel-transaction-api-hpa
+  namespace: erp-travel
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: travel-transaction-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+# ============================================================
+# Booking Service
+# ============================================================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-api
+  namespace: erp-travel
+  labels:
+    app: booking-api
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: booking-api
+  template:
+    metadata:
+      labels:
+        app: booking-api
+        tier: backend
+    spec:
+      containers:
+      - name: booking-api
+        image: ${REGISTRY}/booking-api:${IMAGE_TAG}
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: erp-config
+        env:
+        - name: ConnectionStrings__TravelDb
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: traveldb-connection
+        - name: Jwt__Key
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: key
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: username
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: password
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: booking-api
+  namespace: erp-travel
+spec:
+  selector:
+    app: booking-api
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: booking-api-hpa
+  namespace: erp-travel
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: booking-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+# ============================================================
+# Expense Service
+# ============================================================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: expense-api
+  namespace: erp-travel
+  labels:
+    app: expense-api
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: expense-api
+  template:
+    metadata:
+      labels:
+        app: expense-api
+        tier: backend
+    spec:
+      containers:
+      - name: expense-api
+        image: ${REGISTRY}/expense-api:${IMAGE_TAG}
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: erp-config
+        env:
+        - name: ConnectionStrings__TravelDb
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: traveldb-connection
+        - name: Jwt__Key
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: key
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: username
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: password
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: expense-api
+  namespace: erp-travel
+spec:
+  selector:
+    app: expense-api
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: expense-api-hpa
+  namespace: erp-travel
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: expense-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+# ============================================================
+# Finance Service
+# ============================================================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finance-api
+  namespace: erp-travel
+  labels:
+    app: finance-api
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: finance-api
+  template:
+    metadata:
+      labels:
+        app: finance-api
+        tier: backend
+    spec:
+      containers:
+      - name: finance-api
+        image: ${REGISTRY}/finance-api:${IMAGE_TAG}
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: erp-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: financedb-connection
+        - name: Jwt__Key
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: key
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: username
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: password
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: finance-api
+  namespace: erp-travel
+spec:
+  selector:
+    app: finance-api
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: finance-api-hpa
+  namespace: erp-travel
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: finance-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+# ============================================================
+# Insurance Service
+# ============================================================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insurance-api
+  namespace: erp-travel
+  labels:
+    app: insurance-api
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: insurance-api
+  template:
+    metadata:
+      labels:
+        app: insurance-api
+        tier: backend
+    spec:
+      containers:
+      - name: insurance-api
+        image: ${REGISTRY}/insurance-api:${IMAGE_TAG}
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: erp-config
+        env:
+        - name: ConnectionStrings__TravelDb
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: traveldb-connection
+        - name: Jwt__Key
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: key
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: username
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: password
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: insurance-api
+  namespace: erp-travel
+spec:
+  selector:
+    app: insurance-api
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: insurance-api-hpa
+  namespace: erp-travel
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: insurance-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+# ============================================================
+# MasterData Service
+# ============================================================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: masterdata-api
+  namespace: erp-travel
+  labels:
+    app: masterdata-api
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: masterdata-api
+  template:
+    metadata:
+      labels:
+        app: masterdata-api
+        tier: backend
+    spec:
+      containers:
+      - name: masterdata-api
+        image: ${REGISTRY}/masterdata-api:${IMAGE_TAG}
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: erp-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: masterdatadb-connection
+        - name: Jwt__Key
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: key
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: username
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: password
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: masterdata-api
+  namespace: erp-travel
+spec:
+  selector:
+    app: masterdata-api
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: masterdata-api-hpa
+  namespace: erp-travel
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: masterdata-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+# ============================================================
+# Agency Service
+# ============================================================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agency-api
+  namespace: erp-travel
+  labels:
+    app: agency-api
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: agency-api
+  template:
+    metadata:
+      labels:
+        app: agency-api
+        tier: backend
+    spec:
+      containers:
+      - name: agency-api
+        image: ${REGISTRY}/agency-api:${IMAGE_TAG}
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: erp-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: agencydb-connection
+        - name: Jwt__Key
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: key
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: username
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: password
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agency-api
+  namespace: erp-travel
+spec:
+  selector:
+    app: agency-api
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agency-api-hpa
+  namespace: erp-travel
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agency-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+# ============================================================
+# Admin Service
+# ============================================================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-api
+  namespace: erp-travel
+  labels:
+    app: admin-api
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: admin-api
+  template:
+    metadata:
+      labels:
+        app: admin-api
+        tier: backend
+    spec:
+      containers:
+      - name: admin-api
+        image: ${REGISTRY}/admin-api:${IMAGE_TAG}
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: erp-config
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: admindb-connection
+        - name: JwtSettings__SecretKey
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: key
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: username
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: password
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-api
+  namespace: erp-travel
+spec:
+  selector:
+    app: admin-api
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: admin-api-hpa
+  namespace: erp-travel
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: admin-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70

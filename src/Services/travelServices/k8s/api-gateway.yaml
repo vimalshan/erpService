@@ -1,0 +1,99 @@
+# ============================================================
+# API Gateway
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: erp-travel
+  labels:
+    app: api-gateway
+    tier: gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+        tier: gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: ${REGISTRY}/api-gateway:${IMAGE_TAG}
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: erp-config
+        env:
+        - name: Jwt__Key
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: key
+        - name: RabbitMQ__UserName
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: username
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: password
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: erp-travel
+spec:
+  selector:
+    app: api-gateway
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+  type: LoadBalancer
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-gateway-hpa
+  namespace: erp-travel
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-gateway
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70

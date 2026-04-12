@@ -1,0 +1,388 @@
+{
+  "rabbit_version": "3.13",
+  "users": [
+    {
+      "name": "guest",
+      "password_hash": "guest",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"]
+    },
+    {
+      "name": "erp_service",
+      "password_hash": "erp_service",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"]
+    }
+  ],
+  "vhosts": [
+    { "name": "/" }
+  ],
+  "permissions": [
+    {
+      "user": "guest",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "erp_service",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "erp.travel.events",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "booking.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "erp.travel.deadletter",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "travel-request-events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.travel.deadletter",
+        "x-dead-letter-routing-key": "dlq.travel-request",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "travel-transaction-events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.travel.deadletter",
+        "x-dead-letter-routing-key": "dlq.travel-transaction",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "booking-events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.travel.deadletter",
+        "x-dead-letter-routing-key": "dlq.booking",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "expense-events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.travel.deadletter",
+        "x-dead-letter-routing-key": "dlq.expense",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "finance-events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.travel.deadletter",
+        "x-dead-letter-routing-key": "dlq.finance",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "insurance-events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.travel.deadletter",
+        "x-dead-letter-routing-key": "dlq.insurance",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "masterdata-events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.travel.deadletter",
+        "x-dead-letter-routing-key": "dlq.masterdata",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "agency-events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.travel.deadletter",
+        "x-dead-letter-routing-key": "dlq.agency",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "admin-events",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "erp.travel.deadletter",
+        "x-dead-letter-routing-key": "dlq.admin",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "dlq.travel-request",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dlq.travel-transaction",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dlq.booking",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dlq.expense",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dlq.finance",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dlq.insurance",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dlq.masterdata",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dlq.agency",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dlq.admin",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "erp.travel.events",
+      "vhost": "/",
+      "destination": "travel-request-events",
+      "destination_type": "queue",
+      "routing_key": "travel.request.#",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.events",
+      "vhost": "/",
+      "destination": "travel-transaction-events",
+      "destination_type": "queue",
+      "routing_key": "travel.transaction.#",
+      "arguments": {}
+    },
+    {
+      "source": "booking.exchange",
+      "vhost": "/",
+      "destination": "booking-events",
+      "destination_type": "queue",
+      "routing_key": "booking.#",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.events",
+      "vhost": "/",
+      "destination": "expense-events",
+      "destination_type": "queue",
+      "routing_key": "expense.#",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.events",
+      "vhost": "/",
+      "destination": "finance-events",
+      "destination_type": "queue",
+      "routing_key": "finance.#",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.events",
+      "vhost": "/",
+      "destination": "insurance-events",
+      "destination_type": "queue",
+      "routing_key": "insurance.#",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.events",
+      "vhost": "/",
+      "destination": "masterdata-events",
+      "destination_type": "queue",
+      "routing_key": "masterdata.#",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.events",
+      "vhost": "/",
+      "destination": "agency-events",
+      "destination_type": "queue",
+      "routing_key": "agency.#",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.events",
+      "vhost": "/",
+      "destination": "admin-events",
+      "destination_type": "queue",
+      "routing_key": "admin.#",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.deadletter",
+      "vhost": "/",
+      "destination": "dlq.travel-request",
+      "destination_type": "queue",
+      "routing_key": "dlq.travel-request",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.deadletter",
+      "vhost": "/",
+      "destination": "dlq.travel-transaction",
+      "destination_type": "queue",
+      "routing_key": "dlq.travel-transaction",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.deadletter",
+      "vhost": "/",
+      "destination": "dlq.booking",
+      "destination_type": "queue",
+      "routing_key": "dlq.booking",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.deadletter",
+      "vhost": "/",
+      "destination": "dlq.expense",
+      "destination_type": "queue",
+      "routing_key": "dlq.expense",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.deadletter",
+      "vhost": "/",
+      "destination": "dlq.finance",
+      "destination_type": "queue",
+      "routing_key": "dlq.finance",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.deadletter",
+      "vhost": "/",
+      "destination": "dlq.insurance",
+      "destination_type": "queue",
+      "routing_key": "dlq.insurance",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.deadletter",
+      "vhost": "/",
+      "destination": "dlq.masterdata",
+      "destination_type": "queue",
+      "routing_key": "dlq.masterdata",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.deadletter",
+      "vhost": "/",
+      "destination": "dlq.agency",
+      "destination_type": "queue",
+      "routing_key": "dlq.agency",
+      "arguments": {}
+    },
+    {
+      "source": "erp.travel.deadletter",
+      "vhost": "/",
+      "destination": "dlq.admin",
+      "destination_type": "queue",
+      "routing_key": "dlq.admin",
+      "arguments": {}
+    }
+  ],
+  "policies": [
+    {
+      "vhost": "/",
+      "name": "ha-all",
+      "pattern": ".*",
+      "apply-to": "queues",
+      "definition": {
+        "ha-mode": "all",
+        "ha-sync-mode": "automatic"
+      },
+      "priority": 0
+    }
+  ]
+}

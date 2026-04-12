@@ -30,7 +30,8 @@ public class RabbitMqPublisher : IMessagePublisher, IAsyncDisposable
             HostName = _configuration["RabbitMQ:HostName"] ?? "localhost",
             UserName = _configuration["RabbitMQ:UserName"] ?? "guest",
             Password = _configuration["RabbitMQ:Password"] ?? "guest",
-            Port = int.Parse(_configuration["RabbitMQ:Port"] ?? "5672")
+            Port = int.Parse(_configuration["RabbitMQ:Port"] ?? "5672"),
+            RequestedConnectionTimeout = TimeSpan.FromSeconds(5)
         };
 
         _connection = await factory.CreateConnectionAsync();

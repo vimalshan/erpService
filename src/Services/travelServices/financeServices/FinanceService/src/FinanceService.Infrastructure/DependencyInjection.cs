@@ -66,6 +66,10 @@ public static class DependencyInjection
         services.AddHostedService<PaymentProcessedConsumer>();
         services.AddHostedService<BatchApprovedConsumer>();
 
+        // Register Infrastructure domain event handlers with MediatR
+        services.AddMediatR(cfg =>
+            cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
+
         // Current User
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();

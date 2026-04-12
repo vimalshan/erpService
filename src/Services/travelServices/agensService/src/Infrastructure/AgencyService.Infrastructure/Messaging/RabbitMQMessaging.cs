@@ -36,7 +36,7 @@ public class RabbitMQEventPublisher : IEventPublisher, IDisposable
     {
         try
         {
-            var eventName = typeof(TEvent).Name;
+            var eventName = @event.GetType().Name;
             var exchange = "agency.events";
             
             _channel.ExchangeDeclare(
@@ -44,7 +44,7 @@ public class RabbitMQEventPublisher : IEventPublisher, IDisposable
                 type: ExchangeType.Topic,
                 durable: true);
             
-            var message = JsonSerializer.Serialize(@event);
+            var message = JsonSerializer.Serialize(@event, @event.GetType());
             var body = Encoding.UTF8.GetBytes(message);
             
             _channel.BasicPublish(
@@ -57,7 +57,7 @@ public class RabbitMQEventPublisher : IEventPublisher, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error publishing event: {EventType}", typeof(TEvent).Name);
+            _logger.LogError(ex, "Error publishing event: {EventType}", @event.GetType().Name);
             throw;
         }
     }

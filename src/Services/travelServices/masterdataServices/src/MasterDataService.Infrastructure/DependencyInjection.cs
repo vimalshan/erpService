@@ -61,6 +61,9 @@ public static class DependencyInjection
         services.AddHttpClient("ResilientClient")
             .AddPolicyHandler(PolicyRegistry.GetCombinedPolicy());
 
+        // Register Infrastructure MediatR handlers (domain event handlers)
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
+
         return services;
     }
 }

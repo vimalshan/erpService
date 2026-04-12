@@ -1,3 +1,4 @@
+using BookingService.Domain.Interfaces;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Microsoft.Extensions.Logging;
@@ -15,11 +16,6 @@ public class RabbitMqOptions
     public string Password { get; set; } = "guest";
     public string VirtualHost { get; set; } = "/";
     public string ExchangeName { get; set; } = "booking.exchange";
-}
-
-public interface IMessagePublisher
-{
-    Task PublishAsync<T>(string routingKey, T message, CancellationToken ct = default);
 }
 
 public class RabbitMqPublisher : IMessagePublisher, IAsyncDisposable

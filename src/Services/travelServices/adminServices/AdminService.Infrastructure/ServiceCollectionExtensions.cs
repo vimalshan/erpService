@@ -45,7 +45,11 @@ public static class ServiceCollectionExtensions
         services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
         // MediatR
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<MappingProfile>());
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssemblyContaining<MappingProfile>();
+            cfg.RegisterServicesFromAssemblyContaining<RabbitMQPublisher>();
+        });
 
         // JWT Token Service
         services.AddScoped<ITokenService, TokenService>();

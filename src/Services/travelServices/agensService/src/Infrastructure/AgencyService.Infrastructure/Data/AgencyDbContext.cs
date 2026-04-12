@@ -1,4 +1,5 @@
 using AgencyService.Domain.Common;
+using AgencyService.Infrastructure.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -7,11 +8,13 @@ namespace AgencyService.Infrastructure.Data;
 public class AgencyDbContext : DbContext
 {
     private readonly ILogger<AgencyDbContext> _logger;
+    private readonly IEventPublisher _eventPublisher;
     
-    public AgencyDbContext(DbContextOptions<AgencyDbContext> options, ILogger<AgencyDbContext> logger)
+    public AgencyDbContext(DbContextOptions<AgencyDbContext> options, ILogger<AgencyDbContext> logger, IEventPublisher eventPublisher)
         : base(options)
     {
         _logger = logger;
+        _eventPublisher = eventPublisher;
     }
     
     public DbSet<Domain.Entities.Agency> Agencies { get; set; }
@@ -107,6 +110,19 @@ public class AgencyDbContext : DbContext
             .ToList();
 
         var result = await base.SaveChangesAsync(cancellationToken);
+
+        // Publish domain events via IEventPublisher
+        foreach (var domainEvent in domainEvents)
+        {
+            try
+            {
+                await _eventPublisher.PublishAsync(domainEvent);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to publish domain event {EventType}", domainEvent.GetType().Name);
+            }
+        }
 
         // Clear domain events
         foreach (var entity in domainEntities)

@@ -88,7 +88,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Disabled: running HTTP-only profile
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();

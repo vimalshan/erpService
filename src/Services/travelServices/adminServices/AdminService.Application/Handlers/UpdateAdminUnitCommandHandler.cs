@@ -2,6 +2,7 @@ using AutoMapper;
 using MediatR;
 using AdminService.Application.Commands;
 using AdminService.Application.DTOs;
+using AdminService.Domain.Events;
 using AdminService.Domain.Interfaces;
 
 namespace AdminService.Application.Handlers;
@@ -13,11 +14,13 @@ public class UpdateAdminUnitCommandHandler : IRequestHandler<UpdateAdminUnitComm
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IMediator _mediator;
 
-    public UpdateAdminUnitCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public UpdateAdminUnitCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IMediator mediator)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     }
 
     public async Task<AdminUnitDto> Handle(UpdateAdminUnitCommand request, CancellationToken cancellationToken)
@@ -36,6 +39,9 @@ public class UpdateAdminUnitCommandHandler : IRequestHandler<UpdateAdminUnitComm
 
         var result = await _unitOfWork.AdminUnits.UpdateAsync(adminUnit, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await _mediator.Publish(new AdminUnitUpdatedEvent(
+            result.AdminCode, result.Name, result.AdminType, DateTime.UtcNow), cancellationToken);
 
         return _mapper.Map<AdminUnitDto>(result);
     }

@@ -56,9 +56,8 @@ public class CreateInvoiceCommandHandler : IRequestHandler<CreateInvoiceCommand,
         }
 
         _context.ApInvoices.Add(invoice);
-        await _context.SaveChangesAsync(cancellationToken);
-
         invoice.AddDomainEvent(new InvoiceCreatedEvent(invoice.InvoiceId, invoice.InvoiceNum));
+        await _context.SaveChangesAsync(cancellationToken);
 
         return _mapper.Map<InvoiceDto>(invoice);
     }

@@ -1,9 +1,11 @@
+using MediatR;
+
 namespace AdminService.Domain.Events;
 
 /// <summary>
 /// Base class for domain events
 /// </summary>
-public abstract record DomainEvent(DateTime OccurredAt)
+public abstract record DomainEvent(DateTime OccurredAt) : INotification
 {
     /// <summary>
     /// Unique event identifier

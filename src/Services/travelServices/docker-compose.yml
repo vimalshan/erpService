@@ -1,0 +1,354 @@
+version: "3.8"
+
+x-common-env: &common-env
+  ASPNETCORE_ENVIRONMENT: Production
+  RabbitMQ__HostName: rabbitmq
+  RabbitMQ__UserName: ${RABBITMQ_USER:-guest}
+  RabbitMQ__Password: ${RABBITMQ_PASS:-guest}
+  RabbitMQ__Port: "5672"
+  Jwt__Key: ${JWT_SECRET_KEY:-TravelRequestServiceSecretKey2024!@#$$%^&*()MinLength32Chars}
+  Jwt__Issuer: TravelRequestService
+  Jwt__Audience: TravelRequestService.Clients
+  AzureBlobStorage__ConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1"
+
+services:
+  # ==================== INFRASTRUCTURE ====================
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: erp-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SA_PASSWORD:-Erp@Travel2024!}
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+      - ./deploy/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - erp-network
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" -b
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: erp-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./deploy/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./deploy/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    networks:
+      - erp-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: erp-azurite
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - azurite_data:/data
+    networks:
+      - erp-network
+    command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
+    restart: unless-stopped
+
+  # ==================== API GATEWAY ====================
+
+  api-gateway:
+    build:
+      context: ./ApiGateway
+      dockerfile: Dockerfile
+    container_name: erp-api-gateway
+    environment:
+      <<: *common-env
+      ASPNETCORE_URLS: http://+:8080
+    ports:
+      - "5100:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      travel-request-api:
+        condition: service_healthy
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ==================== MICROSERVICES ====================
+
+  travel-request-api:
+    build:
+      context: ./travelRequestServices
+      dockerfile: Dockerfile
+    container_name: erp-travel-request
+    environment:
+      <<: *common-env
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__TravelDb: "Server=sqlserver,1433;Database=TRAVELDB;User Id=sa;Password=${SA_PASSWORD:-Erp@Travel2024!};TrustServerCertificate=True;MultipleActiveResultSets=True"
+    ports:
+      - "5205:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  travel-transaction-api:
+    build:
+      context: ./traveltransactionServices
+      dockerfile: Dockerfile
+    container_name: erp-travel-transaction
+    environment:
+      <<: *common-env
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__TravelDb: "Server=sqlserver,1433;Database=TRAVELDB;User Id=sa;Password=${SA_PASSWORD:-Erp@Travel2024!};TrustServerCertificate=True;MultipleActiveResultSets=True"
+    ports:
+      - "5082:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  booking-api:
+    build:
+      context: ./bookingServices
+      dockerfile: Dockerfile
+    container_name: erp-booking
+    environment:
+      <<: *common-env
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__TravelDb: "Server=sqlserver,1433;Database=TRAVELDB;User Id=sa;Password=${SA_PASSWORD:-Erp@Travel2024!};TrustServerCertificate=True;MultipleActiveResultSets=True"
+    ports:
+      - "5117:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  expense-api:
+    build:
+      context: ./expenseServices
+      dockerfile: Dockerfile
+    container_name: erp-expense
+    environment:
+      <<: *common-env
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__TravelDb: "Server=sqlserver,1433;Database=TRAVELDB;User Id=sa;Password=${SA_PASSWORD:-Erp@Travel2024!};TrustServerCertificate=True;MultipleActiveResultSets=True"
+    ports:
+      - "5090:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  finance-api:
+    build:
+      context: ./financeServices
+      dockerfile: Dockerfile
+    container_name: erp-finance
+    environment:
+      <<: *common-env
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=FinanceServiceDb;User Id=sa;Password=${SA_PASSWORD:-Erp@Travel2024!};TrustServerCertificate=True;MultipleActiveResultSets=True"
+    ports:
+      - "5294:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  insurance-api:
+    build:
+      context: ./insuranceServices
+      dockerfile: Dockerfile
+    container_name: erp-insurance
+    environment:
+      <<: *common-env
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__TravelDb: "Server=sqlserver,1433;Database=TRAVELDB;User Id=sa;Password=${SA_PASSWORD:-Erp@Travel2024!};TrustServerCertificate=True;MultipleActiveResultSets=True"
+    ports:
+      - "5179:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  masterdata-api:
+    build:
+      context: ./masterdataServices
+      dockerfile: Dockerfile
+    container_name: erp-masterdata
+    environment:
+      <<: *common-env
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=MasterDataDB;User Id=sa;Password=${SA_PASSWORD:-Erp@Travel2024!};TrustServerCertificate=True;MultipleActiveResultSets=True"
+    ports:
+      - "5166:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  agency-api:
+    build:
+      context: ./agensService
+      dockerfile: Dockerfile.production
+    container_name: erp-agency
+    environment:
+      <<: *common-env
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=AgencyServiceDb;User Id=sa;Password=${SA_PASSWORD:-Erp@Travel2024!};TrustServerCertificate=True;MultipleActiveResultSets=True"
+    ports:
+      - "5000:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  admin-api:
+    build:
+      context: ./adminServices
+      dockerfile: Dockerfile
+    container_name: erp-admin
+    environment:
+      <<: *common-env
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=AdminServiceDb;User Id=sa;Password=${SA_PASSWORD:-Erp@Travel2024!};TrustServerCertificate=True;MultipleActiveResultSets=True"
+      JwtSettings__SecretKey: ${JWT_SECRET_KEY:-TravelRequestServiceSecretKey2024!@#$$%^&*()MinLength32Chars}
+      JwtSettings__Issuer: AdminService
+      JwtSettings__Audience: AdminServiceAPI
+    ports:
+      - "5001:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  azurite_data:
+    driver: local
+
+networks:
+  erp-network:
+    driver: bridge
+    name: erp-travel-network

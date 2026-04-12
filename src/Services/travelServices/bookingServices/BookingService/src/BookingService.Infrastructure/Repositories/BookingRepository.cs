@@ -27,6 +27,8 @@ public class BookingRepository : IBookingRepository
     {
         var entity = MapToEntity(booking);
         await _context.BookingRequests.AddAsync(entity, ct);
+        _context.AddDomainEvents(booking.DomainEvents);
+        booking.ClearDomainEvents();
     }
 
     public async Task UpdateAsync(BookingAggregate booking, CancellationToken ct = default)
@@ -46,6 +48,9 @@ public class BookingRepository : IBookingRepository
         entity.BkCanDat = booking.CancelledOn;
         entity.BkCanRem = booking.CancellationRemarks;
         entity.BkCanUsr = booking.CancelledBy;
+
+        _context.AddDomainEvents(booking.DomainEvents);
+        booking.ClearDomainEvents();
     }
 
     public async Task<IEnumerable<BookingRequest>> GetByUserAsync(string userCode, CancellationToken ct = default)

@@ -27,20 +27,20 @@ public class BookingDapperRepository : IBookingReadRepository
     {
         const string sql = """
             SELECT 
-                br.BK_BOK_NUM   AS BookingNumber,
+                CAST(br.BK_BOK_NUM AS BIGINT) AS BookingNumber,
                 br.BK_USR_COD   AS UserCode,
-                br.BK_USR_NUM   AS UserNum,
+                CAST(br.BK_USR_NUM AS BIGINT) AS UserNum,
                 br.BK_BOK_TYP   AS BookingType,
                 br.BK_FRO_DAT   AS DepartureDate,
                 br.BK_RET_DAT   AS ReturnDate,
-                br.BK_FRO_CIT   AS FromCity,
-                br.BK_TO_CIT    AS ToCity,
+                CAST(br.BK_FRO_CIT AS BIGINT) AS FromCity,
+                CAST(br.BK_TO_CIT  AS BIGINT) AS ToCity,
                 br.BK_FRO_LOC   AS FromLocation,
                 br.BK_TO_LOC    AS ToLocation,
                 br.BK_PER_NAM   AS PersonName,
-                ISNULL(br.BK_BUD_AMT,0) AS BudgetAmount,
+                CAST(ISNULL(br.BK_BUD_AMT,0) AS DECIMAL(19,2)) AS BudgetAmount,
                 br.BK_APP_STS   AS Status,
-                br.BK_CNF_NUM   AS ConfirmationNumber,
+                CAST(br.BK_CNF_NUM AS BIGINT) AS ConfirmationNumber,
                 br.BK_CAN_DAT   AS CancelledOn,
                 br.BK_CAN_REM   AS CancellationRemarks
             FROM dbo.BOOK_REQUEST br
@@ -80,7 +80,7 @@ public class BookingDapperRepository : IBookingReadRepository
     {
         const string sql = """
             SELECT 
-                br.BK_BOK_NUM   AS BookingNumber,
+                CAST(br.BK_BOK_NUM AS BIGINT) AS BookingNumber,
                 br.BK_USR_COD   AS UserCode,
                 br.BK_BOK_TYP   AS BookingType,
                 br.BK_FRO_DAT   AS DepartureDate,

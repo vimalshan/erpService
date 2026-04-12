@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: erp-config
+  namespace: erp-travel
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  RabbitMQ__HostName: "rabbitmq.erp-travel.svc.cluster.local"
+  RabbitMQ__Port: "5672"
+  Jwt__Issuer: "TravelRequestService"
+  Jwt__Audience: "TravelRequestService.Clients"
