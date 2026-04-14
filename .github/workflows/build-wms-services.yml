@@ -1,0 +1,211 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Build & Push WMS Service Docker Images to GitHub Container Registry (GHCR)
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# Triggers:
+#   - Push to main (only when relevant service files change)
+#   - Manual dispatch (workflow_dispatch) to build all or specific services
+#
+# Prerequisites (GitHub repo settings):
+#   No secrets needed — uses the built-in GITHUB_TOKEN for GHCR authentication.
+#   Ensure "Read and write permissions" is enabled under:
+#     Settings → Actions → General → Workflow permissions
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Build & Push WMS Services
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/Services/wmsServices/**'
+
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to build (or "all")'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - api-gateway
+          - auditlog-service
+          - customer-service
+          - employee-service
+          - fleet-management-service
+          - inventory-service
+          - order-service
+          - product-service
+          - purchaseorder-service
+          - rackingsystem-service
+          - receiving-service
+          - salesorder-service
+          - security-service
+          - shipment-service
+          - supplier-service
+          - warehousestructure-service
+          - wmtransactional-service
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/erp
+
+jobs:
+  # ── Detect which services changed ────────────────────────────────────────
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine changed services
+        id: set-matrix
+        run: |
+          # Service registry: name → context + dockerfile
+          declare -A SVC_CONTEXT SVC_DOCKERFILE
+          SVC_CONTEXT[api-gateway]="src/Services/wmsServices/apiGateway";                                             SVC_DOCKERFILE[api-gateway]="Dockerfile"
+          SVC_CONTEXT[auditlog-service]="src/Services/wmsServices/auditlogService";                                   SVC_DOCKERFILE[auditlog-service]="Dockerfile"
+          SVC_CONTEXT[customer-service]="src/Services/wmsServices/customerService";                                   SVC_DOCKERFILE[customer-service]="Dockerfile"
+          SVC_CONTEXT[employee-service]="src/Services/wmsServices/emplyeeService";                                    SVC_DOCKERFILE[employee-service]="Dockerfile"
+          SVC_CONTEXT[fleet-management-service]="src/Services/wmsServices/fleetManagementService";                    SVC_DOCKERFILE[fleet-management-service]="Dockerfile"
+          SVC_CONTEXT[inventory-service]="src/Services/wmsServices/inventoryService";                                 SVC_DOCKERFILE[inventory-service]="Dockerfile"
+          SVC_CONTEXT[order-service]="src/Services/wmsServices/orderService";                                         SVC_DOCKERFILE[order-service]="Dockerfile"
+          SVC_CONTEXT[product-service]="src/Services/wmsServices/productService";                                     SVC_DOCKERFILE[product-service]="Dockerfile"
+          SVC_CONTEXT[purchaseorder-service]="src/Services/wmsServices/purchaseorderService";                         SVC_DOCKERFILE[purchaseorder-service]="Dockerfile"
+          SVC_CONTEXT[rackingsystem-service]="src/Services/wmsServices/rackingsystemService";                         SVC_DOCKERFILE[rackingsystem-service]="Dockerfile"
+          SVC_CONTEXT[receiving-service]="src/Services/wmsServices/receivingService";                                 SVC_DOCKERFILE[receiving-service]="Dockerfile"
+          SVC_CONTEXT[salesorder-service]="src/Services/wmsServices/salesorderService";                               SVC_DOCKERFILE[salesorder-service]="Dockerfile"
+          SVC_CONTEXT[security-service]="src/Services/wmsServices/securityService";                                   SVC_DOCKERFILE[security-service]="Dockerfile"
+          SVC_CONTEXT[shipment-service]="src/Services/wmsServices/shipmentService";                                   SVC_DOCKERFILE[shipment-service]="Dockerfile"
+          SVC_CONTEXT[supplier-service]="src/Services/wmsServices/supplierService";                                   SVC_DOCKERFILE[supplier-service]="Dockerfile"
+          SVC_CONTEXT[warehousestructure-service]="src/Services/wmsServices/warehousestructureService";               SVC_DOCKERFILE[warehousestructure-service]="Dockerfile"
+          SVC_CONTEXT[wmtransactional-service]="src/Services/wmsServices/wmtransactionalService";                     SVC_DOCKERFILE[wmtransactional-service]="Dockerfile"
+
+          # Ordered list matching the paths for change detection
+          SVC_NAMES=(api-gateway auditlog-service customer-service employee-service fleet-management-service inventory-service order-service product-service purchaseorder-service rackingsystem-service receiving-service salesorder-service security-service shipment-service supplier-service warehousestructure-service wmtransactional-service)
+          SVC_PATHS=(
+            "src/Services/wmsServices/apiGateway/"
+            "src/Services/wmsServices/auditlogService/"
+            "src/Services/wmsServices/customerService/"
+            "src/Services/wmsServices/emplyeeService/"
+            "src/Services/wmsServices/fleetManagementService/"
+            "src/Services/wmsServices/inventoryService/"
+            "src/Services/wmsServices/orderService/"
+            "src/Services/wmsServices/productService/"
+            "src/Services/wmsServices/purchaseorderService/"
+            "src/Services/wmsServices/rackingsystemService/"
+            "src/Services/wmsServices/receivingService/"
+            "src/Services/wmsServices/salesorderService/"
+            "src/Services/wmsServices/securityService/"
+            "src/Services/wmsServices/shipmentService/"
+            "src/Services/wmsServices/supplierService/"
+            "src/Services/wmsServices/warehousestructureService/"
+            "src/Services/wmsServices/wmtransactionalService/"
+          )
+
+          make_entry() {
+            local n="$1"
+            echo "{\"name\":\"${n}\",\"context\":\"${SVC_CONTEXT[$n]}\",\"dockerfile\":\"${SVC_DOCKERFILE[$n]}\"}"
+          }
+
+          # If manual dispatch with a specific service, build only that
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            INPUT="${{ github.event.inputs.service }}"
+            if [[ "$INPUT" != "all" ]]; then
+              ENTRY=$(make_entry "$INPUT")
+              echo "matrix={\"include\":[${ENTRY}]}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          # For push events or "all", detect changes
+          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "src/Services/wmsServices/")
+          BUILD_ALL=$([[ "${{ github.event.inputs.service }}" == "all" ]] && echo "true" || echo "false")
+
+          # If shared infrastructure assets changed, rebuild all WMS services
+          if echo "$CHANGED" | grep -q "^src/Services/wmsServices/deploy/\|^src/Services/wmsServices/WMSDB/"; then
+            BUILD_ALL="true"
+          fi
+
+          # If shared WMS root files changed (outside specific service folders), rebuild all
+          NON_SERVICE_CHANGES=$(echo "$CHANGED" | grep "^src/Services/wmsServices/" | grep -Ev "^src/Services/wmsServices/(apiGateway|auditlogService|customerService|emplyeeService|fleetManagementService|inventoryService|orderService|productService|purchaseorderService|rackingsystemService|receivingService|salesorderService|securityService|shipmentService|supplierService|warehousestructureService|wmtransactionalService|deploy|WMSDB|gen-token)/" || true)
+          if [[ -n "$NON_SERVICE_CHANGES" ]]; then
+            BUILD_ALL="true"
+          fi
+
+          SERVICES=()
+          for i in "${!SVC_NAMES[@]}"; do
+            NAME="${SVC_NAMES[$i]}"
+            PATH_PREFIX="${SVC_PATHS[$i]}"
+            if [[ "$BUILD_ALL" == "true" ]] || echo "$CHANGED" | grep -q "^${PATH_PREFIX}"; then
+              SERVICES+=("$(make_entry "$NAME")")
+            fi
+          done
+
+          if [[ ${#SERVICES[@]} -eq 0 ]]; then
+            echo "matrix={\"include\":[]}" >> "$GITHUB_OUTPUT"
+          else
+            JSON=$(printf '%s,' "${SERVICES[@]}")
+            JSON="[${JSON%,}]"
+            echo "matrix={\"include\":${JSON}}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Print matrix
+        run: echo '${{ steps.set-matrix.outputs.matrix }}'
+
+  # ── Build & Push ─────────────────────────────────────────────────────────
+  build-and-push:
+    name: Build ${{ matrix.name }}
+    needs: changes
+    if: ${{ fromJson(needs.changes.outputs.matrix).include[0] != null }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
