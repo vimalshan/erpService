@@ -13,14 +13,19 @@ public abstract class RabbitMqConsumerBase<T> : BackgroundService
     private readonly ILogger _logger;
     private readonly IConfiguration _configuration;
     private readonly string _queueName;
+    private readonly string? _exchangeName;
+    private readonly string? _routingKeyPattern;
     private IConnection? _connection;
     private IChannel? _channel;
 
-    protected RabbitMqConsumerBase(IConfiguration configuration, ILogger logger, string queueName)
+    protected RabbitMqConsumerBase(IConfiguration configuration, ILogger logger, string queueName,
+        string? exchangeName = null, string? routingKeyPattern = null)
     {
         _logger = logger;
         _configuration = configuration;
         _queueName = queueName;
+        _exchangeName = exchangeName;
+        _routingKeyPattern = routingKeyPattern;
     }
 
     protected abstract Task HandleMessageAsync(T message, CancellationToken cancellationToken);
@@ -43,6 +48,12 @@ public abstract class RabbitMqConsumerBase<T> : BackgroundService
                 _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
                 await _channel.QueueDeclareAsync(_queueName, durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
+
+                if (_exchangeName != null)
+                {
+                    await _channel.ExchangeDeclareAsync(_exchangeName, "topic", durable: true, cancellationToken: stoppingToken);
+                    await _channel.QueueBindAsync(_queueName, _exchangeName, _routingKeyPattern ?? "#", cancellationToken: stoppingToken);
+                }
 
                 var consumer = new AsyncEventingBasicConsumer(_channel);
                 consumer.ReceivedAsync += async (_, ea) =>

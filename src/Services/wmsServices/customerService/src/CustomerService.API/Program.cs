@@ -72,6 +72,7 @@ builder.Services.AddAuthorization();
 // ── GraphQL (Hot Chocolate) ─────────────────────────────────────────────────
 builder.Services
     .AddGraphQLServer()
+    .BindRuntimeType<DateTime, FlexibleDateTimeType>()
     .AddQueryType<CustomerQuery>()
     .AddMutationType<CustomerMutation>()
     .AddFiltering()

@@ -52,9 +52,7 @@ builder.Services
     .AddGraphQLServer()
     .AddQueryType<SupplierQuery>()
     .AddMutationType<SupplierMutation>()
-    .AddFiltering()
-    .AddSorting()
-    .AddProjections();
+    .BindRuntimeType<DateTime, FlexibleDateTimeType>();
 
 // Health Checks
 builder.Services.AddHealthChecks()

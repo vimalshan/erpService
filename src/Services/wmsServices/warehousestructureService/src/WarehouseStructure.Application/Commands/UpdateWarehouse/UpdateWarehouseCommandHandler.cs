@@ -32,8 +32,8 @@ public sealed class UpdateWarehouseCommandHandler : IRequestHandler<UpdateWareho
         warehouse.IsActive = request.Dto.IsActive;
         warehouse.ModifiedDate = DateTime.UtcNow;
 
-        await _repository.UpdateAsync(warehouse, cancellationToken);
         warehouse.RaiseUpdatedEvent();
+        await _repository.UpdateAsync(warehouse, cancellationToken);
 
         return _mapper.Map<WarehouseDto>(warehouse);
     }

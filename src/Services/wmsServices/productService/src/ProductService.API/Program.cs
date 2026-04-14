@@ -7,6 +7,7 @@ using ProductService.API.Endpoints;
 using ProductService.API.GraphQL.Mutations;
 using ProductService.API.GraphQL.Queries;
 using ProductService.API.GraphQL.Types;
+using ProductService.API.GraphQL;
 using ProductService.API.Middleware;
 using ProductService.Application;
 using ProductService.Infrastructure;
@@ -50,6 +51,7 @@ builder.Services.AddAuthorization();
 // GraphQL (Hot Chocolate)
 builder.Services
     .AddGraphQLServer()
+    .BindRuntimeType<DateTime, FlexibleDateTimeType>()
     .AddQueryType<ProductQuery>()
     .AddMutationType<ProductMutation>()
     .AddType<ProductType>()

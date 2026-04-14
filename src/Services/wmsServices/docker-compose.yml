@@ -1,0 +1,661 @@
+# =============================================================================
+# WMS Microservices - Docker Compose
+# =============================================================================
+
+services:
+
+  # ===========================================================================
+  # Infrastructure Services
+  # ===========================================================================
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: wms-sqlserver
+    hostname: sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${SA_PASSWORD}
+      - MSSQL_PID=${MSSQL_PID}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./deploy/sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${SA_PASSWORD}" -C -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: wms-rabbitmq
+    hostname: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./deploy/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./deploy/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ./deploy/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 01 - Security Service
+  # ===========================================================================
+  security-service:
+    image: ${REGISTRY:-wms}/security-service:${IMAGE_TAG:-latest}
+    container_name: wms-security
+    build:
+      context: ./securityService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__SecurityDb=Server=sqlserver;Database=SecurityServiceDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5249:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 02 - Warehouse Structure Service
+  # ===========================================================================
+  warehouse-service:
+    image: ${REGISTRY:-wms}/warehouse-service:${IMAGE_TAG:-latest}
+    container_name: wms-warehouse
+    build:
+      context: ./warehousestructureService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=WarehouseStructureDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5217:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 03 - Racking System Service
+  # ===========================================================================
+  racking-service:
+    image: ${REGISTRY:-wms}/racking-service:${IMAGE_TAG:-latest}
+    container_name: wms-racking
+    build:
+      context: ./rackingsystemService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=RackingSystemDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5241:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 04 - Employee Service
+  # ===========================================================================
+  employee-service:
+    image: ${REGISTRY:-wms}/employee-service:${IMAGE_TAG:-latest}
+    container_name: wms-employee
+    build:
+      context: ./emplyeeService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=EmployeeServiceDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5014:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 05 - Product Service
+  # ===========================================================================
+  product-service:
+    image: ${REGISTRY:-wms}/product-service:${IMAGE_TAG:-latest}
+    container_name: wms-product
+    build:
+      context: ./productService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=ProductServiceDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5058:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 06 - Inventory Service
+  # ===========================================================================
+  inventory-service:
+    image: ${REGISTRY:-wms}/inventory-service:${IMAGE_TAG:-latest}
+    container_name: wms-inventory
+    build:
+      context: ./inventoryService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__InventoryDb=Server=sqlserver;Database=InventoryServiceDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5059:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 07 - Supplier Service
+  # ===========================================================================
+  supplier-service:
+    image: ${REGISTRY:-wms}/supplier-service:${IMAGE_TAG:-latest}
+    container_name: wms-supplier
+    build:
+      context: ./supplierService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SupplierServiceDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5156:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 08 - Customer Service
+  # ===========================================================================
+  customer-service:
+    image: ${REGISTRY:-wms}/customer-service:${IMAGE_TAG:-latest}
+    container_name: wms-customer
+    build:
+      context: ./customerService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=CustomerServiceDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5054:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 09 - Purchase Order Service
+  # ===========================================================================
+  purchaseorder-service:
+    image: ${REGISTRY:-wms}/purchaseorder-service:${IMAGE_TAG:-latest}
+    container_name: wms-purchaseorder
+    build:
+      context: ./purchaseorderService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=PurchaseOrderDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5289:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 10 - Receiving Service
+  # ===========================================================================
+  receiving-service:
+    image: ${REGISTRY:-wms}/receiving-service:${IMAGE_TAG:-latest}
+    container_name: wms-receiving
+    build:
+      context: ./receivingService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__ReceivingDb=Server=sqlserver;Database=ReceivingServiceDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5215:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 11 - Sales Order Service
+  # ===========================================================================
+  salesorder-service:
+    image: ${REGISTRY:-wms}/salesorder-service:${IMAGE_TAG:-latest}
+    container_name: wms-salesorder
+    build:
+      context: ./salesorderService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__SalesOrderDb=Server=sqlserver;Database=SalesOrderDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5075:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 12 - Shipment Service
+  # ===========================================================================
+  shipment-service:
+    image: ${REGISTRY:-wms}/shipment-service:${IMAGE_TAG:-latest}
+    container_name: wms-shipment
+    build:
+      context: ./shipmentService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__ShipmentDb=Server=sqlserver;Database=ShipmentServiceDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5148:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 13 - Order Service
+  # ===========================================================================
+  order-service:
+    image: ${REGISTRY:-wms}/order-service:${IMAGE_TAG:-latest}
+    container_name: wms-order
+    build:
+      context: ./orderService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__OrderDb=Server=sqlserver;Database=OrderServiceDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5117:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 14 - Fleet Management Service
+  # ===========================================================================
+  fleet-service:
+    image: ${REGISTRY:-wms}/fleet-service:${IMAGE_TAG:-latest}
+    container_name: wms-fleet
+    build:
+      context: ./fleetManagementService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=FleetManagementDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5163:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 15 - Audit Log Service
+  # ===========================================================================
+  auditlog-service:
+    image: ${REGISTRY:-wms}/auditlog-service:${IMAGE_TAG:-latest}
+    container_name: wms-auditlog
+    build:
+      context: ./auditlogService/AuditLogService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=AuditLogDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5277:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # 16 - WM Transactional Service
+  # ===========================================================================
+  transactional-service:
+    image: ${REGISTRY:-wms}/transactional-service:${IMAGE_TAG:-latest}
+    container_name: wms-transactional
+    build:
+      context: ./wmtransactionalService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__WMTransactionalDb=Server=sqlserver;Database=WMTransactionalDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=true;Encrypt=false
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBITMQ_DEFAULT_USER}
+      - RabbitMQ__Password=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5080:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # API Gateway
+  # ===========================================================================
+  api-gateway:
+    image: ${REGISTRY:-wms}/api-gateway:${IMAGE_TAG:-latest}
+    container_name: wms-api-gateway
+    build:
+      context: ./apiGateway
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+    ports:
+      - "5000:8080"
+    depends_on:
+      security-service:
+        condition: service_healthy
+      warehouse-service:
+        condition: service_healthy
+      racking-service:
+        condition: service_healthy
+      employee-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+      inventory-service:
+        condition: service_healthy
+      supplier-service:
+        condition: service_healthy
+      customer-service:
+        condition: service_healthy
+      purchaseorder-service:
+        condition: service_healthy
+      receiving-service:
+        condition: service_healthy
+      salesorder-service:
+        condition: service_healthy
+      shipment-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+      fleet-service:
+        condition: service_healthy
+      auditlog-service:
+        condition: service_healthy
+      transactional-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - wms-network
+    restart: unless-stopped
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  sqlserver-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  wms-network:
+    driver: bridge
+    name: wms-network

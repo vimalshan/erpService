@@ -66,6 +66,7 @@ builder.Services.AddSwaggerGen(c =>
 // GraphQL (Hot Chocolate)
 builder.Services
     .AddGraphQLServer()
+    .BindRuntimeType<DateTime, FlexibleDateTimeType>()
     .AddQueryType<SecurityQuery>()
     .AddMutationType<SecurityMutation>()
     .AddFiltering()

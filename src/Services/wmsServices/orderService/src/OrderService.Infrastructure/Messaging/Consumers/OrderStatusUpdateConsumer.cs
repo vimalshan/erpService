@@ -9,7 +9,7 @@ public class OrderStatusUpdateConsumer : RabbitMqConsumerBase<UpdateOrderStatusM
     private readonly ILogger<OrderStatusUpdateConsumer> _logger;
 
     public OrderStatusUpdateConsumer(IConfiguration configuration, ILogger<OrderStatusUpdateConsumer> logger)
-        : base(configuration, logger, "order-status-updates")
+        : base(configuration, logger, "order-status-updates", "orders", "order.#")
     {
         _logger = logger;
     }

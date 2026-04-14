@@ -60,6 +60,7 @@ builder.Services.AddAuthorization();
 // GraphQL (HotChocolate / Banana Cake Pop)
 builder.Services
     .AddGraphQLServer()
+    .BindRuntimeType<DateTime, FlexibleDateTimeType>()
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
     .AddFiltering()

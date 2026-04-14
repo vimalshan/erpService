@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using ReceivingService.API.HealthChecks;
+using ReceivingService.API.GraphQL;
 using ReceivingService.API.Middleware;
 using ReceivingService.API.MinimalApis;
 using ReceivingService.Application;
@@ -60,6 +61,7 @@ builder.Services.AddAuthorization();
 // ──────────────────────────────────────────────────────────────────────────────
 builder.Services
     .AddGraphQLServer()
+    .BindRuntimeType<DateTime, FlexibleDateTimeType>()
     .AddQueryType<ReceivingService.API.GraphQL.ReceivingQuery>()
     .AddMutationType<ReceivingService.API.GraphQL.ReceivingMutation>();
 

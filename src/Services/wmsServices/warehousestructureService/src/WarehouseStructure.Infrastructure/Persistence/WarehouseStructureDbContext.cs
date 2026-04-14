@@ -26,22 +26,36 @@ public class WarehouseStructureDbContext : DbContext
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        // Dispatch domain events before saving
-        var aggregateRoots = ChangeTracker.Entries<AggregateRoot>()
-            .Where(e => e.Entity.DomainEvents.Any())
+        // Collect events from entities being deleted (they'll be detached after save)
+        var deletedRoots = ChangeTracker.Entries<AggregateRoot>()
+            .Where(e => e.State == EntityState.Deleted && e.Entity.DomainEvents.Any())
             .Select(e => e.Entity)
             .ToList();
 
-        var domainEvents = aggregateRoots
+        var preDeleteEvents = deletedRoots
             .SelectMany(ar => ar.DomainEvents)
             .ToList();
 
-        foreach (var ar in aggregateRoots)
+        foreach (var ar in deletedRoots)
             ar.ClearDomainEvents();
 
         var result = await base.SaveChangesAsync(cancellationToken);
 
-        foreach (var domainEvent in domainEvents)
+        // Collect events from remaining tracked entities (IDs now populated for new entities)
+        var postSaveRoots = ChangeTracker.Entries<AggregateRoot>()
+            .Where(e => e.Entity.DomainEvents.Any())
+            .Select(e => e.Entity)
+            .ToList();
+
+        var postSaveEvents = postSaveRoots
+            .SelectMany(ar => ar.DomainEvents)
+            .ToList();
+
+        foreach (var ar in postSaveRoots)
+            ar.ClearDomainEvents();
+
+        // Dispatch all events: pre-delete + post-save
+        foreach (var domainEvent in preDeleteEvents.Concat(postSaveEvents))
             await _mediator.Publish(domainEvent, cancellationToken);
 
         return result;

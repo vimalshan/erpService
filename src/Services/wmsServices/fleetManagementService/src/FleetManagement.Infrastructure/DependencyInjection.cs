@@ -3,6 +3,7 @@ using FleetManagement.Domain.Interfaces;
 using FleetManagement.Infrastructure.Data;
 using FleetManagement.Infrastructure.Repositories;
 using FleetManagement.Infrastructure.Services;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,6 +39,9 @@ public static class DependencyInjection
 
         // RabbitMQ Publisher (lazy connection — won't fail if RabbitMQ is unavailable)
         services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
+
+        // Register Infrastructure MediatR handlers (domain event → RabbitMQ bridge)
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
 
         // RabbitMQ Consumers
         services.AddHostedService<MaintenanceScheduleConsumer>();

@@ -30,6 +30,9 @@ public static class DependencyInjection
         // Blob Storage
         services.AddSingleton<IBlobStorageService, BlobStorageService>();
 
+        // MediatR — register domain event handlers from Infrastructure assembly
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
+
         // RabbitMQ
         services.AddSingleton<IMessagePublisher, MessagePublisher>();
         services.AddHostedService<WarehouseMessageConsumer>();

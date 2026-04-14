@@ -5,6 +5,7 @@ using CustomerService.Infrastructure.Messaging;
 using CustomerService.Infrastructure.Messaging.Consumers;
 using CustomerService.Infrastructure.Persistence;
 using CustomerService.Infrastructure.Repositories;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,9 @@ public static class DependencyInjection
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<CustomerDapperRepository>();
+
+        // MediatR - register Infrastructure assembly (event handlers that publish to RabbitMQ)
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
 
         // RabbitMQ
         services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();

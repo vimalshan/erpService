@@ -84,6 +84,7 @@ builder.Services.AddSwaggerGen(options =>
 // GraphQL
 builder.Services
     .AddGraphQLServer()
+    .BindRuntimeType<DateTime, FlexibleDateTimeType>()
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
     .AddType<EmployeeType>()

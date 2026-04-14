@@ -8,6 +8,7 @@ using Polly;
 using Serilog;
 using ShipmentService.API.GraphQL.Mutations;
 using ShipmentService.API.GraphQL.Queries;
+using ShipmentService.API.GraphQL;
 using ShipmentService.API.Middleware;
 using ShipmentService.API.MinimalApis;
 using ShipmentService.API.Services;
@@ -101,6 +102,7 @@ builder.Services.AddSwaggerGen(c =>
 // ──────────────────────────────────────────
 builder.Services
     .AddGraphQLServer()
+    .BindRuntimeType<DateTime, FlexibleDateTimeType>()
     .AddQueryType<ShipmentQueryResolver>()
     .AddMutationType<ShipmentMutationResolver>()
     .AddFiltering()

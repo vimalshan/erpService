@@ -6,8 +6,6 @@ namespace SupplierService.API.GraphQL;
 
 public class SupplierQuery
 {
-    [UseFiltering]
-    [UseSorting]
     public async Task<IReadOnlyList<SupplierDto>> GetSuppliers([Service] IMediator mediator)
     {
         return await mediator.Send(new GetAllSuppliersQuery());

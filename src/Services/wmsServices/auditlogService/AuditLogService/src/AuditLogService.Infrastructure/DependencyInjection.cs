@@ -5,6 +5,7 @@ using AuditLogService.Infrastructure.Persistence;
 using AuditLogService.Infrastructure.Persistence.Dapper;
 using AuditLogService.Infrastructure.Persistence.Repositories;
 using AuditLogService.Infrastructure.Resilience;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,9 @@ public static class DependencyInjection
 
         // Repositories
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+
+        // MediatR - register Infrastructure assembly (event handlers live here)
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
 
         // RabbitMQ
         services.Configure<RabbitMqSettings>(configuration.GetSection("RabbitMq"));

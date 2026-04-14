@@ -9,6 +9,7 @@ using WarehouseStructure.API.Endpoints;
 using WarehouseStructure.API.GraphQL.Queries;
 using WarehouseStructure.API.GraphQL.Mutations;
 using WarehouseStructure.API.GraphQL.Types;
+using WarehouseStructure.API.GraphQL;
 using WarehouseStructure.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -51,6 +52,7 @@ builder.Services.AddOpenApi();
 // GraphQL (Hot Chocolate)
 builder.Services
     .AddGraphQLServer()
+    .BindRuntimeType<DateTime, FlexibleDateTimeType>()
     .AddQueryType<WarehouseQuery>()
     .AddMutationType<WarehouseMutation>()
     .AddType<WarehouseGqlType>()

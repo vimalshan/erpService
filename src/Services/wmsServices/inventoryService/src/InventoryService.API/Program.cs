@@ -49,6 +49,7 @@ builder.Services.AddOpenApi();
 // GraphQL (HotChocolate)
 builder.Services
     .AddGraphQLServer()
+    .BindRuntimeType<DateTime, FlexibleDateTimeType>()
     .AddQueryType<InventoryQuery>()
     .AddMutationType<InventoryMutation>()
     .AddFiltering()

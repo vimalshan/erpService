@@ -8,6 +8,7 @@ using SalesOrderService.Infrastructure;
 using SalesOrderService.Infrastructure.Persistence.Seeds;
 using SalesOrderService.API.Middleware;
 using SalesOrderService.API.Endpoints;
+using SalesOrderService.API.GraphQL;
 
 // ── Serilog ──────────────────────────────────────────────────────────────────
 Log.Logger = new LoggerConfiguration()
@@ -90,6 +91,7 @@ try
     // ── GraphQL (HotChocolate) ────────────────────────────────────────────────
     builder.Services
         .AddGraphQLServer()
+        .BindRuntimeType<DateTime, FlexibleDateTimeType>()
         .AddQueryType<SalesOrderService.API.GraphQL.SalesOrderQuery>()
         .AddMutationType<SalesOrderService.API.GraphQL.SalesOrderMutation>();
 

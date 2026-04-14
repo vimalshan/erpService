@@ -64,6 +64,7 @@ builder.Services.AddSwaggerGen(c =>
 // ── GraphQL (HotChocolate) ───────────────────────────────────────
 builder.Services
     .AddGraphQLServer()
+    .BindRuntimeType<DateTime, FlexibleDateTimeType>()
     .AddQueryType<OrderQuery>()
     .AddMutationType<OrderMutation>()
     .AddType<OrderType>()
@@ -106,7 +107,7 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger(c => c.SerializeAsV2 = true);
+    app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Order Service API v1"));
 }
 

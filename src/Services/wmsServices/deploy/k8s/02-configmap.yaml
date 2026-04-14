@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wms-config
+  namespace: wms
+  labels:
+    app.kubernetes.io/part-of: wms-platform
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  SQLSERVER_HOST: "sqlserver-svc"
+  RABBITMQ_HOST: "rabbitmq-svc"
+  RABBITMQ_PORT: "5672"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wms-connection-strings
+  namespace: wms
+  labels:
+    app.kubernetes.io/part-of: wms-platform
+data:
+  security-db: "Server=sqlserver-svc;Database=SecurityServiceDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  warehouse-db: "Server=sqlserver-svc;Database=WarehouseStructureDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  racking-db: "Server=sqlserver-svc;Database=RackingSystemDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  employee-db: "Server=sqlserver-svc;Database=EmployeeServiceDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  product-db: "Server=sqlserver-svc;Database=ProductServiceDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  inventory-db: "Server=sqlserver-svc;Database=InventoryServiceDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  supplier-db: "Server=sqlserver-svc;Database=SupplierServiceDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  customer-db: "Server=sqlserver-svc;Database=CustomerServiceDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  purchaseorder-db: "Server=sqlserver-svc;Database=PurchaseOrderDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  receiving-db: "Server=sqlserver-svc;Database=ReceivingServiceDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  salesorder-db: "Server=sqlserver-svc;Database=SalesOrderDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  shipment-db: "Server=sqlserver-svc;Database=ShipmentServiceDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  order-db: "Server=sqlserver-svc;Database=OrderServiceDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  fleet-db: "Server=sqlserver-svc;Database=FleetManagementDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  auditlog-db: "Server=sqlserver-svc;Database=AuditLogDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
+  transactional-db: "Server=sqlserver-svc;Database=WMTransactionalDb;User Id=sa;Password=INJECTED;TrustServerCertificate=true;Encrypt=false"
