@@ -1,0 +1,158 @@
+# =============================================================================
+# TEST PIPELINE — adminServices only  (9 services)
+#
+# Purpose : Validate the full Build → Push (GHCR) flow for ONE module before
+#           rolling the pattern out to all 22 modules.
+#
+# Trigger : manual only (no auto-trigger so it doesn't interfere with main CI)
+#
+# Required pipeline variables (Azure DevOps → Pipeline → Edit → Variables):
+#   GITHUB_ACTOR  – your GitHub username  (vimalshan)
+#   GITHUB_TOKEN  – GitHub PAT with packages:write scope  (mark secret)
+# =============================================================================
+
+name: TEST · adminServices · $(Build.BuildId)
+
+# Manual trigger only
+trigger: none
+pr: none
+
+parameters:
+  - name: service
+    displayName: 'Service to build (or "all")'
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - finyear-api
+      - location-services
+      - lov-service
+      - scholarship-service
+      - stationery-service
+      - tds-service
+      - vendor-service
+      - transaction-service
+
+variables:
+  imagePrefix: 'ghcr.io/vimalshan/erp'
+  MODULE: 'adminServices'
+  pool: 'ubuntu-latest'
+
+pool:
+  vmImage: $(pool)
+
+# ── Stages ────────────────────────────────────────────────────────────────────
+stages:
+
+  # ── BUILD ──────────────────────────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build · adminServices'
+    jobs:
+      - job: BuildImages
+        displayName: Build Docker images
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - script: |
+              set -e
+              build_svc() {
+                local NAME=$1 CTX=$2 DF=$3
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Building $NAME ======="
+                  docker build \
+                    -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
+                    -t "$(imagePrefix)/$NAME:latest" \
+                    -f "$DF" "$CTX"
+                fi
+              }
+              build_svc api-gateway         src/Services/adminServices/ApiGateway           src/Services/adminServices/ApiGateway/Dockerfile
+              build_svc finyear-api         src/Services/adminServices/finyearServices       src/Services/adminServices/finyearServices/Docker/Dockerfile
+              build_svc location-services   src/Services/adminServices/locationServices      src/Services/adminServices/locationServices/Docker/Dockerfile
+              build_svc lov-service         src/Services/adminServices/lovServices           src/Services/adminServices/lovServices/Docker/Dockerfile
+              build_svc scholarship-service src/Services/adminServices/scholarshipServices   src/Services/adminServices/scholarshipServices/Docker/Dockerfile
+              build_svc stationery-service  src/Services/adminServices/stationeryServices    src/Services/adminServices/stationeryServices/Docker/Dockerfile
+              build_svc tds-service         src/Services/adminServices/tdsServices           src/Services/adminServices/tdsServices/Docker/Dockerfile
+              build_svc vendor-service      src/Services/adminServices/vendorServices        src/Services/adminServices/vendorServices/Docker/Dockerfile
+              build_svc transaction-service src/Services/adminServices/transactionServices   src/Services/adminServices/transactionServices/Docker/Dockerfile
+            displayName: 'docker build all selected services'
+
+  # ── PUSH ───────────────────────────────────────────────────────────────────
+  - stage: Push
+    displayName: 'Push · adminServices → GHCR'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: PushImages
+        displayName: Push to GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$(GITHUB_TOKEN)" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              push_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Pushing $NAME ======="
+                  docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  docker push "$(imagePrefix)/$NAME:latest"
+                fi
+              }
+              push_svc api-gateway
+              push_svc finyear-api
+              push_svc location-services
+              push_svc lov-service
+              push_svc scholarship-service
+              push_svc stationery-service
+              push_svc tds-service
+              push_svc vendor-service
+              push_svc transaction-service
+            displayName: 'docker push all selected services'
+
+  # ── VERIFY ─────────────────────────────────────────────────────────────────
+  - stage: Verify
+    displayName: 'Verify · adminServices'
+    dependsOn: Push
+    condition: succeeded()
+    jobs:
+      - job: VerifyImages
+        displayName: Verify images exist in GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$(GITHUB_TOKEN)" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              verify_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  IMAGE="$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  echo "======= Verifying $IMAGE ======="
+                  docker pull "$IMAGE"
+                  echo "OK: $IMAGE pulled successfully"
+                fi
+              }
+              verify_svc api-gateway
+              verify_svc finyear-api
+              verify_svc location-services
+              verify_svc lov-service
+              verify_svc scholarship-service
+              verify_svc stationery-service
+              verify_svc tds-service
+              verify_svc vendor-service
+              verify_svc transaction-service
+            displayName: 'Pull & verify all selected images'
