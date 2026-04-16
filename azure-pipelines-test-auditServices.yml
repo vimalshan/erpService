@@ -1,12 +1,11 @@
 # =============================================================================
 # TEST PIPELINE — auditServices  (10 services)
 #
-# Purpose : Validate Build → Push (GHCR) → Verify for one module.
+# Purpose : Validate Build+Push (GHCR) → Verify for one module.
 # Trigger : MANUAL ONLY — will never run automatically.
 #
 # Required pipeline variables (Azure DevOps → Pipeline → Edit → Variables):
-#   GITHUB_ACTOR  – your GitHub username  (vimalshan)
-#   GITHUB_TOKEN  – GitHub PAT with packages:write scope  (mark secret)
+#   GITHUB_TOKEN  – GitHub PAT with write:packages scope  (mark secret)
 # =============================================================================
 
 name: TEST · auditServices · $(Build.BuildId)
@@ -34,21 +33,47 @@ parameters:
 
 variables:
   imagePrefix: 'ghcr.io/vimalshan/erp'
+  GITHUB_ACTOR: 'vimalshan'
 
 pool:
   vmImage: ubuntu-latest
 
 stages:
 
-  # ── BUILD ──────────────────────────────────────────────────────────────────
-  - stage: Build
-    displayName: 'Build · auditServices'
+  # ── BUILD + PUSH (same agent — images stay in local docker) ────────────────
+  - stage: BuildAndPush
+    displayName: 'Build & Push · auditServices'
     jobs:
-      - job: BuildImages
-        displayName: Build Docker images
+      - job: BuildPushImages
+        displayName: Build & Push Docker images
         steps:
           - checkout: self
             fetchDepth: 1
+
+          - bash: |
+              set -euo pipefail
+              if [ -z "${GITHUB_TOKEN:-}" ]; then
+                echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable."
+                echo "##[error]Go to: Pipeline → Edit → Variables → New variable"
+                echo "##[error]  Name: GITHUB_TOKEN"
+                echo "##[error]  Value: <your GitHub PAT with write:packages scope>"
+                echo "##[error]  Check 'Keep this value secret'"
+                exit 1
+              fi
+              TOKEN_LEN=${#GITHUB_TOKEN}
+              echo "Token length: $TOKEN_LEN chars"
+              if [ "$TOKEN_LEN" -lt 36 ]; then
+                echo "##[error]GITHUB_TOKEN looks invalid ($TOKEN_LEN chars). A GitHub PAT is 40+ chars."
+                echo "##[error]Please regenerate: GitHub → Settings → Developer settings → Personal access tokens"
+                echo "##[error]Required scopes: write:packages, read:packages"
+                exit 1
+              fi
+              echo "Logging in as: $(GITHUB_ACTOR)"
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
+              echo "GHCR login succeeded."
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
           - script: |
               set -e
@@ -74,36 +99,6 @@ stages:
               build_svc 'settings-service' 'src/Services/auditServices/settingsapiServices' 'src/Services/auditServices/settingsapiServices/Dockerfile'
             displayName: 'docker build all selected services'
 
-  # ── PUSH ───────────────────────────────────────────────────────────────────
-  - stage: Push
-    displayName: 'Push · auditServices → GHCR'
-    dependsOn: Build
-    condition: succeeded()
-    jobs:
-      - job: PushImages
-        displayName: Push to GHCR
-        steps:
-          - checkout: none
-
-          - bash: |
-              set -euo pipefail
-              if [ -z "${GITHUB_TOKEN:-}" ]; then
-                echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable (GitHub PAT with write:packages scope)."
-                exit 1
-              fi
-              if [ -z "${GITHUB_ACTOR:-}" ]; then
-                echo "##[error]GITHUB_ACTOR is not set. Add it as a pipeline variable (your GitHub username)."
-                exit 1
-              fi
-              echo "Logging in as: $GITHUB_ACTOR"
-              echo "Token length: ${#GITHUB_TOKEN} chars"
-              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-              echo "GHCR login succeeded."
-            displayName: Login to GHCR
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
-              GITHUB_ACTOR: $(GITHUB_ACTOR)
-
           - script: |
               set -e
               push_svc() {
@@ -126,10 +121,10 @@ stages:
               push_svc 'settings-service'
             displayName: 'docker push all selected services'
 
-  # ── VERIFY ─────────────────────────────────────────────────────────────────
+  # ── VERIFY (separate agent — pulls from registry) ──────────────────────────
   - stage: Verify
     displayName: 'Verify · auditServices'
-    dependsOn: Push
+    dependsOn: BuildAndPush
     condition: succeeded()
     jobs:
       - job: VerifyImages
@@ -140,21 +135,13 @@ stages:
           - bash: |
               set -euo pipefail
               if [ -z "${GITHUB_TOKEN:-}" ]; then
-                echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable (GitHub PAT with write:packages scope)."
+                echo "##[error]GITHUB_TOKEN is not set."
                 exit 1
               fi
-              if [ -z "${GITHUB_ACTOR:-}" ]; then
-                echo "##[error]GITHUB_ACTOR is not set. Add it as a pipeline variable (your GitHub username)."
-                exit 1
-              fi
-              echo "Logging in as: $GITHUB_ACTOR"
-              echo "Token length: ${#GITHUB_TOKEN} chars"
-              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-              echo "GHCR login succeeded."
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
             displayName: Login to GHCR
             env:
               GITHUB_TOKEN: $(GITHUB_TOKEN)
-              GITHUB_ACTOR: $(GITHUB_ACTOR)
 
           - script: |
               set -e

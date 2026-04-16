@@ -46,12 +46,11 @@ def make_test_pipeline(module_name: str, services: list) -> str:
 # =============================================================================
 # TEST PIPELINE — {module_name}  ({len(services)} services)
 #
-# Purpose : Validate Build → Push (GHCR) → Verify for one module.
+# Purpose : Validate Build+Push (GHCR) → Verify for one module.
 # Trigger : MANUAL ONLY — will never run automatically.
 #
 # Required pipeline variables (Azure DevOps → Pipeline → Edit → Variables):
-#   GITHUB_ACTOR  – your GitHub username  (vimalshan)
-#   GITHUB_TOKEN  – GitHub PAT with packages:write scope  (mark secret)
+#   GITHUB_TOKEN  – GitHub PAT with write:packages scope  (mark secret)
 # =============================================================================
 
 name: TEST · {module_name} · $(Build.BuildId)
@@ -77,41 +76,15 @@ pool:
 
 stages:
 
-  # ── BUILD ──────────────────────────────────────────────────────────────────
-  - stage: Build
-    displayName: 'Build · {module_name}'
+  # ── BUILD + PUSH (same agent — images stay in local docker) ────────────────
+  - stage: BuildAndPush
+    displayName: 'Build & Push · {module_name}'
     jobs:
-      - job: BuildImages
-        displayName: Build Docker images
+      - job: BuildPushImages
+        displayName: Build & Push Docker images
         steps:
           - checkout: self
             fetchDepth: 1
-
-          - script: |
-              set -e
-              build_svc() {{
-                local NAME=$1 CTX=$2 DF=$3
-                if [ "${{{{ parameters.service }}}}" = "all" ] || [ "${{{{ parameters.service }}}}" = "$NAME" ]; then
-                  echo "======= Building $NAME ======="
-                  docker build \\
-                    -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \\
-                    -t "$(imagePrefix)/$NAME:latest" \\
-                    -f "$DF" "$CTX"
-                fi
-              }}
-{build_lines()}
-            displayName: 'docker build all selected services'
-
-  # ── PUSH ───────────────────────────────────────────────────────────────────
-  - stage: Push
-    displayName: 'Push · {module_name} → GHCR'
-    dependsOn: Build
-    condition: succeeded()
-    jobs:
-      - job: PushImages
-        displayName: Push to GHCR
-        steps:
-          - checkout: none
 
           - bash: |
               set -euo pipefail
@@ -140,6 +113,21 @@ stages:
 
           - script: |
               set -e
+              build_svc() {{
+                local NAME=$1 CTX=$2 DF=$3
+                if [ "${{{{ parameters.service }}}}" = "all" ] || [ "${{{{ parameters.service }}}}" = "$NAME" ]; then
+                  echo "======= Building $NAME ======="
+                  docker build \\
+                    -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \\
+                    -t "$(imagePrefix)/$NAME:latest" \\
+                    -f "$DF" "$CTX"
+                fi
+              }}
+{build_lines()}
+            displayName: 'docker build all selected services'
+
+          - script: |
+              set -e
               push_svc() {{
                 local NAME=$1
                 if [ "${{{{ parameters.service }}}}" = "all" ] || [ "${{{{ parameters.service }}}}" = "$NAME" ]; then
@@ -151,10 +139,10 @@ stages:
 {push_lines()}
             displayName: 'docker push all selected services'
 
-  # ── VERIFY ─────────────────────────────────────────────────────────────────
+  # ── VERIFY (separate agent — pulls from registry) ──────────────────────────
   - stage: Verify
     displayName: 'Verify · {module_name}'
-    dependsOn: Push
+    dependsOn: BuildAndPush
     condition: succeeded()
     jobs:
       - job: VerifyImages
@@ -166,11 +154,6 @@ stages:
               set -euo pipefail
               if [ -z "${{GITHUB_TOKEN:-}}" ]; then
                 echo "##[error]GITHUB_TOKEN is not set."
-                exit 1
-              fi
-              TOKEN_LEN=${{#GITHUB_TOKEN}}
-              if [ "$TOKEN_LEN" -lt 36 ]; then
-                echo "##[error]GITHUB_TOKEN looks invalid ($TOKEN_LEN chars). A GitHub PAT is 40+ chars."
                 exit 1
               fi
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
