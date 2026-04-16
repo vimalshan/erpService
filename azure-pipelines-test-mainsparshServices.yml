@@ -45,7 +45,7 @@ pool:
 
 stages:
 
-  # ── BUILD + PUSH (same agent — images stay in local docker) ────────────────
+  # ── BUILD + PUSH (single script — login, build, push per service) ───────────
   - stage: BuildAndPush
     displayName: 'Build & Push · mainsparshServices'
     jobs:
@@ -57,84 +57,63 @@ stages:
 
           - bash: |
               set -euo pipefail
+
+              # ── Validate token ──
               if [ -z "${GITHUB_TOKEN:-}" ]; then
                 echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable."
-                echo "##[error]Go to: Pipeline → Edit → Variables → New variable"
-                echo "##[error]  Name: GITHUB_TOKEN"
-                echo "##[error]  Value: <your GitHub PAT with write:packages scope>"
-                echo "##[error]  Check 'Keep this value secret'"
                 exit 1
               fi
               TOKEN_LEN=${#GITHUB_TOKEN}
               echo "Token length: $TOKEN_LEN chars"
               if [ "$TOKEN_LEN" -lt 36 ]; then
                 echo "##[error]GITHUB_TOKEN looks invalid ($TOKEN_LEN chars). A GitHub PAT is 40+ chars."
-                echo "##[error]Please regenerate: GitHub → Settings → Developer settings → Personal access tokens"
-                echo "##[error]Required scopes: write:packages, read:packages"
                 exit 1
               fi
+
+              # ── Login ──
               echo "Logging in as: $(GITHUB_ACTOR)"
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
               echo "GHCR login succeeded."
-            displayName: Login to GHCR
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
-          - script: |
-              set -e
-              build_svc() {
+              # ── Build + Push helper ──
+              build_and_push() {
                 local NAME=$1 CTX=$2 DF=$3
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                if [ "${{{ parameters.service }}}" = "all" ] || [ "${{{ parameters.service }}}" = "$NAME" ]; then
+                  echo ""
                   echo "======= Building $NAME ======="
                   docker build \
                     -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
                     -t "$(imagePrefix)/$NAME:latest" \
                     -f "$DF" "$CTX"
-                fi
-              }
-              build_svc 'api-gateway' 'src/Services/mainsparshServices/apiGateway' 'src/Services/mainsparshServices/apiGateway/Dockerfile'
-              build_svc 'approval-service' 'src/Services/mainsparshServices/approvalServices' 'src/Services/mainsparshServices/approvalServices/Dockerfile'
-              build_svc 'booking-service' 'src/Services/mainsparshServices/bookingServices' 'src/Services/mainsparshServices/bookingServices/Dockerfile'
-              build_svc 'community-service' 'src/Services/mainsparshServices/communityServices' 'src/Services/mainsparshServices/communityServices/Dockerfile'
-              build_svc 'compensation-service' 'src/Services/mainsparshServices/compensationServices' 'src/Services/mainsparshServices/compensationServices/Dockerfile'
-              build_svc 'groupmanagement-service' 'src/Services/mainsparshServices/groupmanagementServices' 'src/Services/mainsparshServices/groupmanagementServices/Dockerfile'
-              build_svc 'location-service' 'src/Services/mainsparshServices/locationServices' 'src/Services/mainsparshServices/locationServices/Dockerfile'
-              build_svc 'meeting-service' 'src/Services/mainsparshServices/meetingServices' 'src/Services/mainsparshServices/meetingServices/Dockerfile'
-              build_svc 'proxy-service' 'src/Services/mainsparshServices/proxyServices' 'src/Services/mainsparshServices/proxyServices/Dockerfile'
-              build_svc 'reimbursement-service' 'src/Services/mainsparshServices/reimbursementServices' 'src/Services/mainsparshServices/reimbursementServices/Dockerfile'
-              build_svc 'stipend-service' 'src/Services/mainsparshServices/stipendservices' 'src/Services/mainsparshServices/stipendservices/Dockerfile'
-              build_svc 'timesheet-service' 'src/Services/mainsparshServices/timesheetServices' 'src/Services/mainsparshServices/timesheetServices/Dockerfile'
-              build_svc 'transaction-service' 'src/Services/mainsparshServices/transactionServices' 'src/Services/mainsparshServices/transactionServices/Dockerfile'
-              build_svc 'usermanagement-service' 'src/Services/mainsparshServices/usermanagementServices' 'src/Services/mainsparshServices/usermanagementServices/Dockerfile'
-              build_svc 'websitecontent-service' 'src/Services/mainsparshServices/websitecontentServices' 'src/Services/mainsparshServices/websitecontentServices/Dockerfile'
-            displayName: 'docker build all selected services'
 
-          - script: |
-              set -e
-              push_svc() {
-                local NAME=$1
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
                   echo "======= Pushing $NAME ======="
                   docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
                   docker push "$(imagePrefix)/$NAME:latest"
+                  echo "OK: $NAME built and pushed."
                 fi
               }
-              push_svc 'api-gateway'
-              push_svc 'approval-service'
-              push_svc 'booking-service'
-              push_svc 'community-service'
-              push_svc 'compensation-service'
-              push_svc 'groupmanagement-service'
-              push_svc 'location-service'
-              push_svc 'meeting-service'
-              push_svc 'proxy-service'
-              push_svc 'reimbursement-service'
-              push_svc 'stipend-service'
-              push_svc 'timesheet-service'
-              push_svc 'transaction-service'
-              push_svc 'usermanagement-service'
-              push_svc 'websitecontent-service'
-            displayName: 'docker push all selected services'
+
+              build_and_push 'api-gateway' 'src/Services/mainsparshServices/apiGateway' 'src/Services/mainsparshServices/apiGateway/Dockerfile'
+              build_and_push 'approval-service' 'src/Services/mainsparshServices/approvalServices' 'src/Services/mainsparshServices/approvalServices/Dockerfile'
+              build_and_push 'booking-service' 'src/Services/mainsparshServices/bookingServices' 'src/Services/mainsparshServices/bookingServices/Dockerfile'
+              build_and_push 'community-service' 'src/Services/mainsparshServices/communityServices' 'src/Services/mainsparshServices/communityServices/Dockerfile'
+              build_and_push 'compensation-service' 'src/Services/mainsparshServices/compensationServices' 'src/Services/mainsparshServices/compensationServices/Dockerfile'
+              build_and_push 'groupmanagement-service' 'src/Services/mainsparshServices/groupmanagementServices' 'src/Services/mainsparshServices/groupmanagementServices/Dockerfile'
+              build_and_push 'location-service' 'src/Services/mainsparshServices/locationServices' 'src/Services/mainsparshServices/locationServices/Dockerfile'
+              build_and_push 'meeting-service' 'src/Services/mainsparshServices/meetingServices' 'src/Services/mainsparshServices/meetingServices/Dockerfile'
+              build_and_push 'proxy-service' 'src/Services/mainsparshServices/proxyServices' 'src/Services/mainsparshServices/proxyServices/Dockerfile'
+              build_and_push 'reimbursement-service' 'src/Services/mainsparshServices/reimbursementServices' 'src/Services/mainsparshServices/reimbursementServices/Dockerfile'
+              build_and_push 'stipend-service' 'src/Services/mainsparshServices/stipendservices' 'src/Services/mainsparshServices/stipendservices/Dockerfile'
+              build_and_push 'timesheet-service' 'src/Services/mainsparshServices/timesheetServices' 'src/Services/mainsparshServices/timesheetServices/Dockerfile'
+              build_and_push 'transaction-service' 'src/Services/mainsparshServices/transactionServices' 'src/Services/mainsparshServices/transactionServices/Dockerfile'
+              build_and_push 'usermanagement-service' 'src/Services/mainsparshServices/usermanagementServices' 'src/Services/mainsparshServices/usermanagementServices/Dockerfile'
+              build_and_push 'websitecontent-service' 'src/Services/mainsparshServices/websitecontentServices' 'src/Services/mainsparshServices/websitecontentServices/Dockerfile'
+
+              echo ""
+              echo "All done."
+            displayName: 'Login, Build & Push all selected services'
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
   # ── VERIFY (separate agent — pulls from registry) ──────────────────────────
   - stage: Verify

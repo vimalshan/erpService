@@ -39,7 +39,7 @@ pool:
 
 stages:
 
-  # ── BUILD + PUSH (same agent — images stay in local docker) ────────────────
+  # ── BUILD + PUSH (single script — login, build, push per service) ───────────
   - stage: BuildAndPush
     displayName: 'Build & Push · adminServices'
     jobs:
@@ -51,72 +51,57 @@ stages:
 
           - bash: |
               set -euo pipefail
+
+              # ── Validate token ──
               if [ -z "${GITHUB_TOKEN:-}" ]; then
                 echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable."
-                echo "##[error]Go to: Pipeline → Edit → Variables → New variable"
-                echo "##[error]  Name: GITHUB_TOKEN"
-                echo "##[error]  Value: <your GitHub PAT with write:packages scope>"
-                echo "##[error]  Check 'Keep this value secret'"
                 exit 1
               fi
               TOKEN_LEN=${#GITHUB_TOKEN}
               echo "Token length: $TOKEN_LEN chars"
               if [ "$TOKEN_LEN" -lt 36 ]; then
                 echo "##[error]GITHUB_TOKEN looks invalid ($TOKEN_LEN chars). A GitHub PAT is 40+ chars."
-                echo "##[error]Please regenerate: GitHub → Settings → Developer settings → Personal access tokens"
-                echo "##[error]Required scopes: write:packages, read:packages"
                 exit 1
               fi
+
+              # ── Login ──
               echo "Logging in as: $(GITHUB_ACTOR)"
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
               echo "GHCR login succeeded."
-            displayName: Login to GHCR
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
-          - script: |
-              set -e
-              build_svc() {
+              # ── Build + Push helper ──
+              build_and_push() {
                 local NAME=$1 CTX=$2 DF=$3
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                if [ "${{{ parameters.service }}}" = "all" ] || [ "${{{ parameters.service }}}" = "$NAME" ]; then
+                  echo ""
                   echo "======= Building $NAME ======="
                   docker build \
                     -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
                     -t "$(imagePrefix)/$NAME:latest" \
                     -f "$DF" "$CTX"
-                fi
-              }
-              build_svc 'api-gateway' 'src/Services/adminServices/ApiGateway' 'src/Services/adminServices/ApiGateway/Dockerfile'
-              build_svc 'finyear-api' 'src/Services/adminServices/finyearServices' 'src/Services/adminServices/finyearServices/Docker/Dockerfile'
-              build_svc 'location-services' 'src/Services/adminServices/locationServices' 'src/Services/adminServices/locationServices/Docker/Dockerfile'
-              build_svc 'lov-service' 'src/Services/adminServices/lovServices' 'src/Services/adminServices/lovServices/Docker/Dockerfile'
-              build_svc 'scholarship-service' 'src/Services/adminServices/scholarshipServices' 'src/Services/adminServices/scholarshipServices/Docker/Dockerfile'
-              build_svc 'stationery-service' 'src/Services/adminServices/stationeryServices' 'src/Services/adminServices/stationeryServices/Docker/Dockerfile'
-              build_svc 'tds-service' 'src/Services/adminServices/tdsServices' 'src/Services/adminServices/tdsServices/Docker/Dockerfile'
-              build_svc 'vendor-service' 'src/Services/adminServices/vendorServices' 'src/Services/adminServices/vendorServices/Docker/Dockerfile'
-              build_svc 'transaction-service' 'src/Services/adminServices/transactionServices' 'src/Services/adminServices/transactionServices/Docker/Dockerfile'
-            displayName: 'docker build all selected services'
 
-          - script: |
-              set -e
-              push_svc() {
-                local NAME=$1
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
                   echo "======= Pushing $NAME ======="
                   docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
                   docker push "$(imagePrefix)/$NAME:latest"
+                  echo "OK: $NAME built and pushed."
                 fi
               }
-              push_svc 'api-gateway'
-              push_svc 'finyear-api'
-              push_svc 'location-services'
-              push_svc 'lov-service'
-              push_svc 'scholarship-service'
-              push_svc 'stationery-service'
-              push_svc 'tds-service'
-              push_svc 'vendor-service'
-              push_svc 'transaction-service'
-            displayName: 'docker push all selected services'
+
+              build_and_push 'api-gateway' 'src/Services/adminServices/ApiGateway' 'src/Services/adminServices/ApiGateway/Dockerfile'
+              build_and_push 'finyear-api' 'src/Services/adminServices/finyearServices' 'src/Services/adminServices/finyearServices/Docker/Dockerfile'
+              build_and_push 'location-services' 'src/Services/adminServices/locationServices' 'src/Services/adminServices/locationServices/Docker/Dockerfile'
+              build_and_push 'lov-service' 'src/Services/adminServices/lovServices' 'src/Services/adminServices/lovServices/Docker/Dockerfile'
+              build_and_push 'scholarship-service' 'src/Services/adminServices/scholarshipServices' 'src/Services/adminServices/scholarshipServices/Docker/Dockerfile'
+              build_and_push 'stationery-service' 'src/Services/adminServices/stationeryServices' 'src/Services/adminServices/stationeryServices/Docker/Dockerfile'
+              build_and_push 'tds-service' 'src/Services/adminServices/tdsServices' 'src/Services/adminServices/tdsServices/Docker/Dockerfile'
+              build_and_push 'vendor-service' 'src/Services/adminServices/vendorServices' 'src/Services/adminServices/vendorServices/Docker/Dockerfile'
+              build_and_push 'transaction-service' 'src/Services/adminServices/transactionServices' 'src/Services/adminServices/transactionServices/Docker/Dockerfile'
+
+              echo ""
+              echo "All done."
+            displayName: 'Login, Build & Push all selected services'
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
   # ── VERIFY (separate agent — pulls from registry) ──────────────────────────
   - stage: Verify

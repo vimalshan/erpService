@@ -22,20 +22,15 @@ def make_test_pipeline(module_name: str, services: list) -> str:
     svc_names = [s[0] for s in services]
     param_values = "\n".join(f"      - {n}" for n in svc_names)
 
-    def build_lines():
+    def build_and_push_lines():
         parts = []
         for name, ctx, df in services:
             parts.append(
-                f"              build_svc '{name}' "
+                f"              build_and_push '{name}' "
                 f"'{ctx}' "
                 f"'{ctx}/{df}'"
             )
         return "\n".join(parts)
-
-    def push_lines():
-        return "\n".join(
-            f"              push_svc '{name}'" for name, _, _ in services
-        )
 
     def verify_lines():
         return "\n".join(
@@ -76,7 +71,7 @@ pool:
 
 stages:
 
-  # ── BUILD + PUSH (same agent — images stay in local docker) ────────────────
+  # ── BUILD + PUSH (single script — login, build, push per service) ───────────
   - stage: BuildAndPush
     displayName: 'Build & Push · {module_name}'
     jobs:
@@ -88,56 +83,49 @@ stages:
 
           - bash: |
               set -euo pipefail
+
+              # ── Validate token ──
               if [ -z "${{GITHUB_TOKEN:-}}" ]; then
                 echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable."
-                echo "##[error]Go to: Pipeline → Edit → Variables → New variable"
-                echo "##[error]  Name: GITHUB_TOKEN"
-                echo "##[error]  Value: <your GitHub PAT with write:packages scope>"
-                echo "##[error]  Check 'Keep this value secret'"
                 exit 1
               fi
               TOKEN_LEN=${{#GITHUB_TOKEN}}
               echo "Token length: $TOKEN_LEN chars"
               if [ "$TOKEN_LEN" -lt 36 ]; then
                 echo "##[error]GITHUB_TOKEN looks invalid ($TOKEN_LEN chars). A GitHub PAT is 40+ chars."
-                echo "##[error]Please regenerate: GitHub → Settings → Developer settings → Personal access tokens"
-                echo "##[error]Required scopes: write:packages, read:packages"
                 exit 1
               fi
+
+              # ── Login ──
               echo "Logging in as: $(GITHUB_ACTOR)"
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
               echo "GHCR login succeeded."
-            displayName: Login to GHCR
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
-          - script: |
-              set -e
-              build_svc() {{
+              # ── Build + Push helper ──
+              build_and_push() {{
                 local NAME=$1 CTX=$2 DF=$3
-                if [ "${{{{ parameters.service }}}}" = "all" ] || [ "${{{{ parameters.service }}}}" = "$NAME" ]; then
+                if [ "${{{{{{ parameters.service }}}}}}" = "all" ] || [ "${{{{{{ parameters.service }}}}}}" = "$NAME" ]; then
+                  echo ""
                   echo "======= Building $NAME ======="
                   docker build \\
                     -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \\
                     -t "$(imagePrefix)/$NAME:latest" \\
                     -f "$DF" "$CTX"
-                fi
-              }}
-{build_lines()}
-            displayName: 'docker build all selected services'
 
-          - script: |
-              set -e
-              push_svc() {{
-                local NAME=$1
-                if [ "${{{{ parameters.service }}}}" = "all" ] || [ "${{{{ parameters.service }}}}" = "$NAME" ]; then
                   echo "======= Pushing $NAME ======="
                   docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
                   docker push "$(imagePrefix)/$NAME:latest"
+                  echo "OK: $NAME built and pushed."
                 fi
               }}
-{push_lines()}
-            displayName: 'docker push all selected services'
+
+{build_and_push_lines()}
+
+              echo ""
+              echo "All done."
+            displayName: 'Login, Build & Push all selected services'
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
   # ── VERIFY (separate agent — pulls from registry) ──────────────────────────
   - stage: Verify

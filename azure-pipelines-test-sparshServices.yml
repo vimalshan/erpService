@@ -36,7 +36,7 @@ pool:
 
 stages:
 
-  # ── BUILD + PUSH (same agent — images stay in local docker) ────────────────
+  # ── BUILD + PUSH (single script — login, build, push per service) ───────────
   - stage: BuildAndPush
     displayName: 'Build & Push · sparshServices'
     jobs:
@@ -48,66 +48,54 @@ stages:
 
           - bash: |
               set -euo pipefail
+
+              # ── Validate token ──
               if [ -z "${GITHUB_TOKEN:-}" ]; then
                 echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable."
-                echo "##[error]Go to: Pipeline → Edit → Variables → New variable"
-                echo "##[error]  Name: GITHUB_TOKEN"
-                echo "##[error]  Value: <your GitHub PAT with write:packages scope>"
-                echo "##[error]  Check 'Keep this value secret'"
                 exit 1
               fi
               TOKEN_LEN=${#GITHUB_TOKEN}
               echo "Token length: $TOKEN_LEN chars"
               if [ "$TOKEN_LEN" -lt 36 ]; then
                 echo "##[error]GITHUB_TOKEN looks invalid ($TOKEN_LEN chars). A GitHub PAT is 40+ chars."
-                echo "##[error]Please regenerate: GitHub → Settings → Developer settings → Personal access tokens"
-                echo "##[error]Required scopes: write:packages, read:packages"
                 exit 1
               fi
+
+              # ── Login ──
               echo "Logging in as: $(GITHUB_ACTOR)"
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
               echo "GHCR login succeeded."
-            displayName: Login to GHCR
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
-          - script: |
-              set -e
-              build_svc() {
+              # ── Build + Push helper ──
+              build_and_push() {
                 local NAME=$1 CTX=$2 DF=$3
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                if [ "${{{ parameters.service }}}" = "all" ] || [ "${{{ parameters.service }}}" = "$NAME" ]; then
+                  echo ""
                   echo "======= Building $NAME ======="
                   docker build \
                     -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
                     -t "$(imagePrefix)/$NAME:latest" \
                     -f "$DF" "$CTX"
-                fi
-              }
-              build_svc 'api-gateway' 'src/Services/sparshServices/apigateway/SparshApiGateway' 'src/Services/sparshServices/apigateway/SparshApiGateway/Dockerfile'
-              build_svc 'employeepridemanagement-service' 'src/Services/sparshServices/employeepridemanagementServices' 'src/Services/sparshServices/employeepridemanagementServices/Dockerfile'
-              build_svc 'mobileappmanagement-service' 'src/Services/sparshServices/mobileappmanagementServices' 'src/Services/sparshServices/mobileappmanagementServices/Dockerfile'
-              build_svc 'mobileexpense-service' 'src/Services/sparshServices/mobileexpenseServices' 'src/Services/sparshServices/mobileexpenseServices/Dockerfile'
-              build_svc 'problemmanagement-service' 'src/Services/sparshServices/problemmanagementServices/ProblemManagement' 'src/Services/sparshServices/problemmanagementServices/ProblemManagement/Dockerfile'
-              build_svc 'sparsh-transaction-service' 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional' 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional/Dockerfile'
-            displayName: 'docker build all selected services'
 
-          - script: |
-              set -e
-              push_svc() {
-                local NAME=$1
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
                   echo "======= Pushing $NAME ======="
                   docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
                   docker push "$(imagePrefix)/$NAME:latest"
+                  echo "OK: $NAME built and pushed."
                 fi
               }
-              push_svc 'api-gateway'
-              push_svc 'employeepridemanagement-service'
-              push_svc 'mobileappmanagement-service'
-              push_svc 'mobileexpense-service'
-              push_svc 'problemmanagement-service'
-              push_svc 'sparsh-transaction-service'
-            displayName: 'docker push all selected services'
+
+              build_and_push 'api-gateway' 'src/Services/sparshServices/apigateway/SparshApiGateway' 'src/Services/sparshServices/apigateway/SparshApiGateway/Dockerfile'
+              build_and_push 'employeepridemanagement-service' 'src/Services/sparshServices/employeepridemanagementServices' 'src/Services/sparshServices/employeepridemanagementServices/Dockerfile'
+              build_and_push 'mobileappmanagement-service' 'src/Services/sparshServices/mobileappmanagementServices' 'src/Services/sparshServices/mobileappmanagementServices/Dockerfile'
+              build_and_push 'mobileexpense-service' 'src/Services/sparshServices/mobileexpenseServices' 'src/Services/sparshServices/mobileexpenseServices/Dockerfile'
+              build_and_push 'problemmanagement-service' 'src/Services/sparshServices/problemmanagementServices/ProblemManagement' 'src/Services/sparshServices/problemmanagementServices/ProblemManagement/Dockerfile'
+              build_and_push 'sparsh-transaction-service' 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional' 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional/Dockerfile'
+
+              echo ""
+              echo "All done."
+            displayName: 'Login, Build & Push all selected services'
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
   # ── VERIFY (separate agent — pulls from registry) ──────────────────────────
   - stage: Verify

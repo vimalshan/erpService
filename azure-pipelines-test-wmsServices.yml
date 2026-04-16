@@ -47,7 +47,7 @@ pool:
 
 stages:
 
-  # ── BUILD + PUSH (same agent — images stay in local docker) ────────────────
+  # ── BUILD + PUSH (single script — login, build, push per service) ───────────
   - stage: BuildAndPush
     displayName: 'Build & Push · wmsServices'
     jobs:
@@ -59,88 +59,65 @@ stages:
 
           - bash: |
               set -euo pipefail
+
+              # ── Validate token ──
               if [ -z "${GITHUB_TOKEN:-}" ]; then
                 echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable."
-                echo "##[error]Go to: Pipeline → Edit → Variables → New variable"
-                echo "##[error]  Name: GITHUB_TOKEN"
-                echo "##[error]  Value: <your GitHub PAT with write:packages scope>"
-                echo "##[error]  Check 'Keep this value secret'"
                 exit 1
               fi
               TOKEN_LEN=${#GITHUB_TOKEN}
               echo "Token length: $TOKEN_LEN chars"
               if [ "$TOKEN_LEN" -lt 36 ]; then
                 echo "##[error]GITHUB_TOKEN looks invalid ($TOKEN_LEN chars). A GitHub PAT is 40+ chars."
-                echo "##[error]Please regenerate: GitHub → Settings → Developer settings → Personal access tokens"
-                echo "##[error]Required scopes: write:packages, read:packages"
                 exit 1
               fi
+
+              # ── Login ──
               echo "Logging in as: $(GITHUB_ACTOR)"
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
               echo "GHCR login succeeded."
-            displayName: Login to GHCR
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
-          - script: |
-              set -e
-              build_svc() {
+              # ── Build + Push helper ──
+              build_and_push() {
                 local NAME=$1 CTX=$2 DF=$3
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                if [ "${{{ parameters.service }}}" = "all" ] || [ "${{{ parameters.service }}}" = "$NAME" ]; then
+                  echo ""
                   echo "======= Building $NAME ======="
                   docker build \
                     -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
                     -t "$(imagePrefix)/$NAME:latest" \
                     -f "$DF" "$CTX"
-                fi
-              }
-              build_svc 'api-gateway' 'src/Services/wmsServices/apiGateway' 'src/Services/wmsServices/apiGateway/Dockerfile'
-              build_svc 'auditlog-service' 'src/Services/wmsServices/auditlogService/AuditLogService' 'src/Services/wmsServices/auditlogService/AuditLogService/Dockerfile'
-              build_svc 'customer-service' 'src/Services/wmsServices/customerService' 'src/Services/wmsServices/customerService/Dockerfile'
-              build_svc 'employee-service' 'src/Services/wmsServices/emplyeeService' 'src/Services/wmsServices/emplyeeService/Dockerfile'
-              build_svc 'fleet-management-service' 'src/Services/wmsServices/fleetManagementService' 'src/Services/wmsServices/fleetManagementService/Dockerfile'
-              build_svc 'inventory-service' 'src/Services/wmsServices/inventoryService' 'src/Services/wmsServices/inventoryService/Dockerfile'
-              build_svc 'order-service' 'src/Services/wmsServices/orderService' 'src/Services/wmsServices/orderService/Dockerfile'
-              build_svc 'product-service' 'src/Services/wmsServices/productService' 'src/Services/wmsServices/productService/Dockerfile'
-              build_svc 'purchaseorder-service' 'src/Services/wmsServices/purchaseorderService' 'src/Services/wmsServices/purchaseorderService/Dockerfile'
-              build_svc 'rackingsystem-service' 'src/Services/wmsServices/rackingsystemService' 'src/Services/wmsServices/rackingsystemService/Dockerfile'
-              build_svc 'receiving-service' 'src/Services/wmsServices/receivingService' 'src/Services/wmsServices/receivingService/Dockerfile'
-              build_svc 'salesorder-service' 'src/Services/wmsServices/salesorderService' 'src/Services/wmsServices/salesorderService/Dockerfile'
-              build_svc 'security-service' 'src/Services/wmsServices/securityService' 'src/Services/wmsServices/securityService/Dockerfile'
-              build_svc 'shipment-service' 'src/Services/wmsServices/shipmentService' 'src/Services/wmsServices/shipmentService/Dockerfile'
-              build_svc 'supplier-service' 'src/Services/wmsServices/supplierService' 'src/Services/wmsServices/supplierService/Dockerfile'
-              build_svc 'warehousestructure-service' 'src/Services/wmsServices/warehousestructureService' 'src/Services/wmsServices/warehousestructureService/Dockerfile'
-              build_svc 'wmtransactional-service' 'src/Services/wmsServices/wmtransactionalService' 'src/Services/wmsServices/wmtransactionalService/Dockerfile'
-            displayName: 'docker build all selected services'
 
-          - script: |
-              set -e
-              push_svc() {
-                local NAME=$1
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
                   echo "======= Pushing $NAME ======="
                   docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
                   docker push "$(imagePrefix)/$NAME:latest"
+                  echo "OK: $NAME built and pushed."
                 fi
               }
-              push_svc 'api-gateway'
-              push_svc 'auditlog-service'
-              push_svc 'customer-service'
-              push_svc 'employee-service'
-              push_svc 'fleet-management-service'
-              push_svc 'inventory-service'
-              push_svc 'order-service'
-              push_svc 'product-service'
-              push_svc 'purchaseorder-service'
-              push_svc 'rackingsystem-service'
-              push_svc 'receiving-service'
-              push_svc 'salesorder-service'
-              push_svc 'security-service'
-              push_svc 'shipment-service'
-              push_svc 'supplier-service'
-              push_svc 'warehousestructure-service'
-              push_svc 'wmtransactional-service'
-            displayName: 'docker push all selected services'
+
+              build_and_push 'api-gateway' 'src/Services/wmsServices/apiGateway' 'src/Services/wmsServices/apiGateway/Dockerfile'
+              build_and_push 'auditlog-service' 'src/Services/wmsServices/auditlogService/AuditLogService' 'src/Services/wmsServices/auditlogService/AuditLogService/Dockerfile'
+              build_and_push 'customer-service' 'src/Services/wmsServices/customerService' 'src/Services/wmsServices/customerService/Dockerfile'
+              build_and_push 'employee-service' 'src/Services/wmsServices/emplyeeService' 'src/Services/wmsServices/emplyeeService/Dockerfile'
+              build_and_push 'fleet-management-service' 'src/Services/wmsServices/fleetManagementService' 'src/Services/wmsServices/fleetManagementService/Dockerfile'
+              build_and_push 'inventory-service' 'src/Services/wmsServices/inventoryService' 'src/Services/wmsServices/inventoryService/Dockerfile'
+              build_and_push 'order-service' 'src/Services/wmsServices/orderService' 'src/Services/wmsServices/orderService/Dockerfile'
+              build_and_push 'product-service' 'src/Services/wmsServices/productService' 'src/Services/wmsServices/productService/Dockerfile'
+              build_and_push 'purchaseorder-service' 'src/Services/wmsServices/purchaseorderService' 'src/Services/wmsServices/purchaseorderService/Dockerfile'
+              build_and_push 'rackingsystem-service' 'src/Services/wmsServices/rackingsystemService' 'src/Services/wmsServices/rackingsystemService/Dockerfile'
+              build_and_push 'receiving-service' 'src/Services/wmsServices/receivingService' 'src/Services/wmsServices/receivingService/Dockerfile'
+              build_and_push 'salesorder-service' 'src/Services/wmsServices/salesorderService' 'src/Services/wmsServices/salesorderService/Dockerfile'
+              build_and_push 'security-service' 'src/Services/wmsServices/securityService' 'src/Services/wmsServices/securityService/Dockerfile'
+              build_and_push 'shipment-service' 'src/Services/wmsServices/shipmentService' 'src/Services/wmsServices/shipmentService/Dockerfile'
+              build_and_push 'supplier-service' 'src/Services/wmsServices/supplierService' 'src/Services/wmsServices/supplierService/Dockerfile'
+              build_and_push 'warehousestructure-service' 'src/Services/wmsServices/warehousestructureService' 'src/Services/wmsServices/warehousestructureService/Dockerfile'
+              build_and_push 'wmtransactional-service' 'src/Services/wmsServices/wmtransactionalService' 'src/Services/wmsServices/wmtransactionalService/Dockerfile'
+
+              echo ""
+              echo "All done."
+            displayName: 'Login, Build & Push all selected services'
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
   # ── VERIFY (separate agent — pulls from registry) ──────────────────────────
   - stage: Verify

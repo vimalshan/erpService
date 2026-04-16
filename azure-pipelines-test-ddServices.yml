@@ -46,7 +46,7 @@ pool:
 
 stages:
 
-  # ── BUILD + PUSH (same agent — images stay in local docker) ────────────────
+  # ── BUILD + PUSH (single script — login, build, push per service) ───────────
   - stage: BuildAndPush
     displayName: 'Build & Push · ddServices'
     jobs:
@@ -58,86 +58,64 @@ stages:
 
           - bash: |
               set -euo pipefail
+
+              # ── Validate token ──
               if [ -z "${GITHUB_TOKEN:-}" ]; then
                 echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable."
-                echo "##[error]Go to: Pipeline → Edit → Variables → New variable"
-                echo "##[error]  Name: GITHUB_TOKEN"
-                echo "##[error]  Value: <your GitHub PAT with write:packages scope>"
-                echo "##[error]  Check 'Keep this value secret'"
                 exit 1
               fi
               TOKEN_LEN=${#GITHUB_TOKEN}
               echo "Token length: $TOKEN_LEN chars"
               if [ "$TOKEN_LEN" -lt 36 ]; then
                 echo "##[error]GITHUB_TOKEN looks invalid ($TOKEN_LEN chars). A GitHub PAT is 40+ chars."
-                echo "##[error]Please regenerate: GitHub → Settings → Developer settings → Personal access tokens"
-                echo "##[error]Required scopes: write:packages, read:packages"
                 exit 1
               fi
+
+              # ── Login ──
               echo "Logging in as: $(GITHUB_ACTOR)"
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
               echo "GHCR login succeeded."
-            displayName: Login to GHCR
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
-          - script: |
-              set -e
-              build_svc() {
+              # ── Build + Push helper ──
+              build_and_push() {
                 local NAME=$1 CTX=$2 DF=$3
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                if [ "${{{ parameters.service }}}" = "all" ] || [ "${{{ parameters.service }}}" = "$NAME" ]; then
+                  echo ""
                   echo "======= Building $NAME ======="
                   docker build \
                     -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
                     -t "$(imagePrefix)/$NAME:latest" \
                     -f "$DF" "$CTX"
-                fi
-              }
-              build_svc 'api-gateway' 'src/Services/ddServices/apiGateway' 'src/Services/ddServices/apiGateway/Dockerfile'
-              build_svc 'appraisal-service' 'src/Services/ddServices/appraisalService' 'src/Services/ddServices/appraisalService/Dockerfile'
-              build_svc 'authorization-service' 'src/Services/ddServices/authorizationServices' 'src/Services/ddServices/authorizationServices/Dockerfile'
-              build_svc 'compensation-service' 'src/Services/ddServices/compensationServices' 'src/Services/ddServices/compensationServices/Dockerfile'
-              build_svc 'competency-service' 'src/Services/ddServices/competencyServices' 'src/Services/ddServices/competencyServices/Dockerfile'
-              build_svc 'demand-management-service' 'src/Services/ddServices/demandmanagementServices' 'src/Services/ddServices/demandmanagementServices/Dockerfile'
-              build_svc 'document-service' 'src/Services/ddServices/documentServices' 'src/Services/ddServices/documentServices/Dockerfile'
-              build_svc 'employee-service' 'src/Services/ddServices/employeeServices' 'src/Services/ddServices/employeeServices/Dockerfile'
-              build_svc 'feedback-service' 'src/Services/ddServices/feedbackServices' 'src/Services/ddServices/feedbackServices/Dockerfile'
-              build_svc 'learning-service' 'src/Services/ddServices/learningServices' 'src/Services/ddServices/learningServices/Dockerfile'
-              build_svc 'objective-service' 'src/Services/ddServices/objectiveServices' 'src/Services/ddServices/objectiveServices/Dockerfile'
-              build_svc 'other-services' 'src/Services/ddServices/OtherServices' 'src/Services/ddServices/OtherServices/Dockerfile'
-              build_svc 'promotion-service' 'src/Services/ddServices/promotionServices' 'src/Services/ddServices/promotionServices/Dockerfile'
-              build_svc 'recruitment-service' 'src/Services/ddServices/recruitmentServices' 'src/Services/ddServices/recruitmentServices/Dockerfile'
-              build_svc 'reporting-service' 'src/Services/ddServices/reportingServices' 'src/Services/ddServices/reportingServices/Dockerfile'
-              build_svc 'transaction-service' 'src/Services/ddServices/transactionServices' 'src/Services/ddServices/transactionServices/Dockerfile'
-            displayName: 'docker build all selected services'
 
-          - script: |
-              set -e
-              push_svc() {
-                local NAME=$1
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
                   echo "======= Pushing $NAME ======="
                   docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
                   docker push "$(imagePrefix)/$NAME:latest"
+                  echo "OK: $NAME built and pushed."
                 fi
               }
-              push_svc 'api-gateway'
-              push_svc 'appraisal-service'
-              push_svc 'authorization-service'
-              push_svc 'compensation-service'
-              push_svc 'competency-service'
-              push_svc 'demand-management-service'
-              push_svc 'document-service'
-              push_svc 'employee-service'
-              push_svc 'feedback-service'
-              push_svc 'learning-service'
-              push_svc 'objective-service'
-              push_svc 'other-services'
-              push_svc 'promotion-service'
-              push_svc 'recruitment-service'
-              push_svc 'reporting-service'
-              push_svc 'transaction-service'
-            displayName: 'docker push all selected services'
+
+              build_and_push 'api-gateway' 'src/Services/ddServices/apiGateway' 'src/Services/ddServices/apiGateway/Dockerfile'
+              build_and_push 'appraisal-service' 'src/Services/ddServices/appraisalService' 'src/Services/ddServices/appraisalService/Dockerfile'
+              build_and_push 'authorization-service' 'src/Services/ddServices/authorizationServices' 'src/Services/ddServices/authorizationServices/Dockerfile'
+              build_and_push 'compensation-service' 'src/Services/ddServices/compensationServices' 'src/Services/ddServices/compensationServices/Dockerfile'
+              build_and_push 'competency-service' 'src/Services/ddServices/competencyServices' 'src/Services/ddServices/competencyServices/Dockerfile'
+              build_and_push 'demand-management-service' 'src/Services/ddServices/demandmanagementServices' 'src/Services/ddServices/demandmanagementServices/Dockerfile'
+              build_and_push 'document-service' 'src/Services/ddServices/documentServices' 'src/Services/ddServices/documentServices/Dockerfile'
+              build_and_push 'employee-service' 'src/Services/ddServices/employeeServices' 'src/Services/ddServices/employeeServices/Dockerfile'
+              build_and_push 'feedback-service' 'src/Services/ddServices/feedbackServices' 'src/Services/ddServices/feedbackServices/Dockerfile'
+              build_and_push 'learning-service' 'src/Services/ddServices/learningServices' 'src/Services/ddServices/learningServices/Dockerfile'
+              build_and_push 'objective-service' 'src/Services/ddServices/objectiveServices' 'src/Services/ddServices/objectiveServices/Dockerfile'
+              build_and_push 'other-services' 'src/Services/ddServices/OtherServices' 'src/Services/ddServices/OtherServices/Dockerfile'
+              build_and_push 'promotion-service' 'src/Services/ddServices/promotionServices' 'src/Services/ddServices/promotionServices/Dockerfile'
+              build_and_push 'recruitment-service' 'src/Services/ddServices/recruitmentServices' 'src/Services/ddServices/recruitmentServices/Dockerfile'
+              build_and_push 'reporting-service' 'src/Services/ddServices/reportingServices' 'src/Services/ddServices/reportingServices/Dockerfile'
+              build_and_push 'transaction-service' 'src/Services/ddServices/transactionServices' 'src/Services/ddServices/transactionServices/Dockerfile'
+
+              echo ""
+              echo "All done."
+            displayName: 'Login, Build & Push all selected services'
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
   # ── VERIFY (separate agent — pulls from registry) ──────────────────────────
   - stage: Verify

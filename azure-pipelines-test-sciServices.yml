@@ -46,7 +46,7 @@ pool:
 
 stages:
 
-  # ── BUILD + PUSH (same agent — images stay in local docker) ────────────────
+  # ── BUILD + PUSH (single script — login, build, push per service) ───────────
   - stage: BuildAndPush
     displayName: 'Build & Push · sciServices'
     jobs:
@@ -58,86 +58,64 @@ stages:
 
           - bash: |
               set -euo pipefail
+
+              # ── Validate token ──
               if [ -z "${GITHUB_TOKEN:-}" ]; then
                 echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable."
-                echo "##[error]Go to: Pipeline → Edit → Variables → New variable"
-                echo "##[error]  Name: GITHUB_TOKEN"
-                echo "##[error]  Value: <your GitHub PAT with write:packages scope>"
-                echo "##[error]  Check 'Keep this value secret'"
                 exit 1
               fi
               TOKEN_LEN=${#GITHUB_TOKEN}
               echo "Token length: $TOKEN_LEN chars"
               if [ "$TOKEN_LEN" -lt 36 ]; then
                 echo "##[error]GITHUB_TOKEN looks invalid ($TOKEN_LEN chars). A GitHub PAT is 40+ chars."
-                echo "##[error]Please regenerate: GitHub → Settings → Developer settings → Personal access tokens"
-                echo "##[error]Required scopes: write:packages, read:packages"
                 exit 1
               fi
+
+              # ── Login ──
               echo "Logging in as: $(GITHUB_ACTOR)"
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
               echo "GHCR login succeeded."
-            displayName: Login to GHCR
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
-          - script: |
-              set -e
-              build_svc() {
+              # ── Build + Push helper ──
+              build_and_push() {
                 local NAME=$1 CTX=$2 DF=$3
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                if [ "${{{ parameters.service }}}" = "all" ] || [ "${{{ parameters.service }}}" = "$NAME" ]; then
+                  echo ""
                   echo "======= Building $NAME ======="
                   docker build \
                     -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
                     -t "$(imagePrefix)/$NAME:latest" \
                     -f "$DF" "$CTX"
-                fi
-              }
-              build_svc 'api-gateway' 'src/Services/sciServices/ApiGateway' 'src/Services/sciServices/ApiGateway/Dockerfile'
-              build_svc 'dispatchplanning-service' 'src/Services/sciServices/dispatchplanningServices' 'src/Services/sciServices/dispatchplanningServices/Dockerfile'
-              build_svc 'errorlogging-service' 'src/Services/sciServices/errorloggingServices' 'src/Services/sciServices/errorloggingServices/Dockerfile'
-              build_svc 'eximmanagement-service' 'src/Services/sciServices/eximmanagementServices' 'src/Services/sciServices/eximmanagementServices/Dockerfile'
-              build_svc 'fillingoperation-service' 'src/Services/sciServices/fillingoperationServices' 'src/Services/sciServices/fillingoperationServices/Dockerfile'
-              build_svc 'gstcompliance-service' 'src/Services/sciServices/gstcomplianceServices' 'src/Services/sciServices/gstcomplianceServices/Dockerfile'
-              build_svc 'inventorymanagement-service' 'src/Services/sciServices/inventorymanagementServices' 'src/Services/sciServices/inventorymanagementServices/Dockerfile'
-              build_svc 'mamallocation-service' 'src/Services/sciServices/mamallocationServices' 'src/Services/sciServices/mamallocationServices/Dockerfile'
-              build_svc 'masterdata-service' 'src/Services/sciServices/masterdataServices' 'src/Services/sciServices/masterdataServices/Dockerfile'
-              build_svc 'orderschedule-service' 'src/Services/sciServices/orderscheduleServices' 'src/Services/sciServices/orderscheduleServices/Dockerfile'
-              build_svc 'productionmanagement-service' 'src/Services/sciServices/productionmanagementServices' 'src/Services/sciServices/productionmanagementServices/Dockerfile'
-              build_svc 'purchasesales-service' 'src/Services/sciServices/purchasesalesService' 'src/Services/sciServices/purchasesalesService/Dockerfile'
-              build_svc 'sci-transaction-service' 'src/Services/sciServices/scitransactionalServices' 'src/Services/sciServices/scitransactionalServices/Dockerfile'
-              build_svc 'security-service' 'src/Services/sciServices/SecurityServices' 'src/Services/sciServices/SecurityServices/Dockerfile'
-              build_svc 'strategicstock-service' 'src/Services/sciServices/strategicstockServices' 'src/Services/sciServices/strategicstockServices/Dockerfile'
-              build_svc 'vechicletracking-service' 'src/Services/sciServices/vechicletrackingServices' 'src/Services/sciServices/vechicletrackingServices/Dockerfile'
-            displayName: 'docker build all selected services'
 
-          - script: |
-              set -e
-              push_svc() {
-                local NAME=$1
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
                   echo "======= Pushing $NAME ======="
                   docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
                   docker push "$(imagePrefix)/$NAME:latest"
+                  echo "OK: $NAME built and pushed."
                 fi
               }
-              push_svc 'api-gateway'
-              push_svc 'dispatchplanning-service'
-              push_svc 'errorlogging-service'
-              push_svc 'eximmanagement-service'
-              push_svc 'fillingoperation-service'
-              push_svc 'gstcompliance-service'
-              push_svc 'inventorymanagement-service'
-              push_svc 'mamallocation-service'
-              push_svc 'masterdata-service'
-              push_svc 'orderschedule-service'
-              push_svc 'productionmanagement-service'
-              push_svc 'purchasesales-service'
-              push_svc 'sci-transaction-service'
-              push_svc 'security-service'
-              push_svc 'strategicstock-service'
-              push_svc 'vechicletracking-service'
-            displayName: 'docker push all selected services'
+
+              build_and_push 'api-gateway' 'src/Services/sciServices/ApiGateway' 'src/Services/sciServices/ApiGateway/Dockerfile'
+              build_and_push 'dispatchplanning-service' 'src/Services/sciServices/dispatchplanningServices' 'src/Services/sciServices/dispatchplanningServices/Dockerfile'
+              build_and_push 'errorlogging-service' 'src/Services/sciServices/errorloggingServices' 'src/Services/sciServices/errorloggingServices/Dockerfile'
+              build_and_push 'eximmanagement-service' 'src/Services/sciServices/eximmanagementServices' 'src/Services/sciServices/eximmanagementServices/Dockerfile'
+              build_and_push 'fillingoperation-service' 'src/Services/sciServices/fillingoperationServices' 'src/Services/sciServices/fillingoperationServices/Dockerfile'
+              build_and_push 'gstcompliance-service' 'src/Services/sciServices/gstcomplianceServices' 'src/Services/sciServices/gstcomplianceServices/Dockerfile'
+              build_and_push 'inventorymanagement-service' 'src/Services/sciServices/inventorymanagementServices' 'src/Services/sciServices/inventorymanagementServices/Dockerfile'
+              build_and_push 'mamallocation-service' 'src/Services/sciServices/mamallocationServices' 'src/Services/sciServices/mamallocationServices/Dockerfile'
+              build_and_push 'masterdata-service' 'src/Services/sciServices/masterdataServices' 'src/Services/sciServices/masterdataServices/Dockerfile'
+              build_and_push 'orderschedule-service' 'src/Services/sciServices/orderscheduleServices' 'src/Services/sciServices/orderscheduleServices/Dockerfile'
+              build_and_push 'productionmanagement-service' 'src/Services/sciServices/productionmanagementServices' 'src/Services/sciServices/productionmanagementServices/Dockerfile'
+              build_and_push 'purchasesales-service' 'src/Services/sciServices/purchasesalesService' 'src/Services/sciServices/purchasesalesService/Dockerfile'
+              build_and_push 'sci-transaction-service' 'src/Services/sciServices/scitransactionalServices' 'src/Services/sciServices/scitransactionalServices/Dockerfile'
+              build_and_push 'security-service' 'src/Services/sciServices/SecurityServices' 'src/Services/sciServices/SecurityServices/Dockerfile'
+              build_and_push 'strategicstock-service' 'src/Services/sciServices/strategicstockServices' 'src/Services/sciServices/strategicstockServices/Dockerfile'
+              build_and_push 'vechicletracking-service' 'src/Services/sciServices/vechicletrackingServices' 'src/Services/sciServices/vechicletrackingServices/Dockerfile'
+
+              echo ""
+              echo "All done."
+            displayName: 'Login, Build & Push all selected services'
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
   # ── VERIFY (separate agent — pulls from registry) ──────────────────────────
   - stage: Verify

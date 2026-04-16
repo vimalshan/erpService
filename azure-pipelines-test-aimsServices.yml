@@ -41,7 +41,7 @@ pool:
 
 stages:
 
-  # ── BUILD + PUSH (same agent — images stay in local docker) ────────────────
+  # ── BUILD + PUSH (single script — login, build, push per service) ───────────
   - stage: BuildAndPush
     displayName: 'Build & Push · aimsServices'
     jobs:
@@ -53,76 +53,59 @@ stages:
 
           - bash: |
               set -euo pipefail
+
+              # ── Validate token ──
               if [ -z "${GITHUB_TOKEN:-}" ]; then
                 echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable."
-                echo "##[error]Go to: Pipeline → Edit → Variables → New variable"
-                echo "##[error]  Name: GITHUB_TOKEN"
-                echo "##[error]  Value: <your GitHub PAT with write:packages scope>"
-                echo "##[error]  Check 'Keep this value secret'"
                 exit 1
               fi
               TOKEN_LEN=${#GITHUB_TOKEN}
               echo "Token length: $TOKEN_LEN chars"
               if [ "$TOKEN_LEN" -lt 36 ]; then
                 echo "##[error]GITHUB_TOKEN looks invalid ($TOKEN_LEN chars). A GitHub PAT is 40+ chars."
-                echo "##[error]Please regenerate: GitHub → Settings → Developer settings → Personal access tokens"
-                echo "##[error]Required scopes: write:packages, read:packages"
                 exit 1
               fi
+
+              # ── Login ──
               echo "Logging in as: $(GITHUB_ACTOR)"
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
               echo "GHCR login succeeded."
-            displayName: Login to GHCR
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
-          - script: |
-              set -e
-              build_svc() {
+              # ── Build + Push helper ──
+              build_and_push() {
                 local NAME=$1 CTX=$2 DF=$3
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                if [ "${{{ parameters.service }}}" = "all" ] || [ "${{{ parameters.service }}}" = "$NAME" ]; then
+                  echo ""
                   echo "======= Building $NAME ======="
                   docker build \
                     -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
                     -t "$(imagePrefix)/$NAME:latest" \
                     -f "$DF" "$CTX"
-                fi
-              }
-              build_svc 'api-gateway' 'src/Services/aimsServices/ApiGateway' 'src/Services/aimsServices/ApiGateway/Dockerfile'
-              build_svc 'access-service' 'src/Services/aimsServices/accessServices' 'src/Services/aimsServices/accessServices/Dockerfile'
-              build_svc 'aims-transaction-service' 'src/Services/aimsServices/aimsTransactionServices' 'src/Services/aimsServices/aimsTransactionServices/Dockerfile'
-              build_svc 'attendance-service' 'src/Services/aimsServices/attendanceServices' 'src/Services/aimsServices/attendanceServices/Dockerfile'
-              build_svc 'bus-services' 'src/Services/aimsServices/busServices' 'src/Services/aimsServices/busServices/Dockerfile'
-              build_svc 'calendar-service' 'src/Services/aimsServices/calendarServices' 'src/Services/aimsServices/calendarServices/Dockerfile'
-              build_svc 'employee-service' 'src/Services/aimsServices/employeeServices' 'src/Services/aimsServices/employeeServices/Dockerfile'
-              build_svc 'groupincentive-service' 'src/Services/aimsServices/groupincentiveServices' 'src/Services/aimsServices/groupincentiveServices/Dockerfile'
-              build_svc 'leave-services' 'src/Services/aimsServices/leaveServices' 'src/Services/aimsServices/leaveServices/Dockerfile'
-              build_svc 'reference-service' 'src/Services/aimsServices/referenceServices' 'src/Services/aimsServices/referenceServices/Dockerfile'
-              build_svc 'visitor-services' 'src/Services/aimsServices/visitorServices' 'src/Services/aimsServices/visitorServices/Dockerfile'
-            displayName: 'docker build all selected services'
 
-          - script: |
-              set -e
-              push_svc() {
-                local NAME=$1
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
                   echo "======= Pushing $NAME ======="
                   docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
                   docker push "$(imagePrefix)/$NAME:latest"
+                  echo "OK: $NAME built and pushed."
                 fi
               }
-              push_svc 'api-gateway'
-              push_svc 'access-service'
-              push_svc 'aims-transaction-service'
-              push_svc 'attendance-service'
-              push_svc 'bus-services'
-              push_svc 'calendar-service'
-              push_svc 'employee-service'
-              push_svc 'groupincentive-service'
-              push_svc 'leave-services'
-              push_svc 'reference-service'
-              push_svc 'visitor-services'
-            displayName: 'docker push all selected services'
+
+              build_and_push 'api-gateway' 'src/Services/aimsServices/ApiGateway' 'src/Services/aimsServices/ApiGateway/Dockerfile'
+              build_and_push 'access-service' 'src/Services/aimsServices/accessServices' 'src/Services/aimsServices/accessServices/Dockerfile'
+              build_and_push 'aims-transaction-service' 'src/Services/aimsServices/aimsTransactionServices' 'src/Services/aimsServices/aimsTransactionServices/Dockerfile'
+              build_and_push 'attendance-service' 'src/Services/aimsServices/attendanceServices' 'src/Services/aimsServices/attendanceServices/Dockerfile'
+              build_and_push 'bus-services' 'src/Services/aimsServices/busServices' 'src/Services/aimsServices/busServices/Dockerfile'
+              build_and_push 'calendar-service' 'src/Services/aimsServices/calendarServices' 'src/Services/aimsServices/calendarServices/Dockerfile'
+              build_and_push 'employee-service' 'src/Services/aimsServices/employeeServices' 'src/Services/aimsServices/employeeServices/Dockerfile'
+              build_and_push 'groupincentive-service' 'src/Services/aimsServices/groupincentiveServices' 'src/Services/aimsServices/groupincentiveServices/Dockerfile'
+              build_and_push 'leave-services' 'src/Services/aimsServices/leaveServices' 'src/Services/aimsServices/leaveServices/Dockerfile'
+              build_and_push 'reference-service' 'src/Services/aimsServices/referenceServices' 'src/Services/aimsServices/referenceServices/Dockerfile'
+              build_and_push 'visitor-services' 'src/Services/aimsServices/visitorServices' 'src/Services/aimsServices/visitorServices/Dockerfile'
+
+              echo ""
+              echo "All done."
+            displayName: 'Login, Build & Push all selected services'
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
   # ── VERIFY (separate agent — pulls from registry) ──────────────────────────
   - stage: Verify

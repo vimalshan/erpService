@@ -43,7 +43,7 @@ pool:
 
 stages:
 
-  # ── BUILD + PUSH (same agent — images stay in local docker) ────────────────
+  # ── BUILD + PUSH (single script — login, build, push per service) ───────────
   - stage: BuildAndPush
     displayName: 'Build & Push · sscServices'
     jobs:
@@ -55,80 +55,61 @@ stages:
 
           - bash: |
               set -euo pipefail
+
+              # ── Validate token ──
               if [ -z "${GITHUB_TOKEN:-}" ]; then
                 echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable."
-                echo "##[error]Go to: Pipeline → Edit → Variables → New variable"
-                echo "##[error]  Name: GITHUB_TOKEN"
-                echo "##[error]  Value: <your GitHub PAT with write:packages scope>"
-                echo "##[error]  Check 'Keep this value secret'"
                 exit 1
               fi
               TOKEN_LEN=${#GITHUB_TOKEN}
               echo "Token length: $TOKEN_LEN chars"
               if [ "$TOKEN_LEN" -lt 36 ]; then
                 echo "##[error]GITHUB_TOKEN looks invalid ($TOKEN_LEN chars). A GitHub PAT is 40+ chars."
-                echo "##[error]Please regenerate: GitHub → Settings → Developer settings → Personal access tokens"
-                echo "##[error]Required scopes: write:packages, read:packages"
                 exit 1
               fi
+
+              # ── Login ──
               echo "Logging in as: $(GITHUB_ACTOR)"
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
               echo "GHCR login succeeded."
-            displayName: Login to GHCR
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
-          - script: |
-              set -e
-              build_svc() {
+              # ── Build + Push helper ──
+              build_and_push() {
                 local NAME=$1 CTX=$2 DF=$3
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                if [ "${{{ parameters.service }}}" = "all" ] || [ "${{{ parameters.service }}}" = "$NAME" ]; then
+                  echo ""
                   echo "======= Building $NAME ======="
                   docker build \
                     -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
                     -t "$(imagePrefix)/$NAME:latest" \
                     -f "$DF" "$CTX"
-                fi
-              }
-              build_svc 'api-gateway' 'src/Services/sscServices/apigateway' 'src/Services/sscServices/apigateway/Dockerfile'
-              build_svc 'approvalgroup-service' 'src/Services/sscServices/approvalgroupServices' 'src/Services/sscServices/approvalgroupServices/Dockerfile'
-              build_svc 'batchandenvelope-service' 'src/Services/sscServices/batchandenvelopeServices' 'src/Services/sscServices/batchandenvelopeServices/Dockerfile'
-              build_svc 'categoryandvendor-service' 'src/Services/sscServices/categoryandvendorServices' 'src/Services/sscServices/categoryandvendorServices/Dockerfile'
-              build_svc 'clubmembership-service' 'src/Services/sscServices/clubmembershipServices' 'src/Services/sscServices/clubmembershipServices/Dockerfile'
-              build_svc 'fillingandarchive-service' 'src/Services/sscServices/fillingandarchiveServices' 'src/Services/sscServices/fillingandarchiveServices/Dockerfile'
-              build_svc 'hrdocument-service' 'src/Services/sscServices/hrdocumentServices' 'src/Services/sscServices/hrdocumentServices/Dockerfile'
-              build_svc 'integration-service' 'src/Services/sscServices/integrationServices/IntegrationService' 'src/Services/sscServices/integrationServices/IntegrationService/Dockerfile'
-              build_svc 'invoiceprocessing-service' 'src/Services/sscServices/invoiceprocessingServices/InvoiceProcessing.Service' 'src/Services/sscServices/invoiceprocessingServices/InvoiceProcessing.Service/Dockerfile'
-              build_svc 'masterdata-service' 'src/Services/sscServices/masterdataServices/MasterDataService' 'src/Services/sscServices/masterdataServices/MasterDataService/Dockerfile'
-              build_svc 'menuandsecurity-service' 'src/Services/sscServices/menuandsecurityServices' 'src/Services/sscServices/menuandsecurityServices/Dockerfile'
-              build_svc 'menu-service' 'src/Services/sscServices/menuServices/01_USER_MODULE' 'src/Services/sscServices/menuServices/01_USER_MODULE/Dockerfile'
-              build_svc 'ssc-transaction-service' 'src/Services/sscServices/ssctransactionalServices' 'src/Services/sscServices/ssctransactionalServices/Dockerfile'
-            displayName: 'docker build all selected services'
 
-          - script: |
-              set -e
-              push_svc() {
-                local NAME=$1
-                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
                   echo "======= Pushing $NAME ======="
                   docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
                   docker push "$(imagePrefix)/$NAME:latest"
+                  echo "OK: $NAME built and pushed."
                 fi
               }
-              push_svc 'api-gateway'
-              push_svc 'approvalgroup-service'
-              push_svc 'batchandenvelope-service'
-              push_svc 'categoryandvendor-service'
-              push_svc 'clubmembership-service'
-              push_svc 'fillingandarchive-service'
-              push_svc 'hrdocument-service'
-              push_svc 'integration-service'
-              push_svc 'invoiceprocessing-service'
-              push_svc 'masterdata-service'
-              push_svc 'menuandsecurity-service'
-              push_svc 'menu-service'
-              push_svc 'ssc-transaction-service'
-            displayName: 'docker push all selected services'
+
+              build_and_push 'api-gateway' 'src/Services/sscServices/apigateway' 'src/Services/sscServices/apigateway/Dockerfile'
+              build_and_push 'approvalgroup-service' 'src/Services/sscServices/approvalgroupServices' 'src/Services/sscServices/approvalgroupServices/Dockerfile'
+              build_and_push 'batchandenvelope-service' 'src/Services/sscServices/batchandenvelopeServices' 'src/Services/sscServices/batchandenvelopeServices/Dockerfile'
+              build_and_push 'categoryandvendor-service' 'src/Services/sscServices/categoryandvendorServices' 'src/Services/sscServices/categoryandvendorServices/Dockerfile'
+              build_and_push 'clubmembership-service' 'src/Services/sscServices/clubmembershipServices' 'src/Services/sscServices/clubmembershipServices/Dockerfile'
+              build_and_push 'fillingandarchive-service' 'src/Services/sscServices/fillingandarchiveServices' 'src/Services/sscServices/fillingandarchiveServices/Dockerfile'
+              build_and_push 'hrdocument-service' 'src/Services/sscServices/hrdocumentServices' 'src/Services/sscServices/hrdocumentServices/Dockerfile'
+              build_and_push 'integration-service' 'src/Services/sscServices/integrationServices/IntegrationService' 'src/Services/sscServices/integrationServices/IntegrationService/Dockerfile'
+              build_and_push 'invoiceprocessing-service' 'src/Services/sscServices/invoiceprocessingServices/InvoiceProcessing.Service' 'src/Services/sscServices/invoiceprocessingServices/InvoiceProcessing.Service/Dockerfile'
+              build_and_push 'masterdata-service' 'src/Services/sscServices/masterdataServices/MasterDataService' 'src/Services/sscServices/masterdataServices/MasterDataService/Dockerfile'
+              build_and_push 'menuandsecurity-service' 'src/Services/sscServices/menuandsecurityServices' 'src/Services/sscServices/menuandsecurityServices/Dockerfile'
+              build_and_push 'menu-service' 'src/Services/sscServices/menuServices/01_USER_MODULE' 'src/Services/sscServices/menuServices/01_USER_MODULE/Dockerfile'
+              build_and_push 'ssc-transaction-service' 'src/Services/sscServices/ssctransactionalServices' 'src/Services/sscServices/ssctransactionalServices/Dockerfile'
+
+              echo ""
+              echo "All done."
+            displayName: 'Login, Build & Push all selected services'
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
   # ── VERIFY (separate agent — pulls from registry) ──────────────────────────
   - stage: Verify
