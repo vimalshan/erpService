@@ -341,6 +341,109 @@ jobs:
               print(f\"  [{s['module']:25}]  {s['name']:45}  port {s['port']}\")
           "
 
+      # ── Generate a docker-compose.yml that users can download and run locally
+      - name: Generate docker-compose.yml artifact
+        run: |
+          TAG="${{ github.event.inputs.tag || 'latest' }}"
+          PREFIX="ghcr.io/${{ github.repository_owner }}/erp"
+
+          python3 - <<'PYEOF'
+          import json, os, sys
+
+          matrix_json = os.environ.get("MATRIX_JSON", "")
+          tag         = os.environ.get("TAG", "latest")
+          prefix      = os.environ.get("PREFIX", "")
+
+          with open("/tmp/matrix.json", "w") as f:
+              f.write(matrix_json)
+          PYEOF
+
+          # Write matrix to file for python
+          echo '${{ steps.build.outputs.matrix }}' > /tmp/matrix.json
+          TAG="${{ github.event.inputs.tag || 'latest' }}"
+          PREFIX="ghcr.io/${{ github.repository_owner }}/erp"
+
+          python3 - <<PYEOF
+          import json
+
+          with open("/tmp/matrix.json") as f:
+              data = json.load(f)
+          services = data.get("include", [])
+          tag = "${TAG}"
+          prefix = "${PREFIX}"
+
+          lines = ["services:"]
+          for s in services:
+              name    = s["name"]
+              port    = s["port"]
+              module  = s["module"]
+              svc_key = f"{module}-{name}".replace("/", "-")
+              lines.append(f"  {svc_key}:")
+              lines.append(f"    image: {prefix}/{name}:{tag}")
+              lines.append(f"    container_name: {svc_key}")
+              lines.append(f"    ports:")
+              lines.append(f"      - \"{port}:{port}\"")
+              lines.append(f"    environment:")
+              lines.append(f"      - ASPNETCORE_ENVIRONMENT=Development")
+              lines.append(f"      - ASPNETCORE_URLS=http://+:{port}")
+              lines.append(f"    restart: unless-stopped")
+              lines.append(f"    # Swagger: http://localhost:{port}/swagger/index.html")
+              lines.append("")
+
+          with open("/tmp/docker-compose-erp.yml", "w") as f:
+              f.write("\n".join(lines))
+          print(f"Generated docker-compose.yml with {len(services)} services")
+          PYEOF
+
+      - name: Upload docker-compose.yml
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-compose-erp-${{ github.event.inputs.module }}-${{ github.event.inputs.tag || 'latest' }}
+          path: /tmp/docker-compose-erp.yml
+          retention-days: 30
+
+      - name: Write setup summary
+        run: |
+          TAG="${{ github.event.inputs.tag || 'latest' }}"
+          PREFIX="ghcr.io/${{ github.repository_owner }}/erp"
+          {
+            echo "# ERP Services — Run Locally"
+            echo ""
+            echo "## Why can't I open \`localhost:<port>\` from my browser?"
+            echo ""
+            echo "> GitHub Actions runs on **cloud VMs**. Ports are never exposed to your browser."
+            echo "> Download the artifact below and run it on **your own machine** instead."
+            echo ""
+            echo "## How to run locally"
+            echo ""
+            echo "1. **Download artifact** \`docker-compose-erp-${{ github.event.inputs.module }}-${TAG}\` from the top of this run page"
+            echo "2. Save as \`docker-compose.yml\` in any folder"
+            echo "3. Login to GHCR once:"
+            echo '   ```'
+            echo "   echo YOUR_GITHUB_PAT | docker login ghcr.io -u ${{ github.actor }} --password-stdin"
+            echo '   ```'
+            echo "4. Start all services:"
+            echo '   ```'
+            echo "   docker compose up -d"
+            echo '   ```'
+            echo "5. Open Swagger in your browser — examples:"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo '${{ steps.build.outputs.matrix }}' | python3 - <<'PYEOF'
+          import json, sys, os
+          raw = sys.stdin.read()
+          data = json.loads(raw)
+          svcs = data.get("include", [])
+          lines = []
+          for s in svcs[:10]:   # show first 10 as examples
+              lines.append(f"   - http://localhost:{s['port']}/swagger/index.html  ({s['module']} / {s['name']})")
+          if len(svcs) > 10:
+              lines.append(f"   - ... and {len(svcs)-10} more services")
+          print("\n".join(lines))
+          PYEOF
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "6. Stop all services: \`docker compose down\`" >> "$GITHUB_STEP_SUMMARY"
+
 # ─────────────────────────────────────────────────────────────────────────────
   run-service:
     name: "${{ matrix.module }} / ${{ matrix.name }}"
