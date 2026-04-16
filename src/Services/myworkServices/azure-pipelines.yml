@@ -1,0 +1,243 @@
+# Azure DevOps Pipeline - myworkServices
+# Builds and pushes all 9 service images to GHCR.
+# Registry: ghcr.io/$(githubOwner)/erp/<service-name>
+#
+# Setup required (once):
+#   Project Settings -> Service connections -> New -> Docker Registry
+#   Name: ghcr-service-connection  Type: Other  Registry: ghcr.io
+#   Username: <github-username>   Password: <GitHub PAT with packages:write>
+
+name: Build & Push myworkServices
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - src/Services/myworkServices/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - src/Services/myworkServices/**
+
+parameters:
+  - name: service
+    displayName: Service to build
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - audit-service
+      - batch-service
+      - csa-service
+      - project-service
+      - risk-service
+      - team-service
+      - timesheet-service
+      - workorder-service
+
+  - name: pushImage
+    displayName: Push image to GHCR
+    type: boolean
+    default: true
+
+variables:
+  imagePrefix: 'ghcr.io/$(githubOwner)/erp'
+  tag: '$(Build.BuildId)'
+  vmImageName: 'ubuntu-latest'
+
+pool:
+  vmImage: $(vmImageName)
+
+# ── Stages ────────────────────────────────────────────────────────────────────
+stages:
+  - stage: Build
+    displayName: Build Docker Images
+    jobs:
+      - job: BuildImages
+        displayName: Build
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/myworkServices/Gateway'
+          dockerfile: 'src/Services/myworkServices/Gateway/Dockerfile'
+        audit_service:
+          imageName: 'audit-service'
+          context: 'src/Services/myworkServices/auditServices'
+          dockerfile: 'src/Services/myworkServices/auditServices/Dockerfile'
+        batch_service:
+          imageName: 'batch-service'
+          context: 'src/Services/myworkServices/batchServices'
+          dockerfile: 'src/Services/myworkServices/batchServices/Dockerfile'
+        csa_service:
+          imageName: 'csa-service'
+          context: 'src/Services/myworkServices/csaServices/CSA.Service'
+          dockerfile: 'src/Services/myworkServices/csaServices/CSA.Service/Dockerfile'
+        project_service:
+          imageName: 'project-service'
+          context: 'src/Services/myworkServices/projectServices'
+          dockerfile: 'src/Services/myworkServices/projectServices/Dockerfile'
+        risk_service:
+          imageName: 'risk-service'
+          context: 'src/Services/myworkServices/riskServices'
+          dockerfile: 'src/Services/myworkServices/riskServices/Dockerfile'
+        team_service:
+          imageName: 'team-service'
+          context: 'src/Services/myworkServices/teamServices'
+          dockerfile: 'src/Services/myworkServices/teamServices/Dockerfile'
+        timesheet_service:
+          imageName: 'timesheet-service'
+          context: 'src/Services/myworkServices/timeSheetServices'
+          dockerfile: 'src/Services/myworkServices/timeSheetServices/Dockerfile'
+        workorder_service:
+          imageName: 'workorder-service'
+          context: 'src/Services/myworkServices/workorderServices/WorkOrderService'
+          dockerfile: 'src/Services/myworkServices/workorderServices/WorkOrderService/Dockerfile'
+
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: Docker@2
+            displayName: Build $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: build
+              repository: $(imagePrefix)/$(imageName)
+              dockerfile: $(dockerfile)
+              buildContext: $(context)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Push
+    displayName: Push to GHCR
+    dependsOn: Build
+    condition: and(succeeded(), eq('${{ parameters.pushImage }}', true))
+    jobs:
+      - job: PushImages
+        displayName: Push
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/myworkServices/Gateway'
+          dockerfile: 'src/Services/myworkServices/Gateway/Dockerfile'
+        audit_service:
+          imageName: 'audit-service'
+          context: 'src/Services/myworkServices/auditServices'
+          dockerfile: 'src/Services/myworkServices/auditServices/Dockerfile'
+        batch_service:
+          imageName: 'batch-service'
+          context: 'src/Services/myworkServices/batchServices'
+          dockerfile: 'src/Services/myworkServices/batchServices/Dockerfile'
+        csa_service:
+          imageName: 'csa-service'
+          context: 'src/Services/myworkServices/csaServices/CSA.Service'
+          dockerfile: 'src/Services/myworkServices/csaServices/CSA.Service/Dockerfile'
+        project_service:
+          imageName: 'project-service'
+          context: 'src/Services/myworkServices/projectServices'
+          dockerfile: 'src/Services/myworkServices/projectServices/Dockerfile'
+        risk_service:
+          imageName: 'risk-service'
+          context: 'src/Services/myworkServices/riskServices'
+          dockerfile: 'src/Services/myworkServices/riskServices/Dockerfile'
+        team_service:
+          imageName: 'team-service'
+          context: 'src/Services/myworkServices/teamServices'
+          dockerfile: 'src/Services/myworkServices/teamServices/Dockerfile'
+        timesheet_service:
+          imageName: 'timesheet-service'
+          context: 'src/Services/myworkServices/timeSheetServices'
+          dockerfile: 'src/Services/myworkServices/timeSheetServices/Dockerfile'
+        workorder_service:
+          imageName: 'workorder-service'
+          context: 'src/Services/myworkServices/workorderServices/WorkOrderService'
+          dockerfile: 'src/Services/myworkServices/workorderServices/WorkOrderService/Dockerfile'
+
+        steps:
+          - task: Docker@2
+            displayName: Login to GHCR
+            inputs:
+              command: login
+              containerRegistry: ghcr-service-connection
+
+          - task: Docker@2
+            displayName: Push $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: push
+              repository: $(imagePrefix)/$(imageName)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Verify
+    displayName: Smoke Test
+    dependsOn: Push
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: SmokeTest
+        displayName: Verify images
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/myworkServices/Gateway'
+          dockerfile: 'src/Services/myworkServices/Gateway/Dockerfile'
+        audit_service:
+          imageName: 'audit-service'
+          context: 'src/Services/myworkServices/auditServices'
+          dockerfile: 'src/Services/myworkServices/auditServices/Dockerfile'
+        batch_service:
+          imageName: 'batch-service'
+          context: 'src/Services/myworkServices/batchServices'
+          dockerfile: 'src/Services/myworkServices/batchServices/Dockerfile'
+        csa_service:
+          imageName: 'csa-service'
+          context: 'src/Services/myworkServices/csaServices/CSA.Service'
+          dockerfile: 'src/Services/myworkServices/csaServices/CSA.Service/Dockerfile'
+        project_service:
+          imageName: 'project-service'
+          context: 'src/Services/myworkServices/projectServices'
+          dockerfile: 'src/Services/myworkServices/projectServices/Dockerfile'
+        risk_service:
+          imageName: 'risk-service'
+          context: 'src/Services/myworkServices/riskServices'
+          dockerfile: 'src/Services/myworkServices/riskServices/Dockerfile'
+        team_service:
+          imageName: 'team-service'
+          context: 'src/Services/myworkServices/teamServices'
+          dockerfile: 'src/Services/myworkServices/teamServices/Dockerfile'
+        timesheet_service:
+          imageName: 'timesheet-service'
+          context: 'src/Services/myworkServices/timeSheetServices'
+          dockerfile: 'src/Services/myworkServices/timeSheetServices/Dockerfile'
+        workorder_service:
+          imageName: 'workorder-service'
+          context: 'src/Services/myworkServices/workorderServices/WorkOrderService'
+          dockerfile: 'src/Services/myworkServices/workorderServices/WorkOrderService/Dockerfile'
+
+        steps:
+          - script: |
+              IMAGE="$(imagePrefix)/$(imageName):latest"
+              echo "Pulling $IMAGE ..."
+              docker pull "$IMAGE"
+              CNAME="smoke-$(imageName | tr '/' '-')"
+              docker run -d --name "$CNAME" \
+                -e ASPNETCORE_ENVIRONMENT=Development \
+                "$IMAGE"
+              sleep 10
+              docker logs "$CNAME"
+              docker rm -f "$CNAME"
+            displayName: Smoke test $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))

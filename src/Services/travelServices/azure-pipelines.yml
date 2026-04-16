@@ -1,0 +1,256 @@
+# Azure DevOps Pipeline - travelServices
+# Builds and pushes all 10 service images to GHCR.
+# Registry: ghcr.io/$(githubOwner)/erp/<service-name>
+#
+# Setup required (once):
+#   Project Settings -> Service connections -> New -> Docker Registry
+#   Name: ghcr-service-connection  Type: Other  Registry: ghcr.io
+#   Username: <github-username>   Password: <GitHub PAT with packages:write>
+
+name: Build & Push travelServices
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - src/Services/travelServices/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - src/Services/travelServices/**
+
+parameters:
+  - name: service
+    displayName: Service to build
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - admin-service
+      - agens-service
+      - booking-service
+      - travelexpense-service
+      - travelfinance-service
+      - insurance-service
+      - masterdata-service
+      - travelrequest-service
+      - travel-transaction-service
+
+  - name: pushImage
+    displayName: Push image to GHCR
+    type: boolean
+    default: true
+
+variables:
+  imagePrefix: 'ghcr.io/$(githubOwner)/erp'
+  tag: '$(Build.BuildId)'
+  vmImageName: 'ubuntu-latest'
+
+pool:
+  vmImage: $(vmImageName)
+
+# ── Stages ────────────────────────────────────────────────────────────────────
+stages:
+  - stage: Build
+    displayName: Build Docker Images
+    jobs:
+      - job: BuildImages
+        displayName: Build
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/travelServices/ApiGateway'
+          dockerfile: 'src/Services/travelServices/ApiGateway/Dockerfile'
+        admin_service:
+          imageName: 'admin-service'
+          context: 'src/Services/travelServices/adminServices'
+          dockerfile: 'src/Services/travelServices/adminServices/Dockerfile'
+        agens_service:
+          imageName: 'agens-service'
+          context: 'src/Services/travelServices/agensService'
+          dockerfile: 'src/Services/travelServices/agensService/Dockerfile'
+        booking_service:
+          imageName: 'booking-service'
+          context: 'src/Services/travelServices/bookingServices'
+          dockerfile: 'src/Services/travelServices/bookingServices/Dockerfile'
+        travelexpense_service:
+          imageName: 'travelexpense-service'
+          context: 'src/Services/travelServices/expenseServices'
+          dockerfile: 'src/Services/travelServices/expenseServices/Dockerfile'
+        travelfinance_service:
+          imageName: 'travelfinance-service'
+          context: 'src/Services/travelServices/financeServices'
+          dockerfile: 'src/Services/travelServices/financeServices/Dockerfile'
+        insurance_service:
+          imageName: 'insurance-service'
+          context: 'src/Services/travelServices/insuranceServices'
+          dockerfile: 'src/Services/travelServices/insuranceServices/Dockerfile'
+        masterdata_service:
+          imageName: 'masterdata-service'
+          context: 'src/Services/travelServices/masterdataServices'
+          dockerfile: 'src/Services/travelServices/masterdataServices/Dockerfile'
+        travelrequest_service:
+          imageName: 'travelrequest-service'
+          context: 'src/Services/travelServices/travelRequestServices'
+          dockerfile: 'src/Services/travelServices/travelRequestServices/Dockerfile'
+        travel_transaction_service:
+          imageName: 'travel-transaction-service'
+          context: 'src/Services/travelServices/traveltransactionServices'
+          dockerfile: 'src/Services/travelServices/traveltransactionServices/Dockerfile'
+
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: Docker@2
+            displayName: Build $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: build
+              repository: $(imagePrefix)/$(imageName)
+              dockerfile: $(dockerfile)
+              buildContext: $(context)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Push
+    displayName: Push to GHCR
+    dependsOn: Build
+    condition: and(succeeded(), eq('${{ parameters.pushImage }}', true))
+    jobs:
+      - job: PushImages
+        displayName: Push
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/travelServices/ApiGateway'
+          dockerfile: 'src/Services/travelServices/ApiGateway/Dockerfile'
+        admin_service:
+          imageName: 'admin-service'
+          context: 'src/Services/travelServices/adminServices'
+          dockerfile: 'src/Services/travelServices/adminServices/Dockerfile'
+        agens_service:
+          imageName: 'agens-service'
+          context: 'src/Services/travelServices/agensService'
+          dockerfile: 'src/Services/travelServices/agensService/Dockerfile'
+        booking_service:
+          imageName: 'booking-service'
+          context: 'src/Services/travelServices/bookingServices'
+          dockerfile: 'src/Services/travelServices/bookingServices/Dockerfile'
+        travelexpense_service:
+          imageName: 'travelexpense-service'
+          context: 'src/Services/travelServices/expenseServices'
+          dockerfile: 'src/Services/travelServices/expenseServices/Dockerfile'
+        travelfinance_service:
+          imageName: 'travelfinance-service'
+          context: 'src/Services/travelServices/financeServices'
+          dockerfile: 'src/Services/travelServices/financeServices/Dockerfile'
+        insurance_service:
+          imageName: 'insurance-service'
+          context: 'src/Services/travelServices/insuranceServices'
+          dockerfile: 'src/Services/travelServices/insuranceServices/Dockerfile'
+        masterdata_service:
+          imageName: 'masterdata-service'
+          context: 'src/Services/travelServices/masterdataServices'
+          dockerfile: 'src/Services/travelServices/masterdataServices/Dockerfile'
+        travelrequest_service:
+          imageName: 'travelrequest-service'
+          context: 'src/Services/travelServices/travelRequestServices'
+          dockerfile: 'src/Services/travelServices/travelRequestServices/Dockerfile'
+        travel_transaction_service:
+          imageName: 'travel-transaction-service'
+          context: 'src/Services/travelServices/traveltransactionServices'
+          dockerfile: 'src/Services/travelServices/traveltransactionServices/Dockerfile'
+
+        steps:
+          - task: Docker@2
+            displayName: Login to GHCR
+            inputs:
+              command: login
+              containerRegistry: ghcr-service-connection
+
+          - task: Docker@2
+            displayName: Push $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: push
+              repository: $(imagePrefix)/$(imageName)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Verify
+    displayName: Smoke Test
+    dependsOn: Push
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: SmokeTest
+        displayName: Verify images
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/travelServices/ApiGateway'
+          dockerfile: 'src/Services/travelServices/ApiGateway/Dockerfile'
+        admin_service:
+          imageName: 'admin-service'
+          context: 'src/Services/travelServices/adminServices'
+          dockerfile: 'src/Services/travelServices/adminServices/Dockerfile'
+        agens_service:
+          imageName: 'agens-service'
+          context: 'src/Services/travelServices/agensService'
+          dockerfile: 'src/Services/travelServices/agensService/Dockerfile'
+        booking_service:
+          imageName: 'booking-service'
+          context: 'src/Services/travelServices/bookingServices'
+          dockerfile: 'src/Services/travelServices/bookingServices/Dockerfile'
+        travelexpense_service:
+          imageName: 'travelexpense-service'
+          context: 'src/Services/travelServices/expenseServices'
+          dockerfile: 'src/Services/travelServices/expenseServices/Dockerfile'
+        travelfinance_service:
+          imageName: 'travelfinance-service'
+          context: 'src/Services/travelServices/financeServices'
+          dockerfile: 'src/Services/travelServices/financeServices/Dockerfile'
+        insurance_service:
+          imageName: 'insurance-service'
+          context: 'src/Services/travelServices/insuranceServices'
+          dockerfile: 'src/Services/travelServices/insuranceServices/Dockerfile'
+        masterdata_service:
+          imageName: 'masterdata-service'
+          context: 'src/Services/travelServices/masterdataServices'
+          dockerfile: 'src/Services/travelServices/masterdataServices/Dockerfile'
+        travelrequest_service:
+          imageName: 'travelrequest-service'
+          context: 'src/Services/travelServices/travelRequestServices'
+          dockerfile: 'src/Services/travelServices/travelRequestServices/Dockerfile'
+        travel_transaction_service:
+          imageName: 'travel-transaction-service'
+          context: 'src/Services/travelServices/traveltransactionServices'
+          dockerfile: 'src/Services/travelServices/traveltransactionServices/Dockerfile'
+
+        steps:
+          - script: |
+              IMAGE="$(imagePrefix)/$(imageName):latest"
+              echo "Pulling $IMAGE ..."
+              docker pull "$IMAGE"
+              CNAME="smoke-$(imageName | tr '/' '-')"
+              docker run -d --name "$CNAME" \
+                -e ASPNETCORE_ENVIRONMENT=Development \
+                "$IMAGE"
+              sleep 10
+              docker logs "$CNAME"
+              docker rm -f "$CNAME"
+            displayName: Smoke test $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))

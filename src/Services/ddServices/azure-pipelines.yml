@@ -1,0 +1,334 @@
+# Azure DevOps Pipeline - ddServices
+# Builds and pushes all 16 service images to GHCR.
+# Registry: ghcr.io/$(githubOwner)/erp/<service-name>
+#
+# Setup required (once):
+#   Project Settings -> Service connections -> New -> Docker Registry
+#   Name: ghcr-service-connection  Type: Other  Registry: ghcr.io
+#   Username: <github-username>   Password: <GitHub PAT with packages:write>
+
+name: Build & Push ddServices
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - src/Services/ddServices/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - src/Services/ddServices/**
+
+parameters:
+  - name: service
+    displayName: Service to build
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - appraisal-service
+      - authorization-service
+      - compensation-service
+      - competency-service
+      - demand-management-service
+      - document-service
+      - employee-service
+      - feedback-service
+      - learning-service
+      - objective-service
+      - other-services
+      - promotion-service
+      - recruitment-service
+      - reporting-service
+      - transaction-service
+
+  - name: pushImage
+    displayName: Push image to GHCR
+    type: boolean
+    default: true
+
+variables:
+  imagePrefix: 'ghcr.io/$(githubOwner)/erp'
+  tag: '$(Build.BuildId)'
+  vmImageName: 'ubuntu-latest'
+
+pool:
+  vmImage: $(vmImageName)
+
+# ── Stages ────────────────────────────────────────────────────────────────────
+stages:
+  - stage: Build
+    displayName: Build Docker Images
+    jobs:
+      - job: BuildImages
+        displayName: Build
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/ddServices/apiGateway'
+          dockerfile: 'src/Services/ddServices/apiGateway/Dockerfile'
+        appraisal_service:
+          imageName: 'appraisal-service'
+          context: 'src/Services/ddServices/appraisalService'
+          dockerfile: 'src/Services/ddServices/appraisalService/Dockerfile'
+        authorization_service:
+          imageName: 'authorization-service'
+          context: 'src/Services/ddServices/authorizationServices'
+          dockerfile: 'src/Services/ddServices/authorizationServices/Dockerfile'
+        compensation_service:
+          imageName: 'compensation-service'
+          context: 'src/Services/ddServices/compensationServices'
+          dockerfile: 'src/Services/ddServices/compensationServices/Dockerfile'
+        competency_service:
+          imageName: 'competency-service'
+          context: 'src/Services/ddServices/competencyServices'
+          dockerfile: 'src/Services/ddServices/competencyServices/Dockerfile'
+        demand_management_service:
+          imageName: 'demand-management-service'
+          context: 'src/Services/ddServices/demandmanagementServices'
+          dockerfile: 'src/Services/ddServices/demandmanagementServices/Dockerfile'
+        document_service:
+          imageName: 'document-service'
+          context: 'src/Services/ddServices/documentServices'
+          dockerfile: 'src/Services/ddServices/documentServices/Dockerfile'
+        employee_service:
+          imageName: 'employee-service'
+          context: 'src/Services/ddServices/employeeServices'
+          dockerfile: 'src/Services/ddServices/employeeServices/Dockerfile'
+        feedback_service:
+          imageName: 'feedback-service'
+          context: 'src/Services/ddServices/feedbackServices'
+          dockerfile: 'src/Services/ddServices/feedbackServices/Dockerfile'
+        learning_service:
+          imageName: 'learning-service'
+          context: 'src/Services/ddServices/learningServices'
+          dockerfile: 'src/Services/ddServices/learningServices/Dockerfile'
+        objective_service:
+          imageName: 'objective-service'
+          context: 'src/Services/ddServices/objectiveServices'
+          dockerfile: 'src/Services/ddServices/objectiveServices/Dockerfile'
+        other_services:
+          imageName: 'other-services'
+          context: 'src/Services/ddServices/OtherServices'
+          dockerfile: 'src/Services/ddServices/OtherServices/Dockerfile'
+        promotion_service:
+          imageName: 'promotion-service'
+          context: 'src/Services/ddServices/promotionServices'
+          dockerfile: 'src/Services/ddServices/promotionServices/Dockerfile'
+        recruitment_service:
+          imageName: 'recruitment-service'
+          context: 'src/Services/ddServices/recruitmentServices'
+          dockerfile: 'src/Services/ddServices/recruitmentServices/Dockerfile'
+        reporting_service:
+          imageName: 'reporting-service'
+          context: 'src/Services/ddServices/reportingServices'
+          dockerfile: 'src/Services/ddServices/reportingServices/Dockerfile'
+        transaction_service:
+          imageName: 'transaction-service'
+          context: 'src/Services/ddServices/transactionServices'
+          dockerfile: 'src/Services/ddServices/transactionServices/Dockerfile'
+
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: Docker@2
+            displayName: Build $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: build
+              repository: $(imagePrefix)/$(imageName)
+              dockerfile: $(dockerfile)
+              buildContext: $(context)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Push
+    displayName: Push to GHCR
+    dependsOn: Build
+    condition: and(succeeded(), eq('${{ parameters.pushImage }}', true))
+    jobs:
+      - job: PushImages
+        displayName: Push
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/ddServices/apiGateway'
+          dockerfile: 'src/Services/ddServices/apiGateway/Dockerfile'
+        appraisal_service:
+          imageName: 'appraisal-service'
+          context: 'src/Services/ddServices/appraisalService'
+          dockerfile: 'src/Services/ddServices/appraisalService/Dockerfile'
+        authorization_service:
+          imageName: 'authorization-service'
+          context: 'src/Services/ddServices/authorizationServices'
+          dockerfile: 'src/Services/ddServices/authorizationServices/Dockerfile'
+        compensation_service:
+          imageName: 'compensation-service'
+          context: 'src/Services/ddServices/compensationServices'
+          dockerfile: 'src/Services/ddServices/compensationServices/Dockerfile'
+        competency_service:
+          imageName: 'competency-service'
+          context: 'src/Services/ddServices/competencyServices'
+          dockerfile: 'src/Services/ddServices/competencyServices/Dockerfile'
+        demand_management_service:
+          imageName: 'demand-management-service'
+          context: 'src/Services/ddServices/demandmanagementServices'
+          dockerfile: 'src/Services/ddServices/demandmanagementServices/Dockerfile'
+        document_service:
+          imageName: 'document-service'
+          context: 'src/Services/ddServices/documentServices'
+          dockerfile: 'src/Services/ddServices/documentServices/Dockerfile'
+        employee_service:
+          imageName: 'employee-service'
+          context: 'src/Services/ddServices/employeeServices'
+          dockerfile: 'src/Services/ddServices/employeeServices/Dockerfile'
+        feedback_service:
+          imageName: 'feedback-service'
+          context: 'src/Services/ddServices/feedbackServices'
+          dockerfile: 'src/Services/ddServices/feedbackServices/Dockerfile'
+        learning_service:
+          imageName: 'learning-service'
+          context: 'src/Services/ddServices/learningServices'
+          dockerfile: 'src/Services/ddServices/learningServices/Dockerfile'
+        objective_service:
+          imageName: 'objective-service'
+          context: 'src/Services/ddServices/objectiveServices'
+          dockerfile: 'src/Services/ddServices/objectiveServices/Dockerfile'
+        other_services:
+          imageName: 'other-services'
+          context: 'src/Services/ddServices/OtherServices'
+          dockerfile: 'src/Services/ddServices/OtherServices/Dockerfile'
+        promotion_service:
+          imageName: 'promotion-service'
+          context: 'src/Services/ddServices/promotionServices'
+          dockerfile: 'src/Services/ddServices/promotionServices/Dockerfile'
+        recruitment_service:
+          imageName: 'recruitment-service'
+          context: 'src/Services/ddServices/recruitmentServices'
+          dockerfile: 'src/Services/ddServices/recruitmentServices/Dockerfile'
+        reporting_service:
+          imageName: 'reporting-service'
+          context: 'src/Services/ddServices/reportingServices'
+          dockerfile: 'src/Services/ddServices/reportingServices/Dockerfile'
+        transaction_service:
+          imageName: 'transaction-service'
+          context: 'src/Services/ddServices/transactionServices'
+          dockerfile: 'src/Services/ddServices/transactionServices/Dockerfile'
+
+        steps:
+          - task: Docker@2
+            displayName: Login to GHCR
+            inputs:
+              command: login
+              containerRegistry: ghcr-service-connection
+
+          - task: Docker@2
+            displayName: Push $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: push
+              repository: $(imagePrefix)/$(imageName)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Verify
+    displayName: Smoke Test
+    dependsOn: Push
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: SmokeTest
+        displayName: Verify images
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/ddServices/apiGateway'
+          dockerfile: 'src/Services/ddServices/apiGateway/Dockerfile'
+        appraisal_service:
+          imageName: 'appraisal-service'
+          context: 'src/Services/ddServices/appraisalService'
+          dockerfile: 'src/Services/ddServices/appraisalService/Dockerfile'
+        authorization_service:
+          imageName: 'authorization-service'
+          context: 'src/Services/ddServices/authorizationServices'
+          dockerfile: 'src/Services/ddServices/authorizationServices/Dockerfile'
+        compensation_service:
+          imageName: 'compensation-service'
+          context: 'src/Services/ddServices/compensationServices'
+          dockerfile: 'src/Services/ddServices/compensationServices/Dockerfile'
+        competency_service:
+          imageName: 'competency-service'
+          context: 'src/Services/ddServices/competencyServices'
+          dockerfile: 'src/Services/ddServices/competencyServices/Dockerfile'
+        demand_management_service:
+          imageName: 'demand-management-service'
+          context: 'src/Services/ddServices/demandmanagementServices'
+          dockerfile: 'src/Services/ddServices/demandmanagementServices/Dockerfile'
+        document_service:
+          imageName: 'document-service'
+          context: 'src/Services/ddServices/documentServices'
+          dockerfile: 'src/Services/ddServices/documentServices/Dockerfile'
+        employee_service:
+          imageName: 'employee-service'
+          context: 'src/Services/ddServices/employeeServices'
+          dockerfile: 'src/Services/ddServices/employeeServices/Dockerfile'
+        feedback_service:
+          imageName: 'feedback-service'
+          context: 'src/Services/ddServices/feedbackServices'
+          dockerfile: 'src/Services/ddServices/feedbackServices/Dockerfile'
+        learning_service:
+          imageName: 'learning-service'
+          context: 'src/Services/ddServices/learningServices'
+          dockerfile: 'src/Services/ddServices/learningServices/Dockerfile'
+        objective_service:
+          imageName: 'objective-service'
+          context: 'src/Services/ddServices/objectiveServices'
+          dockerfile: 'src/Services/ddServices/objectiveServices/Dockerfile'
+        other_services:
+          imageName: 'other-services'
+          context: 'src/Services/ddServices/OtherServices'
+          dockerfile: 'src/Services/ddServices/OtherServices/Dockerfile'
+        promotion_service:
+          imageName: 'promotion-service'
+          context: 'src/Services/ddServices/promotionServices'
+          dockerfile: 'src/Services/ddServices/promotionServices/Dockerfile'
+        recruitment_service:
+          imageName: 'recruitment-service'
+          context: 'src/Services/ddServices/recruitmentServices'
+          dockerfile: 'src/Services/ddServices/recruitmentServices/Dockerfile'
+        reporting_service:
+          imageName: 'reporting-service'
+          context: 'src/Services/ddServices/reportingServices'
+          dockerfile: 'src/Services/ddServices/reportingServices/Dockerfile'
+        transaction_service:
+          imageName: 'transaction-service'
+          context: 'src/Services/ddServices/transactionServices'
+          dockerfile: 'src/Services/ddServices/transactionServices/Dockerfile'
+
+        steps:
+          - script: |
+              IMAGE="$(imagePrefix)/$(imageName):latest"
+              echo "Pulling $IMAGE ..."
+              docker pull "$IMAGE"
+              CNAME="smoke-$(imageName | tr '/' '-')"
+              docker run -d --name "$CNAME" \
+                -e ASPNETCORE_ENVIRONMENT=Development \
+                "$IMAGE"
+              sleep 10
+              docker logs "$CNAME"
+              docker rm -f "$CNAME"
+            displayName: Smoke test $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))

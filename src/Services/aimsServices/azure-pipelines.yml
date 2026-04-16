@@ -1,0 +1,269 @@
+# Azure DevOps Pipeline - aimsServices
+# Builds and pushes all 11 service images to GHCR.
+# Registry: ghcr.io/$(githubOwner)/erp/<service-name>
+#
+# Setup required (once):
+#   Project Settings -> Service connections -> New -> Docker Registry
+#   Name: ghcr-service-connection  Type: Other  Registry: ghcr.io
+#   Username: <github-username>   Password: <GitHub PAT with packages:write>
+
+name: Build & Push aimsServices
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - src/Services/aimsServices/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - src/Services/aimsServices/**
+
+parameters:
+  - name: service
+    displayName: Service to build
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - access-service
+      - aims-transaction-service
+      - attendance-service
+      - bus-services
+      - calendar-service
+      - employee-service
+      - groupincentive-service
+      - leave-services
+      - reference-service
+      - visitor-services
+
+  - name: pushImage
+    displayName: Push image to GHCR
+    type: boolean
+    default: true
+
+variables:
+  imagePrefix: 'ghcr.io/$(githubOwner)/erp'
+  tag: '$(Build.BuildId)'
+  vmImageName: 'ubuntu-latest'
+
+pool:
+  vmImage: $(vmImageName)
+
+# ── Stages ────────────────────────────────────────────────────────────────────
+stages:
+  - stage: Build
+    displayName: Build Docker Images
+    jobs:
+      - job: BuildImages
+        displayName: Build
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/aimsServices/ApiGateway'
+          dockerfile: 'src/Services/aimsServices/ApiGateway/Dockerfile'
+        access_service:
+          imageName: 'access-service'
+          context: 'src/Services/aimsServices/accessServices'
+          dockerfile: 'src/Services/aimsServices/accessServices/Dockerfile'
+        aims_transaction_service:
+          imageName: 'aims-transaction-service'
+          context: 'src/Services/aimsServices/aimsTransactionServices'
+          dockerfile: 'src/Services/aimsServices/aimsTransactionServices/Dockerfile'
+        attendance_service:
+          imageName: 'attendance-service'
+          context: 'src/Services/aimsServices/attendanceServices'
+          dockerfile: 'src/Services/aimsServices/attendanceServices/Dockerfile'
+        bus_services:
+          imageName: 'bus-services'
+          context: 'src/Services/aimsServices/busServices'
+          dockerfile: 'src/Services/aimsServices/busServices/Dockerfile'
+        calendar_service:
+          imageName: 'calendar-service'
+          context: 'src/Services/aimsServices/calendarServices'
+          dockerfile: 'src/Services/aimsServices/calendarServices/Dockerfile'
+        employee_service:
+          imageName: 'employee-service'
+          context: 'src/Services/aimsServices/employeeServices'
+          dockerfile: 'src/Services/aimsServices/employeeServices/Dockerfile'
+        groupincentive_service:
+          imageName: 'groupincentive-service'
+          context: 'src/Services/aimsServices/groupincentiveServices'
+          dockerfile: 'src/Services/aimsServices/groupincentiveServices/Dockerfile'
+        leave_services:
+          imageName: 'leave-services'
+          context: 'src/Services/aimsServices/leaveServices'
+          dockerfile: 'src/Services/aimsServices/leaveServices/Dockerfile'
+        reference_service:
+          imageName: 'reference-service'
+          context: 'src/Services/aimsServices/referenceServices'
+          dockerfile: 'src/Services/aimsServices/referenceServices/Dockerfile'
+        visitor_services:
+          imageName: 'visitor-services'
+          context: 'src/Services/aimsServices/visitorServices'
+          dockerfile: 'src/Services/aimsServices/visitorServices/Dockerfile'
+
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: Docker@2
+            displayName: Build $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: build
+              repository: $(imagePrefix)/$(imageName)
+              dockerfile: $(dockerfile)
+              buildContext: $(context)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Push
+    displayName: Push to GHCR
+    dependsOn: Build
+    condition: and(succeeded(), eq('${{ parameters.pushImage }}', true))
+    jobs:
+      - job: PushImages
+        displayName: Push
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/aimsServices/ApiGateway'
+          dockerfile: 'src/Services/aimsServices/ApiGateway/Dockerfile'
+        access_service:
+          imageName: 'access-service'
+          context: 'src/Services/aimsServices/accessServices'
+          dockerfile: 'src/Services/aimsServices/accessServices/Dockerfile'
+        aims_transaction_service:
+          imageName: 'aims-transaction-service'
+          context: 'src/Services/aimsServices/aimsTransactionServices'
+          dockerfile: 'src/Services/aimsServices/aimsTransactionServices/Dockerfile'
+        attendance_service:
+          imageName: 'attendance-service'
+          context: 'src/Services/aimsServices/attendanceServices'
+          dockerfile: 'src/Services/aimsServices/attendanceServices/Dockerfile'
+        bus_services:
+          imageName: 'bus-services'
+          context: 'src/Services/aimsServices/busServices'
+          dockerfile: 'src/Services/aimsServices/busServices/Dockerfile'
+        calendar_service:
+          imageName: 'calendar-service'
+          context: 'src/Services/aimsServices/calendarServices'
+          dockerfile: 'src/Services/aimsServices/calendarServices/Dockerfile'
+        employee_service:
+          imageName: 'employee-service'
+          context: 'src/Services/aimsServices/employeeServices'
+          dockerfile: 'src/Services/aimsServices/employeeServices/Dockerfile'
+        groupincentive_service:
+          imageName: 'groupincentive-service'
+          context: 'src/Services/aimsServices/groupincentiveServices'
+          dockerfile: 'src/Services/aimsServices/groupincentiveServices/Dockerfile'
+        leave_services:
+          imageName: 'leave-services'
+          context: 'src/Services/aimsServices/leaveServices'
+          dockerfile: 'src/Services/aimsServices/leaveServices/Dockerfile'
+        reference_service:
+          imageName: 'reference-service'
+          context: 'src/Services/aimsServices/referenceServices'
+          dockerfile: 'src/Services/aimsServices/referenceServices/Dockerfile'
+        visitor_services:
+          imageName: 'visitor-services'
+          context: 'src/Services/aimsServices/visitorServices'
+          dockerfile: 'src/Services/aimsServices/visitorServices/Dockerfile'
+
+        steps:
+          - task: Docker@2
+            displayName: Login to GHCR
+            inputs:
+              command: login
+              containerRegistry: ghcr-service-connection
+
+          - task: Docker@2
+            displayName: Push $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: push
+              repository: $(imagePrefix)/$(imageName)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Verify
+    displayName: Smoke Test
+    dependsOn: Push
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: SmokeTest
+        displayName: Verify images
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/aimsServices/ApiGateway'
+          dockerfile: 'src/Services/aimsServices/ApiGateway/Dockerfile'
+        access_service:
+          imageName: 'access-service'
+          context: 'src/Services/aimsServices/accessServices'
+          dockerfile: 'src/Services/aimsServices/accessServices/Dockerfile'
+        aims_transaction_service:
+          imageName: 'aims-transaction-service'
+          context: 'src/Services/aimsServices/aimsTransactionServices'
+          dockerfile: 'src/Services/aimsServices/aimsTransactionServices/Dockerfile'
+        attendance_service:
+          imageName: 'attendance-service'
+          context: 'src/Services/aimsServices/attendanceServices'
+          dockerfile: 'src/Services/aimsServices/attendanceServices/Dockerfile'
+        bus_services:
+          imageName: 'bus-services'
+          context: 'src/Services/aimsServices/busServices'
+          dockerfile: 'src/Services/aimsServices/busServices/Dockerfile'
+        calendar_service:
+          imageName: 'calendar-service'
+          context: 'src/Services/aimsServices/calendarServices'
+          dockerfile: 'src/Services/aimsServices/calendarServices/Dockerfile'
+        employee_service:
+          imageName: 'employee-service'
+          context: 'src/Services/aimsServices/employeeServices'
+          dockerfile: 'src/Services/aimsServices/employeeServices/Dockerfile'
+        groupincentive_service:
+          imageName: 'groupincentive-service'
+          context: 'src/Services/aimsServices/groupincentiveServices'
+          dockerfile: 'src/Services/aimsServices/groupincentiveServices/Dockerfile'
+        leave_services:
+          imageName: 'leave-services'
+          context: 'src/Services/aimsServices/leaveServices'
+          dockerfile: 'src/Services/aimsServices/leaveServices/Dockerfile'
+        reference_service:
+          imageName: 'reference-service'
+          context: 'src/Services/aimsServices/referenceServices'
+          dockerfile: 'src/Services/aimsServices/referenceServices/Dockerfile'
+        visitor_services:
+          imageName: 'visitor-services'
+          context: 'src/Services/aimsServices/visitorServices'
+          dockerfile: 'src/Services/aimsServices/visitorServices/Dockerfile'
+
+        steps:
+          - script: |
+              IMAGE="$(imagePrefix)/$(imageName):latest"
+              echo "Pulling $IMAGE ..."
+              docker pull "$IMAGE"
+              CNAME="smoke-$(imageName | tr '/' '-')"
+              docker run -d --name "$CNAME" \
+                -e ASPNETCORE_ENVIRONMENT=Development \
+                "$IMAGE"
+              sleep 10
+              docker logs "$CNAME"
+              docker rm -f "$CNAME"
+            displayName: Smoke test $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
