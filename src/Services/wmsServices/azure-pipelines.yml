@@ -1,0 +1,347 @@
+# Azure DevOps Pipeline - wmsServices
+# Builds and pushes all 17 service images to GHCR.
+# Registry: ghcr.io/$(githubOwner)/erp/<service-name>
+#
+# Setup required (once):
+#   Project Settings -> Service connections -> New -> Docker Registry
+#   Name: ghcr-service-connection  Type: Other  Registry: ghcr.io
+#   Username: <github-username>   Password: <GitHub PAT with packages:write>
+
+name: Build & Push wmsServices
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - src/Services/wmsServices/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - src/Services/wmsServices/**
+
+parameters:
+  - name: service
+    displayName: Service to build
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - auditlog-service
+      - customer-service
+      - employee-service
+      - fleet-management-service
+      - inventory-service
+      - order-service
+      - product-service
+      - purchaseorder-service
+      - rackingsystem-service
+      - receiving-service
+      - salesorder-service
+      - security-service
+      - shipment-service
+      - supplier-service
+      - warehousestructure-service
+      - wmtransactional-service
+
+  - name: pushImage
+    displayName: Push image to GHCR
+    type: boolean
+    default: true
+
+variables:
+  imagePrefix: 'ghcr.io/$(githubOwner)/erp'
+  tag: '$(Build.BuildId)'
+  vmImageName: 'ubuntu-latest'
+
+pool:
+  vmImage: $(vmImageName)
+
+# ── Stages ────────────────────────────────────────────────────────────────────
+stages:
+  - stage: Build
+    displayName: Build Docker Images
+    jobs:
+      - job: BuildImages
+        displayName: Build
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/wmsServices/apiGateway'
+          dockerfile: 'src/Services/wmsServices/apiGateway/Dockerfile'
+        auditlog_service:
+          imageName: 'auditlog-service'
+          context: 'src/Services/wmsServices/auditlogService/AuditLogService'
+          dockerfile: 'src/Services/wmsServices/auditlogService/AuditLogService/Dockerfile'
+        customer_service:
+          imageName: 'customer-service'
+          context: 'src/Services/wmsServices/customerService'
+          dockerfile: 'src/Services/wmsServices/customerService/Dockerfile'
+        employee_service:
+          imageName: 'employee-service'
+          context: 'src/Services/wmsServices/emplyeeService'
+          dockerfile: 'src/Services/wmsServices/emplyeeService/Dockerfile'
+        fleet_management_service:
+          imageName: 'fleet-management-service'
+          context: 'src/Services/wmsServices/fleetManagementService'
+          dockerfile: 'src/Services/wmsServices/fleetManagementService/Dockerfile'
+        inventory_service:
+          imageName: 'inventory-service'
+          context: 'src/Services/wmsServices/inventoryService'
+          dockerfile: 'src/Services/wmsServices/inventoryService/Dockerfile'
+        order_service:
+          imageName: 'order-service'
+          context: 'src/Services/wmsServices/orderService'
+          dockerfile: 'src/Services/wmsServices/orderService/Dockerfile'
+        product_service:
+          imageName: 'product-service'
+          context: 'src/Services/wmsServices/productService'
+          dockerfile: 'src/Services/wmsServices/productService/Dockerfile'
+        purchaseorder_service:
+          imageName: 'purchaseorder-service'
+          context: 'src/Services/wmsServices/purchaseorderService'
+          dockerfile: 'src/Services/wmsServices/purchaseorderService/Dockerfile'
+        rackingsystem_service:
+          imageName: 'rackingsystem-service'
+          context: 'src/Services/wmsServices/rackingsystemService'
+          dockerfile: 'src/Services/wmsServices/rackingsystemService/Dockerfile'
+        receiving_service:
+          imageName: 'receiving-service'
+          context: 'src/Services/wmsServices/receivingService'
+          dockerfile: 'src/Services/wmsServices/receivingService/Dockerfile'
+        salesorder_service:
+          imageName: 'salesorder-service'
+          context: 'src/Services/wmsServices/salesorderService'
+          dockerfile: 'src/Services/wmsServices/salesorderService/Dockerfile'
+        security_service:
+          imageName: 'security-service'
+          context: 'src/Services/wmsServices/securityService'
+          dockerfile: 'src/Services/wmsServices/securityService/Dockerfile'
+        shipment_service:
+          imageName: 'shipment-service'
+          context: 'src/Services/wmsServices/shipmentService'
+          dockerfile: 'src/Services/wmsServices/shipmentService/Dockerfile'
+        supplier_service:
+          imageName: 'supplier-service'
+          context: 'src/Services/wmsServices/supplierService'
+          dockerfile: 'src/Services/wmsServices/supplierService/Dockerfile'
+        warehousestructure_service:
+          imageName: 'warehousestructure-service'
+          context: 'src/Services/wmsServices/warehousestructureService'
+          dockerfile: 'src/Services/wmsServices/warehousestructureService/Dockerfile'
+        wmtransactional_service:
+          imageName: 'wmtransactional-service'
+          context: 'src/Services/wmsServices/wmtransactionalService'
+          dockerfile: 'src/Services/wmsServices/wmtransactionalService/Dockerfile'
+
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: Docker@2
+            displayName: Build $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: build
+              repository: $(imagePrefix)/$(imageName)
+              dockerfile: $(dockerfile)
+              buildContext: $(context)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Push
+    displayName: Push to GHCR
+    dependsOn: Build
+    condition: and(succeeded(), eq('${{ parameters.pushImage }}', true))
+    jobs:
+      - job: PushImages
+        displayName: Push
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/wmsServices/apiGateway'
+          dockerfile: 'src/Services/wmsServices/apiGateway/Dockerfile'
+        auditlog_service:
+          imageName: 'auditlog-service'
+          context: 'src/Services/wmsServices/auditlogService/AuditLogService'
+          dockerfile: 'src/Services/wmsServices/auditlogService/AuditLogService/Dockerfile'
+        customer_service:
+          imageName: 'customer-service'
+          context: 'src/Services/wmsServices/customerService'
+          dockerfile: 'src/Services/wmsServices/customerService/Dockerfile'
+        employee_service:
+          imageName: 'employee-service'
+          context: 'src/Services/wmsServices/emplyeeService'
+          dockerfile: 'src/Services/wmsServices/emplyeeService/Dockerfile'
+        fleet_management_service:
+          imageName: 'fleet-management-service'
+          context: 'src/Services/wmsServices/fleetManagementService'
+          dockerfile: 'src/Services/wmsServices/fleetManagementService/Dockerfile'
+        inventory_service:
+          imageName: 'inventory-service'
+          context: 'src/Services/wmsServices/inventoryService'
+          dockerfile: 'src/Services/wmsServices/inventoryService/Dockerfile'
+        order_service:
+          imageName: 'order-service'
+          context: 'src/Services/wmsServices/orderService'
+          dockerfile: 'src/Services/wmsServices/orderService/Dockerfile'
+        product_service:
+          imageName: 'product-service'
+          context: 'src/Services/wmsServices/productService'
+          dockerfile: 'src/Services/wmsServices/productService/Dockerfile'
+        purchaseorder_service:
+          imageName: 'purchaseorder-service'
+          context: 'src/Services/wmsServices/purchaseorderService'
+          dockerfile: 'src/Services/wmsServices/purchaseorderService/Dockerfile'
+        rackingsystem_service:
+          imageName: 'rackingsystem-service'
+          context: 'src/Services/wmsServices/rackingsystemService'
+          dockerfile: 'src/Services/wmsServices/rackingsystemService/Dockerfile'
+        receiving_service:
+          imageName: 'receiving-service'
+          context: 'src/Services/wmsServices/receivingService'
+          dockerfile: 'src/Services/wmsServices/receivingService/Dockerfile'
+        salesorder_service:
+          imageName: 'salesorder-service'
+          context: 'src/Services/wmsServices/salesorderService'
+          dockerfile: 'src/Services/wmsServices/salesorderService/Dockerfile'
+        security_service:
+          imageName: 'security-service'
+          context: 'src/Services/wmsServices/securityService'
+          dockerfile: 'src/Services/wmsServices/securityService/Dockerfile'
+        shipment_service:
+          imageName: 'shipment-service'
+          context: 'src/Services/wmsServices/shipmentService'
+          dockerfile: 'src/Services/wmsServices/shipmentService/Dockerfile'
+        supplier_service:
+          imageName: 'supplier-service'
+          context: 'src/Services/wmsServices/supplierService'
+          dockerfile: 'src/Services/wmsServices/supplierService/Dockerfile'
+        warehousestructure_service:
+          imageName: 'warehousestructure-service'
+          context: 'src/Services/wmsServices/warehousestructureService'
+          dockerfile: 'src/Services/wmsServices/warehousestructureService/Dockerfile'
+        wmtransactional_service:
+          imageName: 'wmtransactional-service'
+          context: 'src/Services/wmsServices/wmtransactionalService'
+          dockerfile: 'src/Services/wmsServices/wmtransactionalService/Dockerfile'
+
+        steps:
+          - task: Docker@2
+            displayName: Login to GHCR
+            inputs:
+              command: login
+              containerRegistry: ghcr-service-connection
+
+          - task: Docker@2
+            displayName: Push $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: push
+              repository: $(imagePrefix)/$(imageName)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Verify
+    displayName: Smoke Test
+    dependsOn: Push
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: SmokeTest
+        displayName: Verify images
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/wmsServices/apiGateway'
+          dockerfile: 'src/Services/wmsServices/apiGateway/Dockerfile'
+        auditlog_service:
+          imageName: 'auditlog-service'
+          context: 'src/Services/wmsServices/auditlogService/AuditLogService'
+          dockerfile: 'src/Services/wmsServices/auditlogService/AuditLogService/Dockerfile'
+        customer_service:
+          imageName: 'customer-service'
+          context: 'src/Services/wmsServices/customerService'
+          dockerfile: 'src/Services/wmsServices/customerService/Dockerfile'
+        employee_service:
+          imageName: 'employee-service'
+          context: 'src/Services/wmsServices/emplyeeService'
+          dockerfile: 'src/Services/wmsServices/emplyeeService/Dockerfile'
+        fleet_management_service:
+          imageName: 'fleet-management-service'
+          context: 'src/Services/wmsServices/fleetManagementService'
+          dockerfile: 'src/Services/wmsServices/fleetManagementService/Dockerfile'
+        inventory_service:
+          imageName: 'inventory-service'
+          context: 'src/Services/wmsServices/inventoryService'
+          dockerfile: 'src/Services/wmsServices/inventoryService/Dockerfile'
+        order_service:
+          imageName: 'order-service'
+          context: 'src/Services/wmsServices/orderService'
+          dockerfile: 'src/Services/wmsServices/orderService/Dockerfile'
+        product_service:
+          imageName: 'product-service'
+          context: 'src/Services/wmsServices/productService'
+          dockerfile: 'src/Services/wmsServices/productService/Dockerfile'
+        purchaseorder_service:
+          imageName: 'purchaseorder-service'
+          context: 'src/Services/wmsServices/purchaseorderService'
+          dockerfile: 'src/Services/wmsServices/purchaseorderService/Dockerfile'
+        rackingsystem_service:
+          imageName: 'rackingsystem-service'
+          context: 'src/Services/wmsServices/rackingsystemService'
+          dockerfile: 'src/Services/wmsServices/rackingsystemService/Dockerfile'
+        receiving_service:
+          imageName: 'receiving-service'
+          context: 'src/Services/wmsServices/receivingService'
+          dockerfile: 'src/Services/wmsServices/receivingService/Dockerfile'
+        salesorder_service:
+          imageName: 'salesorder-service'
+          context: 'src/Services/wmsServices/salesorderService'
+          dockerfile: 'src/Services/wmsServices/salesorderService/Dockerfile'
+        security_service:
+          imageName: 'security-service'
+          context: 'src/Services/wmsServices/securityService'
+          dockerfile: 'src/Services/wmsServices/securityService/Dockerfile'
+        shipment_service:
+          imageName: 'shipment-service'
+          context: 'src/Services/wmsServices/shipmentService'
+          dockerfile: 'src/Services/wmsServices/shipmentService/Dockerfile'
+        supplier_service:
+          imageName: 'supplier-service'
+          context: 'src/Services/wmsServices/supplierService'
+          dockerfile: 'src/Services/wmsServices/supplierService/Dockerfile'
+        warehousestructure_service:
+          imageName: 'warehousestructure-service'
+          context: 'src/Services/wmsServices/warehousestructureService'
+          dockerfile: 'src/Services/wmsServices/warehousestructureService/Dockerfile'
+        wmtransactional_service:
+          imageName: 'wmtransactional-service'
+          context: 'src/Services/wmsServices/wmtransactionalService'
+          dockerfile: 'src/Services/wmsServices/wmtransactionalService/Dockerfile'
+
+        steps:
+          - script: |
+              IMAGE="$(imagePrefix)/$(imageName):latest"
+              echo "Pulling $IMAGE ..."
+              docker pull "$IMAGE"
+              CNAME="smoke-$(imageName | tr '/' '-')"
+              docker run -d --name "$CNAME" \
+                -e ASPNETCORE_ENVIRONMENT=Development \
+                "$IMAGE"
+              sleep 10
+              docker logs "$CNAME"
+              docker rm -f "$CNAME"
+            displayName: Smoke test $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))

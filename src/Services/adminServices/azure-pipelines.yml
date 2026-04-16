@@ -1,0 +1,243 @@
+# Azure DevOps Pipeline - adminServices
+# Builds and pushes all 9 service images to GHCR.
+# Registry: ghcr.io/$(githubOwner)/erp/<service-name>
+#
+# Setup required (once):
+#   Project Settings -> Service connections -> New -> Docker Registry
+#   Name: ghcr-service-connection  Type: Other  Registry: ghcr.io
+#   Username: <github-username>   Password: <GitHub PAT with packages:write>
+
+name: Build & Push adminServices
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - src/Services/adminServices/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - src/Services/adminServices/**
+
+parameters:
+  - name: service
+    displayName: Service to build
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - finyear-api
+      - location-services
+      - lov-service
+      - scholarship-service
+      - stationery-service
+      - tds-service
+      - vendor-service
+      - transaction-service
+
+  - name: pushImage
+    displayName: Push image to GHCR
+    type: boolean
+    default: true
+
+variables:
+  imagePrefix: 'ghcr.io/$(githubOwner)/erp'
+  tag: '$(Build.BuildId)'
+  vmImageName: 'ubuntu-latest'
+
+pool:
+  vmImage: $(vmImageName)
+
+# ── Stages ────────────────────────────────────────────────────────────────────
+stages:
+  - stage: Build
+    displayName: Build Docker Images
+    jobs:
+      - job: BuildImages
+        displayName: Build
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/adminServices/ApiGateway'
+          dockerfile: 'src/Services/adminServices/ApiGateway/Dockerfile'
+        finyear_api:
+          imageName: 'finyear-api'
+          context: 'src/Services/adminServices/finyearServices'
+          dockerfile: 'src/Services/adminServices/finyearServices/Docker/Dockerfile'
+        location_services:
+          imageName: 'location-services'
+          context: 'src/Services/adminServices/locationServices'
+          dockerfile: 'src/Services/adminServices/locationServices/Docker/Dockerfile'
+        lov_service:
+          imageName: 'lov-service'
+          context: 'src/Services/adminServices/lovServices'
+          dockerfile: 'src/Services/adminServices/lovServices/Docker/Dockerfile'
+        scholarship_service:
+          imageName: 'scholarship-service'
+          context: 'src/Services/adminServices/scholarshipServices'
+          dockerfile: 'src/Services/adminServices/scholarshipServices/Docker/Dockerfile'
+        stationery_service:
+          imageName: 'stationery-service'
+          context: 'src/Services/adminServices/stationeryServices'
+          dockerfile: 'src/Services/adminServices/stationeryServices/Docker/Dockerfile'
+        tds_service:
+          imageName: 'tds-service'
+          context: 'src/Services/adminServices/tdsServices'
+          dockerfile: 'src/Services/adminServices/tdsServices/Docker/Dockerfile'
+        vendor_service:
+          imageName: 'vendor-service'
+          context: 'src/Services/adminServices/vendorServices'
+          dockerfile: 'src/Services/adminServices/vendorServices/Docker/Dockerfile'
+        transaction_service:
+          imageName: 'transaction-service'
+          context: 'src/Services/adminServices/transactionServices'
+          dockerfile: 'src/Services/adminServices/transactionServices/Docker/Dockerfile'
+
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: Docker@2
+            displayName: Build $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: build
+              repository: $(imagePrefix)/$(imageName)
+              dockerfile: $(dockerfile)
+              buildContext: $(context)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Push
+    displayName: Push to GHCR
+    dependsOn: Build
+    condition: and(succeeded(), eq('${{ parameters.pushImage }}', true))
+    jobs:
+      - job: PushImages
+        displayName: Push
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/adminServices/ApiGateway'
+          dockerfile: 'src/Services/adminServices/ApiGateway/Dockerfile'
+        finyear_api:
+          imageName: 'finyear-api'
+          context: 'src/Services/adminServices/finyearServices'
+          dockerfile: 'src/Services/adminServices/finyearServices/Docker/Dockerfile'
+        location_services:
+          imageName: 'location-services'
+          context: 'src/Services/adminServices/locationServices'
+          dockerfile: 'src/Services/adminServices/locationServices/Docker/Dockerfile'
+        lov_service:
+          imageName: 'lov-service'
+          context: 'src/Services/adminServices/lovServices'
+          dockerfile: 'src/Services/adminServices/lovServices/Docker/Dockerfile'
+        scholarship_service:
+          imageName: 'scholarship-service'
+          context: 'src/Services/adminServices/scholarshipServices'
+          dockerfile: 'src/Services/adminServices/scholarshipServices/Docker/Dockerfile'
+        stationery_service:
+          imageName: 'stationery-service'
+          context: 'src/Services/adminServices/stationeryServices'
+          dockerfile: 'src/Services/adminServices/stationeryServices/Docker/Dockerfile'
+        tds_service:
+          imageName: 'tds-service'
+          context: 'src/Services/adminServices/tdsServices'
+          dockerfile: 'src/Services/adminServices/tdsServices/Docker/Dockerfile'
+        vendor_service:
+          imageName: 'vendor-service'
+          context: 'src/Services/adminServices/vendorServices'
+          dockerfile: 'src/Services/adminServices/vendorServices/Docker/Dockerfile'
+        transaction_service:
+          imageName: 'transaction-service'
+          context: 'src/Services/adminServices/transactionServices'
+          dockerfile: 'src/Services/adminServices/transactionServices/Docker/Dockerfile'
+
+        steps:
+          - task: Docker@2
+            displayName: Login to GHCR
+            inputs:
+              command: login
+              containerRegistry: ghcr-service-connection
+
+          - task: Docker@2
+            displayName: Push $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: push
+              repository: $(imagePrefix)/$(imageName)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Verify
+    displayName: Smoke Test
+    dependsOn: Push
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: SmokeTest
+        displayName: Verify images
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/adminServices/ApiGateway'
+          dockerfile: 'src/Services/adminServices/ApiGateway/Dockerfile'
+        finyear_api:
+          imageName: 'finyear-api'
+          context: 'src/Services/adminServices/finyearServices'
+          dockerfile: 'src/Services/adminServices/finyearServices/Docker/Dockerfile'
+        location_services:
+          imageName: 'location-services'
+          context: 'src/Services/adminServices/locationServices'
+          dockerfile: 'src/Services/adminServices/locationServices/Docker/Dockerfile'
+        lov_service:
+          imageName: 'lov-service'
+          context: 'src/Services/adminServices/lovServices'
+          dockerfile: 'src/Services/adminServices/lovServices/Docker/Dockerfile'
+        scholarship_service:
+          imageName: 'scholarship-service'
+          context: 'src/Services/adminServices/scholarshipServices'
+          dockerfile: 'src/Services/adminServices/scholarshipServices/Docker/Dockerfile'
+        stationery_service:
+          imageName: 'stationery-service'
+          context: 'src/Services/adminServices/stationeryServices'
+          dockerfile: 'src/Services/adminServices/stationeryServices/Docker/Dockerfile'
+        tds_service:
+          imageName: 'tds-service'
+          context: 'src/Services/adminServices/tdsServices'
+          dockerfile: 'src/Services/adminServices/tdsServices/Docker/Dockerfile'
+        vendor_service:
+          imageName: 'vendor-service'
+          context: 'src/Services/adminServices/vendorServices'
+          dockerfile: 'src/Services/adminServices/vendorServices/Docker/Dockerfile'
+        transaction_service:
+          imageName: 'transaction-service'
+          context: 'src/Services/adminServices/transactionServices'
+          dockerfile: 'src/Services/adminServices/transactionServices/Docker/Dockerfile'
+
+        steps:
+          - script: |
+              IMAGE="$(imagePrefix)/$(imageName):latest"
+              echo "Pulling $IMAGE ..."
+              docker pull "$IMAGE"
+              CNAME="smoke-$(imageName | tr '/' '-')"
+              docker run -d --name "$CNAME" \
+                -e ASPNETCORE_ENVIRONMENT=Development \
+                "$IMAGE"
+              sleep 10
+              docker logs "$CNAME"
+              docker rm -f "$CNAME"
+            displayName: Smoke test $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))

@@ -1,0 +1,321 @@
+# Azure DevOps Pipeline - mainsparshServices
+# Builds and pushes all 15 service images to GHCR.
+# Registry: ghcr.io/$(githubOwner)/erp/<service-name>
+#
+# Setup required (once):
+#   Project Settings -> Service connections -> New -> Docker Registry
+#   Name: ghcr-service-connection  Type: Other  Registry: ghcr.io
+#   Username: <github-username>   Password: <GitHub PAT with packages:write>
+
+name: Build & Push mainsparshServices
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - src/Services/mainsparshServices/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - src/Services/mainsparshServices/**
+
+parameters:
+  - name: service
+    displayName: Service to build
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - approval-service
+      - booking-service
+      - community-service
+      - compensation-service
+      - groupmanagement-service
+      - location-service
+      - meeting-service
+      - proxy-service
+      - reimbursement-service
+      - stipend-service
+      - timesheet-service
+      - transaction-service
+      - usermanagement-service
+      - websitecontent-service
+
+  - name: pushImage
+    displayName: Push image to GHCR
+    type: boolean
+    default: true
+
+variables:
+  imagePrefix: 'ghcr.io/$(githubOwner)/erp'
+  tag: '$(Build.BuildId)'
+  vmImageName: 'ubuntu-latest'
+
+pool:
+  vmImage: $(vmImageName)
+
+# ── Stages ────────────────────────────────────────────────────────────────────
+stages:
+  - stage: Build
+    displayName: Build Docker Images
+    jobs:
+      - job: BuildImages
+        displayName: Build
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/mainsparshServices/apiGateway'
+          dockerfile: 'src/Services/mainsparshServices/apiGateway/Dockerfile'
+        approval_service:
+          imageName: 'approval-service'
+          context: 'src/Services/mainsparshServices/approvalServices'
+          dockerfile: 'src/Services/mainsparshServices/approvalServices/Dockerfile'
+        booking_service:
+          imageName: 'booking-service'
+          context: 'src/Services/mainsparshServices/bookingServices'
+          dockerfile: 'src/Services/mainsparshServices/bookingServices/Dockerfile'
+        community_service:
+          imageName: 'community-service'
+          context: 'src/Services/mainsparshServices/communityServices'
+          dockerfile: 'src/Services/mainsparshServices/communityServices/Dockerfile'
+        compensation_service:
+          imageName: 'compensation-service'
+          context: 'src/Services/mainsparshServices/compensationServices'
+          dockerfile: 'src/Services/mainsparshServices/compensationServices/Dockerfile'
+        groupmanagement_service:
+          imageName: 'groupmanagement-service'
+          context: 'src/Services/mainsparshServices/groupmanagementServices'
+          dockerfile: 'src/Services/mainsparshServices/groupmanagementServices/Dockerfile'
+        location_service:
+          imageName: 'location-service'
+          context: 'src/Services/mainsparshServices/locationServices'
+          dockerfile: 'src/Services/mainsparshServices/locationServices/Dockerfile'
+        meeting_service:
+          imageName: 'meeting-service'
+          context: 'src/Services/mainsparshServices/meetingServices'
+          dockerfile: 'src/Services/mainsparshServices/meetingServices/Dockerfile'
+        proxy_service:
+          imageName: 'proxy-service'
+          context: 'src/Services/mainsparshServices/proxyServices'
+          dockerfile: 'src/Services/mainsparshServices/proxyServices/Dockerfile'
+        reimbursement_service:
+          imageName: 'reimbursement-service'
+          context: 'src/Services/mainsparshServices/reimbursementServices'
+          dockerfile: 'src/Services/mainsparshServices/reimbursementServices/Dockerfile'
+        stipend_service:
+          imageName: 'stipend-service'
+          context: 'src/Services/mainsparshServices/stipendservices'
+          dockerfile: 'src/Services/mainsparshServices/stipendservices/Dockerfile'
+        timesheet_service:
+          imageName: 'timesheet-service'
+          context: 'src/Services/mainsparshServices/timesheetServices'
+          dockerfile: 'src/Services/mainsparshServices/timesheetServices/Dockerfile'
+        transaction_service:
+          imageName: 'transaction-service'
+          context: 'src/Services/mainsparshServices/transactionServices'
+          dockerfile: 'src/Services/mainsparshServices/transactionServices/Dockerfile'
+        usermanagement_service:
+          imageName: 'usermanagement-service'
+          context: 'src/Services/mainsparshServices/usermanagementServices'
+          dockerfile: 'src/Services/mainsparshServices/usermanagementServices/Dockerfile'
+        websitecontent_service:
+          imageName: 'websitecontent-service'
+          context: 'src/Services/mainsparshServices/websitecontentServices'
+          dockerfile: 'src/Services/mainsparshServices/websitecontentServices/Dockerfile'
+
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: Docker@2
+            displayName: Build $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: build
+              repository: $(imagePrefix)/$(imageName)
+              dockerfile: $(dockerfile)
+              buildContext: $(context)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Push
+    displayName: Push to GHCR
+    dependsOn: Build
+    condition: and(succeeded(), eq('${{ parameters.pushImage }}', true))
+    jobs:
+      - job: PushImages
+        displayName: Push
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/mainsparshServices/apiGateway'
+          dockerfile: 'src/Services/mainsparshServices/apiGateway/Dockerfile'
+        approval_service:
+          imageName: 'approval-service'
+          context: 'src/Services/mainsparshServices/approvalServices'
+          dockerfile: 'src/Services/mainsparshServices/approvalServices/Dockerfile'
+        booking_service:
+          imageName: 'booking-service'
+          context: 'src/Services/mainsparshServices/bookingServices'
+          dockerfile: 'src/Services/mainsparshServices/bookingServices/Dockerfile'
+        community_service:
+          imageName: 'community-service'
+          context: 'src/Services/mainsparshServices/communityServices'
+          dockerfile: 'src/Services/mainsparshServices/communityServices/Dockerfile'
+        compensation_service:
+          imageName: 'compensation-service'
+          context: 'src/Services/mainsparshServices/compensationServices'
+          dockerfile: 'src/Services/mainsparshServices/compensationServices/Dockerfile'
+        groupmanagement_service:
+          imageName: 'groupmanagement-service'
+          context: 'src/Services/mainsparshServices/groupmanagementServices'
+          dockerfile: 'src/Services/mainsparshServices/groupmanagementServices/Dockerfile'
+        location_service:
+          imageName: 'location-service'
+          context: 'src/Services/mainsparshServices/locationServices'
+          dockerfile: 'src/Services/mainsparshServices/locationServices/Dockerfile'
+        meeting_service:
+          imageName: 'meeting-service'
+          context: 'src/Services/mainsparshServices/meetingServices'
+          dockerfile: 'src/Services/mainsparshServices/meetingServices/Dockerfile'
+        proxy_service:
+          imageName: 'proxy-service'
+          context: 'src/Services/mainsparshServices/proxyServices'
+          dockerfile: 'src/Services/mainsparshServices/proxyServices/Dockerfile'
+        reimbursement_service:
+          imageName: 'reimbursement-service'
+          context: 'src/Services/mainsparshServices/reimbursementServices'
+          dockerfile: 'src/Services/mainsparshServices/reimbursementServices/Dockerfile'
+        stipend_service:
+          imageName: 'stipend-service'
+          context: 'src/Services/mainsparshServices/stipendservices'
+          dockerfile: 'src/Services/mainsparshServices/stipendservices/Dockerfile'
+        timesheet_service:
+          imageName: 'timesheet-service'
+          context: 'src/Services/mainsparshServices/timesheetServices'
+          dockerfile: 'src/Services/mainsparshServices/timesheetServices/Dockerfile'
+        transaction_service:
+          imageName: 'transaction-service'
+          context: 'src/Services/mainsparshServices/transactionServices'
+          dockerfile: 'src/Services/mainsparshServices/transactionServices/Dockerfile'
+        usermanagement_service:
+          imageName: 'usermanagement-service'
+          context: 'src/Services/mainsparshServices/usermanagementServices'
+          dockerfile: 'src/Services/mainsparshServices/usermanagementServices/Dockerfile'
+        websitecontent_service:
+          imageName: 'websitecontent-service'
+          context: 'src/Services/mainsparshServices/websitecontentServices'
+          dockerfile: 'src/Services/mainsparshServices/websitecontentServices/Dockerfile'
+
+        steps:
+          - task: Docker@2
+            displayName: Login to GHCR
+            inputs:
+              command: login
+              containerRegistry: ghcr-service-connection
+
+          - task: Docker@2
+            displayName: Push $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: push
+              repository: $(imagePrefix)/$(imageName)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Verify
+    displayName: Smoke Test
+    dependsOn: Push
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: SmokeTest
+        displayName: Verify images
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/mainsparshServices/apiGateway'
+          dockerfile: 'src/Services/mainsparshServices/apiGateway/Dockerfile'
+        approval_service:
+          imageName: 'approval-service'
+          context: 'src/Services/mainsparshServices/approvalServices'
+          dockerfile: 'src/Services/mainsparshServices/approvalServices/Dockerfile'
+        booking_service:
+          imageName: 'booking-service'
+          context: 'src/Services/mainsparshServices/bookingServices'
+          dockerfile: 'src/Services/mainsparshServices/bookingServices/Dockerfile'
+        community_service:
+          imageName: 'community-service'
+          context: 'src/Services/mainsparshServices/communityServices'
+          dockerfile: 'src/Services/mainsparshServices/communityServices/Dockerfile'
+        compensation_service:
+          imageName: 'compensation-service'
+          context: 'src/Services/mainsparshServices/compensationServices'
+          dockerfile: 'src/Services/mainsparshServices/compensationServices/Dockerfile'
+        groupmanagement_service:
+          imageName: 'groupmanagement-service'
+          context: 'src/Services/mainsparshServices/groupmanagementServices'
+          dockerfile: 'src/Services/mainsparshServices/groupmanagementServices/Dockerfile'
+        location_service:
+          imageName: 'location-service'
+          context: 'src/Services/mainsparshServices/locationServices'
+          dockerfile: 'src/Services/mainsparshServices/locationServices/Dockerfile'
+        meeting_service:
+          imageName: 'meeting-service'
+          context: 'src/Services/mainsparshServices/meetingServices'
+          dockerfile: 'src/Services/mainsparshServices/meetingServices/Dockerfile'
+        proxy_service:
+          imageName: 'proxy-service'
+          context: 'src/Services/mainsparshServices/proxyServices'
+          dockerfile: 'src/Services/mainsparshServices/proxyServices/Dockerfile'
+        reimbursement_service:
+          imageName: 'reimbursement-service'
+          context: 'src/Services/mainsparshServices/reimbursementServices'
+          dockerfile: 'src/Services/mainsparshServices/reimbursementServices/Dockerfile'
+        stipend_service:
+          imageName: 'stipend-service'
+          context: 'src/Services/mainsparshServices/stipendservices'
+          dockerfile: 'src/Services/mainsparshServices/stipendservices/Dockerfile'
+        timesheet_service:
+          imageName: 'timesheet-service'
+          context: 'src/Services/mainsparshServices/timesheetServices'
+          dockerfile: 'src/Services/mainsparshServices/timesheetServices/Dockerfile'
+        transaction_service:
+          imageName: 'transaction-service'
+          context: 'src/Services/mainsparshServices/transactionServices'
+          dockerfile: 'src/Services/mainsparshServices/transactionServices/Dockerfile'
+        usermanagement_service:
+          imageName: 'usermanagement-service'
+          context: 'src/Services/mainsparshServices/usermanagementServices'
+          dockerfile: 'src/Services/mainsparshServices/usermanagementServices/Dockerfile'
+        websitecontent_service:
+          imageName: 'websitecontent-service'
+          context: 'src/Services/mainsparshServices/websitecontentServices'
+          dockerfile: 'src/Services/mainsparshServices/websitecontentServices/Dockerfile'
+
+        steps:
+          - script: |
+              IMAGE="$(imagePrefix)/$(imageName):latest"
+              echo "Pulling $IMAGE ..."
+              docker pull "$IMAGE"
+              CNAME="smoke-$(imageName | tr '/' '-')"
+              docker run -d --name "$CNAME" \
+                -e ASPNETCORE_ENVIRONMENT=Development \
+                "$IMAGE"
+              sleep 10
+              docker logs "$CNAME"
+              docker rm -f "$CNAME"
+            displayName: Smoke test $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))

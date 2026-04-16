@@ -1,0 +1,230 @@
+# Azure DevOps Pipeline - cashServices
+# Builds and pushes all 8 service images to GHCR.
+# Registry: ghcr.io/$(githubOwner)/erp/<service-name>
+#
+# Setup required (once):
+#   Project Settings -> Service connections -> New -> Docker Registry
+#   Name: ghcr-service-connection  Type: Other  Registry: ghcr.io
+#   Username: <github-username>   Password: <GitHub PAT with packages:write>
+
+name: Build & Push cashServices
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - src/Services/cashServices/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - src/Services/cashServices/**
+
+parameters:
+  - name: service
+    displayName: Service to build
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - cash-management-service
+      - current-management-service
+      - deal-ticketing-service
+      - email-notification-service
+      - loan-management-service
+      - organization-setup-service
+      - transaction-service
+
+  - name: pushImage
+    displayName: Push image to GHCR
+    type: boolean
+    default: true
+
+variables:
+  imagePrefix: 'ghcr.io/$(githubOwner)/erp'
+  tag: '$(Build.BuildId)'
+  vmImageName: 'ubuntu-latest'
+
+pool:
+  vmImage: $(vmImageName)
+
+# ── Stages ────────────────────────────────────────────────────────────────────
+stages:
+  - stage: Build
+    displayName: Build Docker Images
+    jobs:
+      - job: BuildImages
+        displayName: Build
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/cashServices/ApiGateway'
+          dockerfile: 'src/Services/cashServices/ApiGateway/Docker/Dockerfile'
+        cash_management_service:
+          imageName: 'cash-management-service'
+          context: 'src/Services/cashServices/cashmanagementServices'
+          dockerfile: 'src/Services/cashServices/cashmanagementServices/Docker/Dockerfile'
+        current_management_service:
+          imageName: 'current-management-service'
+          context: 'src/Services/cashServices/currentmanagementServices'
+          dockerfile: 'src/Services/cashServices/currentmanagementServices/Docker/Dockerfile'
+        deal_ticketing_service:
+          imageName: 'deal-ticketing-service'
+          context: 'src/Services/cashServices/dealticketingServices'
+          dockerfile: 'src/Services/cashServices/dealticketingServices/Docker/Dockerfile'
+        email_notification_service:
+          imageName: 'email-notification-service'
+          context: 'src/Services/cashServices/emailnotificationServices'
+          dockerfile: 'src/Services/cashServices/emailnotificationServices/Docker/Dockerfile'
+        loan_management_service:
+          imageName: 'loan-management-service'
+          context: 'src/Services/cashServices/loanmanagementServices'
+          dockerfile: 'src/Services/cashServices/loanmanagementServices/Docker/Dockerfile'
+        organization_setup_service:
+          imageName: 'organization-setup-service'
+          context: 'src/Services/cashServices/organizationsetupServices'
+          dockerfile: 'src/Services/cashServices/organizationsetupServices/Docker/Dockerfile'
+        transaction_service:
+          imageName: 'transaction-service'
+          context: 'src/Services/cashServices/transactionServices'
+          dockerfile: 'src/Services/cashServices/transactionServices/Docker/Dockerfile'
+
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: Docker@2
+            displayName: Build $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: build
+              repository: $(imagePrefix)/$(imageName)
+              dockerfile: $(dockerfile)
+              buildContext: $(context)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Push
+    displayName: Push to GHCR
+    dependsOn: Build
+    condition: and(succeeded(), eq('${{ parameters.pushImage }}', true))
+    jobs:
+      - job: PushImages
+        displayName: Push
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/cashServices/ApiGateway'
+          dockerfile: 'src/Services/cashServices/ApiGateway/Docker/Dockerfile'
+        cash_management_service:
+          imageName: 'cash-management-service'
+          context: 'src/Services/cashServices/cashmanagementServices'
+          dockerfile: 'src/Services/cashServices/cashmanagementServices/Docker/Dockerfile'
+        current_management_service:
+          imageName: 'current-management-service'
+          context: 'src/Services/cashServices/currentmanagementServices'
+          dockerfile: 'src/Services/cashServices/currentmanagementServices/Docker/Dockerfile'
+        deal_ticketing_service:
+          imageName: 'deal-ticketing-service'
+          context: 'src/Services/cashServices/dealticketingServices'
+          dockerfile: 'src/Services/cashServices/dealticketingServices/Docker/Dockerfile'
+        email_notification_service:
+          imageName: 'email-notification-service'
+          context: 'src/Services/cashServices/emailnotificationServices'
+          dockerfile: 'src/Services/cashServices/emailnotificationServices/Docker/Dockerfile'
+        loan_management_service:
+          imageName: 'loan-management-service'
+          context: 'src/Services/cashServices/loanmanagementServices'
+          dockerfile: 'src/Services/cashServices/loanmanagementServices/Docker/Dockerfile'
+        organization_setup_service:
+          imageName: 'organization-setup-service'
+          context: 'src/Services/cashServices/organizationsetupServices'
+          dockerfile: 'src/Services/cashServices/organizationsetupServices/Docker/Dockerfile'
+        transaction_service:
+          imageName: 'transaction-service'
+          context: 'src/Services/cashServices/transactionServices'
+          dockerfile: 'src/Services/cashServices/transactionServices/Docker/Dockerfile'
+
+        steps:
+          - task: Docker@2
+            displayName: Login to GHCR
+            inputs:
+              command: login
+              containerRegistry: ghcr-service-connection
+
+          - task: Docker@2
+            displayName: Push $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+            inputs:
+              command: push
+              repository: $(imagePrefix)/$(imageName)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Verify
+    displayName: Smoke Test
+    dependsOn: Push
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: SmokeTest
+        displayName: Verify images
+        strategy:
+          matrix:
+        api_gateway:
+          imageName: 'api-gateway'
+          context: 'src/Services/cashServices/ApiGateway'
+          dockerfile: 'src/Services/cashServices/ApiGateway/Docker/Dockerfile'
+        cash_management_service:
+          imageName: 'cash-management-service'
+          context: 'src/Services/cashServices/cashmanagementServices'
+          dockerfile: 'src/Services/cashServices/cashmanagementServices/Docker/Dockerfile'
+        current_management_service:
+          imageName: 'current-management-service'
+          context: 'src/Services/cashServices/currentmanagementServices'
+          dockerfile: 'src/Services/cashServices/currentmanagementServices/Docker/Dockerfile'
+        deal_ticketing_service:
+          imageName: 'deal-ticketing-service'
+          context: 'src/Services/cashServices/dealticketingServices'
+          dockerfile: 'src/Services/cashServices/dealticketingServices/Docker/Dockerfile'
+        email_notification_service:
+          imageName: 'email-notification-service'
+          context: 'src/Services/cashServices/emailnotificationServices'
+          dockerfile: 'src/Services/cashServices/emailnotificationServices/Docker/Dockerfile'
+        loan_management_service:
+          imageName: 'loan-management-service'
+          context: 'src/Services/cashServices/loanmanagementServices'
+          dockerfile: 'src/Services/cashServices/loanmanagementServices/Docker/Dockerfile'
+        organization_setup_service:
+          imageName: 'organization-setup-service'
+          context: 'src/Services/cashServices/organizationsetupServices'
+          dockerfile: 'src/Services/cashServices/organizationsetupServices/Docker/Dockerfile'
+        transaction_service:
+          imageName: 'transaction-service'
+          context: 'src/Services/cashServices/transactionServices'
+          dockerfile: 'src/Services/cashServices/transactionServices/Docker/Dockerfile'
+
+        steps:
+          - script: |
+              IMAGE="$(imagePrefix)/$(imageName):latest"
+              echo "Pulling $IMAGE ..."
+              docker pull "$IMAGE"
+              CNAME="smoke-$(imageName | tr '/' '-')"
+              docker run -d --name "$CNAME" \
+                -e ASPNETCORE_ENVIRONMENT=Development \
+                "$IMAGE"
+              sleep 10
+              docker logs "$CNAME"
+              docker rm -f "$CNAME"
+            displayName: Smoke test $(imageName)
+            condition: or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
