@@ -6,7 +6,7 @@ Reads the exact same MODULES registry as generate-module-pipelines.py.
 import pathlib, textwrap
 
 REPO = pathlib.Path(r"E:\ERPMicroservice")
-IMAGE_PREFIX = "ghcr.io/$(githubOwner)/erp"
+IMAGE_PREFIX = "ghcr.io/vimalshan/erp"
 
 # ── Complete registry (copied from generate-module-pipelines.py) ──────────────
 MODULES = {
@@ -435,7 +435,7 @@ parameters:
 
 # ── Variables ─────────────────────────────────────────────────────────────────
 variables:
-  imagePrefix: 'ghcr.io/$(githubOwner)/erp'
+  imagePrefix: 'ghcr.io/vimalshan/erp'
   tag: '$(Build.BuildId)'
   vmImageName: 'ubuntu-latest'
 

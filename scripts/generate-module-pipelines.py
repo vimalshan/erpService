@@ -6,7 +6,7 @@ Service registry is copied exactly from the existing .github/workflows/build-*.y
 import pathlib
 
 REPO = pathlib.Path(r"E:\ERPMicroservice")
-IMAGE_PREFIX = "ghcr.io/$(githubOwner)/erp"
+IMAGE_PREFIX = "ghcr.io/vimalshan/erp"
 
 # ── Complete service registry (name → {context, dockerfile}) per module ──────
 MODULES = {
@@ -422,7 +422,7 @@ parameters:
     default: true
 
 variables:
-  imagePrefix: 'ghcr.io/$(githubOwner)/erp'
+  imagePrefix: 'ghcr.io/vimalshan/erp'
   tag: '$(Build.BuildId)'
   vmImageName: 'ubuntu-latest'
 
