@@ -72,7 +72,7 @@ stages:
               # ── Build + Push helper ──
               build_and_push() {
                 local NAME=$1 CTX=$2 DF=$3
-                if [ "${{{ parameters.service }}}" = "all" ] || [ "${{{ parameters.service }}}" = "$NAME" ]; then
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
                   echo ""
                   echo "======= Building $NAME ======="
                   docker build \
