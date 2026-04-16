@@ -62,30 +62,30 @@ stages:
         displayName: Build
         strategy:
           matrix:
-        api_gateway:
-          imageName: 'api-gateway'
-          context: 'src/Services/sparshServices/apigateway/SparshApiGateway'
-          dockerfile: 'src/Services/sparshServices/apigateway/SparshApiGateway/Dockerfile'
-        employeepridemanagement_service:
-          imageName: 'employeepridemanagement-service'
-          context: 'src/Services/sparshServices/employeepridemanagementServices'
-          dockerfile: 'src/Services/sparshServices/employeepridemanagementServices/Dockerfile'
-        mobileappmanagement_service:
-          imageName: 'mobileappmanagement-service'
-          context: 'src/Services/sparshServices/mobileappmanagementServices'
-          dockerfile: 'src/Services/sparshServices/mobileappmanagementServices/Dockerfile'
-        mobileexpense_service:
-          imageName: 'mobileexpense-service'
-          context: 'src/Services/sparshServices/mobileexpenseServices'
-          dockerfile: 'src/Services/sparshServices/mobileexpenseServices/Dockerfile'
-        problemmanagement_service:
-          imageName: 'problemmanagement-service'
-          context: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement'
-          dockerfile: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement/Dockerfile'
-        sparsh_transaction_service:
-          imageName: 'sparsh-transaction-service'
-          context: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional'
-          dockerfile: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional/Dockerfile'
+            api_gateway:
+              imageName: 'api-gateway'
+              context: 'src/Services/sparshServices/apigateway/SparshApiGateway'
+              dockerfile: 'src/Services/sparshServices/apigateway/SparshApiGateway/Dockerfile'
+            employeepridemanagement_service:
+              imageName: 'employeepridemanagement-service'
+              context: 'src/Services/sparshServices/employeepridemanagementServices'
+              dockerfile: 'src/Services/sparshServices/employeepridemanagementServices/Dockerfile'
+            mobileappmanagement_service:
+              imageName: 'mobileappmanagement-service'
+              context: 'src/Services/sparshServices/mobileappmanagementServices'
+              dockerfile: 'src/Services/sparshServices/mobileappmanagementServices/Dockerfile'
+            mobileexpense_service:
+              imageName: 'mobileexpense-service'
+              context: 'src/Services/sparshServices/mobileexpenseServices'
+              dockerfile: 'src/Services/sparshServices/mobileexpenseServices/Dockerfile'
+            problemmanagement_service:
+              imageName: 'problemmanagement-service'
+              context: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement'
+              dockerfile: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement/Dockerfile'
+            sparsh_transaction_service:
+              imageName: 'sparsh-transaction-service'
+              context: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional'
+              dockerfile: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional/Dockerfile'
 
         steps:
           - checkout: self
@@ -112,30 +112,30 @@ stages:
         displayName: Push
         strategy:
           matrix:
-        api_gateway:
-          imageName: 'api-gateway'
-          context: 'src/Services/sparshServices/apigateway/SparshApiGateway'
-          dockerfile: 'src/Services/sparshServices/apigateway/SparshApiGateway/Dockerfile'
-        employeepridemanagement_service:
-          imageName: 'employeepridemanagement-service'
-          context: 'src/Services/sparshServices/employeepridemanagementServices'
-          dockerfile: 'src/Services/sparshServices/employeepridemanagementServices/Dockerfile'
-        mobileappmanagement_service:
-          imageName: 'mobileappmanagement-service'
-          context: 'src/Services/sparshServices/mobileappmanagementServices'
-          dockerfile: 'src/Services/sparshServices/mobileappmanagementServices/Dockerfile'
-        mobileexpense_service:
-          imageName: 'mobileexpense-service'
-          context: 'src/Services/sparshServices/mobileexpenseServices'
-          dockerfile: 'src/Services/sparshServices/mobileexpenseServices/Dockerfile'
-        problemmanagement_service:
-          imageName: 'problemmanagement-service'
-          context: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement'
-          dockerfile: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement/Dockerfile'
-        sparsh_transaction_service:
-          imageName: 'sparsh-transaction-service'
-          context: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional'
-          dockerfile: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional/Dockerfile'
+            api_gateway:
+              imageName: 'api-gateway'
+              context: 'src/Services/sparshServices/apigateway/SparshApiGateway'
+              dockerfile: 'src/Services/sparshServices/apigateway/SparshApiGateway/Dockerfile'
+            employeepridemanagement_service:
+              imageName: 'employeepridemanagement-service'
+              context: 'src/Services/sparshServices/employeepridemanagementServices'
+              dockerfile: 'src/Services/sparshServices/employeepridemanagementServices/Dockerfile'
+            mobileappmanagement_service:
+              imageName: 'mobileappmanagement-service'
+              context: 'src/Services/sparshServices/mobileappmanagementServices'
+              dockerfile: 'src/Services/sparshServices/mobileappmanagementServices/Dockerfile'
+            mobileexpense_service:
+              imageName: 'mobileexpense-service'
+              context: 'src/Services/sparshServices/mobileexpenseServices'
+              dockerfile: 'src/Services/sparshServices/mobileexpenseServices/Dockerfile'
+            problemmanagement_service:
+              imageName: 'problemmanagement-service'
+              context: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement'
+              dockerfile: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement/Dockerfile'
+            sparsh_transaction_service:
+              imageName: 'sparsh-transaction-service'
+              context: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional'
+              dockerfile: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional/Dockerfile'
 
         steps:
           - task: Docker@2
@@ -163,30 +163,30 @@ stages:
         displayName: Verify images
         strategy:
           matrix:
-        api_gateway:
-          imageName: 'api-gateway'
-          context: 'src/Services/sparshServices/apigateway/SparshApiGateway'
-          dockerfile: 'src/Services/sparshServices/apigateway/SparshApiGateway/Dockerfile'
-        employeepridemanagement_service:
-          imageName: 'employeepridemanagement-service'
-          context: 'src/Services/sparshServices/employeepridemanagementServices'
-          dockerfile: 'src/Services/sparshServices/employeepridemanagementServices/Dockerfile'
-        mobileappmanagement_service:
-          imageName: 'mobileappmanagement-service'
-          context: 'src/Services/sparshServices/mobileappmanagementServices'
-          dockerfile: 'src/Services/sparshServices/mobileappmanagementServices/Dockerfile'
-        mobileexpense_service:
-          imageName: 'mobileexpense-service'
-          context: 'src/Services/sparshServices/mobileexpenseServices'
-          dockerfile: 'src/Services/sparshServices/mobileexpenseServices/Dockerfile'
-        problemmanagement_service:
-          imageName: 'problemmanagement-service'
-          context: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement'
-          dockerfile: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement/Dockerfile'
-        sparsh_transaction_service:
-          imageName: 'sparsh-transaction-service'
-          context: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional'
-          dockerfile: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional/Dockerfile'
+            api_gateway:
+              imageName: 'api-gateway'
+              context: 'src/Services/sparshServices/apigateway/SparshApiGateway'
+              dockerfile: 'src/Services/sparshServices/apigateway/SparshApiGateway/Dockerfile'
+            employeepridemanagement_service:
+              imageName: 'employeepridemanagement-service'
+              context: 'src/Services/sparshServices/employeepridemanagementServices'
+              dockerfile: 'src/Services/sparshServices/employeepridemanagementServices/Dockerfile'
+            mobileappmanagement_service:
+              imageName: 'mobileappmanagement-service'
+              context: 'src/Services/sparshServices/mobileappmanagementServices'
+              dockerfile: 'src/Services/sparshServices/mobileappmanagementServices/Dockerfile'
+            mobileexpense_service:
+              imageName: 'mobileexpense-service'
+              context: 'src/Services/sparshServices/mobileexpenseServices'
+              dockerfile: 'src/Services/sparshServices/mobileexpenseServices/Dockerfile'
+            problemmanagement_service:
+              imageName: 'problemmanagement-service'
+              context: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement'
+              dockerfile: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement/Dockerfile'
+            sparsh_transaction_service:
+              imageName: 'sparsh-transaction-service'
+              context: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional'
+              dockerfile: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional/Dockerfile'
 
         steps:
           - script: |

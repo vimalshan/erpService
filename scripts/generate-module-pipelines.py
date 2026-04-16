@@ -372,10 +372,10 @@ def make_pipeline(module_name, module_path, services):
     matrix_lines = []
     for name, ctx, df in services:
         safe = name.replace("-", "_")
-        matrix_lines.append(f"        {safe}:")
-        matrix_lines.append(f"          imageName: '{name}'")
-        matrix_lines.append(f"          context: '{ctx}'")
-        matrix_lines.append(f"          dockerfile: '{ctx}/{df}'")
+        matrix_lines.append(f"            {safe}:")
+        matrix_lines.append(f"              imageName: '{name}'")
+        matrix_lines.append(f"              context: '{ctx}'")
+        matrix_lines.append(f"              dockerfile: '{ctx}/{df}'")
     matrix_block = "\n".join(matrix_lines)
 
     return f"""\

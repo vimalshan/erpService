@@ -64,38 +64,38 @@ stages:
         displayName: Build
         strategy:
           matrix:
-        api_gateway:
-          imageName: 'api-gateway'
-          context: 'src/Services/tourServices/apiGateway'
-          dockerfile: 'src/Services/tourServices/apiGateway/Dockerfile'
-        admin_service:
-          imageName: 'admin-service'
-          context: 'src/Services/tourServices/adminServices'
-          dockerfile: 'src/Services/tourServices/adminServices/Dockerfile'
-        booking_service:
-          imageName: 'booking-service'
-          context: 'src/Services/tourServices/bookingServices/BookingService'
-          dockerfile: 'src/Services/tourServices/bookingServices/BookingService/Dockerfile'
-        config_service:
-          imageName: 'config-service'
-          context: 'src/Services/tourServices/configServices'
-          dockerfile: 'src/Services/tourServices/configServices/Dockerfile'
-        tourplan_service:
-          imageName: 'tourplan-service'
-          context: 'src/Services/tourServices/tourplanServices'
-          dockerfile: 'src/Services/tourServices/tourplanServices/Dockerfile'
-        tour_service:
-          imageName: 'tour-service'
-          context: 'src/Services/tourServices/tourServices'
-          dockerfile: 'src/Services/tourServices/tourServices/Dockerfile'
-        transaction_service:
-          imageName: 'transaction-service'
-          context: 'src/Services/tourServices/transactionServices'
-          dockerfile: 'src/Services/tourServices/transactionServices/Dockerfile'
-        travel_service:
-          imageName: 'travel-service'
-          context: 'src/Services/tourServices/travelServices'
-          dockerfile: 'src/Services/tourServices/travelServices/Dockerfile'
+            api_gateway:
+              imageName: 'api-gateway'
+              context: 'src/Services/tourServices/apiGateway'
+              dockerfile: 'src/Services/tourServices/apiGateway/Dockerfile'
+            admin_service:
+              imageName: 'admin-service'
+              context: 'src/Services/tourServices/adminServices'
+              dockerfile: 'src/Services/tourServices/adminServices/Dockerfile'
+            booking_service:
+              imageName: 'booking-service'
+              context: 'src/Services/tourServices/bookingServices/BookingService'
+              dockerfile: 'src/Services/tourServices/bookingServices/BookingService/Dockerfile'
+            config_service:
+              imageName: 'config-service'
+              context: 'src/Services/tourServices/configServices'
+              dockerfile: 'src/Services/tourServices/configServices/Dockerfile'
+            tourplan_service:
+              imageName: 'tourplan-service'
+              context: 'src/Services/tourServices/tourplanServices'
+              dockerfile: 'src/Services/tourServices/tourplanServices/Dockerfile'
+            tour_service:
+              imageName: 'tour-service'
+              context: 'src/Services/tourServices/tourServices'
+              dockerfile: 'src/Services/tourServices/tourServices/Dockerfile'
+            transaction_service:
+              imageName: 'transaction-service'
+              context: 'src/Services/tourServices/transactionServices'
+              dockerfile: 'src/Services/tourServices/transactionServices/Dockerfile'
+            travel_service:
+              imageName: 'travel-service'
+              context: 'src/Services/tourServices/travelServices'
+              dockerfile: 'src/Services/tourServices/travelServices/Dockerfile'
 
         steps:
           - checkout: self
@@ -122,38 +122,38 @@ stages:
         displayName: Push
         strategy:
           matrix:
-        api_gateway:
-          imageName: 'api-gateway'
-          context: 'src/Services/tourServices/apiGateway'
-          dockerfile: 'src/Services/tourServices/apiGateway/Dockerfile'
-        admin_service:
-          imageName: 'admin-service'
-          context: 'src/Services/tourServices/adminServices'
-          dockerfile: 'src/Services/tourServices/adminServices/Dockerfile'
-        booking_service:
-          imageName: 'booking-service'
-          context: 'src/Services/tourServices/bookingServices/BookingService'
-          dockerfile: 'src/Services/tourServices/bookingServices/BookingService/Dockerfile'
-        config_service:
-          imageName: 'config-service'
-          context: 'src/Services/tourServices/configServices'
-          dockerfile: 'src/Services/tourServices/configServices/Dockerfile'
-        tourplan_service:
-          imageName: 'tourplan-service'
-          context: 'src/Services/tourServices/tourplanServices'
-          dockerfile: 'src/Services/tourServices/tourplanServices/Dockerfile'
-        tour_service:
-          imageName: 'tour-service'
-          context: 'src/Services/tourServices/tourServices'
-          dockerfile: 'src/Services/tourServices/tourServices/Dockerfile'
-        transaction_service:
-          imageName: 'transaction-service'
-          context: 'src/Services/tourServices/transactionServices'
-          dockerfile: 'src/Services/tourServices/transactionServices/Dockerfile'
-        travel_service:
-          imageName: 'travel-service'
-          context: 'src/Services/tourServices/travelServices'
-          dockerfile: 'src/Services/tourServices/travelServices/Dockerfile'
+            api_gateway:
+              imageName: 'api-gateway'
+              context: 'src/Services/tourServices/apiGateway'
+              dockerfile: 'src/Services/tourServices/apiGateway/Dockerfile'
+            admin_service:
+              imageName: 'admin-service'
+              context: 'src/Services/tourServices/adminServices'
+              dockerfile: 'src/Services/tourServices/adminServices/Dockerfile'
+            booking_service:
+              imageName: 'booking-service'
+              context: 'src/Services/tourServices/bookingServices/BookingService'
+              dockerfile: 'src/Services/tourServices/bookingServices/BookingService/Dockerfile'
+            config_service:
+              imageName: 'config-service'
+              context: 'src/Services/tourServices/configServices'
+              dockerfile: 'src/Services/tourServices/configServices/Dockerfile'
+            tourplan_service:
+              imageName: 'tourplan-service'
+              context: 'src/Services/tourServices/tourplanServices'
+              dockerfile: 'src/Services/tourServices/tourplanServices/Dockerfile'
+            tour_service:
+              imageName: 'tour-service'
+              context: 'src/Services/tourServices/tourServices'
+              dockerfile: 'src/Services/tourServices/tourServices/Dockerfile'
+            transaction_service:
+              imageName: 'transaction-service'
+              context: 'src/Services/tourServices/transactionServices'
+              dockerfile: 'src/Services/tourServices/transactionServices/Dockerfile'
+            travel_service:
+              imageName: 'travel-service'
+              context: 'src/Services/tourServices/travelServices'
+              dockerfile: 'src/Services/tourServices/travelServices/Dockerfile'
 
         steps:
           - task: Docker@2
@@ -181,38 +181,38 @@ stages:
         displayName: Verify images
         strategy:
           matrix:
-        api_gateway:
-          imageName: 'api-gateway'
-          context: 'src/Services/tourServices/apiGateway'
-          dockerfile: 'src/Services/tourServices/apiGateway/Dockerfile'
-        admin_service:
-          imageName: 'admin-service'
-          context: 'src/Services/tourServices/adminServices'
-          dockerfile: 'src/Services/tourServices/adminServices/Dockerfile'
-        booking_service:
-          imageName: 'booking-service'
-          context: 'src/Services/tourServices/bookingServices/BookingService'
-          dockerfile: 'src/Services/tourServices/bookingServices/BookingService/Dockerfile'
-        config_service:
-          imageName: 'config-service'
-          context: 'src/Services/tourServices/configServices'
-          dockerfile: 'src/Services/tourServices/configServices/Dockerfile'
-        tourplan_service:
-          imageName: 'tourplan-service'
-          context: 'src/Services/tourServices/tourplanServices'
-          dockerfile: 'src/Services/tourServices/tourplanServices/Dockerfile'
-        tour_service:
-          imageName: 'tour-service'
-          context: 'src/Services/tourServices/tourServices'
-          dockerfile: 'src/Services/tourServices/tourServices/Dockerfile'
-        transaction_service:
-          imageName: 'transaction-service'
-          context: 'src/Services/tourServices/transactionServices'
-          dockerfile: 'src/Services/tourServices/transactionServices/Dockerfile'
-        travel_service:
-          imageName: 'travel-service'
-          context: 'src/Services/tourServices/travelServices'
-          dockerfile: 'src/Services/tourServices/travelServices/Dockerfile'
+            api_gateway:
+              imageName: 'api-gateway'
+              context: 'src/Services/tourServices/apiGateway'
+              dockerfile: 'src/Services/tourServices/apiGateway/Dockerfile'
+            admin_service:
+              imageName: 'admin-service'
+              context: 'src/Services/tourServices/adminServices'
+              dockerfile: 'src/Services/tourServices/adminServices/Dockerfile'
+            booking_service:
+              imageName: 'booking-service'
+              context: 'src/Services/tourServices/bookingServices/BookingService'
+              dockerfile: 'src/Services/tourServices/bookingServices/BookingService/Dockerfile'
+            config_service:
+              imageName: 'config-service'
+              context: 'src/Services/tourServices/configServices'
+              dockerfile: 'src/Services/tourServices/configServices/Dockerfile'
+            tourplan_service:
+              imageName: 'tourplan-service'
+              context: 'src/Services/tourServices/tourplanServices'
+              dockerfile: 'src/Services/tourServices/tourplanServices/Dockerfile'
+            tour_service:
+              imageName: 'tour-service'
+              context: 'src/Services/tourServices/tourServices'
+              dockerfile: 'src/Services/tourServices/tourServices/Dockerfile'
+            transaction_service:
+              imageName: 'transaction-service'
+              context: 'src/Services/tourServices/transactionServices'
+              dockerfile: 'src/Services/tourServices/transactionServices/Dockerfile'
+            travel_service:
+              imageName: 'travel-service'
+              context: 'src/Services/tourServices/travelServices'
+              dockerfile: 'src/Services/tourServices/travelServices/Dockerfile'
 
         steps:
           - script: |

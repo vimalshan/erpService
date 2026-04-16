@@ -63,34 +63,34 @@ stages:
         displayName: Build
         strategy:
           matrix:
-        api_gateway:
-          imageName: 'api-gateway'
-          context: 'src/Services/taskServices/apiGateway'
-          dockerfile: 'src/Services/taskServices/apiGateway/Dockerfile'
-        complaint_service:
-          imageName: 'complaint-service'
-          context: 'src/Services/taskServices/complaintServices'
-          dockerfile: 'src/Services/taskServices/complaintServices/Dockerfile'
-        energy_service:
-          imageName: 'energy-service'
-          context: 'src/Services/taskServices/energyServices'
-          dockerfile: 'src/Services/taskServices/energyServices/Dockerfile'
-        lookup_service:
-          imageName: 'lookup-service'
-          context: 'src/Services/taskServices/lookupServices'
-          dockerfile: 'src/Services/taskServices/lookupServices/Dockerfile'
-        task_service:
-          imageName: 'task-service'
-          context: 'src/Services/taskServices/taskServices'
-          dockerfile: 'src/Services/taskServices/taskServices/Dockerfile'
-        task_transactional_service:
-          imageName: 'task-transactional-service'
-          context: 'src/Services/taskServices/taskTransactionalServices'
-          dockerfile: 'src/Services/taskServices/taskTransactionalServices/Dockerfile'
-        unit_service:
-          imageName: 'unit-service'
-          context: 'src/Services/taskServices/unitServices'
-          dockerfile: 'src/Services/taskServices/unitServices/Dockerfile'
+            api_gateway:
+              imageName: 'api-gateway'
+              context: 'src/Services/taskServices/apiGateway'
+              dockerfile: 'src/Services/taskServices/apiGateway/Dockerfile'
+            complaint_service:
+              imageName: 'complaint-service'
+              context: 'src/Services/taskServices/complaintServices'
+              dockerfile: 'src/Services/taskServices/complaintServices/Dockerfile'
+            energy_service:
+              imageName: 'energy-service'
+              context: 'src/Services/taskServices/energyServices'
+              dockerfile: 'src/Services/taskServices/energyServices/Dockerfile'
+            lookup_service:
+              imageName: 'lookup-service'
+              context: 'src/Services/taskServices/lookupServices'
+              dockerfile: 'src/Services/taskServices/lookupServices/Dockerfile'
+            task_service:
+              imageName: 'task-service'
+              context: 'src/Services/taskServices/taskServices'
+              dockerfile: 'src/Services/taskServices/taskServices/Dockerfile'
+            task_transactional_service:
+              imageName: 'task-transactional-service'
+              context: 'src/Services/taskServices/taskTransactionalServices'
+              dockerfile: 'src/Services/taskServices/taskTransactionalServices/Dockerfile'
+            unit_service:
+              imageName: 'unit-service'
+              context: 'src/Services/taskServices/unitServices'
+              dockerfile: 'src/Services/taskServices/unitServices/Dockerfile'
 
         steps:
           - checkout: self
@@ -117,34 +117,34 @@ stages:
         displayName: Push
         strategy:
           matrix:
-        api_gateway:
-          imageName: 'api-gateway'
-          context: 'src/Services/taskServices/apiGateway'
-          dockerfile: 'src/Services/taskServices/apiGateway/Dockerfile'
-        complaint_service:
-          imageName: 'complaint-service'
-          context: 'src/Services/taskServices/complaintServices'
-          dockerfile: 'src/Services/taskServices/complaintServices/Dockerfile'
-        energy_service:
-          imageName: 'energy-service'
-          context: 'src/Services/taskServices/energyServices'
-          dockerfile: 'src/Services/taskServices/energyServices/Dockerfile'
-        lookup_service:
-          imageName: 'lookup-service'
-          context: 'src/Services/taskServices/lookupServices'
-          dockerfile: 'src/Services/taskServices/lookupServices/Dockerfile'
-        task_service:
-          imageName: 'task-service'
-          context: 'src/Services/taskServices/taskServices'
-          dockerfile: 'src/Services/taskServices/taskServices/Dockerfile'
-        task_transactional_service:
-          imageName: 'task-transactional-service'
-          context: 'src/Services/taskServices/taskTransactionalServices'
-          dockerfile: 'src/Services/taskServices/taskTransactionalServices/Dockerfile'
-        unit_service:
-          imageName: 'unit-service'
-          context: 'src/Services/taskServices/unitServices'
-          dockerfile: 'src/Services/taskServices/unitServices/Dockerfile'
+            api_gateway:
+              imageName: 'api-gateway'
+              context: 'src/Services/taskServices/apiGateway'
+              dockerfile: 'src/Services/taskServices/apiGateway/Dockerfile'
+            complaint_service:
+              imageName: 'complaint-service'
+              context: 'src/Services/taskServices/complaintServices'
+              dockerfile: 'src/Services/taskServices/complaintServices/Dockerfile'
+            energy_service:
+              imageName: 'energy-service'
+              context: 'src/Services/taskServices/energyServices'
+              dockerfile: 'src/Services/taskServices/energyServices/Dockerfile'
+            lookup_service:
+              imageName: 'lookup-service'
+              context: 'src/Services/taskServices/lookupServices'
+              dockerfile: 'src/Services/taskServices/lookupServices/Dockerfile'
+            task_service:
+              imageName: 'task-service'
+              context: 'src/Services/taskServices/taskServices'
+              dockerfile: 'src/Services/taskServices/taskServices/Dockerfile'
+            task_transactional_service:
+              imageName: 'task-transactional-service'
+              context: 'src/Services/taskServices/taskTransactionalServices'
+              dockerfile: 'src/Services/taskServices/taskTransactionalServices/Dockerfile'
+            unit_service:
+              imageName: 'unit-service'
+              context: 'src/Services/taskServices/unitServices'
+              dockerfile: 'src/Services/taskServices/unitServices/Dockerfile'
 
         steps:
           - task: Docker@2
@@ -172,34 +172,34 @@ stages:
         displayName: Verify images
         strategy:
           matrix:
-        api_gateway:
-          imageName: 'api-gateway'
-          context: 'src/Services/taskServices/apiGateway'
-          dockerfile: 'src/Services/taskServices/apiGateway/Dockerfile'
-        complaint_service:
-          imageName: 'complaint-service'
-          context: 'src/Services/taskServices/complaintServices'
-          dockerfile: 'src/Services/taskServices/complaintServices/Dockerfile'
-        energy_service:
-          imageName: 'energy-service'
-          context: 'src/Services/taskServices/energyServices'
-          dockerfile: 'src/Services/taskServices/energyServices/Dockerfile'
-        lookup_service:
-          imageName: 'lookup-service'
-          context: 'src/Services/taskServices/lookupServices'
-          dockerfile: 'src/Services/taskServices/lookupServices/Dockerfile'
-        task_service:
-          imageName: 'task-service'
-          context: 'src/Services/taskServices/taskServices'
-          dockerfile: 'src/Services/taskServices/taskServices/Dockerfile'
-        task_transactional_service:
-          imageName: 'task-transactional-service'
-          context: 'src/Services/taskServices/taskTransactionalServices'
-          dockerfile: 'src/Services/taskServices/taskTransactionalServices/Dockerfile'
-        unit_service:
-          imageName: 'unit-service'
-          context: 'src/Services/taskServices/unitServices'
-          dockerfile: 'src/Services/taskServices/unitServices/Dockerfile'
+            api_gateway:
+              imageName: 'api-gateway'
+              context: 'src/Services/taskServices/apiGateway'
+              dockerfile: 'src/Services/taskServices/apiGateway/Dockerfile'
+            complaint_service:
+              imageName: 'complaint-service'
+              context: 'src/Services/taskServices/complaintServices'
+              dockerfile: 'src/Services/taskServices/complaintServices/Dockerfile'
+            energy_service:
+              imageName: 'energy-service'
+              context: 'src/Services/taskServices/energyServices'
+              dockerfile: 'src/Services/taskServices/energyServices/Dockerfile'
+            lookup_service:
+              imageName: 'lookup-service'
+              context: 'src/Services/taskServices/lookupServices'
+              dockerfile: 'src/Services/taskServices/lookupServices/Dockerfile'
+            task_service:
+              imageName: 'task-service'
+              context: 'src/Services/taskServices/taskServices'
+              dockerfile: 'src/Services/taskServices/taskServices/Dockerfile'
+            task_transactional_service:
+              imageName: 'task-transactional-service'
+              context: 'src/Services/taskServices/taskTransactionalServices'
+              dockerfile: 'src/Services/taskServices/taskTransactionalServices/Dockerfile'
+            unit_service:
+              imageName: 'unit-service'
+              context: 'src/Services/taskServices/unitServices'
+              dockerfile: 'src/Services/taskServices/unitServices/Dockerfile'
 
         steps:
           - script: |

@@ -357,11 +357,11 @@ matrix_lines = []
 for module, cfg in MODULES.items():
     for name, ctx, df in cfg["services"]:
         key = f"{module}__{name}".replace("-", "_")
-        matrix_lines.append(f"        {key}:")
-        matrix_lines.append(f"          module: '{module}'")
-        matrix_lines.append(f"          imageName: '{name}'")
-        matrix_lines.append(f"          context: '{ctx}'")
-        matrix_lines.append(f"          dockerfile: '{ctx}/{df}'")
+        matrix_lines.append(f"            {key}:")
+        matrix_lines.append(f"              module: '{module}'")
+        matrix_lines.append(f"              imageName: '{name}'")
+        matrix_lines.append(f"              context: '{ctx}'")
+        matrix_lines.append(f"              dockerfile: '{ctx}/{df}'")
 matrix_block = "\n".join(matrix_lines)
 
 # ── Service name list for parameter values ────────────────────────────────────

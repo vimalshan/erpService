@@ -57,10 +57,10 @@ stages:
         displayName: Build
         strategy:
           matrix:
-        auth_provider:
-          imageName: 'auth-provider'
-          context: 'src/Services/AuthProvider'
-          dockerfile: 'src/Services/AuthProvider/Docker/Dockerfile'
+            auth_provider:
+              imageName: 'auth-provider'
+              context: 'src/Services/AuthProvider'
+              dockerfile: 'src/Services/AuthProvider/Docker/Dockerfile'
 
         steps:
           - checkout: self
@@ -87,10 +87,10 @@ stages:
         displayName: Push
         strategy:
           matrix:
-        auth_provider:
-          imageName: 'auth-provider'
-          context: 'src/Services/AuthProvider'
-          dockerfile: 'src/Services/AuthProvider/Docker/Dockerfile'
+            auth_provider:
+              imageName: 'auth-provider'
+              context: 'src/Services/AuthProvider'
+              dockerfile: 'src/Services/AuthProvider/Docker/Dockerfile'
 
         steps:
           - task: Docker@2
@@ -118,10 +118,10 @@ stages:
         displayName: Verify images
         strategy:
           matrix:
-        auth_provider:
-          imageName: 'auth-provider'
-          context: 'src/Services/AuthProvider'
-          dockerfile: 'src/Services/AuthProvider/Docker/Dockerfile'
+            auth_provider:
+              imageName: 'auth-provider'
+              context: 'src/Services/AuthProvider'
+              dockerfile: 'src/Services/AuthProvider/Docker/Dockerfile'
 
         steps:
           - script: |
