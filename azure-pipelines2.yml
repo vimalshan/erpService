@@ -1,0 +1,3511 @@
+# =============================================================================
+# ERP Microservice — Root Azure Pipelines
+# Builds & pushes ALL 219 Docker images across 22 modules to GHCR.
+# Registry: ghcr.io/$(githubOwner)/erp/<service-name>
+#
+# Setup required (once per Azure DevOps project):
+#   Project Settings -> Service connections -> New -> Docker Registry
+#   Name     : ghcr-service-connection
+#   Type     : Other (Docker Registry)
+#   Registry : https://ghcr.io
+#   Username : <your-github-username>
+#   Password : <GitHub PAT with packages:write scope>
+# =============================================================================
+
+name: Build & Push All ERP Services
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - src/Services/adminServices/**
+      - src/Services/aimsServices/**
+      - src/Services/auditServices/**
+      - src/Services/AuthProvider/**
+      - src/Services/canteenServices/**
+      - src/Services/cashServices/**
+      - src/Services/ddServices/**
+      - src/Services/healthServices/**
+      - src/Services/hrServicess/**
+      - src/Services/letServices/**
+      - src/Services/loanServices/**
+      - src/Services/mainsparshServices/**
+      - src/Services/myworkServices/**
+      - src/Services/payServices/**
+      - src/Services/pfServices/**
+      - src/Services/sciServices/**
+      - src/Services/sparshServices/**
+      - src/Services/sscServices/**
+      - src/Services/taskServices/**
+      - src/Services/tourServices/**
+      - src/Services/travelServices/**
+      - src/Services/wmsServices/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - src/Services/adminServices/**
+      - src/Services/aimsServices/**
+      - src/Services/auditServices/**
+      - src/Services/AuthProvider/**
+      - src/Services/canteenServices/**
+      - src/Services/cashServices/**
+      - src/Services/ddServices/**
+      - src/Services/healthServices/**
+      - src/Services/hrServicess/**
+      - src/Services/letServices/**
+      - src/Services/loanServices/**
+      - src/Services/mainsparshServices/**
+      - src/Services/myworkServices/**
+      - src/Services/payServices/**
+      - src/Services/pfServices/**
+      - src/Services/sciServices/**
+      - src/Services/sparshServices/**
+      - src/Services/sscServices/**
+      - src/Services/taskServices/**
+      - src/Services/tourServices/**
+      - src/Services/travelServices/**
+      - src/Services/wmsServices/**
+
+# ── Parameters ────────────────────────────────────────────────────────────────
+parameters:
+  - name: module
+    displayName: Module to build
+    type: string
+    default: all
+    values:
+      - all
+      - adminServices
+      - aimsServices
+      - auditServices
+      - AuthProvider
+      - canteenServices
+      - cashServices
+      - ddServices
+      - healthServices
+      - hrServicess
+      - letServices
+      - loanServices
+      - mainsparshServices
+      - myworkServices
+      - payServices
+      - pfServices
+      - sciServices
+      - sparshServices
+      - sscServices
+      - taskServices
+      - tourServices
+      - travelServices
+      - wmsServices
+
+  - name: service
+    displayName: Service to build (within module, or "all")
+    type: string
+    default: all
+
+  - name: pushImage
+    displayName: Push images to GHCR
+    type: boolean
+    default: true
+
+  - name: smokeTest
+    displayName: Run smoke test after push
+    type: boolean
+    default: false
+
+# ── Variables ─────────────────────────────────────────────────────────────────
+variables:
+  imagePrefix: 'ghcr.io/vimalshan/erp'
+  tag: '$(Build.BuildId)'
+  vmImageName: 'ubuntu-latest'
+
+pool:
+  vmImage: $(vmImageName)
+
+# ── Stages ────────────────────────────────────────────────────────────────────
+stages:
+
+  # ── BUILD ──────────────────────────────────────────────────────────────────
+  - stage: Build
+    displayName: Build Docker Images
+    jobs:
+      - job: BuildImages
+        displayName: Build
+        strategy:
+          matrix:
+            adminServices__api_gateway:
+              module: 'adminServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/adminServices/ApiGateway'
+              dockerfile: 'src/Services/adminServices/ApiGateway/Dockerfile'
+            adminServices__finyear_api:
+              module: 'adminServices'
+              imageName: 'finyear-api'
+              context: 'src/Services/adminServices/finyearServices'
+              dockerfile: 'src/Services/adminServices/finyearServices/Docker/Dockerfile'
+            adminServices__location_services:
+              module: 'adminServices'
+              imageName: 'location-services'
+              context: 'src/Services/adminServices/locationServices'
+              dockerfile: 'src/Services/adminServices/locationServices/Docker/Dockerfile'
+            adminServices__lov_service:
+              module: 'adminServices'
+              imageName: 'lov-service'
+              context: 'src/Services/adminServices/lovServices'
+              dockerfile: 'src/Services/adminServices/lovServices/Docker/Dockerfile'
+            adminServices__scholarship_service:
+              module: 'adminServices'
+              imageName: 'scholarship-service'
+              context: 'src/Services/adminServices/scholarshipServices'
+              dockerfile: 'src/Services/adminServices/scholarshipServices/Docker/Dockerfile'
+            adminServices__stationery_service:
+              module: 'adminServices'
+              imageName: 'stationery-service'
+              context: 'src/Services/adminServices/stationeryServices'
+              dockerfile: 'src/Services/adminServices/stationeryServices/Docker/Dockerfile'
+            adminServices__tds_service:
+              module: 'adminServices'
+              imageName: 'tds-service'
+              context: 'src/Services/adminServices/tdsServices'
+              dockerfile: 'src/Services/adminServices/tdsServices/Docker/Dockerfile'
+            adminServices__vendor_service:
+              module: 'adminServices'
+              imageName: 'vendor-service'
+              context: 'src/Services/adminServices/vendorServices'
+              dockerfile: 'src/Services/adminServices/vendorServices/Docker/Dockerfile'
+            adminServices__transaction_service:
+              module: 'adminServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/adminServices/transactionServices'
+              dockerfile: 'src/Services/adminServices/transactionServices/Docker/Dockerfile'
+            aimsServices__api_gateway:
+              module: 'aimsServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/aimsServices/ApiGateway'
+              dockerfile: 'src/Services/aimsServices/ApiGateway/Dockerfile'
+            aimsServices__access_service:
+              module: 'aimsServices'
+              imageName: 'access-service'
+              context: 'src/Services/aimsServices/accessServices'
+              dockerfile: 'src/Services/aimsServices/accessServices/Dockerfile'
+            aimsServices__aims_transaction_service:
+              module: 'aimsServices'
+              imageName: 'aims-transaction-service'
+              context: 'src/Services/aimsServices/aimsTransactionServices'
+              dockerfile: 'src/Services/aimsServices/aimsTransactionServices/Dockerfile'
+            aimsServices__attendance_service:
+              module: 'aimsServices'
+              imageName: 'attendance-service'
+              context: 'src/Services/aimsServices/attendanceServices'
+              dockerfile: 'src/Services/aimsServices/attendanceServices/Dockerfile'
+            aimsServices__bus_services:
+              module: 'aimsServices'
+              imageName: 'bus-services'
+              context: 'src/Services/aimsServices/busServices'
+              dockerfile: 'src/Services/aimsServices/busServices/Dockerfile'
+            aimsServices__calendar_service:
+              module: 'aimsServices'
+              imageName: 'calendar-service'
+              context: 'src/Services/aimsServices/calendarServices'
+              dockerfile: 'src/Services/aimsServices/calendarServices/Dockerfile'
+            aimsServices__employee_service:
+              module: 'aimsServices'
+              imageName: 'employee-service'
+              context: 'src/Services/aimsServices/employeeServices'
+              dockerfile: 'src/Services/aimsServices/employeeServices/Dockerfile'
+            aimsServices__groupincentive_service:
+              module: 'aimsServices'
+              imageName: 'groupincentive-service'
+              context: 'src/Services/aimsServices/groupincentiveServices'
+              dockerfile: 'src/Services/aimsServices/groupincentiveServices/Dockerfile'
+            aimsServices__leave_services:
+              module: 'aimsServices'
+              imageName: 'leave-services'
+              context: 'src/Services/aimsServices/leaveServices'
+              dockerfile: 'src/Services/aimsServices/leaveServices/Dockerfile'
+            aimsServices__reference_service:
+              module: 'aimsServices'
+              imageName: 'reference-service'
+              context: 'src/Services/aimsServices/referenceServices'
+              dockerfile: 'src/Services/aimsServices/referenceServices/Dockerfile'
+            aimsServices__visitor_services:
+              module: 'aimsServices'
+              imageName: 'visitor-services'
+              context: 'src/Services/aimsServices/visitorServices'
+              dockerfile: 'src/Services/aimsServices/visitorServices/Dockerfile'
+            auditServices__api_gateway:
+              module: 'auditServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/auditServices/apigateway'
+              dockerfile: 'src/Services/auditServices/apigateway/Dockerfile'
+            auditServices__action_service:
+              module: 'auditServices'
+              imageName: 'action-service'
+              context: 'src/Services/auditServices/actionapiServices'
+              dockerfile: 'src/Services/auditServices/actionapiServices/Dockerfile'
+            auditServices__audit_service:
+              module: 'auditServices'
+              imageName: 'audit-service'
+              context: 'src/Services/auditServices/auditapiServices'
+              dockerfile: 'src/Services/auditServices/auditapiServices/Dockerfile'
+            auditServices__certificate_service:
+              module: 'auditServices'
+              imageName: 'certificate-service'
+              context: 'src/Services/auditServices/certificateapiServices'
+              dockerfile: 'src/Services/auditServices/certificateapiServices/Dockerfile'
+            auditServices__contract_service:
+              module: 'auditServices'
+              imageName: 'contract-service'
+              context: 'src/Services/auditServices/contractapiServices'
+              dockerfile: 'src/Services/auditServices/contractapiServices/Dockerfile'
+            auditServices__finance_service:
+              module: 'auditServices'
+              imageName: 'finance-service'
+              context: 'src/Services/auditServices/financeapiServices'
+              dockerfile: 'src/Services/auditServices/financeapiServices/Dockerfile'
+            auditServices__findings_service:
+              module: 'auditServices'
+              imageName: 'findings-service'
+              context: 'src/Services/auditServices/findingsapiServices'
+              dockerfile: 'src/Services/auditServices/findingsapiServices/Dockerfile'
+            auditServices__notification_service:
+              module: 'auditServices'
+              imageName: 'notification-service'
+              context: 'src/Services/auditServices/notificationapiServices'
+              dockerfile: 'src/Services/auditServices/notificationapiServices/Dockerfile'
+            auditServices__schedule_service:
+              module: 'auditServices'
+              imageName: 'schedule-service'
+              context: 'src/Services/auditServices/scheduleapiServices'
+              dockerfile: 'src/Services/auditServices/scheduleapiServices/Dockerfile'
+            auditServices__settings_service:
+              module: 'auditServices'
+              imageName: 'settings-service'
+              context: 'src/Services/auditServices/settingsapiServices'
+              dockerfile: 'src/Services/auditServices/settingsapiServices/Dockerfile'
+            AuthProvider__auth_provider:
+              module: 'AuthProvider'
+              imageName: 'auth-provider'
+              context: 'src/Services/AuthProvider'
+              dockerfile: 'src/Services/AuthProvider/Docker/Dockerfile'
+            canteenServices__api_gateway:
+              module: 'canteenServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/canteenServices/ApiGateway'
+              dockerfile: 'src/Services/canteenServices/ApiGateway/Dockerfile'
+            canteenServices__canteen_transaction_service:
+              module: 'canteenServices'
+              imageName: 'canteen-transaction-service'
+              context: 'src/Services/canteenServices/canteenTransactionServices'
+              dockerfile: 'src/Services/canteenServices/canteenTransactionServices/Docker/Dockerfile'
+            canteenServices__canteen_unit_service:
+              module: 'canteenServices'
+              imageName: 'canteen-unit-service'
+              context: 'src/Services/canteenServices/canteenunitServices'
+              dockerfile: 'src/Services/canteenServices/canteenunitServices/Docker/Dockerfile'
+            canteenServices__card_management_service:
+              module: 'canteenServices'
+              imageName: 'card-management-service'
+              context: 'src/Services/canteenServices/cardmanagementServices'
+              dockerfile: 'src/Services/canteenServices/cardmanagementServices/Docker/Dockerfile'
+            canteenServices__deduction_service:
+              module: 'canteenServices'
+              imageName: 'deduction-service'
+              context: 'src/Services/canteenServices/deductionServices'
+              dockerfile: 'src/Services/canteenServices/deductionServices/Docker/Dockerfile'
+            canteenServices__eligibility_service:
+              module: 'canteenServices'
+              imageName: 'eligibility-service'
+              context: 'src/Services/canteenServices/eligibilityServices'
+              dockerfile: 'src/Services/canteenServices/eligibilityServices/Docker/Dockerfile'
+            canteenServices__item_master_service:
+              module: 'canteenServices'
+              imageName: 'item-master-service'
+              context: 'src/Services/canteenServices/itemmasterServices'
+              dockerfile: 'src/Services/canteenServices/itemmasterServices/Docker/Dockerfile'
+            canteenServices__reference_data_service:
+              module: 'canteenServices'
+              imageName: 'reference-data-service'
+              context: 'src/Services/canteenServices/referencedataServices'
+              dockerfile: 'src/Services/canteenServices/referencedataServices/Docker/Dockerfile'
+            canteenServices__swipe_transaction_service:
+              module: 'canteenServices'
+              imageName: 'swipe-transaction-service'
+              context: 'src/Services/canteenServices/swipeTransactionServices'
+              dockerfile: 'src/Services/canteenServices/swipeTransactionServices/Docker/Dockerfile'
+            cashServices__api_gateway:
+              module: 'cashServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/cashServices/ApiGateway'
+              dockerfile: 'src/Services/cashServices/ApiGateway/Docker/Dockerfile'
+            cashServices__cash_management_service:
+              module: 'cashServices'
+              imageName: 'cash-management-service'
+              context: 'src/Services/cashServices/cashmanagementServices'
+              dockerfile: 'src/Services/cashServices/cashmanagementServices/Docker/Dockerfile'
+            cashServices__current_management_service:
+              module: 'cashServices'
+              imageName: 'current-management-service'
+              context: 'src/Services/cashServices/currentmanagementServices'
+              dockerfile: 'src/Services/cashServices/currentmanagementServices/Docker/Dockerfile'
+            cashServices__deal_ticketing_service:
+              module: 'cashServices'
+              imageName: 'deal-ticketing-service'
+              context: 'src/Services/cashServices/dealticketingServices'
+              dockerfile: 'src/Services/cashServices/dealticketingServices/Docker/Dockerfile'
+            cashServices__email_notification_service:
+              module: 'cashServices'
+              imageName: 'email-notification-service'
+              context: 'src/Services/cashServices/emailnotificationServices'
+              dockerfile: 'src/Services/cashServices/emailnotificationServices/Docker/Dockerfile'
+            cashServices__loan_management_service:
+              module: 'cashServices'
+              imageName: 'loan-management-service'
+              context: 'src/Services/cashServices/loanmanagementServices'
+              dockerfile: 'src/Services/cashServices/loanmanagementServices/Docker/Dockerfile'
+            cashServices__organization_setup_service:
+              module: 'cashServices'
+              imageName: 'organization-setup-service'
+              context: 'src/Services/cashServices/organizationsetupServices'
+              dockerfile: 'src/Services/cashServices/organizationsetupServices/Docker/Dockerfile'
+            cashServices__transaction_service:
+              module: 'cashServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/cashServices/transactionServices'
+              dockerfile: 'src/Services/cashServices/transactionServices/Docker/Dockerfile'
+            ddServices__api_gateway:
+              module: 'ddServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/ddServices/apiGateway'
+              dockerfile: 'src/Services/ddServices/apiGateway/Dockerfile'
+            ddServices__appraisal_service:
+              module: 'ddServices'
+              imageName: 'appraisal-service'
+              context: 'src/Services/ddServices/appraisalService'
+              dockerfile: 'src/Services/ddServices/appraisalService/Dockerfile'
+            ddServices__authorization_service:
+              module: 'ddServices'
+              imageName: 'authorization-service'
+              context: 'src/Services/ddServices/authorizationServices'
+              dockerfile: 'src/Services/ddServices/authorizationServices/Dockerfile'
+            ddServices__compensation_service:
+              module: 'ddServices'
+              imageName: 'compensation-service'
+              context: 'src/Services/ddServices/compensationServices'
+              dockerfile: 'src/Services/ddServices/compensationServices/Dockerfile'
+            ddServices__competency_service:
+              module: 'ddServices'
+              imageName: 'competency-service'
+              context: 'src/Services/ddServices/competencyServices'
+              dockerfile: 'src/Services/ddServices/competencyServices/Dockerfile'
+            ddServices__demand_management_service:
+              module: 'ddServices'
+              imageName: 'demand-management-service'
+              context: 'src/Services/ddServices/demandmanagementServices'
+              dockerfile: 'src/Services/ddServices/demandmanagementServices/Dockerfile'
+            ddServices__document_service:
+              module: 'ddServices'
+              imageName: 'document-service'
+              context: 'src/Services/ddServices/documentServices'
+              dockerfile: 'src/Services/ddServices/documentServices/Dockerfile'
+            ddServices__employee_service:
+              module: 'ddServices'
+              imageName: 'employee-service'
+              context: 'src/Services/ddServices/employeeServices'
+              dockerfile: 'src/Services/ddServices/employeeServices/Dockerfile'
+            ddServices__feedback_service:
+              module: 'ddServices'
+              imageName: 'feedback-service'
+              context: 'src/Services/ddServices/feedbackServices'
+              dockerfile: 'src/Services/ddServices/feedbackServices/Dockerfile'
+            ddServices__learning_service:
+              module: 'ddServices'
+              imageName: 'learning-service'
+              context: 'src/Services/ddServices/learningServices'
+              dockerfile: 'src/Services/ddServices/learningServices/Dockerfile'
+            ddServices__objective_service:
+              module: 'ddServices'
+              imageName: 'objective-service'
+              context: 'src/Services/ddServices/objectiveServices'
+              dockerfile: 'src/Services/ddServices/objectiveServices/Dockerfile'
+            ddServices__other_services:
+              module: 'ddServices'
+              imageName: 'other-services'
+              context: 'src/Services/ddServices/OtherServices'
+              dockerfile: 'src/Services/ddServices/OtherServices/Dockerfile'
+            ddServices__promotion_service:
+              module: 'ddServices'
+              imageName: 'promotion-service'
+              context: 'src/Services/ddServices/promotionServices'
+              dockerfile: 'src/Services/ddServices/promotionServices/Dockerfile'
+            ddServices__recruitment_service:
+              module: 'ddServices'
+              imageName: 'recruitment-service'
+              context: 'src/Services/ddServices/recruitmentServices'
+              dockerfile: 'src/Services/ddServices/recruitmentServices/Dockerfile'
+            ddServices__reporting_service:
+              module: 'ddServices'
+              imageName: 'reporting-service'
+              context: 'src/Services/ddServices/reportingServices'
+              dockerfile: 'src/Services/ddServices/reportingServices/Dockerfile'
+            ddServices__transaction_service:
+              module: 'ddServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/ddServices/transactionServices'
+              dockerfile: 'src/Services/ddServices/transactionServices/Dockerfile'
+            healthServices__api_gateway:
+              module: 'healthServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/healthServices/apiGateway/src'
+              dockerfile: 'src/Services/healthServices/apiGateway/src/Dockerfile'
+            healthServices__accident_management_service:
+              module: 'healthServices'
+              imageName: 'accident-management-service'
+              context: 'src/Services/healthServices/accidentmanagementServices/src'
+              dockerfile: 'src/Services/healthServices/accidentmanagementServices/src/Dockerfile'
+            healthServices__healthcheckup_service:
+              module: 'healthServices'
+              imageName: 'healthcheckup-service'
+              context: 'src/Services/healthServices/healthcheckupServices/src'
+              dockerfile: 'src/Services/healthServices/healthcheckupServices/src/Dockerfile'
+            healthServices__health_transaction_service:
+              module: 'healthServices'
+              imageName: 'health-transaction-service'
+              context: 'src/Services/healthServices/healthTransactionServices/src'
+              dockerfile: 'src/Services/healthServices/healthTransactionServices/src/Dockerfile'
+            healthServices__insurance_management_service:
+              module: 'healthServices'
+              imageName: 'insurance-management-service'
+              context: 'src/Services/healthServices/insurancemanagementServices/src'
+              dockerfile: 'src/Services/healthServices/insurancemanagementServices/src/Dockerfile'
+            healthServices__master_service:
+              module: 'healthServices'
+              imageName: 'master-service'
+              context: 'src/Services/healthServices/masterServices/src'
+              dockerfile: 'src/Services/healthServices/masterServices/src/Dockerfile'
+            healthServices__medicalvisit_service:
+              module: 'healthServices'
+              imageName: 'medicalvisit-service'
+              context: 'src/Services/healthServices/medicalvisitServices/src'
+              dockerfile: 'src/Services/healthServices/medicalvisitServices/src/Dockerfile'
+            healthServices__medicine_management_service:
+              module: 'healthServices'
+              imageName: 'medicine-management-service'
+              context: 'src/Services/healthServices/medicinemanagementServices/src'
+              dockerfile: 'src/Services/healthServices/medicinemanagementServices/src/Dockerfile'
+            hrServicess__api_gateway:
+              module: 'hrServicess'
+              imageName: 'api-gateway'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/ApiGateway.Dockerfile'
+            hrServicess__alerts_notifications_service:
+              module: 'hrServicess'
+              imageName: 'alerts-notifications-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/AlertsNotifications.Dockerfile'
+            hrServicess__compensation_benefits_service:
+              module: 'hrServicess'
+              imageName: 'compensation-benefits-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/CompensationBenefits.Dockerfile'
+            hrServicess__employee_management_service:
+              module: 'hrServicess'
+              imageName: 'employee-management-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/EmployeeManagement.Dockerfile'
+            hrServicess__employee_relations_service:
+              module: 'hrServicess'
+              imageName: 'employee-relations-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/EmployeeRelations.Dockerfile'
+            hrServicess__employee_transactions_service:
+              module: 'hrServicess'
+              imageName: 'employee-transactions-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/EmployeeTransactions.Dockerfile'
+            hrServicess__exit_management_service:
+              module: 'hrServicess'
+              imageName: 'exit-management-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/ExitManagement.Dockerfile'
+            hrServicess__organization_structure_service:
+              module: 'hrServicess'
+              imageName: 'organization-structure-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/OrganizationStructure.Dockerfile'
+            hrServicess__recruitment_service:
+              module: 'hrServicess'
+              imageName: 'recruitment-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/Recruitment.Dockerfile'
+            hrServicess__time_attendance_service:
+              module: 'hrServicess'
+              imageName: 'time-attendance-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/TimeAttendance.Dockerfile'
+            hrServicess__training_development_service:
+              module: 'hrServicess'
+              imageName: 'training-development-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/TrainingDevelopment.Dockerfile'
+            hrServicess__user_security_service:
+              module: 'hrServicess'
+              imageName: 'user-security-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/UserSecurity.Dockerfile'
+            letServices__api_gateway:
+              module: 'letServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/letServices/apiGateway'
+              dockerfile: 'src/Services/letServices/apiGateway/Dockerfile'
+            letServices__course_service:
+              module: 'letServices'
+              imageName: 'course-service'
+              context: 'src/Services/letServices/courseServices'
+              dockerfile: 'src/Services/letServices/courseServices/Dockerfile'
+            letServices__development_service:
+              module: 'letServices'
+              imageName: 'development-service'
+              context: 'src/Services/letServices/developmentServices'
+              dockerfile: 'src/Services/letServices/developmentServices/Dockerfile'
+            letServices__leave_service:
+              module: 'letServices'
+              imageName: 'leave-service'
+              context: 'src/Services/letServices/leaveServices'
+              dockerfile: 'src/Services/letServices/leaveServices/Dockerfile'
+            letServices__let_transaction_service:
+              module: 'letServices'
+              imageName: 'let-transaction-service'
+              context: 'src/Services/letServices/letTransactionServices'
+              dockerfile: 'src/Services/letServices/letTransactionServices/Dockerfile'
+            letServices__master_service:
+              module: 'letServices'
+              imageName: 'master-service'
+              context: 'src/Services/letServices/masterServices'
+              dockerfile: 'src/Services/letServices/masterServices/Dockerfile'
+            letServices__request_service:
+              module: 'letServices'
+              imageName: 'request-service'
+              context: 'src/Services/letServices/requestServices'
+              dockerfile: 'src/Services/letServices/requestServices/Dockerfile'
+            letServices__review_service:
+              module: 'letServices'
+              imageName: 'review-service'
+              context: 'src/Services/letServices/reviewServices'
+              dockerfile: 'src/Services/letServices/reviewServices/Dockerfile'
+            loanServices__api_gateway:
+              module: 'loanServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/loanServices/apiGateway'
+              dockerfile: 'src/Services/loanServices/apiGateway/Dockerfile'
+            loanServices__document_service:
+              module: 'loanServices'
+              imageName: 'document-service'
+              context: 'src/Services/loanServices/documentServices'
+              dockerfile: 'src/Services/loanServices/documentServices/Dockerfile'
+            loanServices__loanaccount_service:
+              module: 'loanServices'
+              imageName: 'loanaccount-service'
+              context: 'src/Services/loanServices/loanaccountServices'
+              dockerfile: 'src/Services/loanServices/loanaccountServices/Dockerfile'
+            loanServices__loanapplication_service:
+              module: 'loanServices'
+              imageName: 'loanapplication-service'
+              context: 'src/Services/loanServices/loanapplicationServices'
+              dockerfile: 'src/Services/loanServices/loanapplicationServices/Dockerfile'
+            loanServices__loandefinition_service:
+              module: 'loanServices'
+              imageName: 'loandefinition-service'
+              context: 'src/Services/loanServices/loandefinitionServices'
+              dockerfile: 'src/Services/loanServices/loandefinitionServices/Dockerfile'
+            loanServices__loan_transaction_service:
+              module: 'loanServices'
+              imageName: 'loan-transaction-service'
+              context: 'src/Services/loanServices/loanTransactionServices'
+              dockerfile: 'src/Services/loanServices/loanTransactionServices/Dockerfile'
+            loanServices__lov_service:
+              module: 'loanServices'
+              imageName: 'lov-service'
+              context: 'src/Services/loanServices/lovServices'
+              dockerfile: 'src/Services/loanServices/lovServices/Dockerfile'
+            loanServices__utility_service:
+              module: 'loanServices'
+              imageName: 'utility-service'
+              context: 'src/Services/loanServices/utilityServices'
+              dockerfile: 'src/Services/loanServices/utilityServices/Dockerfile'
+            mainsparshServices__api_gateway:
+              module: 'mainsparshServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/mainsparshServices/apiGateway'
+              dockerfile: 'src/Services/mainsparshServices/apiGateway/Dockerfile'
+            mainsparshServices__approval_service:
+              module: 'mainsparshServices'
+              imageName: 'approval-service'
+              context: 'src/Services/mainsparshServices/approvalServices'
+              dockerfile: 'src/Services/mainsparshServices/approvalServices/Dockerfile'
+            mainsparshServices__booking_service:
+              module: 'mainsparshServices'
+              imageName: 'booking-service'
+              context: 'src/Services/mainsparshServices/bookingServices'
+              dockerfile: 'src/Services/mainsparshServices/bookingServices/Dockerfile'
+            mainsparshServices__community_service:
+              module: 'mainsparshServices'
+              imageName: 'community-service'
+              context: 'src/Services/mainsparshServices/communityServices'
+              dockerfile: 'src/Services/mainsparshServices/communityServices/Dockerfile'
+            mainsparshServices__compensation_service:
+              module: 'mainsparshServices'
+              imageName: 'compensation-service'
+              context: 'src/Services/mainsparshServices/compensationServices'
+              dockerfile: 'src/Services/mainsparshServices/compensationServices/Dockerfile'
+            mainsparshServices__groupmanagement_service:
+              module: 'mainsparshServices'
+              imageName: 'groupmanagement-service'
+              context: 'src/Services/mainsparshServices/groupmanagementServices'
+              dockerfile: 'src/Services/mainsparshServices/groupmanagementServices/Dockerfile'
+            mainsparshServices__location_service:
+              module: 'mainsparshServices'
+              imageName: 'location-service'
+              context: 'src/Services/mainsparshServices/locationServices'
+              dockerfile: 'src/Services/mainsparshServices/locationServices/Dockerfile'
+            mainsparshServices__meeting_service:
+              module: 'mainsparshServices'
+              imageName: 'meeting-service'
+              context: 'src/Services/mainsparshServices/meetingServices'
+              dockerfile: 'src/Services/mainsparshServices/meetingServices/Dockerfile'
+            mainsparshServices__proxy_service:
+              module: 'mainsparshServices'
+              imageName: 'proxy-service'
+              context: 'src/Services/mainsparshServices/proxyServices'
+              dockerfile: 'src/Services/mainsparshServices/proxyServices/Dockerfile'
+            mainsparshServices__reimbursement_service:
+              module: 'mainsparshServices'
+              imageName: 'reimbursement-service'
+              context: 'src/Services/mainsparshServices/reimbursementServices'
+              dockerfile: 'src/Services/mainsparshServices/reimbursementServices/Dockerfile'
+            mainsparshServices__stipend_service:
+              module: 'mainsparshServices'
+              imageName: 'stipend-service'
+              context: 'src/Services/mainsparshServices/stipendservices'
+              dockerfile: 'src/Services/mainsparshServices/stipendservices/Dockerfile'
+            mainsparshServices__timesheet_service:
+              module: 'mainsparshServices'
+              imageName: 'timesheet-service'
+              context: 'src/Services/mainsparshServices/timesheetServices'
+              dockerfile: 'src/Services/mainsparshServices/timesheetServices/Dockerfile'
+            mainsparshServices__transaction_service:
+              module: 'mainsparshServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/mainsparshServices/transactionServices'
+              dockerfile: 'src/Services/mainsparshServices/transactionServices/Dockerfile'
+            mainsparshServices__usermanagement_service:
+              module: 'mainsparshServices'
+              imageName: 'usermanagement-service'
+              context: 'src/Services/mainsparshServices/usermanagementServices'
+              dockerfile: 'src/Services/mainsparshServices/usermanagementServices/Dockerfile'
+            mainsparshServices__websitecontent_service:
+              module: 'mainsparshServices'
+              imageName: 'websitecontent-service'
+              context: 'src/Services/mainsparshServices/websitecontentServices'
+              dockerfile: 'src/Services/mainsparshServices/websitecontentServices/Dockerfile'
+            myworkServices__api_gateway:
+              module: 'myworkServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/myworkServices/Gateway'
+              dockerfile: 'src/Services/myworkServices/Gateway/Dockerfile'
+            myworkServices__audit_service:
+              module: 'myworkServices'
+              imageName: 'audit-service'
+              context: 'src/Services/myworkServices/auditServices'
+              dockerfile: 'src/Services/myworkServices/auditServices/Dockerfile'
+            myworkServices__batch_service:
+              module: 'myworkServices'
+              imageName: 'batch-service'
+              context: 'src/Services/myworkServices/batchServices'
+              dockerfile: 'src/Services/myworkServices/batchServices/Dockerfile'
+            myworkServices__csa_service:
+              module: 'myworkServices'
+              imageName: 'csa-service'
+              context: 'src/Services/myworkServices/csaServices/CSA.Service'
+              dockerfile: 'src/Services/myworkServices/csaServices/CSA.Service/Dockerfile'
+            myworkServices__project_service:
+              module: 'myworkServices'
+              imageName: 'project-service'
+              context: 'src/Services/myworkServices/projectServices'
+              dockerfile: 'src/Services/myworkServices/projectServices/Dockerfile'
+            myworkServices__risk_service:
+              module: 'myworkServices'
+              imageName: 'risk-service'
+              context: 'src/Services/myworkServices/riskServices'
+              dockerfile: 'src/Services/myworkServices/riskServices/Dockerfile'
+            myworkServices__team_service:
+              module: 'myworkServices'
+              imageName: 'team-service'
+              context: 'src/Services/myworkServices/teamServices'
+              dockerfile: 'src/Services/myworkServices/teamServices/Dockerfile'
+            myworkServices__timesheet_service:
+              module: 'myworkServices'
+              imageName: 'timesheet-service'
+              context: 'src/Services/myworkServices/timeSheetServices'
+              dockerfile: 'src/Services/myworkServices/timeSheetServices/Dockerfile'
+            myworkServices__workorder_service:
+              module: 'myworkServices'
+              imageName: 'workorder-service'
+              context: 'src/Services/myworkServices/workorderServices/WorkOrderService'
+              dockerfile: 'src/Services/myworkServices/workorderServices/WorkOrderService/Dockerfile'
+            payServices__api_gateway:
+              module: 'payServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/payServices/apiGateway'
+              dockerfile: 'src/Services/payServices/apiGateway/Dockerfile'
+            payServices__employee_service:
+              module: 'payServices'
+              imageName: 'employee-service'
+              context: 'src/Services/payServices/employeeServices'
+              dockerfile: 'src/Services/payServices/employeeServices/Dockerfile'
+            payServices__faq_service:
+              module: 'payServices'
+              imageName: 'faq-service'
+              context: 'src/Services/payServices/faqServices'
+              dockerfile: 'src/Services/payServices/faqServices/Dockerfile'
+            payServices__hr_service:
+              module: 'payServices'
+              imageName: 'hr-service'
+              context: 'src/Services/payServices/hrServices'
+              dockerfile: 'src/Services/payServices/hrServices/Dockerfile'
+            payServices__payroll_service:
+              module: 'payServices'
+              imageName: 'payroll-service'
+              context: 'src/Services/payServices/payrollServices'
+              dockerfile: 'src/Services/payServices/payrollServices/Dockerfile'
+            payServices__pay_transaction_service:
+              module: 'payServices'
+              imageName: 'pay-transaction-service'
+              context: 'src/Services/payServices/payTransactionalServices'
+              dockerfile: 'src/Services/payServices/payTransactionalServices/Dockerfile'
+            payServices__tax_service:
+              module: 'payServices'
+              imageName: 'tax-service'
+              context: 'src/Services/payServices/taxServices'
+              dockerfile: 'src/Services/payServices/taxServices/Dockerfile'
+            pfServices__api_gateway:
+              module: 'pfServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/pfServices/apiGateway'
+              dockerfile: 'src/Services/pfServices/apiGateway/Dockerfile'
+            pfServices__accounting_service:
+              module: 'pfServices'
+              imageName: 'accounting-service'
+              context: 'src/Services/pfServices/accountingServices'
+              dockerfile: 'src/Services/pfServices/accountingServices/Dockerfile'
+            pfServices__bank_service:
+              module: 'pfServices'
+              imageName: 'bank-service'
+              context: 'src/Services/pfServices/bankServices/BankService'
+              dockerfile: 'src/Services/pfServices/bankServices/BankService/Dockerfile'
+            pfServices__contribution_service:
+              module: 'pfServices'
+              imageName: 'contribution-service'
+              context: 'src/Services/pfServices/contributionServices/ContributionService'
+              dockerfile: 'src/Services/pfServices/contributionServices/ContributionService/Dockerfile'
+            pfServices__investment_service:
+              module: 'pfServices'
+              imageName: 'investment-service'
+              context: 'src/Services/pfServices/investmentServices/InvestmentService'
+              dockerfile: 'src/Services/pfServices/investmentServices/InvestmentService/Dockerfile'
+            pfServices__loan_service:
+              module: 'pfServices'
+              imageName: 'loan-service'
+              context: 'src/Services/pfServices/loanServices'
+              dockerfile: 'src/Services/pfServices/loanServices/Dockerfile'
+            pfServices__masterdata_service:
+              module: 'pfServices'
+              imageName: 'masterdata-service'
+              context: 'src/Services/pfServices/masterdataServices/MasterDataService'
+              dockerfile: 'src/Services/pfServices/masterdataServices/MasterDataService/Dockerfile'
+            pfServices__member_service:
+              module: 'pfServices'
+              imageName: 'member-service'
+              context: 'src/Services/pfServices/memberServices'
+              dockerfile: 'src/Services/pfServices/memberServices/Dockerfile'
+            pfServices__pf_transaction_service:
+              module: 'pfServices'
+              imageName: 'pf-transaction-service'
+              context: 'src/Services/pfServices/pftransactionalServices'
+              dockerfile: 'src/Services/pfServices/pftransactionalServices/Dockerfile'
+            pfServices__settlement_service:
+              module: 'pfServices'
+              imageName: 'settlement-service'
+              context: 'src/Services/pfServices/settlementServices'
+              dockerfile: 'src/Services/pfServices/settlementServices/Dockerfile'
+            pfServices__trust_service:
+              module: 'pfServices'
+              imageName: 'trust-service'
+              context: 'src/Services/pfServices/trustServices/TrustService'
+              dockerfile: 'src/Services/pfServices/trustServices/TrustService/Dockerfile'
+            sciServices__api_gateway:
+              module: 'sciServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/sciServices/ApiGateway'
+              dockerfile: 'src/Services/sciServices/ApiGateway/Dockerfile'
+            sciServices__dispatchplanning_service:
+              module: 'sciServices'
+              imageName: 'dispatchplanning-service'
+              context: 'src/Services/sciServices/dispatchplanningServices'
+              dockerfile: 'src/Services/sciServices/dispatchplanningServices/Dockerfile'
+            sciServices__errorlogging_service:
+              module: 'sciServices'
+              imageName: 'errorlogging-service'
+              context: 'src/Services/sciServices/errorloggingServices'
+              dockerfile: 'src/Services/sciServices/errorloggingServices/Dockerfile'
+            sciServices__eximmanagement_service:
+              module: 'sciServices'
+              imageName: 'eximmanagement-service'
+              context: 'src/Services/sciServices/eximmanagementServices'
+              dockerfile: 'src/Services/sciServices/eximmanagementServices/Dockerfile'
+            sciServices__fillingoperation_service:
+              module: 'sciServices'
+              imageName: 'fillingoperation-service'
+              context: 'src/Services/sciServices/fillingoperationServices'
+              dockerfile: 'src/Services/sciServices/fillingoperationServices/Dockerfile'
+            sciServices__gstcompliance_service:
+              module: 'sciServices'
+              imageName: 'gstcompliance-service'
+              context: 'src/Services/sciServices/gstcomplianceServices'
+              dockerfile: 'src/Services/sciServices/gstcomplianceServices/Dockerfile'
+            sciServices__inventorymanagement_service:
+              module: 'sciServices'
+              imageName: 'inventorymanagement-service'
+              context: 'src/Services/sciServices/inventorymanagementServices'
+              dockerfile: 'src/Services/sciServices/inventorymanagementServices/Dockerfile'
+            sciServices__mamallocation_service:
+              module: 'sciServices'
+              imageName: 'mamallocation-service'
+              context: 'src/Services/sciServices/mamallocationServices'
+              dockerfile: 'src/Services/sciServices/mamallocationServices/Dockerfile'
+            sciServices__masterdata_service:
+              module: 'sciServices'
+              imageName: 'masterdata-service'
+              context: 'src/Services/sciServices/masterdataServices'
+              dockerfile: 'src/Services/sciServices/masterdataServices/Dockerfile'
+            sciServices__orderschedule_service:
+              module: 'sciServices'
+              imageName: 'orderschedule-service'
+              context: 'src/Services/sciServices/orderscheduleServices'
+              dockerfile: 'src/Services/sciServices/orderscheduleServices/Dockerfile'
+            sciServices__productionmanagement_service:
+              module: 'sciServices'
+              imageName: 'productionmanagement-service'
+              context: 'src/Services/sciServices/productionmanagementServices'
+              dockerfile: 'src/Services/sciServices/productionmanagementServices/Dockerfile'
+            sciServices__purchasesales_service:
+              module: 'sciServices'
+              imageName: 'purchasesales-service'
+              context: 'src/Services/sciServices/purchasesalesService'
+              dockerfile: 'src/Services/sciServices/purchasesalesService/Dockerfile'
+            sciServices__sci_transaction_service:
+              module: 'sciServices'
+              imageName: 'sci-transaction-service'
+              context: 'src/Services/sciServices/scitransactionalServices'
+              dockerfile: 'src/Services/sciServices/scitransactionalServices/Dockerfile'
+            sciServices__security_service:
+              module: 'sciServices'
+              imageName: 'security-service'
+              context: 'src/Services/sciServices/SecurityServices'
+              dockerfile: 'src/Services/sciServices/SecurityServices/Dockerfile'
+            sciServices__strategicstock_service:
+              module: 'sciServices'
+              imageName: 'strategicstock-service'
+              context: 'src/Services/sciServices/strategicstockServices'
+              dockerfile: 'src/Services/sciServices/strategicstockServices/Dockerfile'
+            sciServices__vechicletracking_service:
+              module: 'sciServices'
+              imageName: 'vechicletracking-service'
+              context: 'src/Services/sciServices/vechicletrackingServices'
+              dockerfile: 'src/Services/sciServices/vechicletrackingServices/Dockerfile'
+            sparshServices__api_gateway:
+              module: 'sparshServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/sparshServices/apigateway/SparshApiGateway'
+              dockerfile: 'src/Services/sparshServices/apigateway/SparshApiGateway/Dockerfile'
+            sparshServices__employeepridemanagement_service:
+              module: 'sparshServices'
+              imageName: 'employeepridemanagement-service'
+              context: 'src/Services/sparshServices/employeepridemanagementServices'
+              dockerfile: 'src/Services/sparshServices/employeepridemanagementServices/Dockerfile'
+            sparshServices__mobileappmanagement_service:
+              module: 'sparshServices'
+              imageName: 'mobileappmanagement-service'
+              context: 'src/Services/sparshServices/mobileappmanagementServices'
+              dockerfile: 'src/Services/sparshServices/mobileappmanagementServices/Dockerfile'
+            sparshServices__mobileexpense_service:
+              module: 'sparshServices'
+              imageName: 'mobileexpense-service'
+              context: 'src/Services/sparshServices/mobileexpenseServices'
+              dockerfile: 'src/Services/sparshServices/mobileexpenseServices/Dockerfile'
+            sparshServices__problemmanagement_service:
+              module: 'sparshServices'
+              imageName: 'problemmanagement-service'
+              context: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement'
+              dockerfile: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement/Dockerfile'
+            sparshServices__sparsh_transaction_service:
+              module: 'sparshServices'
+              imageName: 'sparsh-transaction-service'
+              context: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional'
+              dockerfile: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional/Dockerfile'
+            sscServices__api_gateway:
+              module: 'sscServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/sscServices/apigateway'
+              dockerfile: 'src/Services/sscServices/apigateway/Dockerfile'
+            sscServices__approvalgroup_service:
+              module: 'sscServices'
+              imageName: 'approvalgroup-service'
+              context: 'src/Services/sscServices/approvalgroupServices'
+              dockerfile: 'src/Services/sscServices/approvalgroupServices/Dockerfile'
+            sscServices__batchandenvelope_service:
+              module: 'sscServices'
+              imageName: 'batchandenvelope-service'
+              context: 'src/Services/sscServices/batchandenvelopeServices'
+              dockerfile: 'src/Services/sscServices/batchandenvelopeServices/Dockerfile'
+            sscServices__categoryandvendor_service:
+              module: 'sscServices'
+              imageName: 'categoryandvendor-service'
+              context: 'src/Services/sscServices/categoryandvendorServices'
+              dockerfile: 'src/Services/sscServices/categoryandvendorServices/Dockerfile'
+            sscServices__clubmembership_service:
+              module: 'sscServices'
+              imageName: 'clubmembership-service'
+              context: 'src/Services/sscServices/clubmembershipServices'
+              dockerfile: 'src/Services/sscServices/clubmembershipServices/Dockerfile'
+            sscServices__fillingandarchive_service:
+              module: 'sscServices'
+              imageName: 'fillingandarchive-service'
+              context: 'src/Services/sscServices/fillingandarchiveServices'
+              dockerfile: 'src/Services/sscServices/fillingandarchiveServices/Dockerfile'
+            sscServices__hrdocument_service:
+              module: 'sscServices'
+              imageName: 'hrdocument-service'
+              context: 'src/Services/sscServices/hrdocumentServices'
+              dockerfile: 'src/Services/sscServices/hrdocumentServices/Dockerfile'
+            sscServices__integration_service:
+              module: 'sscServices'
+              imageName: 'integration-service'
+              context: 'src/Services/sscServices/integrationServices/IntegrationService'
+              dockerfile: 'src/Services/sscServices/integrationServices/IntegrationService/Dockerfile'
+            sscServices__invoiceprocessing_service:
+              module: 'sscServices'
+              imageName: 'invoiceprocessing-service'
+              context: 'src/Services/sscServices/invoiceprocessingServices/InvoiceProcessing.Service'
+              dockerfile: 'src/Services/sscServices/invoiceprocessingServices/InvoiceProcessing.Service/Dockerfile'
+            sscServices__masterdata_service:
+              module: 'sscServices'
+              imageName: 'masterdata-service'
+              context: 'src/Services/sscServices/masterdataServices/MasterDataService'
+              dockerfile: 'src/Services/sscServices/masterdataServices/MasterDataService/Dockerfile'
+            sscServices__menuandsecurity_service:
+              module: 'sscServices'
+              imageName: 'menuandsecurity-service'
+              context: 'src/Services/sscServices/menuandsecurityServices'
+              dockerfile: 'src/Services/sscServices/menuandsecurityServices/Dockerfile'
+            sscServices__menu_service:
+              module: 'sscServices'
+              imageName: 'menu-service'
+              context: 'src/Services/sscServices/menuServices/01_USER_MODULE'
+              dockerfile: 'src/Services/sscServices/menuServices/01_USER_MODULE/Dockerfile'
+            sscServices__ssc_transaction_service:
+              module: 'sscServices'
+              imageName: 'ssc-transaction-service'
+              context: 'src/Services/sscServices/ssctransactionalServices'
+              dockerfile: 'src/Services/sscServices/ssctransactionalServices/Dockerfile'
+            taskServices__api_gateway:
+              module: 'taskServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/taskServices/apiGateway'
+              dockerfile: 'src/Services/taskServices/apiGateway/Dockerfile'
+            taskServices__complaint_service:
+              module: 'taskServices'
+              imageName: 'complaint-service'
+              context: 'src/Services/taskServices/complaintServices'
+              dockerfile: 'src/Services/taskServices/complaintServices/Dockerfile'
+            taskServices__energy_service:
+              module: 'taskServices'
+              imageName: 'energy-service'
+              context: 'src/Services/taskServices/energyServices'
+              dockerfile: 'src/Services/taskServices/energyServices/Dockerfile'
+            taskServices__lookup_service:
+              module: 'taskServices'
+              imageName: 'lookup-service'
+              context: 'src/Services/taskServices/lookupServices'
+              dockerfile: 'src/Services/taskServices/lookupServices/Dockerfile'
+            taskServices__task_service:
+              module: 'taskServices'
+              imageName: 'task-service'
+              context: 'src/Services/taskServices/taskServices'
+              dockerfile: 'src/Services/taskServices/taskServices/Dockerfile'
+            taskServices__task_transactional_service:
+              module: 'taskServices'
+              imageName: 'task-transactional-service'
+              context: 'src/Services/taskServices/taskTransactionalServices'
+              dockerfile: 'src/Services/taskServices/taskTransactionalServices/Dockerfile'
+            taskServices__unit_service:
+              module: 'taskServices'
+              imageName: 'unit-service'
+              context: 'src/Services/taskServices/unitServices'
+              dockerfile: 'src/Services/taskServices/unitServices/Dockerfile'
+            tourServices__api_gateway:
+              module: 'tourServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/tourServices/apiGateway'
+              dockerfile: 'src/Services/tourServices/apiGateway/Dockerfile'
+            tourServices__admin_service:
+              module: 'tourServices'
+              imageName: 'admin-service'
+              context: 'src/Services/tourServices/adminServices'
+              dockerfile: 'src/Services/tourServices/adminServices/Dockerfile'
+            tourServices__booking_service:
+              module: 'tourServices'
+              imageName: 'booking-service'
+              context: 'src/Services/tourServices/bookingServices/BookingService'
+              dockerfile: 'src/Services/tourServices/bookingServices/BookingService/Dockerfile'
+            tourServices__config_service:
+              module: 'tourServices'
+              imageName: 'config-service'
+              context: 'src/Services/tourServices/configServices'
+              dockerfile: 'src/Services/tourServices/configServices/Dockerfile'
+            tourServices__tourplan_service:
+              module: 'tourServices'
+              imageName: 'tourplan-service'
+              context: 'src/Services/tourServices/tourplanServices'
+              dockerfile: 'src/Services/tourServices/tourplanServices/Dockerfile'
+            tourServices__tour_service:
+              module: 'tourServices'
+              imageName: 'tour-service'
+              context: 'src/Services/tourServices/tourServices'
+              dockerfile: 'src/Services/tourServices/tourServices/Dockerfile'
+            tourServices__transaction_service:
+              module: 'tourServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/tourServices/transactionServices'
+              dockerfile: 'src/Services/tourServices/transactionServices/Dockerfile'
+            tourServices__travel_service:
+              module: 'tourServices'
+              imageName: 'travel-service'
+              context: 'src/Services/tourServices/travelServices'
+              dockerfile: 'src/Services/tourServices/travelServices/Dockerfile'
+            travelServices__api_gateway:
+              module: 'travelServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/travelServices/ApiGateway'
+              dockerfile: 'src/Services/travelServices/ApiGateway/Dockerfile'
+            travelServices__admin_service:
+              module: 'travelServices'
+              imageName: 'admin-service'
+              context: 'src/Services/travelServices/adminServices'
+              dockerfile: 'src/Services/travelServices/adminServices/Dockerfile'
+            travelServices__agens_service:
+              module: 'travelServices'
+              imageName: 'agens-service'
+              context: 'src/Services/travelServices/agensService'
+              dockerfile: 'src/Services/travelServices/agensService/Dockerfile'
+            travelServices__booking_service:
+              module: 'travelServices'
+              imageName: 'booking-service'
+              context: 'src/Services/travelServices/bookingServices'
+              dockerfile: 'src/Services/travelServices/bookingServices/Dockerfile'
+            travelServices__travelexpense_service:
+              module: 'travelServices'
+              imageName: 'travelexpense-service'
+              context: 'src/Services/travelServices/expenseServices'
+              dockerfile: 'src/Services/travelServices/expenseServices/Dockerfile'
+            travelServices__travelfinance_service:
+              module: 'travelServices'
+              imageName: 'travelfinance-service'
+              context: 'src/Services/travelServices/financeServices'
+              dockerfile: 'src/Services/travelServices/financeServices/Dockerfile'
+            travelServices__insurance_service:
+              module: 'travelServices'
+              imageName: 'insurance-service'
+              context: 'src/Services/travelServices/insuranceServices'
+              dockerfile: 'src/Services/travelServices/insuranceServices/Dockerfile'
+            travelServices__masterdata_service:
+              module: 'travelServices'
+              imageName: 'masterdata-service'
+              context: 'src/Services/travelServices/masterdataServices'
+              dockerfile: 'src/Services/travelServices/masterdataServices/Dockerfile'
+            travelServices__travelrequest_service:
+              module: 'travelServices'
+              imageName: 'travelrequest-service'
+              context: 'src/Services/travelServices/travelRequestServices'
+              dockerfile: 'src/Services/travelServices/travelRequestServices/Dockerfile'
+            travelServices__travel_transaction_service:
+              module: 'travelServices'
+              imageName: 'travel-transaction-service'
+              context: 'src/Services/travelServices/traveltransactionServices'
+              dockerfile: 'src/Services/travelServices/traveltransactionServices/Dockerfile'
+            wmsServices__api_gateway:
+              module: 'wmsServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/wmsServices/apiGateway'
+              dockerfile: 'src/Services/wmsServices/apiGateway/Dockerfile'
+            wmsServices__auditlog_service:
+              module: 'wmsServices'
+              imageName: 'auditlog-service'
+              context: 'src/Services/wmsServices/auditlogService/AuditLogService'
+              dockerfile: 'src/Services/wmsServices/auditlogService/AuditLogService/Dockerfile'
+            wmsServices__customer_service:
+              module: 'wmsServices'
+              imageName: 'customer-service'
+              context: 'src/Services/wmsServices/customerService'
+              dockerfile: 'src/Services/wmsServices/customerService/Dockerfile'
+            wmsServices__employee_service:
+              module: 'wmsServices'
+              imageName: 'employee-service'
+              context: 'src/Services/wmsServices/emplyeeService'
+              dockerfile: 'src/Services/wmsServices/emplyeeService/Dockerfile'
+            wmsServices__fleet_management_service:
+              module: 'wmsServices'
+              imageName: 'fleet-management-service'
+              context: 'src/Services/wmsServices/fleetManagementService'
+              dockerfile: 'src/Services/wmsServices/fleetManagementService/Dockerfile'
+            wmsServices__inventory_service:
+              module: 'wmsServices'
+              imageName: 'inventory-service'
+              context: 'src/Services/wmsServices/inventoryService'
+              dockerfile: 'src/Services/wmsServices/inventoryService/Dockerfile'
+            wmsServices__order_service:
+              module: 'wmsServices'
+              imageName: 'order-service'
+              context: 'src/Services/wmsServices/orderService'
+              dockerfile: 'src/Services/wmsServices/orderService/Dockerfile'
+            wmsServices__product_service:
+              module: 'wmsServices'
+              imageName: 'product-service'
+              context: 'src/Services/wmsServices/productService'
+              dockerfile: 'src/Services/wmsServices/productService/Dockerfile'
+            wmsServices__purchaseorder_service:
+              module: 'wmsServices'
+              imageName: 'purchaseorder-service'
+              context: 'src/Services/wmsServices/purchaseorderService'
+              dockerfile: 'src/Services/wmsServices/purchaseorderService/Dockerfile'
+            wmsServices__rackingsystem_service:
+              module: 'wmsServices'
+              imageName: 'rackingsystem-service'
+              context: 'src/Services/wmsServices/rackingsystemService'
+              dockerfile: 'src/Services/wmsServices/rackingsystemService/Dockerfile'
+            wmsServices__receiving_service:
+              module: 'wmsServices'
+              imageName: 'receiving-service'
+              context: 'src/Services/wmsServices/receivingService'
+              dockerfile: 'src/Services/wmsServices/receivingService/Dockerfile'
+            wmsServices__salesorder_service:
+              module: 'wmsServices'
+              imageName: 'salesorder-service'
+              context: 'src/Services/wmsServices/salesorderService'
+              dockerfile: 'src/Services/wmsServices/salesorderService/Dockerfile'
+            wmsServices__security_service:
+              module: 'wmsServices'
+              imageName: 'security-service'
+              context: 'src/Services/wmsServices/securityService'
+              dockerfile: 'src/Services/wmsServices/securityService/Dockerfile'
+            wmsServices__shipment_service:
+              module: 'wmsServices'
+              imageName: 'shipment-service'
+              context: 'src/Services/wmsServices/shipmentService'
+              dockerfile: 'src/Services/wmsServices/shipmentService/Dockerfile'
+            wmsServices__supplier_service:
+              module: 'wmsServices'
+              imageName: 'supplier-service'
+              context: 'src/Services/wmsServices/supplierService'
+              dockerfile: 'src/Services/wmsServices/supplierService/Dockerfile'
+            wmsServices__warehousestructure_service:
+              module: 'wmsServices'
+              imageName: 'warehousestructure-service'
+              context: 'src/Services/wmsServices/warehousestructureService'
+              dockerfile: 'src/Services/wmsServices/warehousestructureService/Dockerfile'
+            wmsServices__wmtransactional_service:
+              module: 'wmsServices'
+              imageName: 'wmtransactional-service'
+              context: 'src/Services/wmsServices/wmtransactionalService'
+              dockerfile: 'src/Services/wmsServices/wmtransactionalService/Dockerfile'
+
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: Docker@2
+            displayName: 'Build $(module)/$(imageName)'
+            condition: |
+              and(
+                or(eq('${{ parameters.module }}', 'all'), eq('${{ parameters.module }}', variables['module'])),
+                or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+              )
+            inputs:
+              command: build
+              repository: $(imagePrefix)/$(imageName)
+              dockerfile: $(dockerfile)
+              buildContext: $(context)
+              tags: |
+                $(tag)
+                latest
+
+  # ── PUSH ───────────────────────────────────────────────────────────────────
+  - stage: Push
+    displayName: Push to GHCR
+    dependsOn: Build
+    condition: and(succeeded(), eq('${{ parameters.pushImage }}', true))
+    jobs:
+      - job: PushImages
+        displayName: Push
+        strategy:
+          matrix:
+            adminServices__api_gateway:
+              module: 'adminServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/adminServices/ApiGateway'
+              dockerfile: 'src/Services/adminServices/ApiGateway/Dockerfile'
+            adminServices__finyear_api:
+              module: 'adminServices'
+              imageName: 'finyear-api'
+              context: 'src/Services/adminServices/finyearServices'
+              dockerfile: 'src/Services/adminServices/finyearServices/Docker/Dockerfile'
+            adminServices__location_services:
+              module: 'adminServices'
+              imageName: 'location-services'
+              context: 'src/Services/adminServices/locationServices'
+              dockerfile: 'src/Services/adminServices/locationServices/Docker/Dockerfile'
+            adminServices__lov_service:
+              module: 'adminServices'
+              imageName: 'lov-service'
+              context: 'src/Services/adminServices/lovServices'
+              dockerfile: 'src/Services/adminServices/lovServices/Docker/Dockerfile'
+            adminServices__scholarship_service:
+              module: 'adminServices'
+              imageName: 'scholarship-service'
+              context: 'src/Services/adminServices/scholarshipServices'
+              dockerfile: 'src/Services/adminServices/scholarshipServices/Docker/Dockerfile'
+            adminServices__stationery_service:
+              module: 'adminServices'
+              imageName: 'stationery-service'
+              context: 'src/Services/adminServices/stationeryServices'
+              dockerfile: 'src/Services/adminServices/stationeryServices/Docker/Dockerfile'
+            adminServices__tds_service:
+              module: 'adminServices'
+              imageName: 'tds-service'
+              context: 'src/Services/adminServices/tdsServices'
+              dockerfile: 'src/Services/adminServices/tdsServices/Docker/Dockerfile'
+            adminServices__vendor_service:
+              module: 'adminServices'
+              imageName: 'vendor-service'
+              context: 'src/Services/adminServices/vendorServices'
+              dockerfile: 'src/Services/adminServices/vendorServices/Docker/Dockerfile'
+            adminServices__transaction_service:
+              module: 'adminServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/adminServices/transactionServices'
+              dockerfile: 'src/Services/adminServices/transactionServices/Docker/Dockerfile'
+            aimsServices__api_gateway:
+              module: 'aimsServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/aimsServices/ApiGateway'
+              dockerfile: 'src/Services/aimsServices/ApiGateway/Dockerfile'
+            aimsServices__access_service:
+              module: 'aimsServices'
+              imageName: 'access-service'
+              context: 'src/Services/aimsServices/accessServices'
+              dockerfile: 'src/Services/aimsServices/accessServices/Dockerfile'
+            aimsServices__aims_transaction_service:
+              module: 'aimsServices'
+              imageName: 'aims-transaction-service'
+              context: 'src/Services/aimsServices/aimsTransactionServices'
+              dockerfile: 'src/Services/aimsServices/aimsTransactionServices/Dockerfile'
+            aimsServices__attendance_service:
+              module: 'aimsServices'
+              imageName: 'attendance-service'
+              context: 'src/Services/aimsServices/attendanceServices'
+              dockerfile: 'src/Services/aimsServices/attendanceServices/Dockerfile'
+            aimsServices__bus_services:
+              module: 'aimsServices'
+              imageName: 'bus-services'
+              context: 'src/Services/aimsServices/busServices'
+              dockerfile: 'src/Services/aimsServices/busServices/Dockerfile'
+            aimsServices__calendar_service:
+              module: 'aimsServices'
+              imageName: 'calendar-service'
+              context: 'src/Services/aimsServices/calendarServices'
+              dockerfile: 'src/Services/aimsServices/calendarServices/Dockerfile'
+            aimsServices__employee_service:
+              module: 'aimsServices'
+              imageName: 'employee-service'
+              context: 'src/Services/aimsServices/employeeServices'
+              dockerfile: 'src/Services/aimsServices/employeeServices/Dockerfile'
+            aimsServices__groupincentive_service:
+              module: 'aimsServices'
+              imageName: 'groupincentive-service'
+              context: 'src/Services/aimsServices/groupincentiveServices'
+              dockerfile: 'src/Services/aimsServices/groupincentiveServices/Dockerfile'
+            aimsServices__leave_services:
+              module: 'aimsServices'
+              imageName: 'leave-services'
+              context: 'src/Services/aimsServices/leaveServices'
+              dockerfile: 'src/Services/aimsServices/leaveServices/Dockerfile'
+            aimsServices__reference_service:
+              module: 'aimsServices'
+              imageName: 'reference-service'
+              context: 'src/Services/aimsServices/referenceServices'
+              dockerfile: 'src/Services/aimsServices/referenceServices/Dockerfile'
+            aimsServices__visitor_services:
+              module: 'aimsServices'
+              imageName: 'visitor-services'
+              context: 'src/Services/aimsServices/visitorServices'
+              dockerfile: 'src/Services/aimsServices/visitorServices/Dockerfile'
+            auditServices__api_gateway:
+              module: 'auditServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/auditServices/apigateway'
+              dockerfile: 'src/Services/auditServices/apigateway/Dockerfile'
+            auditServices__action_service:
+              module: 'auditServices'
+              imageName: 'action-service'
+              context: 'src/Services/auditServices/actionapiServices'
+              dockerfile: 'src/Services/auditServices/actionapiServices/Dockerfile'
+            auditServices__audit_service:
+              module: 'auditServices'
+              imageName: 'audit-service'
+              context: 'src/Services/auditServices/auditapiServices'
+              dockerfile: 'src/Services/auditServices/auditapiServices/Dockerfile'
+            auditServices__certificate_service:
+              module: 'auditServices'
+              imageName: 'certificate-service'
+              context: 'src/Services/auditServices/certificateapiServices'
+              dockerfile: 'src/Services/auditServices/certificateapiServices/Dockerfile'
+            auditServices__contract_service:
+              module: 'auditServices'
+              imageName: 'contract-service'
+              context: 'src/Services/auditServices/contractapiServices'
+              dockerfile: 'src/Services/auditServices/contractapiServices/Dockerfile'
+            auditServices__finance_service:
+              module: 'auditServices'
+              imageName: 'finance-service'
+              context: 'src/Services/auditServices/financeapiServices'
+              dockerfile: 'src/Services/auditServices/financeapiServices/Dockerfile'
+            auditServices__findings_service:
+              module: 'auditServices'
+              imageName: 'findings-service'
+              context: 'src/Services/auditServices/findingsapiServices'
+              dockerfile: 'src/Services/auditServices/findingsapiServices/Dockerfile'
+            auditServices__notification_service:
+              module: 'auditServices'
+              imageName: 'notification-service'
+              context: 'src/Services/auditServices/notificationapiServices'
+              dockerfile: 'src/Services/auditServices/notificationapiServices/Dockerfile'
+            auditServices__schedule_service:
+              module: 'auditServices'
+              imageName: 'schedule-service'
+              context: 'src/Services/auditServices/scheduleapiServices'
+              dockerfile: 'src/Services/auditServices/scheduleapiServices/Dockerfile'
+            auditServices__settings_service:
+              module: 'auditServices'
+              imageName: 'settings-service'
+              context: 'src/Services/auditServices/settingsapiServices'
+              dockerfile: 'src/Services/auditServices/settingsapiServices/Dockerfile'
+            AuthProvider__auth_provider:
+              module: 'AuthProvider'
+              imageName: 'auth-provider'
+              context: 'src/Services/AuthProvider'
+              dockerfile: 'src/Services/AuthProvider/Docker/Dockerfile'
+            canteenServices__api_gateway:
+              module: 'canteenServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/canteenServices/ApiGateway'
+              dockerfile: 'src/Services/canteenServices/ApiGateway/Dockerfile'
+            canteenServices__canteen_transaction_service:
+              module: 'canteenServices'
+              imageName: 'canteen-transaction-service'
+              context: 'src/Services/canteenServices/canteenTransactionServices'
+              dockerfile: 'src/Services/canteenServices/canteenTransactionServices/Docker/Dockerfile'
+            canteenServices__canteen_unit_service:
+              module: 'canteenServices'
+              imageName: 'canteen-unit-service'
+              context: 'src/Services/canteenServices/canteenunitServices'
+              dockerfile: 'src/Services/canteenServices/canteenunitServices/Docker/Dockerfile'
+            canteenServices__card_management_service:
+              module: 'canteenServices'
+              imageName: 'card-management-service'
+              context: 'src/Services/canteenServices/cardmanagementServices'
+              dockerfile: 'src/Services/canteenServices/cardmanagementServices/Docker/Dockerfile'
+            canteenServices__deduction_service:
+              module: 'canteenServices'
+              imageName: 'deduction-service'
+              context: 'src/Services/canteenServices/deductionServices'
+              dockerfile: 'src/Services/canteenServices/deductionServices/Docker/Dockerfile'
+            canteenServices__eligibility_service:
+              module: 'canteenServices'
+              imageName: 'eligibility-service'
+              context: 'src/Services/canteenServices/eligibilityServices'
+              dockerfile: 'src/Services/canteenServices/eligibilityServices/Docker/Dockerfile'
+            canteenServices__item_master_service:
+              module: 'canteenServices'
+              imageName: 'item-master-service'
+              context: 'src/Services/canteenServices/itemmasterServices'
+              dockerfile: 'src/Services/canteenServices/itemmasterServices/Docker/Dockerfile'
+            canteenServices__reference_data_service:
+              module: 'canteenServices'
+              imageName: 'reference-data-service'
+              context: 'src/Services/canteenServices/referencedataServices'
+              dockerfile: 'src/Services/canteenServices/referencedataServices/Docker/Dockerfile'
+            canteenServices__swipe_transaction_service:
+              module: 'canteenServices'
+              imageName: 'swipe-transaction-service'
+              context: 'src/Services/canteenServices/swipeTransactionServices'
+              dockerfile: 'src/Services/canteenServices/swipeTransactionServices/Docker/Dockerfile'
+            cashServices__api_gateway:
+              module: 'cashServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/cashServices/ApiGateway'
+              dockerfile: 'src/Services/cashServices/ApiGateway/Docker/Dockerfile'
+            cashServices__cash_management_service:
+              module: 'cashServices'
+              imageName: 'cash-management-service'
+              context: 'src/Services/cashServices/cashmanagementServices'
+              dockerfile: 'src/Services/cashServices/cashmanagementServices/Docker/Dockerfile'
+            cashServices__current_management_service:
+              module: 'cashServices'
+              imageName: 'current-management-service'
+              context: 'src/Services/cashServices/currentmanagementServices'
+              dockerfile: 'src/Services/cashServices/currentmanagementServices/Docker/Dockerfile'
+            cashServices__deal_ticketing_service:
+              module: 'cashServices'
+              imageName: 'deal-ticketing-service'
+              context: 'src/Services/cashServices/dealticketingServices'
+              dockerfile: 'src/Services/cashServices/dealticketingServices/Docker/Dockerfile'
+            cashServices__email_notification_service:
+              module: 'cashServices'
+              imageName: 'email-notification-service'
+              context: 'src/Services/cashServices/emailnotificationServices'
+              dockerfile: 'src/Services/cashServices/emailnotificationServices/Docker/Dockerfile'
+            cashServices__loan_management_service:
+              module: 'cashServices'
+              imageName: 'loan-management-service'
+              context: 'src/Services/cashServices/loanmanagementServices'
+              dockerfile: 'src/Services/cashServices/loanmanagementServices/Docker/Dockerfile'
+            cashServices__organization_setup_service:
+              module: 'cashServices'
+              imageName: 'organization-setup-service'
+              context: 'src/Services/cashServices/organizationsetupServices'
+              dockerfile: 'src/Services/cashServices/organizationsetupServices/Docker/Dockerfile'
+            cashServices__transaction_service:
+              module: 'cashServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/cashServices/transactionServices'
+              dockerfile: 'src/Services/cashServices/transactionServices/Docker/Dockerfile'
+            ddServices__api_gateway:
+              module: 'ddServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/ddServices/apiGateway'
+              dockerfile: 'src/Services/ddServices/apiGateway/Dockerfile'
+            ddServices__appraisal_service:
+              module: 'ddServices'
+              imageName: 'appraisal-service'
+              context: 'src/Services/ddServices/appraisalService'
+              dockerfile: 'src/Services/ddServices/appraisalService/Dockerfile'
+            ddServices__authorization_service:
+              module: 'ddServices'
+              imageName: 'authorization-service'
+              context: 'src/Services/ddServices/authorizationServices'
+              dockerfile: 'src/Services/ddServices/authorizationServices/Dockerfile'
+            ddServices__compensation_service:
+              module: 'ddServices'
+              imageName: 'compensation-service'
+              context: 'src/Services/ddServices/compensationServices'
+              dockerfile: 'src/Services/ddServices/compensationServices/Dockerfile'
+            ddServices__competency_service:
+              module: 'ddServices'
+              imageName: 'competency-service'
+              context: 'src/Services/ddServices/competencyServices'
+              dockerfile: 'src/Services/ddServices/competencyServices/Dockerfile'
+            ddServices__demand_management_service:
+              module: 'ddServices'
+              imageName: 'demand-management-service'
+              context: 'src/Services/ddServices/demandmanagementServices'
+              dockerfile: 'src/Services/ddServices/demandmanagementServices/Dockerfile'
+            ddServices__document_service:
+              module: 'ddServices'
+              imageName: 'document-service'
+              context: 'src/Services/ddServices/documentServices'
+              dockerfile: 'src/Services/ddServices/documentServices/Dockerfile'
+            ddServices__employee_service:
+              module: 'ddServices'
+              imageName: 'employee-service'
+              context: 'src/Services/ddServices/employeeServices'
+              dockerfile: 'src/Services/ddServices/employeeServices/Dockerfile'
+            ddServices__feedback_service:
+              module: 'ddServices'
+              imageName: 'feedback-service'
+              context: 'src/Services/ddServices/feedbackServices'
+              dockerfile: 'src/Services/ddServices/feedbackServices/Dockerfile'
+            ddServices__learning_service:
+              module: 'ddServices'
+              imageName: 'learning-service'
+              context: 'src/Services/ddServices/learningServices'
+              dockerfile: 'src/Services/ddServices/learningServices/Dockerfile'
+            ddServices__objective_service:
+              module: 'ddServices'
+              imageName: 'objective-service'
+              context: 'src/Services/ddServices/objectiveServices'
+              dockerfile: 'src/Services/ddServices/objectiveServices/Dockerfile'
+            ddServices__other_services:
+              module: 'ddServices'
+              imageName: 'other-services'
+              context: 'src/Services/ddServices/OtherServices'
+              dockerfile: 'src/Services/ddServices/OtherServices/Dockerfile'
+            ddServices__promotion_service:
+              module: 'ddServices'
+              imageName: 'promotion-service'
+              context: 'src/Services/ddServices/promotionServices'
+              dockerfile: 'src/Services/ddServices/promotionServices/Dockerfile'
+            ddServices__recruitment_service:
+              module: 'ddServices'
+              imageName: 'recruitment-service'
+              context: 'src/Services/ddServices/recruitmentServices'
+              dockerfile: 'src/Services/ddServices/recruitmentServices/Dockerfile'
+            ddServices__reporting_service:
+              module: 'ddServices'
+              imageName: 'reporting-service'
+              context: 'src/Services/ddServices/reportingServices'
+              dockerfile: 'src/Services/ddServices/reportingServices/Dockerfile'
+            ddServices__transaction_service:
+              module: 'ddServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/ddServices/transactionServices'
+              dockerfile: 'src/Services/ddServices/transactionServices/Dockerfile'
+            healthServices__api_gateway:
+              module: 'healthServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/healthServices/apiGateway/src'
+              dockerfile: 'src/Services/healthServices/apiGateway/src/Dockerfile'
+            healthServices__accident_management_service:
+              module: 'healthServices'
+              imageName: 'accident-management-service'
+              context: 'src/Services/healthServices/accidentmanagementServices/src'
+              dockerfile: 'src/Services/healthServices/accidentmanagementServices/src/Dockerfile'
+            healthServices__healthcheckup_service:
+              module: 'healthServices'
+              imageName: 'healthcheckup-service'
+              context: 'src/Services/healthServices/healthcheckupServices/src'
+              dockerfile: 'src/Services/healthServices/healthcheckupServices/src/Dockerfile'
+            healthServices__health_transaction_service:
+              module: 'healthServices'
+              imageName: 'health-transaction-service'
+              context: 'src/Services/healthServices/healthTransactionServices/src'
+              dockerfile: 'src/Services/healthServices/healthTransactionServices/src/Dockerfile'
+            healthServices__insurance_management_service:
+              module: 'healthServices'
+              imageName: 'insurance-management-service'
+              context: 'src/Services/healthServices/insurancemanagementServices/src'
+              dockerfile: 'src/Services/healthServices/insurancemanagementServices/src/Dockerfile'
+            healthServices__master_service:
+              module: 'healthServices'
+              imageName: 'master-service'
+              context: 'src/Services/healthServices/masterServices/src'
+              dockerfile: 'src/Services/healthServices/masterServices/src/Dockerfile'
+            healthServices__medicalvisit_service:
+              module: 'healthServices'
+              imageName: 'medicalvisit-service'
+              context: 'src/Services/healthServices/medicalvisitServices/src'
+              dockerfile: 'src/Services/healthServices/medicalvisitServices/src/Dockerfile'
+            healthServices__medicine_management_service:
+              module: 'healthServices'
+              imageName: 'medicine-management-service'
+              context: 'src/Services/healthServices/medicinemanagementServices/src'
+              dockerfile: 'src/Services/healthServices/medicinemanagementServices/src/Dockerfile'
+            hrServicess__api_gateway:
+              module: 'hrServicess'
+              imageName: 'api-gateway'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/ApiGateway.Dockerfile'
+            hrServicess__alerts_notifications_service:
+              module: 'hrServicess'
+              imageName: 'alerts-notifications-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/AlertsNotifications.Dockerfile'
+            hrServicess__compensation_benefits_service:
+              module: 'hrServicess'
+              imageName: 'compensation-benefits-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/CompensationBenefits.Dockerfile'
+            hrServicess__employee_management_service:
+              module: 'hrServicess'
+              imageName: 'employee-management-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/EmployeeManagement.Dockerfile'
+            hrServicess__employee_relations_service:
+              module: 'hrServicess'
+              imageName: 'employee-relations-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/EmployeeRelations.Dockerfile'
+            hrServicess__employee_transactions_service:
+              module: 'hrServicess'
+              imageName: 'employee-transactions-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/EmployeeTransactions.Dockerfile'
+            hrServicess__exit_management_service:
+              module: 'hrServicess'
+              imageName: 'exit-management-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/ExitManagement.Dockerfile'
+            hrServicess__organization_structure_service:
+              module: 'hrServicess'
+              imageName: 'organization-structure-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/OrganizationStructure.Dockerfile'
+            hrServicess__recruitment_service:
+              module: 'hrServicess'
+              imageName: 'recruitment-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/Recruitment.Dockerfile'
+            hrServicess__time_attendance_service:
+              module: 'hrServicess'
+              imageName: 'time-attendance-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/TimeAttendance.Dockerfile'
+            hrServicess__training_development_service:
+              module: 'hrServicess'
+              imageName: 'training-development-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/TrainingDevelopment.Dockerfile'
+            hrServicess__user_security_service:
+              module: 'hrServicess'
+              imageName: 'user-security-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/UserSecurity.Dockerfile'
+            letServices__api_gateway:
+              module: 'letServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/letServices/apiGateway'
+              dockerfile: 'src/Services/letServices/apiGateway/Dockerfile'
+            letServices__course_service:
+              module: 'letServices'
+              imageName: 'course-service'
+              context: 'src/Services/letServices/courseServices'
+              dockerfile: 'src/Services/letServices/courseServices/Dockerfile'
+            letServices__development_service:
+              module: 'letServices'
+              imageName: 'development-service'
+              context: 'src/Services/letServices/developmentServices'
+              dockerfile: 'src/Services/letServices/developmentServices/Dockerfile'
+            letServices__leave_service:
+              module: 'letServices'
+              imageName: 'leave-service'
+              context: 'src/Services/letServices/leaveServices'
+              dockerfile: 'src/Services/letServices/leaveServices/Dockerfile'
+            letServices__let_transaction_service:
+              module: 'letServices'
+              imageName: 'let-transaction-service'
+              context: 'src/Services/letServices/letTransactionServices'
+              dockerfile: 'src/Services/letServices/letTransactionServices/Dockerfile'
+            letServices__master_service:
+              module: 'letServices'
+              imageName: 'master-service'
+              context: 'src/Services/letServices/masterServices'
+              dockerfile: 'src/Services/letServices/masterServices/Dockerfile'
+            letServices__request_service:
+              module: 'letServices'
+              imageName: 'request-service'
+              context: 'src/Services/letServices/requestServices'
+              dockerfile: 'src/Services/letServices/requestServices/Dockerfile'
+            letServices__review_service:
+              module: 'letServices'
+              imageName: 'review-service'
+              context: 'src/Services/letServices/reviewServices'
+              dockerfile: 'src/Services/letServices/reviewServices/Dockerfile'
+            loanServices__api_gateway:
+              module: 'loanServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/loanServices/apiGateway'
+              dockerfile: 'src/Services/loanServices/apiGateway/Dockerfile'
+            loanServices__document_service:
+              module: 'loanServices'
+              imageName: 'document-service'
+              context: 'src/Services/loanServices/documentServices'
+              dockerfile: 'src/Services/loanServices/documentServices/Dockerfile'
+            loanServices__loanaccount_service:
+              module: 'loanServices'
+              imageName: 'loanaccount-service'
+              context: 'src/Services/loanServices/loanaccountServices'
+              dockerfile: 'src/Services/loanServices/loanaccountServices/Dockerfile'
+            loanServices__loanapplication_service:
+              module: 'loanServices'
+              imageName: 'loanapplication-service'
+              context: 'src/Services/loanServices/loanapplicationServices'
+              dockerfile: 'src/Services/loanServices/loanapplicationServices/Dockerfile'
+            loanServices__loandefinition_service:
+              module: 'loanServices'
+              imageName: 'loandefinition-service'
+              context: 'src/Services/loanServices/loandefinitionServices'
+              dockerfile: 'src/Services/loanServices/loandefinitionServices/Dockerfile'
+            loanServices__loan_transaction_service:
+              module: 'loanServices'
+              imageName: 'loan-transaction-service'
+              context: 'src/Services/loanServices/loanTransactionServices'
+              dockerfile: 'src/Services/loanServices/loanTransactionServices/Dockerfile'
+            loanServices__lov_service:
+              module: 'loanServices'
+              imageName: 'lov-service'
+              context: 'src/Services/loanServices/lovServices'
+              dockerfile: 'src/Services/loanServices/lovServices/Dockerfile'
+            loanServices__utility_service:
+              module: 'loanServices'
+              imageName: 'utility-service'
+              context: 'src/Services/loanServices/utilityServices'
+              dockerfile: 'src/Services/loanServices/utilityServices/Dockerfile'
+            mainsparshServices__api_gateway:
+              module: 'mainsparshServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/mainsparshServices/apiGateway'
+              dockerfile: 'src/Services/mainsparshServices/apiGateway/Dockerfile'
+            mainsparshServices__approval_service:
+              module: 'mainsparshServices'
+              imageName: 'approval-service'
+              context: 'src/Services/mainsparshServices/approvalServices'
+              dockerfile: 'src/Services/mainsparshServices/approvalServices/Dockerfile'
+            mainsparshServices__booking_service:
+              module: 'mainsparshServices'
+              imageName: 'booking-service'
+              context: 'src/Services/mainsparshServices/bookingServices'
+              dockerfile: 'src/Services/mainsparshServices/bookingServices/Dockerfile'
+            mainsparshServices__community_service:
+              module: 'mainsparshServices'
+              imageName: 'community-service'
+              context: 'src/Services/mainsparshServices/communityServices'
+              dockerfile: 'src/Services/mainsparshServices/communityServices/Dockerfile'
+            mainsparshServices__compensation_service:
+              module: 'mainsparshServices'
+              imageName: 'compensation-service'
+              context: 'src/Services/mainsparshServices/compensationServices'
+              dockerfile: 'src/Services/mainsparshServices/compensationServices/Dockerfile'
+            mainsparshServices__groupmanagement_service:
+              module: 'mainsparshServices'
+              imageName: 'groupmanagement-service'
+              context: 'src/Services/mainsparshServices/groupmanagementServices'
+              dockerfile: 'src/Services/mainsparshServices/groupmanagementServices/Dockerfile'
+            mainsparshServices__location_service:
+              module: 'mainsparshServices'
+              imageName: 'location-service'
+              context: 'src/Services/mainsparshServices/locationServices'
+              dockerfile: 'src/Services/mainsparshServices/locationServices/Dockerfile'
+            mainsparshServices__meeting_service:
+              module: 'mainsparshServices'
+              imageName: 'meeting-service'
+              context: 'src/Services/mainsparshServices/meetingServices'
+              dockerfile: 'src/Services/mainsparshServices/meetingServices/Dockerfile'
+            mainsparshServices__proxy_service:
+              module: 'mainsparshServices'
+              imageName: 'proxy-service'
+              context: 'src/Services/mainsparshServices/proxyServices'
+              dockerfile: 'src/Services/mainsparshServices/proxyServices/Dockerfile'
+            mainsparshServices__reimbursement_service:
+              module: 'mainsparshServices'
+              imageName: 'reimbursement-service'
+              context: 'src/Services/mainsparshServices/reimbursementServices'
+              dockerfile: 'src/Services/mainsparshServices/reimbursementServices/Dockerfile'
+            mainsparshServices__stipend_service:
+              module: 'mainsparshServices'
+              imageName: 'stipend-service'
+              context: 'src/Services/mainsparshServices/stipendservices'
+              dockerfile: 'src/Services/mainsparshServices/stipendservices/Dockerfile'
+            mainsparshServices__timesheet_service:
+              module: 'mainsparshServices'
+              imageName: 'timesheet-service'
+              context: 'src/Services/mainsparshServices/timesheetServices'
+              dockerfile: 'src/Services/mainsparshServices/timesheetServices/Dockerfile'
+            mainsparshServices__transaction_service:
+              module: 'mainsparshServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/mainsparshServices/transactionServices'
+              dockerfile: 'src/Services/mainsparshServices/transactionServices/Dockerfile'
+            mainsparshServices__usermanagement_service:
+              module: 'mainsparshServices'
+              imageName: 'usermanagement-service'
+              context: 'src/Services/mainsparshServices/usermanagementServices'
+              dockerfile: 'src/Services/mainsparshServices/usermanagementServices/Dockerfile'
+            mainsparshServices__websitecontent_service:
+              module: 'mainsparshServices'
+              imageName: 'websitecontent-service'
+              context: 'src/Services/mainsparshServices/websitecontentServices'
+              dockerfile: 'src/Services/mainsparshServices/websitecontentServices/Dockerfile'
+            myworkServices__api_gateway:
+              module: 'myworkServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/myworkServices/Gateway'
+              dockerfile: 'src/Services/myworkServices/Gateway/Dockerfile'
+            myworkServices__audit_service:
+              module: 'myworkServices'
+              imageName: 'audit-service'
+              context: 'src/Services/myworkServices/auditServices'
+              dockerfile: 'src/Services/myworkServices/auditServices/Dockerfile'
+            myworkServices__batch_service:
+              module: 'myworkServices'
+              imageName: 'batch-service'
+              context: 'src/Services/myworkServices/batchServices'
+              dockerfile: 'src/Services/myworkServices/batchServices/Dockerfile'
+            myworkServices__csa_service:
+              module: 'myworkServices'
+              imageName: 'csa-service'
+              context: 'src/Services/myworkServices/csaServices/CSA.Service'
+              dockerfile: 'src/Services/myworkServices/csaServices/CSA.Service/Dockerfile'
+            myworkServices__project_service:
+              module: 'myworkServices'
+              imageName: 'project-service'
+              context: 'src/Services/myworkServices/projectServices'
+              dockerfile: 'src/Services/myworkServices/projectServices/Dockerfile'
+            myworkServices__risk_service:
+              module: 'myworkServices'
+              imageName: 'risk-service'
+              context: 'src/Services/myworkServices/riskServices'
+              dockerfile: 'src/Services/myworkServices/riskServices/Dockerfile'
+            myworkServices__team_service:
+              module: 'myworkServices'
+              imageName: 'team-service'
+              context: 'src/Services/myworkServices/teamServices'
+              dockerfile: 'src/Services/myworkServices/teamServices/Dockerfile'
+            myworkServices__timesheet_service:
+              module: 'myworkServices'
+              imageName: 'timesheet-service'
+              context: 'src/Services/myworkServices/timeSheetServices'
+              dockerfile: 'src/Services/myworkServices/timeSheetServices/Dockerfile'
+            myworkServices__workorder_service:
+              module: 'myworkServices'
+              imageName: 'workorder-service'
+              context: 'src/Services/myworkServices/workorderServices/WorkOrderService'
+              dockerfile: 'src/Services/myworkServices/workorderServices/WorkOrderService/Dockerfile'
+            payServices__api_gateway:
+              module: 'payServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/payServices/apiGateway'
+              dockerfile: 'src/Services/payServices/apiGateway/Dockerfile'
+            payServices__employee_service:
+              module: 'payServices'
+              imageName: 'employee-service'
+              context: 'src/Services/payServices/employeeServices'
+              dockerfile: 'src/Services/payServices/employeeServices/Dockerfile'
+            payServices__faq_service:
+              module: 'payServices'
+              imageName: 'faq-service'
+              context: 'src/Services/payServices/faqServices'
+              dockerfile: 'src/Services/payServices/faqServices/Dockerfile'
+            payServices__hr_service:
+              module: 'payServices'
+              imageName: 'hr-service'
+              context: 'src/Services/payServices/hrServices'
+              dockerfile: 'src/Services/payServices/hrServices/Dockerfile'
+            payServices__payroll_service:
+              module: 'payServices'
+              imageName: 'payroll-service'
+              context: 'src/Services/payServices/payrollServices'
+              dockerfile: 'src/Services/payServices/payrollServices/Dockerfile'
+            payServices__pay_transaction_service:
+              module: 'payServices'
+              imageName: 'pay-transaction-service'
+              context: 'src/Services/payServices/payTransactionalServices'
+              dockerfile: 'src/Services/payServices/payTransactionalServices/Dockerfile'
+            payServices__tax_service:
+              module: 'payServices'
+              imageName: 'tax-service'
+              context: 'src/Services/payServices/taxServices'
+              dockerfile: 'src/Services/payServices/taxServices/Dockerfile'
+            pfServices__api_gateway:
+              module: 'pfServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/pfServices/apiGateway'
+              dockerfile: 'src/Services/pfServices/apiGateway/Dockerfile'
+            pfServices__accounting_service:
+              module: 'pfServices'
+              imageName: 'accounting-service'
+              context: 'src/Services/pfServices/accountingServices'
+              dockerfile: 'src/Services/pfServices/accountingServices/Dockerfile'
+            pfServices__bank_service:
+              module: 'pfServices'
+              imageName: 'bank-service'
+              context: 'src/Services/pfServices/bankServices/BankService'
+              dockerfile: 'src/Services/pfServices/bankServices/BankService/Dockerfile'
+            pfServices__contribution_service:
+              module: 'pfServices'
+              imageName: 'contribution-service'
+              context: 'src/Services/pfServices/contributionServices/ContributionService'
+              dockerfile: 'src/Services/pfServices/contributionServices/ContributionService/Dockerfile'
+            pfServices__investment_service:
+              module: 'pfServices'
+              imageName: 'investment-service'
+              context: 'src/Services/pfServices/investmentServices/InvestmentService'
+              dockerfile: 'src/Services/pfServices/investmentServices/InvestmentService/Dockerfile'
+            pfServices__loan_service:
+              module: 'pfServices'
+              imageName: 'loan-service'
+              context: 'src/Services/pfServices/loanServices'
+              dockerfile: 'src/Services/pfServices/loanServices/Dockerfile'
+            pfServices__masterdata_service:
+              module: 'pfServices'
+              imageName: 'masterdata-service'
+              context: 'src/Services/pfServices/masterdataServices/MasterDataService'
+              dockerfile: 'src/Services/pfServices/masterdataServices/MasterDataService/Dockerfile'
+            pfServices__member_service:
+              module: 'pfServices'
+              imageName: 'member-service'
+              context: 'src/Services/pfServices/memberServices'
+              dockerfile: 'src/Services/pfServices/memberServices/Dockerfile'
+            pfServices__pf_transaction_service:
+              module: 'pfServices'
+              imageName: 'pf-transaction-service'
+              context: 'src/Services/pfServices/pftransactionalServices'
+              dockerfile: 'src/Services/pfServices/pftransactionalServices/Dockerfile'
+            pfServices__settlement_service:
+              module: 'pfServices'
+              imageName: 'settlement-service'
+              context: 'src/Services/pfServices/settlementServices'
+              dockerfile: 'src/Services/pfServices/settlementServices/Dockerfile'
+            pfServices__trust_service:
+              module: 'pfServices'
+              imageName: 'trust-service'
+              context: 'src/Services/pfServices/trustServices/TrustService'
+              dockerfile: 'src/Services/pfServices/trustServices/TrustService/Dockerfile'
+            sciServices__api_gateway:
+              module: 'sciServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/sciServices/ApiGateway'
+              dockerfile: 'src/Services/sciServices/ApiGateway/Dockerfile'
+            sciServices__dispatchplanning_service:
+              module: 'sciServices'
+              imageName: 'dispatchplanning-service'
+              context: 'src/Services/sciServices/dispatchplanningServices'
+              dockerfile: 'src/Services/sciServices/dispatchplanningServices/Dockerfile'
+            sciServices__errorlogging_service:
+              module: 'sciServices'
+              imageName: 'errorlogging-service'
+              context: 'src/Services/sciServices/errorloggingServices'
+              dockerfile: 'src/Services/sciServices/errorloggingServices/Dockerfile'
+            sciServices__eximmanagement_service:
+              module: 'sciServices'
+              imageName: 'eximmanagement-service'
+              context: 'src/Services/sciServices/eximmanagementServices'
+              dockerfile: 'src/Services/sciServices/eximmanagementServices/Dockerfile'
+            sciServices__fillingoperation_service:
+              module: 'sciServices'
+              imageName: 'fillingoperation-service'
+              context: 'src/Services/sciServices/fillingoperationServices'
+              dockerfile: 'src/Services/sciServices/fillingoperationServices/Dockerfile'
+            sciServices__gstcompliance_service:
+              module: 'sciServices'
+              imageName: 'gstcompliance-service'
+              context: 'src/Services/sciServices/gstcomplianceServices'
+              dockerfile: 'src/Services/sciServices/gstcomplianceServices/Dockerfile'
+            sciServices__inventorymanagement_service:
+              module: 'sciServices'
+              imageName: 'inventorymanagement-service'
+              context: 'src/Services/sciServices/inventorymanagementServices'
+              dockerfile: 'src/Services/sciServices/inventorymanagementServices/Dockerfile'
+            sciServices__mamallocation_service:
+              module: 'sciServices'
+              imageName: 'mamallocation-service'
+              context: 'src/Services/sciServices/mamallocationServices'
+              dockerfile: 'src/Services/sciServices/mamallocationServices/Dockerfile'
+            sciServices__masterdata_service:
+              module: 'sciServices'
+              imageName: 'masterdata-service'
+              context: 'src/Services/sciServices/masterdataServices'
+              dockerfile: 'src/Services/sciServices/masterdataServices/Dockerfile'
+            sciServices__orderschedule_service:
+              module: 'sciServices'
+              imageName: 'orderschedule-service'
+              context: 'src/Services/sciServices/orderscheduleServices'
+              dockerfile: 'src/Services/sciServices/orderscheduleServices/Dockerfile'
+            sciServices__productionmanagement_service:
+              module: 'sciServices'
+              imageName: 'productionmanagement-service'
+              context: 'src/Services/sciServices/productionmanagementServices'
+              dockerfile: 'src/Services/sciServices/productionmanagementServices/Dockerfile'
+            sciServices__purchasesales_service:
+              module: 'sciServices'
+              imageName: 'purchasesales-service'
+              context: 'src/Services/sciServices/purchasesalesService'
+              dockerfile: 'src/Services/sciServices/purchasesalesService/Dockerfile'
+            sciServices__sci_transaction_service:
+              module: 'sciServices'
+              imageName: 'sci-transaction-service'
+              context: 'src/Services/sciServices/scitransactionalServices'
+              dockerfile: 'src/Services/sciServices/scitransactionalServices/Dockerfile'
+            sciServices__security_service:
+              module: 'sciServices'
+              imageName: 'security-service'
+              context: 'src/Services/sciServices/SecurityServices'
+              dockerfile: 'src/Services/sciServices/SecurityServices/Dockerfile'
+            sciServices__strategicstock_service:
+              module: 'sciServices'
+              imageName: 'strategicstock-service'
+              context: 'src/Services/sciServices/strategicstockServices'
+              dockerfile: 'src/Services/sciServices/strategicstockServices/Dockerfile'
+            sciServices__vechicletracking_service:
+              module: 'sciServices'
+              imageName: 'vechicletracking-service'
+              context: 'src/Services/sciServices/vechicletrackingServices'
+              dockerfile: 'src/Services/sciServices/vechicletrackingServices/Dockerfile'
+            sparshServices__api_gateway:
+              module: 'sparshServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/sparshServices/apigateway/SparshApiGateway'
+              dockerfile: 'src/Services/sparshServices/apigateway/SparshApiGateway/Dockerfile'
+            sparshServices__employeepridemanagement_service:
+              module: 'sparshServices'
+              imageName: 'employeepridemanagement-service'
+              context: 'src/Services/sparshServices/employeepridemanagementServices'
+              dockerfile: 'src/Services/sparshServices/employeepridemanagementServices/Dockerfile'
+            sparshServices__mobileappmanagement_service:
+              module: 'sparshServices'
+              imageName: 'mobileappmanagement-service'
+              context: 'src/Services/sparshServices/mobileappmanagementServices'
+              dockerfile: 'src/Services/sparshServices/mobileappmanagementServices/Dockerfile'
+            sparshServices__mobileexpense_service:
+              module: 'sparshServices'
+              imageName: 'mobileexpense-service'
+              context: 'src/Services/sparshServices/mobileexpenseServices'
+              dockerfile: 'src/Services/sparshServices/mobileexpenseServices/Dockerfile'
+            sparshServices__problemmanagement_service:
+              module: 'sparshServices'
+              imageName: 'problemmanagement-service'
+              context: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement'
+              dockerfile: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement/Dockerfile'
+            sparshServices__sparsh_transaction_service:
+              module: 'sparshServices'
+              imageName: 'sparsh-transaction-service'
+              context: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional'
+              dockerfile: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional/Dockerfile'
+            sscServices__api_gateway:
+              module: 'sscServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/sscServices/apigateway'
+              dockerfile: 'src/Services/sscServices/apigateway/Dockerfile'
+            sscServices__approvalgroup_service:
+              module: 'sscServices'
+              imageName: 'approvalgroup-service'
+              context: 'src/Services/sscServices/approvalgroupServices'
+              dockerfile: 'src/Services/sscServices/approvalgroupServices/Dockerfile'
+            sscServices__batchandenvelope_service:
+              module: 'sscServices'
+              imageName: 'batchandenvelope-service'
+              context: 'src/Services/sscServices/batchandenvelopeServices'
+              dockerfile: 'src/Services/sscServices/batchandenvelopeServices/Dockerfile'
+            sscServices__categoryandvendor_service:
+              module: 'sscServices'
+              imageName: 'categoryandvendor-service'
+              context: 'src/Services/sscServices/categoryandvendorServices'
+              dockerfile: 'src/Services/sscServices/categoryandvendorServices/Dockerfile'
+            sscServices__clubmembership_service:
+              module: 'sscServices'
+              imageName: 'clubmembership-service'
+              context: 'src/Services/sscServices/clubmembershipServices'
+              dockerfile: 'src/Services/sscServices/clubmembershipServices/Dockerfile'
+            sscServices__fillingandarchive_service:
+              module: 'sscServices'
+              imageName: 'fillingandarchive-service'
+              context: 'src/Services/sscServices/fillingandarchiveServices'
+              dockerfile: 'src/Services/sscServices/fillingandarchiveServices/Dockerfile'
+            sscServices__hrdocument_service:
+              module: 'sscServices'
+              imageName: 'hrdocument-service'
+              context: 'src/Services/sscServices/hrdocumentServices'
+              dockerfile: 'src/Services/sscServices/hrdocumentServices/Dockerfile'
+            sscServices__integration_service:
+              module: 'sscServices'
+              imageName: 'integration-service'
+              context: 'src/Services/sscServices/integrationServices/IntegrationService'
+              dockerfile: 'src/Services/sscServices/integrationServices/IntegrationService/Dockerfile'
+            sscServices__invoiceprocessing_service:
+              module: 'sscServices'
+              imageName: 'invoiceprocessing-service'
+              context: 'src/Services/sscServices/invoiceprocessingServices/InvoiceProcessing.Service'
+              dockerfile: 'src/Services/sscServices/invoiceprocessingServices/InvoiceProcessing.Service/Dockerfile'
+            sscServices__masterdata_service:
+              module: 'sscServices'
+              imageName: 'masterdata-service'
+              context: 'src/Services/sscServices/masterdataServices/MasterDataService'
+              dockerfile: 'src/Services/sscServices/masterdataServices/MasterDataService/Dockerfile'
+            sscServices__menuandsecurity_service:
+              module: 'sscServices'
+              imageName: 'menuandsecurity-service'
+              context: 'src/Services/sscServices/menuandsecurityServices'
+              dockerfile: 'src/Services/sscServices/menuandsecurityServices/Dockerfile'
+            sscServices__menu_service:
+              module: 'sscServices'
+              imageName: 'menu-service'
+              context: 'src/Services/sscServices/menuServices/01_USER_MODULE'
+              dockerfile: 'src/Services/sscServices/menuServices/01_USER_MODULE/Dockerfile'
+            sscServices__ssc_transaction_service:
+              module: 'sscServices'
+              imageName: 'ssc-transaction-service'
+              context: 'src/Services/sscServices/ssctransactionalServices'
+              dockerfile: 'src/Services/sscServices/ssctransactionalServices/Dockerfile'
+            taskServices__api_gateway:
+              module: 'taskServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/taskServices/apiGateway'
+              dockerfile: 'src/Services/taskServices/apiGateway/Dockerfile'
+            taskServices__complaint_service:
+              module: 'taskServices'
+              imageName: 'complaint-service'
+              context: 'src/Services/taskServices/complaintServices'
+              dockerfile: 'src/Services/taskServices/complaintServices/Dockerfile'
+            taskServices__energy_service:
+              module: 'taskServices'
+              imageName: 'energy-service'
+              context: 'src/Services/taskServices/energyServices'
+              dockerfile: 'src/Services/taskServices/energyServices/Dockerfile'
+            taskServices__lookup_service:
+              module: 'taskServices'
+              imageName: 'lookup-service'
+              context: 'src/Services/taskServices/lookupServices'
+              dockerfile: 'src/Services/taskServices/lookupServices/Dockerfile'
+            taskServices__task_service:
+              module: 'taskServices'
+              imageName: 'task-service'
+              context: 'src/Services/taskServices/taskServices'
+              dockerfile: 'src/Services/taskServices/taskServices/Dockerfile'
+            taskServices__task_transactional_service:
+              module: 'taskServices'
+              imageName: 'task-transactional-service'
+              context: 'src/Services/taskServices/taskTransactionalServices'
+              dockerfile: 'src/Services/taskServices/taskTransactionalServices/Dockerfile'
+            taskServices__unit_service:
+              module: 'taskServices'
+              imageName: 'unit-service'
+              context: 'src/Services/taskServices/unitServices'
+              dockerfile: 'src/Services/taskServices/unitServices/Dockerfile'
+            tourServices__api_gateway:
+              module: 'tourServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/tourServices/apiGateway'
+              dockerfile: 'src/Services/tourServices/apiGateway/Dockerfile'
+            tourServices__admin_service:
+              module: 'tourServices'
+              imageName: 'admin-service'
+              context: 'src/Services/tourServices/adminServices'
+              dockerfile: 'src/Services/tourServices/adminServices/Dockerfile'
+            tourServices__booking_service:
+              module: 'tourServices'
+              imageName: 'booking-service'
+              context: 'src/Services/tourServices/bookingServices/BookingService'
+              dockerfile: 'src/Services/tourServices/bookingServices/BookingService/Dockerfile'
+            tourServices__config_service:
+              module: 'tourServices'
+              imageName: 'config-service'
+              context: 'src/Services/tourServices/configServices'
+              dockerfile: 'src/Services/tourServices/configServices/Dockerfile'
+            tourServices__tourplan_service:
+              module: 'tourServices'
+              imageName: 'tourplan-service'
+              context: 'src/Services/tourServices/tourplanServices'
+              dockerfile: 'src/Services/tourServices/tourplanServices/Dockerfile'
+            tourServices__tour_service:
+              module: 'tourServices'
+              imageName: 'tour-service'
+              context: 'src/Services/tourServices/tourServices'
+              dockerfile: 'src/Services/tourServices/tourServices/Dockerfile'
+            tourServices__transaction_service:
+              module: 'tourServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/tourServices/transactionServices'
+              dockerfile: 'src/Services/tourServices/transactionServices/Dockerfile'
+            tourServices__travel_service:
+              module: 'tourServices'
+              imageName: 'travel-service'
+              context: 'src/Services/tourServices/travelServices'
+              dockerfile: 'src/Services/tourServices/travelServices/Dockerfile'
+            travelServices__api_gateway:
+              module: 'travelServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/travelServices/ApiGateway'
+              dockerfile: 'src/Services/travelServices/ApiGateway/Dockerfile'
+            travelServices__admin_service:
+              module: 'travelServices'
+              imageName: 'admin-service'
+              context: 'src/Services/travelServices/adminServices'
+              dockerfile: 'src/Services/travelServices/adminServices/Dockerfile'
+            travelServices__agens_service:
+              module: 'travelServices'
+              imageName: 'agens-service'
+              context: 'src/Services/travelServices/agensService'
+              dockerfile: 'src/Services/travelServices/agensService/Dockerfile'
+            travelServices__booking_service:
+              module: 'travelServices'
+              imageName: 'booking-service'
+              context: 'src/Services/travelServices/bookingServices'
+              dockerfile: 'src/Services/travelServices/bookingServices/Dockerfile'
+            travelServices__travelexpense_service:
+              module: 'travelServices'
+              imageName: 'travelexpense-service'
+              context: 'src/Services/travelServices/expenseServices'
+              dockerfile: 'src/Services/travelServices/expenseServices/Dockerfile'
+            travelServices__travelfinance_service:
+              module: 'travelServices'
+              imageName: 'travelfinance-service'
+              context: 'src/Services/travelServices/financeServices'
+              dockerfile: 'src/Services/travelServices/financeServices/Dockerfile'
+            travelServices__insurance_service:
+              module: 'travelServices'
+              imageName: 'insurance-service'
+              context: 'src/Services/travelServices/insuranceServices'
+              dockerfile: 'src/Services/travelServices/insuranceServices/Dockerfile'
+            travelServices__masterdata_service:
+              module: 'travelServices'
+              imageName: 'masterdata-service'
+              context: 'src/Services/travelServices/masterdataServices'
+              dockerfile: 'src/Services/travelServices/masterdataServices/Dockerfile'
+            travelServices__travelrequest_service:
+              module: 'travelServices'
+              imageName: 'travelrequest-service'
+              context: 'src/Services/travelServices/travelRequestServices'
+              dockerfile: 'src/Services/travelServices/travelRequestServices/Dockerfile'
+            travelServices__travel_transaction_service:
+              module: 'travelServices'
+              imageName: 'travel-transaction-service'
+              context: 'src/Services/travelServices/traveltransactionServices'
+              dockerfile: 'src/Services/travelServices/traveltransactionServices/Dockerfile'
+            wmsServices__api_gateway:
+              module: 'wmsServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/wmsServices/apiGateway'
+              dockerfile: 'src/Services/wmsServices/apiGateway/Dockerfile'
+            wmsServices__auditlog_service:
+              module: 'wmsServices'
+              imageName: 'auditlog-service'
+              context: 'src/Services/wmsServices/auditlogService/AuditLogService'
+              dockerfile: 'src/Services/wmsServices/auditlogService/AuditLogService/Dockerfile'
+            wmsServices__customer_service:
+              module: 'wmsServices'
+              imageName: 'customer-service'
+              context: 'src/Services/wmsServices/customerService'
+              dockerfile: 'src/Services/wmsServices/customerService/Dockerfile'
+            wmsServices__employee_service:
+              module: 'wmsServices'
+              imageName: 'employee-service'
+              context: 'src/Services/wmsServices/emplyeeService'
+              dockerfile: 'src/Services/wmsServices/emplyeeService/Dockerfile'
+            wmsServices__fleet_management_service:
+              module: 'wmsServices'
+              imageName: 'fleet-management-service'
+              context: 'src/Services/wmsServices/fleetManagementService'
+              dockerfile: 'src/Services/wmsServices/fleetManagementService/Dockerfile'
+            wmsServices__inventory_service:
+              module: 'wmsServices'
+              imageName: 'inventory-service'
+              context: 'src/Services/wmsServices/inventoryService'
+              dockerfile: 'src/Services/wmsServices/inventoryService/Dockerfile'
+            wmsServices__order_service:
+              module: 'wmsServices'
+              imageName: 'order-service'
+              context: 'src/Services/wmsServices/orderService'
+              dockerfile: 'src/Services/wmsServices/orderService/Dockerfile'
+            wmsServices__product_service:
+              module: 'wmsServices'
+              imageName: 'product-service'
+              context: 'src/Services/wmsServices/productService'
+              dockerfile: 'src/Services/wmsServices/productService/Dockerfile'
+            wmsServices__purchaseorder_service:
+              module: 'wmsServices'
+              imageName: 'purchaseorder-service'
+              context: 'src/Services/wmsServices/purchaseorderService'
+              dockerfile: 'src/Services/wmsServices/purchaseorderService/Dockerfile'
+            wmsServices__rackingsystem_service:
+              module: 'wmsServices'
+              imageName: 'rackingsystem-service'
+              context: 'src/Services/wmsServices/rackingsystemService'
+              dockerfile: 'src/Services/wmsServices/rackingsystemService/Dockerfile'
+            wmsServices__receiving_service:
+              module: 'wmsServices'
+              imageName: 'receiving-service'
+              context: 'src/Services/wmsServices/receivingService'
+              dockerfile: 'src/Services/wmsServices/receivingService/Dockerfile'
+            wmsServices__salesorder_service:
+              module: 'wmsServices'
+              imageName: 'salesorder-service'
+              context: 'src/Services/wmsServices/salesorderService'
+              dockerfile: 'src/Services/wmsServices/salesorderService/Dockerfile'
+            wmsServices__security_service:
+              module: 'wmsServices'
+              imageName: 'security-service'
+              context: 'src/Services/wmsServices/securityService'
+              dockerfile: 'src/Services/wmsServices/securityService/Dockerfile'
+            wmsServices__shipment_service:
+              module: 'wmsServices'
+              imageName: 'shipment-service'
+              context: 'src/Services/wmsServices/shipmentService'
+              dockerfile: 'src/Services/wmsServices/shipmentService/Dockerfile'
+            wmsServices__supplier_service:
+              module: 'wmsServices'
+              imageName: 'supplier-service'
+              context: 'src/Services/wmsServices/supplierService'
+              dockerfile: 'src/Services/wmsServices/supplierService/Dockerfile'
+            wmsServices__warehousestructure_service:
+              module: 'wmsServices'
+              imageName: 'warehousestructure-service'
+              context: 'src/Services/wmsServices/warehousestructureService'
+              dockerfile: 'src/Services/wmsServices/warehousestructureService/Dockerfile'
+            wmsServices__wmtransactional_service:
+              module: 'wmsServices'
+              imageName: 'wmtransactional-service'
+              context: 'src/Services/wmsServices/wmtransactionalService'
+              dockerfile: 'src/Services/wmsServices/wmtransactionalService/Dockerfile'
+
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$(GITHUB_TOKEN)" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - task: Docker@2
+            displayName: 'Push $(module)/$(imageName)'
+            condition: |
+              and(
+                or(eq('${{ parameters.module }}', 'all'), eq('${{ parameters.module }}', variables['module'])),
+                or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+              )
+            inputs:
+              command: push
+              repository: $(imagePrefix)/$(imageName)
+              tags: |
+                $(tag)
+                latest
+
+  # ── SMOKE TEST (optional) ──────────────────────────────────────────────────
+  - stage: SmokeTest
+    displayName: Smoke Test
+    dependsOn: Push
+    condition: and(succeeded(), eq('${{ parameters.smokeTest }}', true))
+    jobs:
+      - job: SmokeTestImages
+        displayName: Smoke test
+        strategy:
+          matrix:
+            adminServices__api_gateway:
+              module: 'adminServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/adminServices/ApiGateway'
+              dockerfile: 'src/Services/adminServices/ApiGateway/Dockerfile'
+            adminServices__finyear_api:
+              module: 'adminServices'
+              imageName: 'finyear-api'
+              context: 'src/Services/adminServices/finyearServices'
+              dockerfile: 'src/Services/adminServices/finyearServices/Docker/Dockerfile'
+            adminServices__location_services:
+              module: 'adminServices'
+              imageName: 'location-services'
+              context: 'src/Services/adminServices/locationServices'
+              dockerfile: 'src/Services/adminServices/locationServices/Docker/Dockerfile'
+            adminServices__lov_service:
+              module: 'adminServices'
+              imageName: 'lov-service'
+              context: 'src/Services/adminServices/lovServices'
+              dockerfile: 'src/Services/adminServices/lovServices/Docker/Dockerfile'
+            adminServices__scholarship_service:
+              module: 'adminServices'
+              imageName: 'scholarship-service'
+              context: 'src/Services/adminServices/scholarshipServices'
+              dockerfile: 'src/Services/adminServices/scholarshipServices/Docker/Dockerfile'
+            adminServices__stationery_service:
+              module: 'adminServices'
+              imageName: 'stationery-service'
+              context: 'src/Services/adminServices/stationeryServices'
+              dockerfile: 'src/Services/adminServices/stationeryServices/Docker/Dockerfile'
+            adminServices__tds_service:
+              module: 'adminServices'
+              imageName: 'tds-service'
+              context: 'src/Services/adminServices/tdsServices'
+              dockerfile: 'src/Services/adminServices/tdsServices/Docker/Dockerfile'
+            adminServices__vendor_service:
+              module: 'adminServices'
+              imageName: 'vendor-service'
+              context: 'src/Services/adminServices/vendorServices'
+              dockerfile: 'src/Services/adminServices/vendorServices/Docker/Dockerfile'
+            adminServices__transaction_service:
+              module: 'adminServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/adminServices/transactionServices'
+              dockerfile: 'src/Services/adminServices/transactionServices/Docker/Dockerfile'
+            aimsServices__api_gateway:
+              module: 'aimsServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/aimsServices/ApiGateway'
+              dockerfile: 'src/Services/aimsServices/ApiGateway/Dockerfile'
+            aimsServices__access_service:
+              module: 'aimsServices'
+              imageName: 'access-service'
+              context: 'src/Services/aimsServices/accessServices'
+              dockerfile: 'src/Services/aimsServices/accessServices/Dockerfile'
+            aimsServices__aims_transaction_service:
+              module: 'aimsServices'
+              imageName: 'aims-transaction-service'
+              context: 'src/Services/aimsServices/aimsTransactionServices'
+              dockerfile: 'src/Services/aimsServices/aimsTransactionServices/Dockerfile'
+            aimsServices__attendance_service:
+              module: 'aimsServices'
+              imageName: 'attendance-service'
+              context: 'src/Services/aimsServices/attendanceServices'
+              dockerfile: 'src/Services/aimsServices/attendanceServices/Dockerfile'
+            aimsServices__bus_services:
+              module: 'aimsServices'
+              imageName: 'bus-services'
+              context: 'src/Services/aimsServices/busServices'
+              dockerfile: 'src/Services/aimsServices/busServices/Dockerfile'
+            aimsServices__calendar_service:
+              module: 'aimsServices'
+              imageName: 'calendar-service'
+              context: 'src/Services/aimsServices/calendarServices'
+              dockerfile: 'src/Services/aimsServices/calendarServices/Dockerfile'
+            aimsServices__employee_service:
+              module: 'aimsServices'
+              imageName: 'employee-service'
+              context: 'src/Services/aimsServices/employeeServices'
+              dockerfile: 'src/Services/aimsServices/employeeServices/Dockerfile'
+            aimsServices__groupincentive_service:
+              module: 'aimsServices'
+              imageName: 'groupincentive-service'
+              context: 'src/Services/aimsServices/groupincentiveServices'
+              dockerfile: 'src/Services/aimsServices/groupincentiveServices/Dockerfile'
+            aimsServices__leave_services:
+              module: 'aimsServices'
+              imageName: 'leave-services'
+              context: 'src/Services/aimsServices/leaveServices'
+              dockerfile: 'src/Services/aimsServices/leaveServices/Dockerfile'
+            aimsServices__reference_service:
+              module: 'aimsServices'
+              imageName: 'reference-service'
+              context: 'src/Services/aimsServices/referenceServices'
+              dockerfile: 'src/Services/aimsServices/referenceServices/Dockerfile'
+            aimsServices__visitor_services:
+              module: 'aimsServices'
+              imageName: 'visitor-services'
+              context: 'src/Services/aimsServices/visitorServices'
+              dockerfile: 'src/Services/aimsServices/visitorServices/Dockerfile'
+            auditServices__api_gateway:
+              module: 'auditServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/auditServices/apigateway'
+              dockerfile: 'src/Services/auditServices/apigateway/Dockerfile'
+            auditServices__action_service:
+              module: 'auditServices'
+              imageName: 'action-service'
+              context: 'src/Services/auditServices/actionapiServices'
+              dockerfile: 'src/Services/auditServices/actionapiServices/Dockerfile'
+            auditServices__audit_service:
+              module: 'auditServices'
+              imageName: 'audit-service'
+              context: 'src/Services/auditServices/auditapiServices'
+              dockerfile: 'src/Services/auditServices/auditapiServices/Dockerfile'
+            auditServices__certificate_service:
+              module: 'auditServices'
+              imageName: 'certificate-service'
+              context: 'src/Services/auditServices/certificateapiServices'
+              dockerfile: 'src/Services/auditServices/certificateapiServices/Dockerfile'
+            auditServices__contract_service:
+              module: 'auditServices'
+              imageName: 'contract-service'
+              context: 'src/Services/auditServices/contractapiServices'
+              dockerfile: 'src/Services/auditServices/contractapiServices/Dockerfile'
+            auditServices__finance_service:
+              module: 'auditServices'
+              imageName: 'finance-service'
+              context: 'src/Services/auditServices/financeapiServices'
+              dockerfile: 'src/Services/auditServices/financeapiServices/Dockerfile'
+            auditServices__findings_service:
+              module: 'auditServices'
+              imageName: 'findings-service'
+              context: 'src/Services/auditServices/findingsapiServices'
+              dockerfile: 'src/Services/auditServices/findingsapiServices/Dockerfile'
+            auditServices__notification_service:
+              module: 'auditServices'
+              imageName: 'notification-service'
+              context: 'src/Services/auditServices/notificationapiServices'
+              dockerfile: 'src/Services/auditServices/notificationapiServices/Dockerfile'
+            auditServices__schedule_service:
+              module: 'auditServices'
+              imageName: 'schedule-service'
+              context: 'src/Services/auditServices/scheduleapiServices'
+              dockerfile: 'src/Services/auditServices/scheduleapiServices/Dockerfile'
+            auditServices__settings_service:
+              module: 'auditServices'
+              imageName: 'settings-service'
+              context: 'src/Services/auditServices/settingsapiServices'
+              dockerfile: 'src/Services/auditServices/settingsapiServices/Dockerfile'
+            AuthProvider__auth_provider:
+              module: 'AuthProvider'
+              imageName: 'auth-provider'
+              context: 'src/Services/AuthProvider'
+              dockerfile: 'src/Services/AuthProvider/Docker/Dockerfile'
+            canteenServices__api_gateway:
+              module: 'canteenServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/canteenServices/ApiGateway'
+              dockerfile: 'src/Services/canteenServices/ApiGateway/Dockerfile'
+            canteenServices__canteen_transaction_service:
+              module: 'canteenServices'
+              imageName: 'canteen-transaction-service'
+              context: 'src/Services/canteenServices/canteenTransactionServices'
+              dockerfile: 'src/Services/canteenServices/canteenTransactionServices/Docker/Dockerfile'
+            canteenServices__canteen_unit_service:
+              module: 'canteenServices'
+              imageName: 'canteen-unit-service'
+              context: 'src/Services/canteenServices/canteenunitServices'
+              dockerfile: 'src/Services/canteenServices/canteenunitServices/Docker/Dockerfile'
+            canteenServices__card_management_service:
+              module: 'canteenServices'
+              imageName: 'card-management-service'
+              context: 'src/Services/canteenServices/cardmanagementServices'
+              dockerfile: 'src/Services/canteenServices/cardmanagementServices/Docker/Dockerfile'
+            canteenServices__deduction_service:
+              module: 'canteenServices'
+              imageName: 'deduction-service'
+              context: 'src/Services/canteenServices/deductionServices'
+              dockerfile: 'src/Services/canteenServices/deductionServices/Docker/Dockerfile'
+            canteenServices__eligibility_service:
+              module: 'canteenServices'
+              imageName: 'eligibility-service'
+              context: 'src/Services/canteenServices/eligibilityServices'
+              dockerfile: 'src/Services/canteenServices/eligibilityServices/Docker/Dockerfile'
+            canteenServices__item_master_service:
+              module: 'canteenServices'
+              imageName: 'item-master-service'
+              context: 'src/Services/canteenServices/itemmasterServices'
+              dockerfile: 'src/Services/canteenServices/itemmasterServices/Docker/Dockerfile'
+            canteenServices__reference_data_service:
+              module: 'canteenServices'
+              imageName: 'reference-data-service'
+              context: 'src/Services/canteenServices/referencedataServices'
+              dockerfile: 'src/Services/canteenServices/referencedataServices/Docker/Dockerfile'
+            canteenServices__swipe_transaction_service:
+              module: 'canteenServices'
+              imageName: 'swipe-transaction-service'
+              context: 'src/Services/canteenServices/swipeTransactionServices'
+              dockerfile: 'src/Services/canteenServices/swipeTransactionServices/Docker/Dockerfile'
+            cashServices__api_gateway:
+              module: 'cashServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/cashServices/ApiGateway'
+              dockerfile: 'src/Services/cashServices/ApiGateway/Docker/Dockerfile'
+            cashServices__cash_management_service:
+              module: 'cashServices'
+              imageName: 'cash-management-service'
+              context: 'src/Services/cashServices/cashmanagementServices'
+              dockerfile: 'src/Services/cashServices/cashmanagementServices/Docker/Dockerfile'
+            cashServices__current_management_service:
+              module: 'cashServices'
+              imageName: 'current-management-service'
+              context: 'src/Services/cashServices/currentmanagementServices'
+              dockerfile: 'src/Services/cashServices/currentmanagementServices/Docker/Dockerfile'
+            cashServices__deal_ticketing_service:
+              module: 'cashServices'
+              imageName: 'deal-ticketing-service'
+              context: 'src/Services/cashServices/dealticketingServices'
+              dockerfile: 'src/Services/cashServices/dealticketingServices/Docker/Dockerfile'
+            cashServices__email_notification_service:
+              module: 'cashServices'
+              imageName: 'email-notification-service'
+              context: 'src/Services/cashServices/emailnotificationServices'
+              dockerfile: 'src/Services/cashServices/emailnotificationServices/Docker/Dockerfile'
+            cashServices__loan_management_service:
+              module: 'cashServices'
+              imageName: 'loan-management-service'
+              context: 'src/Services/cashServices/loanmanagementServices'
+              dockerfile: 'src/Services/cashServices/loanmanagementServices/Docker/Dockerfile'
+            cashServices__organization_setup_service:
+              module: 'cashServices'
+              imageName: 'organization-setup-service'
+              context: 'src/Services/cashServices/organizationsetupServices'
+              dockerfile: 'src/Services/cashServices/organizationsetupServices/Docker/Dockerfile'
+            cashServices__transaction_service:
+              module: 'cashServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/cashServices/transactionServices'
+              dockerfile: 'src/Services/cashServices/transactionServices/Docker/Dockerfile'
+            ddServices__api_gateway:
+              module: 'ddServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/ddServices/apiGateway'
+              dockerfile: 'src/Services/ddServices/apiGateway/Dockerfile'
+            ddServices__appraisal_service:
+              module: 'ddServices'
+              imageName: 'appraisal-service'
+              context: 'src/Services/ddServices/appraisalService'
+              dockerfile: 'src/Services/ddServices/appraisalService/Dockerfile'
+            ddServices__authorization_service:
+              module: 'ddServices'
+              imageName: 'authorization-service'
+              context: 'src/Services/ddServices/authorizationServices'
+              dockerfile: 'src/Services/ddServices/authorizationServices/Dockerfile'
+            ddServices__compensation_service:
+              module: 'ddServices'
+              imageName: 'compensation-service'
+              context: 'src/Services/ddServices/compensationServices'
+              dockerfile: 'src/Services/ddServices/compensationServices/Dockerfile'
+            ddServices__competency_service:
+              module: 'ddServices'
+              imageName: 'competency-service'
+              context: 'src/Services/ddServices/competencyServices'
+              dockerfile: 'src/Services/ddServices/competencyServices/Dockerfile'
+            ddServices__demand_management_service:
+              module: 'ddServices'
+              imageName: 'demand-management-service'
+              context: 'src/Services/ddServices/demandmanagementServices'
+              dockerfile: 'src/Services/ddServices/demandmanagementServices/Dockerfile'
+            ddServices__document_service:
+              module: 'ddServices'
+              imageName: 'document-service'
+              context: 'src/Services/ddServices/documentServices'
+              dockerfile: 'src/Services/ddServices/documentServices/Dockerfile'
+            ddServices__employee_service:
+              module: 'ddServices'
+              imageName: 'employee-service'
+              context: 'src/Services/ddServices/employeeServices'
+              dockerfile: 'src/Services/ddServices/employeeServices/Dockerfile'
+            ddServices__feedback_service:
+              module: 'ddServices'
+              imageName: 'feedback-service'
+              context: 'src/Services/ddServices/feedbackServices'
+              dockerfile: 'src/Services/ddServices/feedbackServices/Dockerfile'
+            ddServices__learning_service:
+              module: 'ddServices'
+              imageName: 'learning-service'
+              context: 'src/Services/ddServices/learningServices'
+              dockerfile: 'src/Services/ddServices/learningServices/Dockerfile'
+            ddServices__objective_service:
+              module: 'ddServices'
+              imageName: 'objective-service'
+              context: 'src/Services/ddServices/objectiveServices'
+              dockerfile: 'src/Services/ddServices/objectiveServices/Dockerfile'
+            ddServices__other_services:
+              module: 'ddServices'
+              imageName: 'other-services'
+              context: 'src/Services/ddServices/OtherServices'
+              dockerfile: 'src/Services/ddServices/OtherServices/Dockerfile'
+            ddServices__promotion_service:
+              module: 'ddServices'
+              imageName: 'promotion-service'
+              context: 'src/Services/ddServices/promotionServices'
+              dockerfile: 'src/Services/ddServices/promotionServices/Dockerfile'
+            ddServices__recruitment_service:
+              module: 'ddServices'
+              imageName: 'recruitment-service'
+              context: 'src/Services/ddServices/recruitmentServices'
+              dockerfile: 'src/Services/ddServices/recruitmentServices/Dockerfile'
+            ddServices__reporting_service:
+              module: 'ddServices'
+              imageName: 'reporting-service'
+              context: 'src/Services/ddServices/reportingServices'
+              dockerfile: 'src/Services/ddServices/reportingServices/Dockerfile'
+            ddServices__transaction_service:
+              module: 'ddServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/ddServices/transactionServices'
+              dockerfile: 'src/Services/ddServices/transactionServices/Dockerfile'
+            healthServices__api_gateway:
+              module: 'healthServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/healthServices/apiGateway/src'
+              dockerfile: 'src/Services/healthServices/apiGateway/src/Dockerfile'
+            healthServices__accident_management_service:
+              module: 'healthServices'
+              imageName: 'accident-management-service'
+              context: 'src/Services/healthServices/accidentmanagementServices/src'
+              dockerfile: 'src/Services/healthServices/accidentmanagementServices/src/Dockerfile'
+            healthServices__healthcheckup_service:
+              module: 'healthServices'
+              imageName: 'healthcheckup-service'
+              context: 'src/Services/healthServices/healthcheckupServices/src'
+              dockerfile: 'src/Services/healthServices/healthcheckupServices/src/Dockerfile'
+            healthServices__health_transaction_service:
+              module: 'healthServices'
+              imageName: 'health-transaction-service'
+              context: 'src/Services/healthServices/healthTransactionServices/src'
+              dockerfile: 'src/Services/healthServices/healthTransactionServices/src/Dockerfile'
+            healthServices__insurance_management_service:
+              module: 'healthServices'
+              imageName: 'insurance-management-service'
+              context: 'src/Services/healthServices/insurancemanagementServices/src'
+              dockerfile: 'src/Services/healthServices/insurancemanagementServices/src/Dockerfile'
+            healthServices__master_service:
+              module: 'healthServices'
+              imageName: 'master-service'
+              context: 'src/Services/healthServices/masterServices/src'
+              dockerfile: 'src/Services/healthServices/masterServices/src/Dockerfile'
+            healthServices__medicalvisit_service:
+              module: 'healthServices'
+              imageName: 'medicalvisit-service'
+              context: 'src/Services/healthServices/medicalvisitServices/src'
+              dockerfile: 'src/Services/healthServices/medicalvisitServices/src/Dockerfile'
+            healthServices__medicine_management_service:
+              module: 'healthServices'
+              imageName: 'medicine-management-service'
+              context: 'src/Services/healthServices/medicinemanagementServices/src'
+              dockerfile: 'src/Services/healthServices/medicinemanagementServices/src/Dockerfile'
+            hrServicess__api_gateway:
+              module: 'hrServicess'
+              imageName: 'api-gateway'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/ApiGateway.Dockerfile'
+            hrServicess__alerts_notifications_service:
+              module: 'hrServicess'
+              imageName: 'alerts-notifications-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/AlertsNotifications.Dockerfile'
+            hrServicess__compensation_benefits_service:
+              module: 'hrServicess'
+              imageName: 'compensation-benefits-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/CompensationBenefits.Dockerfile'
+            hrServicess__employee_management_service:
+              module: 'hrServicess'
+              imageName: 'employee-management-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/EmployeeManagement.Dockerfile'
+            hrServicess__employee_relations_service:
+              module: 'hrServicess'
+              imageName: 'employee-relations-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/EmployeeRelations.Dockerfile'
+            hrServicess__employee_transactions_service:
+              module: 'hrServicess'
+              imageName: 'employee-transactions-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/EmployeeTransactions.Dockerfile'
+            hrServicess__exit_management_service:
+              module: 'hrServicess'
+              imageName: 'exit-management-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/ExitManagement.Dockerfile'
+            hrServicess__organization_structure_service:
+              module: 'hrServicess'
+              imageName: 'organization-structure-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/OrganizationStructure.Dockerfile'
+            hrServicess__recruitment_service:
+              module: 'hrServicess'
+              imageName: 'recruitment-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/Recruitment.Dockerfile'
+            hrServicess__time_attendance_service:
+              module: 'hrServicess'
+              imageName: 'time-attendance-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/TimeAttendance.Dockerfile'
+            hrServicess__training_development_service:
+              module: 'hrServicess'
+              imageName: 'training-development-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/TrainingDevelopment.Dockerfile'
+            hrServicess__user_security_service:
+              module: 'hrServicess'
+              imageName: 'user-security-service'
+              context: 'src/Services/hrServicess'
+              dockerfile: 'src/Services/hrServicess/deployment/Dockerfiles/UserSecurity.Dockerfile'
+            letServices__api_gateway:
+              module: 'letServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/letServices/apiGateway'
+              dockerfile: 'src/Services/letServices/apiGateway/Dockerfile'
+            letServices__course_service:
+              module: 'letServices'
+              imageName: 'course-service'
+              context: 'src/Services/letServices/courseServices'
+              dockerfile: 'src/Services/letServices/courseServices/Dockerfile'
+            letServices__development_service:
+              module: 'letServices'
+              imageName: 'development-service'
+              context: 'src/Services/letServices/developmentServices'
+              dockerfile: 'src/Services/letServices/developmentServices/Dockerfile'
+            letServices__leave_service:
+              module: 'letServices'
+              imageName: 'leave-service'
+              context: 'src/Services/letServices/leaveServices'
+              dockerfile: 'src/Services/letServices/leaveServices/Dockerfile'
+            letServices__let_transaction_service:
+              module: 'letServices'
+              imageName: 'let-transaction-service'
+              context: 'src/Services/letServices/letTransactionServices'
+              dockerfile: 'src/Services/letServices/letTransactionServices/Dockerfile'
+            letServices__master_service:
+              module: 'letServices'
+              imageName: 'master-service'
+              context: 'src/Services/letServices/masterServices'
+              dockerfile: 'src/Services/letServices/masterServices/Dockerfile'
+            letServices__request_service:
+              module: 'letServices'
+              imageName: 'request-service'
+              context: 'src/Services/letServices/requestServices'
+              dockerfile: 'src/Services/letServices/requestServices/Dockerfile'
+            letServices__review_service:
+              module: 'letServices'
+              imageName: 'review-service'
+              context: 'src/Services/letServices/reviewServices'
+              dockerfile: 'src/Services/letServices/reviewServices/Dockerfile'
+            loanServices__api_gateway:
+              module: 'loanServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/loanServices/apiGateway'
+              dockerfile: 'src/Services/loanServices/apiGateway/Dockerfile'
+            loanServices__document_service:
+              module: 'loanServices'
+              imageName: 'document-service'
+              context: 'src/Services/loanServices/documentServices'
+              dockerfile: 'src/Services/loanServices/documentServices/Dockerfile'
+            loanServices__loanaccount_service:
+              module: 'loanServices'
+              imageName: 'loanaccount-service'
+              context: 'src/Services/loanServices/loanaccountServices'
+              dockerfile: 'src/Services/loanServices/loanaccountServices/Dockerfile'
+            loanServices__loanapplication_service:
+              module: 'loanServices'
+              imageName: 'loanapplication-service'
+              context: 'src/Services/loanServices/loanapplicationServices'
+              dockerfile: 'src/Services/loanServices/loanapplicationServices/Dockerfile'
+            loanServices__loandefinition_service:
+              module: 'loanServices'
+              imageName: 'loandefinition-service'
+              context: 'src/Services/loanServices/loandefinitionServices'
+              dockerfile: 'src/Services/loanServices/loandefinitionServices/Dockerfile'
+            loanServices__loan_transaction_service:
+              module: 'loanServices'
+              imageName: 'loan-transaction-service'
+              context: 'src/Services/loanServices/loanTransactionServices'
+              dockerfile: 'src/Services/loanServices/loanTransactionServices/Dockerfile'
+            loanServices__lov_service:
+              module: 'loanServices'
+              imageName: 'lov-service'
+              context: 'src/Services/loanServices/lovServices'
+              dockerfile: 'src/Services/loanServices/lovServices/Dockerfile'
+            loanServices__utility_service:
+              module: 'loanServices'
+              imageName: 'utility-service'
+              context: 'src/Services/loanServices/utilityServices'
+              dockerfile: 'src/Services/loanServices/utilityServices/Dockerfile'
+            mainsparshServices__api_gateway:
+              module: 'mainsparshServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/mainsparshServices/apiGateway'
+              dockerfile: 'src/Services/mainsparshServices/apiGateway/Dockerfile'
+            mainsparshServices__approval_service:
+              module: 'mainsparshServices'
+              imageName: 'approval-service'
+              context: 'src/Services/mainsparshServices/approvalServices'
+              dockerfile: 'src/Services/mainsparshServices/approvalServices/Dockerfile'
+            mainsparshServices__booking_service:
+              module: 'mainsparshServices'
+              imageName: 'booking-service'
+              context: 'src/Services/mainsparshServices/bookingServices'
+              dockerfile: 'src/Services/mainsparshServices/bookingServices/Dockerfile'
+            mainsparshServices__community_service:
+              module: 'mainsparshServices'
+              imageName: 'community-service'
+              context: 'src/Services/mainsparshServices/communityServices'
+              dockerfile: 'src/Services/mainsparshServices/communityServices/Dockerfile'
+            mainsparshServices__compensation_service:
+              module: 'mainsparshServices'
+              imageName: 'compensation-service'
+              context: 'src/Services/mainsparshServices/compensationServices'
+              dockerfile: 'src/Services/mainsparshServices/compensationServices/Dockerfile'
+            mainsparshServices__groupmanagement_service:
+              module: 'mainsparshServices'
+              imageName: 'groupmanagement-service'
+              context: 'src/Services/mainsparshServices/groupmanagementServices'
+              dockerfile: 'src/Services/mainsparshServices/groupmanagementServices/Dockerfile'
+            mainsparshServices__location_service:
+              module: 'mainsparshServices'
+              imageName: 'location-service'
+              context: 'src/Services/mainsparshServices/locationServices'
+              dockerfile: 'src/Services/mainsparshServices/locationServices/Dockerfile'
+            mainsparshServices__meeting_service:
+              module: 'mainsparshServices'
+              imageName: 'meeting-service'
+              context: 'src/Services/mainsparshServices/meetingServices'
+              dockerfile: 'src/Services/mainsparshServices/meetingServices/Dockerfile'
+            mainsparshServices__proxy_service:
+              module: 'mainsparshServices'
+              imageName: 'proxy-service'
+              context: 'src/Services/mainsparshServices/proxyServices'
+              dockerfile: 'src/Services/mainsparshServices/proxyServices/Dockerfile'
+            mainsparshServices__reimbursement_service:
+              module: 'mainsparshServices'
+              imageName: 'reimbursement-service'
+              context: 'src/Services/mainsparshServices/reimbursementServices'
+              dockerfile: 'src/Services/mainsparshServices/reimbursementServices/Dockerfile'
+            mainsparshServices__stipend_service:
+              module: 'mainsparshServices'
+              imageName: 'stipend-service'
+              context: 'src/Services/mainsparshServices/stipendservices'
+              dockerfile: 'src/Services/mainsparshServices/stipendservices/Dockerfile'
+            mainsparshServices__timesheet_service:
+              module: 'mainsparshServices'
+              imageName: 'timesheet-service'
+              context: 'src/Services/mainsparshServices/timesheetServices'
+              dockerfile: 'src/Services/mainsparshServices/timesheetServices/Dockerfile'
+            mainsparshServices__transaction_service:
+              module: 'mainsparshServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/mainsparshServices/transactionServices'
+              dockerfile: 'src/Services/mainsparshServices/transactionServices/Dockerfile'
+            mainsparshServices__usermanagement_service:
+              module: 'mainsparshServices'
+              imageName: 'usermanagement-service'
+              context: 'src/Services/mainsparshServices/usermanagementServices'
+              dockerfile: 'src/Services/mainsparshServices/usermanagementServices/Dockerfile'
+            mainsparshServices__websitecontent_service:
+              module: 'mainsparshServices'
+              imageName: 'websitecontent-service'
+              context: 'src/Services/mainsparshServices/websitecontentServices'
+              dockerfile: 'src/Services/mainsparshServices/websitecontentServices/Dockerfile'
+            myworkServices__api_gateway:
+              module: 'myworkServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/myworkServices/Gateway'
+              dockerfile: 'src/Services/myworkServices/Gateway/Dockerfile'
+            myworkServices__audit_service:
+              module: 'myworkServices'
+              imageName: 'audit-service'
+              context: 'src/Services/myworkServices/auditServices'
+              dockerfile: 'src/Services/myworkServices/auditServices/Dockerfile'
+            myworkServices__batch_service:
+              module: 'myworkServices'
+              imageName: 'batch-service'
+              context: 'src/Services/myworkServices/batchServices'
+              dockerfile: 'src/Services/myworkServices/batchServices/Dockerfile'
+            myworkServices__csa_service:
+              module: 'myworkServices'
+              imageName: 'csa-service'
+              context: 'src/Services/myworkServices/csaServices/CSA.Service'
+              dockerfile: 'src/Services/myworkServices/csaServices/CSA.Service/Dockerfile'
+            myworkServices__project_service:
+              module: 'myworkServices'
+              imageName: 'project-service'
+              context: 'src/Services/myworkServices/projectServices'
+              dockerfile: 'src/Services/myworkServices/projectServices/Dockerfile'
+            myworkServices__risk_service:
+              module: 'myworkServices'
+              imageName: 'risk-service'
+              context: 'src/Services/myworkServices/riskServices'
+              dockerfile: 'src/Services/myworkServices/riskServices/Dockerfile'
+            myworkServices__team_service:
+              module: 'myworkServices'
+              imageName: 'team-service'
+              context: 'src/Services/myworkServices/teamServices'
+              dockerfile: 'src/Services/myworkServices/teamServices/Dockerfile'
+            myworkServices__timesheet_service:
+              module: 'myworkServices'
+              imageName: 'timesheet-service'
+              context: 'src/Services/myworkServices/timeSheetServices'
+              dockerfile: 'src/Services/myworkServices/timeSheetServices/Dockerfile'
+            myworkServices__workorder_service:
+              module: 'myworkServices'
+              imageName: 'workorder-service'
+              context: 'src/Services/myworkServices/workorderServices/WorkOrderService'
+              dockerfile: 'src/Services/myworkServices/workorderServices/WorkOrderService/Dockerfile'
+            payServices__api_gateway:
+              module: 'payServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/payServices/apiGateway'
+              dockerfile: 'src/Services/payServices/apiGateway/Dockerfile'
+            payServices__employee_service:
+              module: 'payServices'
+              imageName: 'employee-service'
+              context: 'src/Services/payServices/employeeServices'
+              dockerfile: 'src/Services/payServices/employeeServices/Dockerfile'
+            payServices__faq_service:
+              module: 'payServices'
+              imageName: 'faq-service'
+              context: 'src/Services/payServices/faqServices'
+              dockerfile: 'src/Services/payServices/faqServices/Dockerfile'
+            payServices__hr_service:
+              module: 'payServices'
+              imageName: 'hr-service'
+              context: 'src/Services/payServices/hrServices'
+              dockerfile: 'src/Services/payServices/hrServices/Dockerfile'
+            payServices__payroll_service:
+              module: 'payServices'
+              imageName: 'payroll-service'
+              context: 'src/Services/payServices/payrollServices'
+              dockerfile: 'src/Services/payServices/payrollServices/Dockerfile'
+            payServices__pay_transaction_service:
+              module: 'payServices'
+              imageName: 'pay-transaction-service'
+              context: 'src/Services/payServices/payTransactionalServices'
+              dockerfile: 'src/Services/payServices/payTransactionalServices/Dockerfile'
+            payServices__tax_service:
+              module: 'payServices'
+              imageName: 'tax-service'
+              context: 'src/Services/payServices/taxServices'
+              dockerfile: 'src/Services/payServices/taxServices/Dockerfile'
+            pfServices__api_gateway:
+              module: 'pfServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/pfServices/apiGateway'
+              dockerfile: 'src/Services/pfServices/apiGateway/Dockerfile'
+            pfServices__accounting_service:
+              module: 'pfServices'
+              imageName: 'accounting-service'
+              context: 'src/Services/pfServices/accountingServices'
+              dockerfile: 'src/Services/pfServices/accountingServices/Dockerfile'
+            pfServices__bank_service:
+              module: 'pfServices'
+              imageName: 'bank-service'
+              context: 'src/Services/pfServices/bankServices/BankService'
+              dockerfile: 'src/Services/pfServices/bankServices/BankService/Dockerfile'
+            pfServices__contribution_service:
+              module: 'pfServices'
+              imageName: 'contribution-service'
+              context: 'src/Services/pfServices/contributionServices/ContributionService'
+              dockerfile: 'src/Services/pfServices/contributionServices/ContributionService/Dockerfile'
+            pfServices__investment_service:
+              module: 'pfServices'
+              imageName: 'investment-service'
+              context: 'src/Services/pfServices/investmentServices/InvestmentService'
+              dockerfile: 'src/Services/pfServices/investmentServices/InvestmentService/Dockerfile'
+            pfServices__loan_service:
+              module: 'pfServices'
+              imageName: 'loan-service'
+              context: 'src/Services/pfServices/loanServices'
+              dockerfile: 'src/Services/pfServices/loanServices/Dockerfile'
+            pfServices__masterdata_service:
+              module: 'pfServices'
+              imageName: 'masterdata-service'
+              context: 'src/Services/pfServices/masterdataServices/MasterDataService'
+              dockerfile: 'src/Services/pfServices/masterdataServices/MasterDataService/Dockerfile'
+            pfServices__member_service:
+              module: 'pfServices'
+              imageName: 'member-service'
+              context: 'src/Services/pfServices/memberServices'
+              dockerfile: 'src/Services/pfServices/memberServices/Dockerfile'
+            pfServices__pf_transaction_service:
+              module: 'pfServices'
+              imageName: 'pf-transaction-service'
+              context: 'src/Services/pfServices/pftransactionalServices'
+              dockerfile: 'src/Services/pfServices/pftransactionalServices/Dockerfile'
+            pfServices__settlement_service:
+              module: 'pfServices'
+              imageName: 'settlement-service'
+              context: 'src/Services/pfServices/settlementServices'
+              dockerfile: 'src/Services/pfServices/settlementServices/Dockerfile'
+            pfServices__trust_service:
+              module: 'pfServices'
+              imageName: 'trust-service'
+              context: 'src/Services/pfServices/trustServices/TrustService'
+              dockerfile: 'src/Services/pfServices/trustServices/TrustService/Dockerfile'
+            sciServices__api_gateway:
+              module: 'sciServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/sciServices/ApiGateway'
+              dockerfile: 'src/Services/sciServices/ApiGateway/Dockerfile'
+            sciServices__dispatchplanning_service:
+              module: 'sciServices'
+              imageName: 'dispatchplanning-service'
+              context: 'src/Services/sciServices/dispatchplanningServices'
+              dockerfile: 'src/Services/sciServices/dispatchplanningServices/Dockerfile'
+            sciServices__errorlogging_service:
+              module: 'sciServices'
+              imageName: 'errorlogging-service'
+              context: 'src/Services/sciServices/errorloggingServices'
+              dockerfile: 'src/Services/sciServices/errorloggingServices/Dockerfile'
+            sciServices__eximmanagement_service:
+              module: 'sciServices'
+              imageName: 'eximmanagement-service'
+              context: 'src/Services/sciServices/eximmanagementServices'
+              dockerfile: 'src/Services/sciServices/eximmanagementServices/Dockerfile'
+            sciServices__fillingoperation_service:
+              module: 'sciServices'
+              imageName: 'fillingoperation-service'
+              context: 'src/Services/sciServices/fillingoperationServices'
+              dockerfile: 'src/Services/sciServices/fillingoperationServices/Dockerfile'
+            sciServices__gstcompliance_service:
+              module: 'sciServices'
+              imageName: 'gstcompliance-service'
+              context: 'src/Services/sciServices/gstcomplianceServices'
+              dockerfile: 'src/Services/sciServices/gstcomplianceServices/Dockerfile'
+            sciServices__inventorymanagement_service:
+              module: 'sciServices'
+              imageName: 'inventorymanagement-service'
+              context: 'src/Services/sciServices/inventorymanagementServices'
+              dockerfile: 'src/Services/sciServices/inventorymanagementServices/Dockerfile'
+            sciServices__mamallocation_service:
+              module: 'sciServices'
+              imageName: 'mamallocation-service'
+              context: 'src/Services/sciServices/mamallocationServices'
+              dockerfile: 'src/Services/sciServices/mamallocationServices/Dockerfile'
+            sciServices__masterdata_service:
+              module: 'sciServices'
+              imageName: 'masterdata-service'
+              context: 'src/Services/sciServices/masterdataServices'
+              dockerfile: 'src/Services/sciServices/masterdataServices/Dockerfile'
+            sciServices__orderschedule_service:
+              module: 'sciServices'
+              imageName: 'orderschedule-service'
+              context: 'src/Services/sciServices/orderscheduleServices'
+              dockerfile: 'src/Services/sciServices/orderscheduleServices/Dockerfile'
+            sciServices__productionmanagement_service:
+              module: 'sciServices'
+              imageName: 'productionmanagement-service'
+              context: 'src/Services/sciServices/productionmanagementServices'
+              dockerfile: 'src/Services/sciServices/productionmanagementServices/Dockerfile'
+            sciServices__purchasesales_service:
+              module: 'sciServices'
+              imageName: 'purchasesales-service'
+              context: 'src/Services/sciServices/purchasesalesService'
+              dockerfile: 'src/Services/sciServices/purchasesalesService/Dockerfile'
+            sciServices__sci_transaction_service:
+              module: 'sciServices'
+              imageName: 'sci-transaction-service'
+              context: 'src/Services/sciServices/scitransactionalServices'
+              dockerfile: 'src/Services/sciServices/scitransactionalServices/Dockerfile'
+            sciServices__security_service:
+              module: 'sciServices'
+              imageName: 'security-service'
+              context: 'src/Services/sciServices/SecurityServices'
+              dockerfile: 'src/Services/sciServices/SecurityServices/Dockerfile'
+            sciServices__strategicstock_service:
+              module: 'sciServices'
+              imageName: 'strategicstock-service'
+              context: 'src/Services/sciServices/strategicstockServices'
+              dockerfile: 'src/Services/sciServices/strategicstockServices/Dockerfile'
+            sciServices__vechicletracking_service:
+              module: 'sciServices'
+              imageName: 'vechicletracking-service'
+              context: 'src/Services/sciServices/vechicletrackingServices'
+              dockerfile: 'src/Services/sciServices/vechicletrackingServices/Dockerfile'
+            sparshServices__api_gateway:
+              module: 'sparshServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/sparshServices/apigateway/SparshApiGateway'
+              dockerfile: 'src/Services/sparshServices/apigateway/SparshApiGateway/Dockerfile'
+            sparshServices__employeepridemanagement_service:
+              module: 'sparshServices'
+              imageName: 'employeepridemanagement-service'
+              context: 'src/Services/sparshServices/employeepridemanagementServices'
+              dockerfile: 'src/Services/sparshServices/employeepridemanagementServices/Dockerfile'
+            sparshServices__mobileappmanagement_service:
+              module: 'sparshServices'
+              imageName: 'mobileappmanagement-service'
+              context: 'src/Services/sparshServices/mobileappmanagementServices'
+              dockerfile: 'src/Services/sparshServices/mobileappmanagementServices/Dockerfile'
+            sparshServices__mobileexpense_service:
+              module: 'sparshServices'
+              imageName: 'mobileexpense-service'
+              context: 'src/Services/sparshServices/mobileexpenseServices'
+              dockerfile: 'src/Services/sparshServices/mobileexpenseServices/Dockerfile'
+            sparshServices__problemmanagement_service:
+              module: 'sparshServices'
+              imageName: 'problemmanagement-service'
+              context: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement'
+              dockerfile: 'src/Services/sparshServices/problemmanagementServices/ProblemManagement/Dockerfile'
+            sparshServices__sparsh_transaction_service:
+              module: 'sparshServices'
+              imageName: 'sparsh-transaction-service'
+              context: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional'
+              dockerfile: 'src/Services/sparshServices/sparshtransactionalServices/SparshTransactional/Dockerfile'
+            sscServices__api_gateway:
+              module: 'sscServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/sscServices/apigateway'
+              dockerfile: 'src/Services/sscServices/apigateway/Dockerfile'
+            sscServices__approvalgroup_service:
+              module: 'sscServices'
+              imageName: 'approvalgroup-service'
+              context: 'src/Services/sscServices/approvalgroupServices'
+              dockerfile: 'src/Services/sscServices/approvalgroupServices/Dockerfile'
+            sscServices__batchandenvelope_service:
+              module: 'sscServices'
+              imageName: 'batchandenvelope-service'
+              context: 'src/Services/sscServices/batchandenvelopeServices'
+              dockerfile: 'src/Services/sscServices/batchandenvelopeServices/Dockerfile'
+            sscServices__categoryandvendor_service:
+              module: 'sscServices'
+              imageName: 'categoryandvendor-service'
+              context: 'src/Services/sscServices/categoryandvendorServices'
+              dockerfile: 'src/Services/sscServices/categoryandvendorServices/Dockerfile'
+            sscServices__clubmembership_service:
+              module: 'sscServices'
+              imageName: 'clubmembership-service'
+              context: 'src/Services/sscServices/clubmembershipServices'
+              dockerfile: 'src/Services/sscServices/clubmembershipServices/Dockerfile'
+            sscServices__fillingandarchive_service:
+              module: 'sscServices'
+              imageName: 'fillingandarchive-service'
+              context: 'src/Services/sscServices/fillingandarchiveServices'
+              dockerfile: 'src/Services/sscServices/fillingandarchiveServices/Dockerfile'
+            sscServices__hrdocument_service:
+              module: 'sscServices'
+              imageName: 'hrdocument-service'
+              context: 'src/Services/sscServices/hrdocumentServices'
+              dockerfile: 'src/Services/sscServices/hrdocumentServices/Dockerfile'
+            sscServices__integration_service:
+              module: 'sscServices'
+              imageName: 'integration-service'
+              context: 'src/Services/sscServices/integrationServices/IntegrationService'
+              dockerfile: 'src/Services/sscServices/integrationServices/IntegrationService/Dockerfile'
+            sscServices__invoiceprocessing_service:
+              module: 'sscServices'
+              imageName: 'invoiceprocessing-service'
+              context: 'src/Services/sscServices/invoiceprocessingServices/InvoiceProcessing.Service'
+              dockerfile: 'src/Services/sscServices/invoiceprocessingServices/InvoiceProcessing.Service/Dockerfile'
+            sscServices__masterdata_service:
+              module: 'sscServices'
+              imageName: 'masterdata-service'
+              context: 'src/Services/sscServices/masterdataServices/MasterDataService'
+              dockerfile: 'src/Services/sscServices/masterdataServices/MasterDataService/Dockerfile'
+            sscServices__menuandsecurity_service:
+              module: 'sscServices'
+              imageName: 'menuandsecurity-service'
+              context: 'src/Services/sscServices/menuandsecurityServices'
+              dockerfile: 'src/Services/sscServices/menuandsecurityServices/Dockerfile'
+            sscServices__menu_service:
+              module: 'sscServices'
+              imageName: 'menu-service'
+              context: 'src/Services/sscServices/menuServices/01_USER_MODULE'
+              dockerfile: 'src/Services/sscServices/menuServices/01_USER_MODULE/Dockerfile'
+            sscServices__ssc_transaction_service:
+              module: 'sscServices'
+              imageName: 'ssc-transaction-service'
+              context: 'src/Services/sscServices/ssctransactionalServices'
+              dockerfile: 'src/Services/sscServices/ssctransactionalServices/Dockerfile'
+            taskServices__api_gateway:
+              module: 'taskServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/taskServices/apiGateway'
+              dockerfile: 'src/Services/taskServices/apiGateway/Dockerfile'
+            taskServices__complaint_service:
+              module: 'taskServices'
+              imageName: 'complaint-service'
+              context: 'src/Services/taskServices/complaintServices'
+              dockerfile: 'src/Services/taskServices/complaintServices/Dockerfile'
+            taskServices__energy_service:
+              module: 'taskServices'
+              imageName: 'energy-service'
+              context: 'src/Services/taskServices/energyServices'
+              dockerfile: 'src/Services/taskServices/energyServices/Dockerfile'
+            taskServices__lookup_service:
+              module: 'taskServices'
+              imageName: 'lookup-service'
+              context: 'src/Services/taskServices/lookupServices'
+              dockerfile: 'src/Services/taskServices/lookupServices/Dockerfile'
+            taskServices__task_service:
+              module: 'taskServices'
+              imageName: 'task-service'
+              context: 'src/Services/taskServices/taskServices'
+              dockerfile: 'src/Services/taskServices/taskServices/Dockerfile'
+            taskServices__task_transactional_service:
+              module: 'taskServices'
+              imageName: 'task-transactional-service'
+              context: 'src/Services/taskServices/taskTransactionalServices'
+              dockerfile: 'src/Services/taskServices/taskTransactionalServices/Dockerfile'
+            taskServices__unit_service:
+              module: 'taskServices'
+              imageName: 'unit-service'
+              context: 'src/Services/taskServices/unitServices'
+              dockerfile: 'src/Services/taskServices/unitServices/Dockerfile'
+            tourServices__api_gateway:
+              module: 'tourServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/tourServices/apiGateway'
+              dockerfile: 'src/Services/tourServices/apiGateway/Dockerfile'
+            tourServices__admin_service:
+              module: 'tourServices'
+              imageName: 'admin-service'
+              context: 'src/Services/tourServices/adminServices'
+              dockerfile: 'src/Services/tourServices/adminServices/Dockerfile'
+            tourServices__booking_service:
+              module: 'tourServices'
+              imageName: 'booking-service'
+              context: 'src/Services/tourServices/bookingServices/BookingService'
+              dockerfile: 'src/Services/tourServices/bookingServices/BookingService/Dockerfile'
+            tourServices__config_service:
+              module: 'tourServices'
+              imageName: 'config-service'
+              context: 'src/Services/tourServices/configServices'
+              dockerfile: 'src/Services/tourServices/configServices/Dockerfile'
+            tourServices__tourplan_service:
+              module: 'tourServices'
+              imageName: 'tourplan-service'
+              context: 'src/Services/tourServices/tourplanServices'
+              dockerfile: 'src/Services/tourServices/tourplanServices/Dockerfile'
+            tourServices__tour_service:
+              module: 'tourServices'
+              imageName: 'tour-service'
+              context: 'src/Services/tourServices/tourServices'
+              dockerfile: 'src/Services/tourServices/tourServices/Dockerfile'
+            tourServices__transaction_service:
+              module: 'tourServices'
+              imageName: 'transaction-service'
+              context: 'src/Services/tourServices/transactionServices'
+              dockerfile: 'src/Services/tourServices/transactionServices/Dockerfile'
+            tourServices__travel_service:
+              module: 'tourServices'
+              imageName: 'travel-service'
+              context: 'src/Services/tourServices/travelServices'
+              dockerfile: 'src/Services/tourServices/travelServices/Dockerfile'
+            travelServices__api_gateway:
+              module: 'travelServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/travelServices/ApiGateway'
+              dockerfile: 'src/Services/travelServices/ApiGateway/Dockerfile'
+            travelServices__admin_service:
+              module: 'travelServices'
+              imageName: 'admin-service'
+              context: 'src/Services/travelServices/adminServices'
+              dockerfile: 'src/Services/travelServices/adminServices/Dockerfile'
+            travelServices__agens_service:
+              module: 'travelServices'
+              imageName: 'agens-service'
+              context: 'src/Services/travelServices/agensService'
+              dockerfile: 'src/Services/travelServices/agensService/Dockerfile'
+            travelServices__booking_service:
+              module: 'travelServices'
+              imageName: 'booking-service'
+              context: 'src/Services/travelServices/bookingServices'
+              dockerfile: 'src/Services/travelServices/bookingServices/Dockerfile'
+            travelServices__travelexpense_service:
+              module: 'travelServices'
+              imageName: 'travelexpense-service'
+              context: 'src/Services/travelServices/expenseServices'
+              dockerfile: 'src/Services/travelServices/expenseServices/Dockerfile'
+            travelServices__travelfinance_service:
+              module: 'travelServices'
+              imageName: 'travelfinance-service'
+              context: 'src/Services/travelServices/financeServices'
+              dockerfile: 'src/Services/travelServices/financeServices/Dockerfile'
+            travelServices__insurance_service:
+              module: 'travelServices'
+              imageName: 'insurance-service'
+              context: 'src/Services/travelServices/insuranceServices'
+              dockerfile: 'src/Services/travelServices/insuranceServices/Dockerfile'
+            travelServices__masterdata_service:
+              module: 'travelServices'
+              imageName: 'masterdata-service'
+              context: 'src/Services/travelServices/masterdataServices'
+              dockerfile: 'src/Services/travelServices/masterdataServices/Dockerfile'
+            travelServices__travelrequest_service:
+              module: 'travelServices'
+              imageName: 'travelrequest-service'
+              context: 'src/Services/travelServices/travelRequestServices'
+              dockerfile: 'src/Services/travelServices/travelRequestServices/Dockerfile'
+            travelServices__travel_transaction_service:
+              module: 'travelServices'
+              imageName: 'travel-transaction-service'
+              context: 'src/Services/travelServices/traveltransactionServices'
+              dockerfile: 'src/Services/travelServices/traveltransactionServices/Dockerfile'
+            wmsServices__api_gateway:
+              module: 'wmsServices'
+              imageName: 'api-gateway'
+              context: 'src/Services/wmsServices/apiGateway'
+              dockerfile: 'src/Services/wmsServices/apiGateway/Dockerfile'
+            wmsServices__auditlog_service:
+              module: 'wmsServices'
+              imageName: 'auditlog-service'
+              context: 'src/Services/wmsServices/auditlogService/AuditLogService'
+              dockerfile: 'src/Services/wmsServices/auditlogService/AuditLogService/Dockerfile'
+            wmsServices__customer_service:
+              module: 'wmsServices'
+              imageName: 'customer-service'
+              context: 'src/Services/wmsServices/customerService'
+              dockerfile: 'src/Services/wmsServices/customerService/Dockerfile'
+            wmsServices__employee_service:
+              module: 'wmsServices'
+              imageName: 'employee-service'
+              context: 'src/Services/wmsServices/emplyeeService'
+              dockerfile: 'src/Services/wmsServices/emplyeeService/Dockerfile'
+            wmsServices__fleet_management_service:
+              module: 'wmsServices'
+              imageName: 'fleet-management-service'
+              context: 'src/Services/wmsServices/fleetManagementService'
+              dockerfile: 'src/Services/wmsServices/fleetManagementService/Dockerfile'
+            wmsServices__inventory_service:
+              module: 'wmsServices'
+              imageName: 'inventory-service'
+              context: 'src/Services/wmsServices/inventoryService'
+              dockerfile: 'src/Services/wmsServices/inventoryService/Dockerfile'
+            wmsServices__order_service:
+              module: 'wmsServices'
+              imageName: 'order-service'
+              context: 'src/Services/wmsServices/orderService'
+              dockerfile: 'src/Services/wmsServices/orderService/Dockerfile'
+            wmsServices__product_service:
+              module: 'wmsServices'
+              imageName: 'product-service'
+              context: 'src/Services/wmsServices/productService'
+              dockerfile: 'src/Services/wmsServices/productService/Dockerfile'
+            wmsServices__purchaseorder_service:
+              module: 'wmsServices'
+              imageName: 'purchaseorder-service'
+              context: 'src/Services/wmsServices/purchaseorderService'
+              dockerfile: 'src/Services/wmsServices/purchaseorderService/Dockerfile'
+            wmsServices__rackingsystem_service:
+              module: 'wmsServices'
+              imageName: 'rackingsystem-service'
+              context: 'src/Services/wmsServices/rackingsystemService'
+              dockerfile: 'src/Services/wmsServices/rackingsystemService/Dockerfile'
+            wmsServices__receiving_service:
+              module: 'wmsServices'
+              imageName: 'receiving-service'
+              context: 'src/Services/wmsServices/receivingService'
+              dockerfile: 'src/Services/wmsServices/receivingService/Dockerfile'
+            wmsServices__salesorder_service:
+              module: 'wmsServices'
+              imageName: 'salesorder-service'
+              context: 'src/Services/wmsServices/salesorderService'
+              dockerfile: 'src/Services/wmsServices/salesorderService/Dockerfile'
+            wmsServices__security_service:
+              module: 'wmsServices'
+              imageName: 'security-service'
+              context: 'src/Services/wmsServices/securityService'
+              dockerfile: 'src/Services/wmsServices/securityService/Dockerfile'
+            wmsServices__shipment_service:
+              module: 'wmsServices'
+              imageName: 'shipment-service'
+              context: 'src/Services/wmsServices/shipmentService'
+              dockerfile: 'src/Services/wmsServices/shipmentService/Dockerfile'
+            wmsServices__supplier_service:
+              module: 'wmsServices'
+              imageName: 'supplier-service'
+              context: 'src/Services/wmsServices/supplierService'
+              dockerfile: 'src/Services/wmsServices/supplierService/Dockerfile'
+            wmsServices__warehousestructure_service:
+              module: 'wmsServices'
+              imageName: 'warehousestructure-service'
+              context: 'src/Services/wmsServices/warehousestructureService'
+              dockerfile: 'src/Services/wmsServices/warehousestructureService/Dockerfile'
+            wmsServices__wmtransactional_service:
+              module: 'wmsServices'
+              imageName: 'wmtransactional-service'
+              context: 'src/Services/wmsServices/wmtransactionalService'
+              dockerfile: 'src/Services/wmsServices/wmtransactionalService/Dockerfile'
+
+        steps:
+          - script: |
+              IMAGE="$(imagePrefix)/$(imageName):latest"
+              echo "Pulling $IMAGE ..."
+              docker pull "$IMAGE"
+              CNAME="smoke-$(imageName)-$(Build.BuildId)"
+              docker run -d --name "$CNAME" \
+                -e ASPNETCORE_ENVIRONMENT=Development \
+                "$IMAGE"
+              sleep 10
+              docker logs "$CNAME"
+              docker rm -f "$CNAME"
+            displayName: 'Smoke test $(module)/$(imageName)'
+            condition: |
+              and(
+                or(eq('${{ parameters.module }}', 'all'), eq('${{ parameters.module }}', variables['module'])),
+                or(eq('${{ parameters.service }}', 'all'), eq('${{ parameters.service }}', variables['imageName']))
+              )
