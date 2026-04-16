@@ -423,20 +423,41 @@ jobs:
             echo "HEALTH: No health endpoint found"
           fi
 
-      # ── Swagger check ──────────────────────────────────────────────────────
+      # ── Swagger check + save swagger.json as artifact ──────────────────────
+      # NOTE: localhost:<port> is only accessible inside the runner VM.
+      # To view swagger from your browser, download the artifact and open
+      # it at https://editor.swagger.io (File > Import file).
       - name: Swagger check
         id: swagger
         if: steps.pull.outputs.pulled == 'true'
         run: |
           PORT=${{ matrix.port }}
-          URL="http://localhost:${PORT}/swagger/index.html"
-          if wget -qO- --timeout=10 "$URL" 2>/dev/null | grep -qi "swagger"; then
+          UI_URL="http://localhost:${PORT}/swagger/index.html"
+          JSON_URL="http://localhost:${PORT}/swagger/v1/swagger.json"
+          mkdir -p swagger-artifacts
+          if wget -qO- --timeout=10 "$UI_URL" 2>/dev/null | grep -qi "swagger"; then
             echo "status=available" >> "$GITHUB_OUTPUT"
-            echo "SWAGGER: Available at $URL"
+            echo "SWAGGER: Available at $UI_URL"
+            if wget -qO "swagger-artifacts/${{ matrix.name }}.json" --timeout=15 "$JSON_URL" 2>/dev/null; then
+              echo "json=downloaded" >> "$GITHUB_OUTPUT"
+              echo "swagger.json saved"
+            else
+              echo "json=unavailable" >> "$GITHUB_OUTPUT"
+            fi
           else
             echo "status=unavailable" >> "$GITHUB_OUTPUT"
-            echo "SWAGGER: Not available at $URL"
+            echo "json=unavailable" >> "$GITHUB_OUTPUT"
+            echo "SWAGGER: Not available"
           fi
+
+      # ── Upload swagger.json as downloadable artifact ───────────────────────
+      - name: Upload swagger.json artifact
+        if: steps.swagger.outputs.json == 'downloaded'
+        uses: actions/upload-artifact@v4
+        with:
+          name: swagger-${{ matrix.module }}-${{ matrix.name }}
+          path: swagger-artifacts/${{ matrix.name }}.json
+          retention-days: 7
 
       # ── Container logs ─────────────────────────────────────────────────────
       - name: Print container logs
@@ -476,10 +497,15 @@ jobs:
               echo "| Health | — not checked |"
             fi
             if [[ "$SWAGGER" == "available" ]]; then
-              echo "| Swagger | ✅ [Open](http://localhost:${PORT}/swagger/index.html) |"
+              echo "| Swagger | ✅ swagger.json saved as artifact |"
+              echo "| View Swagger | Download artifact \`swagger-${{ matrix.module }}-${{ matrix.name }}\` → open [editor.swagger.io](https://editor.swagger.io) → File → Import file |"
             else
               echo "| Swagger | ⚠️ Not available |"
             fi
+            echo ""
+            echo "> ⚠️ **Why can't I open localhost?** GitHub Actions runners are cloud VMs — ports are not exposed to your local browser."
+            echo "> **To browse Swagger:** download the artifact above, then drag the JSON into [editor.swagger.io](https://editor.swagger.io)."
+            echo "> **To run locally:** \`\`\`docker pull ${IMAGE} && docker run -d -p ${PORT}:${PORT} -e ASPNETCORE_ENVIRONMENT=Development ${IMAGE}\`\`\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
       # ── Cleanup ────────────────────────────────────────────────────────────
