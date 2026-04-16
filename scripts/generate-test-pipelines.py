@@ -70,6 +70,7 @@ parameters:
 
 variables:
   imagePrefix: 'ghcr.io/vimalshan/erp'
+  GITHUB_ACTOR: 'vimalshan'
 
 pool:
   vmImage: ubuntu-latest
@@ -112,20 +113,30 @@ stages:
         steps:
           - checkout: none
 
-          - script: |
-              if [ -z "$GITHUB_TOKEN" ]; then
-                echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable (GitHub PAT with write:packages scope)."
+          - bash: |
+              set -euo pipefail
+              if [ -z "${{GITHUB_TOKEN:-}}" ]; then
+                echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable."
+                echo "##[error]Go to: Pipeline → Edit → Variables → New variable"
+                echo "##[error]  Name: GITHUB_TOKEN"
+                echo "##[error]  Value: <your GitHub PAT with write:packages scope>"
+                echo "##[error]  Check 'Keep this value secret'"
                 exit 1
               fi
-              if [ -z "$GITHUB_ACTOR" ]; then
-                echo "##[error]GITHUB_ACTOR is not set. Add it as a pipeline variable (your GitHub username)."
+              TOKEN_LEN=${{#GITHUB_TOKEN}}
+              echo "Token length: $TOKEN_LEN chars"
+              if [ "$TOKEN_LEN" -lt 36 ]; then
+                echo "##[error]GITHUB_TOKEN looks invalid ($TOKEN_LEN chars). A GitHub PAT is 40+ chars."
+                echo "##[error]Please regenerate: GitHub → Settings → Developer settings → Personal access tokens"
+                echo "##[error]Required scopes: write:packages, read:packages"
                 exit 1
               fi
-              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+              echo "Logging in as: $(GITHUB_ACTOR)"
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
+              echo "GHCR login succeeded."
             displayName: Login to GHCR
             env:
               GITHUB_TOKEN: $(GITHUB_TOKEN)
-              GITHUB_ACTOR: $(GITHUB_ACTOR)
 
           - script: |
               set -e
@@ -151,20 +162,21 @@ stages:
         steps:
           - checkout: none
 
-          - script: |
-              if [ -z "$GITHUB_TOKEN" ]; then
-                echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable (GitHub PAT with write:packages scope)."
+          - bash: |
+              set -euo pipefail
+              if [ -z "${{GITHUB_TOKEN:-}}" ]; then
+                echo "##[error]GITHUB_TOKEN is not set."
                 exit 1
               fi
-              if [ -z "$GITHUB_ACTOR" ]; then
-                echo "##[error]GITHUB_ACTOR is not set. Add it as a pipeline variable (your GitHub username)."
+              TOKEN_LEN=${{#GITHUB_TOKEN}}
+              if [ "$TOKEN_LEN" -lt 36 ]; then
+                echo "##[error]GITHUB_TOKEN looks invalid ($TOKEN_LEN chars). A GitHub PAT is 40+ chars."
                 exit 1
               fi
-              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
             displayName: Login to GHCR
             env:
               GITHUB_TOKEN: $(GITHUB_TOKEN)
-              GITHUB_ACTOR: $(GITHUB_ACTOR)
 
           - script: |
               set -e
