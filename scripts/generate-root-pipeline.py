@@ -491,7 +491,7 @@ stages:
           - checkout: none
 
           - script: |
-              echo "$(GITHUB_TOKEN)" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             displayName: Login to GHCR
             env:
               GITHUB_TOKEN: $(GITHUB_TOKEN)
