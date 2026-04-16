@@ -1,6 +1,7 @@
 // Program.cs
 using FindingsAPI.Gateway;
 using FindingsAPI.Gateway.Data;
+using FindingsAPI.Gateway.Extensions;
 using FindingsAPI.Gateway.GraphQL;
 using FindingsAPI.Gateway.GraphQL.Middleware;
 using FindingsAPI.Gateway.GraphQL.Queries;
@@ -50,8 +51,10 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // GraphQL Server
 builder.Services
     .AddGraphQLServer()
+    .AddMutationConventions(applyToAllMutations: true)
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
+    .AddTypeExtension<FindingsDomainMutation>()
     // .AddSubscriptionType<Subscription>()
     .AddType<FindingType>()
     .AddType<CompanyType>()
@@ -59,7 +62,7 @@ builder.Services
     .AddFiltering()
     .AddSorting()
     .AddProjections()
-    // .AddAuthorization()
+    .AddAuthorization()
     .AddHttpRequestInterceptor<GraphQLHttpRequestInterceptor>()
     // .AddSocketSessionInterceptor<GraphQLSocketSessionInterceptor>()
     .AddDiagnosticEventListener<GraphQLExecutionLogger>()
@@ -105,6 +108,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.MapInboundClaims = false;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -175,17 +179,17 @@ builder.Services.AddCors(options =>
 //     // .AddRedis(builder.Configuration.GetConnectionString("Redis"))
 //     // .AddApplicationInsightsPublisher();
 
-// Redis for caching and distributed rate limiting
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = builder.Configuration.GetConnectionString("Redis");
-    options.InstanceName = "FindingsGateway:";
-});
+// Redis for caching and distributed rate limiting (disabled locally — uses in-memory fallback)
+// builder.Services.AddStackExchangeRedisCache(options =>
+// {
+//     options.Configuration = builder.Configuration.GetConnectionString("Redis");
+//     options.InstanceName = "FindingsGateway:";
+// });
 
 // Memory Cache for local caching
 builder.Services.AddMemoryCache();
 
-// Distributed Cache for data loaders
+// Distributed Cache (in-memory for local dev; swap to Redis in production)
 builder.Services.AddDistributedMemoryCache();
 
 // Application Insights
@@ -203,50 +207,22 @@ builder.Services.AddScoped<ISiteService, SiteService>();
 builder.Services.AddSingleton<CorrelationIdHandler>();
 builder.Services.AddSingleton<ICorrelationIdProvider, CorrelationIdProvider>();
 
+// Domain Layer Services (MediatR, Domain Repos, MassTransit, Health Checks)
+builder.Services.AddApplicationServices(builder.Configuration);
+builder.Services.AddMessagingServices(builder.Configuration);
+builder.Services.AddHealthCheckServices(builder.Configuration);
+
 // Swagger/OpenAPI
-// builder.Services.AddEndpointsApiExplorer();
-// builder.Services.AddSwaggerGen(c =>
-// {
-//     c.SwaggerDoc("v1", new OpenApiInfo 
-//     { 
-//         Title = "Findings API Gateway", 
-//         Version = "v1",
-//         Description = "GraphQL Gateway for Findings Management System"
-//     });
-    
-//     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-//     {
-//         Description = "JWT Authorization header",
-//         Name = "Authorization",
-//         In = ParameterLocation.Header,
-//         Type = SecuritySchemeType.Http,
-//         Scheme = "bearer"
-//     });
-    
-//     // c.OperationFilter<AddCorrelationIdHeader>();
-// });
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
 // Middleware Pipeline
 if (app.Environment.IsDevelopment())
 {
-    // app.UseSwagger();
-    // app.UseSwaggerUI(c =>
-    // {
-    //     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Findings Gateway V1");
-    //     c.RoutePrefix = "api-docs";
-    // });
-    
-    // GraphQL Playground/Altair
-    // app.UseGraphQLPlayground("/playground", new PlaygroundOptions
-    // {
-    //     SchemaPollingEnabled = false,
-    //     SchemaPollingInterval = 60000,
-    //     EnableSubscription = true
-    // });
-    
-    // app.UseGraphQLAltair("/altair");
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 // app.UseHttpsRedirection(); // Disabled for development
@@ -254,6 +230,7 @@ app.UseCors("GatewayCors");
 // app.UseRateLimiter();
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -261,39 +238,10 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapGraphQL("/graphql").RequireAuthorization();
 app.MapGraphQLSchema("/graphql/schema");
-// app.MapGraphQLVoyager("/voyager");
-// app.MapBananaCakePop("/graphql-ui");
-// app.MapHealthChecks("/health", new HealthCheckOptions
-// {
-//     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
-//     AllowCachingResponses = false
-// });
+app.MapHealthChecks("/health");
 
 // WebSocket support for GraphQL subscriptions
 app.UseWebSockets();
-
-// REST endpoints (for backward compatibility)
-app.MapGet("/api/findings", async (HttpContext context, [FromServices] IFindingService service) =>
-{
-    var companyId = context.Request.Query["companyId"].FirstOrDefault();
-    var includeCompany = bool.Parse(context.Request.Query["includeCompany"].FirstOrDefault() ?? "false");
-    
-    var query = new GetFindingsQuery
-    {
-        CompanyId = int.Parse(companyId ?? "0"),
-        IncludeCompany = includeCompany
-    };
-    
-    var findings = await service.GetFindingsAsync(query);
-    
-    return Results.Ok(findings);
-}).RequireAuthorization("CanViewFindings");
-
-app.MapGet("/api/findings/{id}", async (int id, [FromServices] IFindingService service) =>
-{
-    var finding = await service.GetFindingByIdAsync(id);
-    return finding != null ? Results.Ok(finding) : Results.NotFound();
-}).RequireAuthorization("CanViewFindings");
 
 // Schema stitching endpoint (for federated GraphQL)
 app.MapGet("/graphql/sdl", () =>

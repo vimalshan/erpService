@@ -3,7 +3,7 @@
 -- Create date: 2025-09-19
 -- Description: Get view preferences for UI grids
 -- =============================================
-CREATE PROCEDURE [dbo].[Sp_GetPreferences]
+CREATE OR ALTER PROCEDURE [dbo].[Sp_GetPreferences]
     @objectType NVARCHAR(50) = NULL,
     @objectName NVARCHAR(50) = NULL,
     @pageName NVARCHAR(50) = NULL,

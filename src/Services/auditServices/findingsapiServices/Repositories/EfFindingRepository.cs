@@ -38,7 +38,7 @@ namespace FindingsAPI.Gateway.Repositories
         {
             return await _context.Findings
                 .AsNoTracking()
-                .FirstOrDefaultAsync(f => f.FindingsId == id);
+                .FirstOrDefaultAsync(f => f.FindingId == id);
         }
 
         public async Task<IEnumerable<Finding>> SearchAsync(SearchFindingsQuery query)

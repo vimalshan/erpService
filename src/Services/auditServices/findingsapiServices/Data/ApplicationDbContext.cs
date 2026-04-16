@@ -19,30 +19,26 @@ namespace FindingsAPI.Gateway.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configure relationships
-            modelBuilder.Entity<Finding>()
-                .HasOne(f => f.Company)
-                .WithMany()
-                .HasForeignKey(f => f.CompanyId);
+            modelBuilder.Entity<Finding>(e =>
+            {
+                e.ToTable("Findings");
+                e.HasKey(f => f.FindingId);
+                // CompanyId is not a real DB column (derived from JOIN) — ignore it for writes
+                e.Ignore(f => f.CompanyId);
+                // Status/Category are from JOIN — ignore for writes
+                e.Ignore(f => f.Status);
+                e.Ignore(f => f.Category);
+                e.Ignore(f => f.Response);
+                e.Ignore(f => f.ClosureNotes);
+                e.Ignore(f => f.ClosedBy);
+                e.Ignore(f => f.OpenDate);
+                e.Ignore(f => f.Services);
+                e.Ignore(f => f.Company);
+                e.Ignore(f => f.Site);
+            });
 
-            modelBuilder.Entity<Finding>()
-                .HasOne(f => f.Site)
-                .WithMany()
-                .HasForeignKey(f => f.SiteId);
-
-            // Configure indexes
-            modelBuilder.Entity<Finding>()
-                .HasIndex(f => f.FindingNumber)
-                .IsUnique();
-
-            modelBuilder.Entity<Finding>()
-                .HasIndex(f => new { f.Status, f.Category });
-
-            modelBuilder.Entity<Company>()
-                .HasIndex(c => c.CompanyName);
-
-            modelBuilder.Entity<Site>()
-                .HasIndex(s => s.SiteName);
+            modelBuilder.Entity<Company>().ToTable("Companies");
+            modelBuilder.Entity<Site>().ToTable("Sites");
         }
     }
 }

@@ -25,6 +25,17 @@ namespace FindingsAPI.Gateway.Repositories
 
         private IDbConnection CreateConnection() => new SqlConnection(_connectionString);
 
+        private static string TableName
+        {
+            get
+            {
+                var name = typeof(T).Name;
+                if (name.EndsWith("y", StringComparison.OrdinalIgnoreCase) && name.Length > 1 && !"aeiou".Contains(char.ToLower(name[^2])))
+                    return name[..^1] + "ies";
+                return name + "s";
+            }
+        }
+
         public async Task<T?> GetByIdAsync(int id)
         {
             var cacheKey = $"{typeof(T).Name}_{id}";
@@ -35,7 +46,7 @@ namespace FindingsAPI.Gateway.Repositories
             }
 
             using var connection = CreateConnection();
-            var result = await connection.QueryFirstOrDefaultAsync<T>($"SELECT * FROM {typeof(T).Name}s WHERE {typeof(T).Name}Id = @Id", new { Id = id });
+            var result = await connection.QueryFirstOrDefaultAsync<T>($"SELECT * FROM {TableName} WHERE {typeof(T).Name}Id = @Id", new { Id = id });
             if (result != null)
             {
                 await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
@@ -56,7 +67,7 @@ namespace FindingsAPI.Gateway.Repositories
             }
 
             using var connection = CreateConnection();
-            var result = await connection.QueryAsync<T>($"SELECT * FROM {typeof(T).Name}s");
+            var result = await connection.QueryAsync<T>($"SELECT * FROM {TableName}");
             await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
@@ -77,7 +88,7 @@ namespace FindingsAPI.Gateway.Repositories
             var properties = typeof(T).GetProperties().Where(p => p.Name != $"{typeof(T).Name}Id");
             var columns = string.Join(", ", properties.Select(p => p.Name));
             var values = string.Join(", ", properties.Select(p => $"@{p.Name}"));
-            var sql = $"INSERT INTO {typeof(T).Name}s ({columns}) VALUES ({values}); SELECT SCOPE_IDENTITY();";
+            var sql = $"INSERT INTO {TableName} ({columns}) VALUES ({values}); SELECT SCOPE_IDENTITY();";
 
             var id = await connection.ExecuteScalarAsync<int>(sql, entity);
             typeof(T).GetProperty($"{typeof(T).Name}Id")?.SetValue(entity, id);
@@ -91,7 +102,7 @@ namespace FindingsAPI.Gateway.Repositories
             using var connection = CreateConnection();
             var properties = typeof(T).GetProperties();
             var setClause = string.Join(", ", properties.Where(p => p.Name != $"{typeof(T).Name}Id").Select(p => $"{p.Name} = @{p.Name}"));
-            var sql = $"UPDATE {typeof(T).Name}s SET {setClause} WHERE {typeof(T).Name}Id = @{typeof(T).Name}Id";
+            var sql = $"UPDATE {TableName} SET {setClause} WHERE {typeof(T).Name}Id = @{typeof(T).Name}Id";
 
             await connection.ExecuteAsync(sql, entity);
 
@@ -102,7 +113,7 @@ namespace FindingsAPI.Gateway.Repositories
         public async Task DeleteAsync(T entity)
         {
             using var connection = CreateConnection();
-            await connection.ExecuteAsync($"DELETE FROM {typeof(T).Name}s WHERE {typeof(T).Name}Id = @{typeof(T).Name}Id", entity);
+            await connection.ExecuteAsync($"DELETE FROM {TableName} WHERE {typeof(T).Name}Id = @{typeof(T).Name}Id", entity);
 
             // Invalidate cache
             await InvalidateCacheAsync();

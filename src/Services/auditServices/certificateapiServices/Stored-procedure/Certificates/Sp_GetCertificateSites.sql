@@ -15,8 +15,8 @@ BEGIN
     SELECT
         s.SiteName AS SiteNameInPrimaryLanguage,
         s.SiteName AS SiteNameInSecondaryLanguage,
-        s.Address AS SiteAddressInPrimaryLanguage,
-        s.Address AS SiteAddressInSecondaryLanguage,
+        s.Location AS SiteAddressInPrimaryLanguage,
+        s.Location AS SiteAddressInSecondaryLanguage,
         cs.Scope AS SiteScopeInPrimaryLanguage,
         cs.Scope AS SiteScopeInSecondaryLanguage,
         CASE

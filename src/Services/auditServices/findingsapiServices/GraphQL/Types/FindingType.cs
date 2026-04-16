@@ -9,7 +9,7 @@ namespace FindingsAPI.Gateway.GraphQL.Types
         {
             descriptor.Description("A finding represents an audit observation or issue");
             
-            descriptor.Field(f => f.FindingsId)
+            descriptor.Field(f => f.FindingId)
                 .Type<NonNullType<IntType>>()
                 .Description("Unique identifier for the finding");
             
@@ -44,10 +44,6 @@ namespace FindingsAPI.Gateway.GraphQL.Types
             descriptor.Field(f => f.DueDate)
                 .Type<DateTimeType>()
                 .Description("Due date for resolution");
-            
-            descriptor.Field(f => f.AcceptedDate)
-                .Type<DateTimeType>()
-                .Description("Date when the finding was accepted");
             
             descriptor.Field(f => f.ClosedDate)
                 .Type<DateTimeType>()

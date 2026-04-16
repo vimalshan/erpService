@@ -1,0 +1,190 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Build & Push Audit Service Docker Images to GitHub Container Registry (GHCR)
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# Triggers:
+#   - Push to main (only when relevant service files change)
+#   - Manual dispatch (workflow_dispatch) to build all or specific services
+#
+# Prerequisites (GitHub repo settings):
+#   No secrets needed — uses the built-in GITHUB_TOKEN for GHCR authentication.
+#   Ensure "Read and write permissions" is enabled under:
+#     Settings → Actions → General → Workflow permissions
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Build & Push Audit Services
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/Services/auditServices/**'
+
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to build (or "all")'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - api-gateway
+          - action-service
+          - audit-service
+          - certificate-service
+          - contract-service
+          - finance-service
+          - findings-service
+          - notification-service
+          - schedule-service
+          - settings-service
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/erp
+
+jobs:
+  # ── Detect which services changed ────────────────────────────────────────
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine changed services
+        id: set-matrix
+        run: |
+          # Service registry: name → context + dockerfile
+          declare -A SVC_CONTEXT SVC_DOCKERFILE
+          SVC_CONTEXT[api-gateway]="src/Services/auditServices/apigateway";                                SVC_DOCKERFILE[api-gateway]="Dockerfile"
+          SVC_CONTEXT[action-service]="src/Services/auditServices/actionapiServices";                      SVC_DOCKERFILE[action-service]="Dockerfile"
+          SVC_CONTEXT[audit-service]="src/Services/auditServices/auditapiServices";                        SVC_DOCKERFILE[audit-service]="Dockerfile"
+          SVC_CONTEXT[certificate-service]="src/Services/auditServices/certificateapiServices";            SVC_DOCKERFILE[certificate-service]="Dockerfile"
+          SVC_CONTEXT[contract-service]="src/Services/auditServices/contractapiServices";                  SVC_DOCKERFILE[contract-service]="Dockerfile"
+          SVC_CONTEXT[finance-service]="src/Services/auditServices/financeapiServices";                    SVC_DOCKERFILE[finance-service]="Dockerfile"
+          SVC_CONTEXT[findings-service]="src/Services/auditServices/findingsapiServices";                  SVC_DOCKERFILE[findings-service]="Dockerfile"
+          SVC_CONTEXT[notification-service]="src/Services/auditServices/notificationapiServices";          SVC_DOCKERFILE[notification-service]="Dockerfile"
+          SVC_CONTEXT[schedule-service]="src/Services/auditServices/scheduleapiServices";                  SVC_DOCKERFILE[schedule-service]="Dockerfile"
+          SVC_CONTEXT[settings-service]="src/Services/auditServices/settingsapiServices";                  SVC_DOCKERFILE[settings-service]="Dockerfile"
+
+          # Ordered list matching the paths for change detection
+          SVC_NAMES=(api-gateway action-service audit-service certificate-service contract-service finance-service findings-service notification-service schedule-service settings-service)
+          SVC_PATHS=(
+            "src/Services/auditServices/apigateway/"
+            "src/Services/auditServices/actionapiServices/"
+            "src/Services/auditServices/auditapiServices/"
+            "src/Services/auditServices/certificateapiServices/"
+            "src/Services/auditServices/contractapiServices/"
+            "src/Services/auditServices/financeapiServices/"
+            "src/Services/auditServices/findingsapiServices/"
+            "src/Services/auditServices/notificationapiServices/"
+            "src/Services/auditServices/scheduleapiServices/"
+            "src/Services/auditServices/settingsapiServices/"
+          )
+
+          make_entry() {
+            local n="$1"
+            echo "{\"name\":\"${n}\",\"context\":\"${SVC_CONTEXT[$n]}\",\"dockerfile\":\"${SVC_DOCKERFILE[$n]}\"}"
+          }
+
+          # If manual dispatch with a specific service, build only that
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            INPUT="${{ github.event.inputs.service }}"
+            if [[ "$INPUT" != "all" ]]; then
+              ENTRY=$(make_entry "$INPUT")
+              echo "matrix={\"include\":[${ENTRY}]}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          # For push events or "all", detect changes
+          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "src/Services/auditServices/")
+          BUILD_ALL=$([[ "${{ github.event.inputs.service }}" == "all" ]] && echo "true" || echo "false")
+
+          # If shared infrastructure assets changed, rebuild all Audit services
+          if echo "$CHANGED" | grep -q "^src/Services/auditServices/deploy/\|^src/Services/auditServices/Database/"; then
+            BUILD_ALL="true"
+          fi
+
+          # If shared Audit root files changed (outside specific service folders), rebuild all
+          NON_SERVICE_CHANGES=$(echo "$CHANGED" | grep "^src/Services/auditServices/" | grep -Ev "^src/Services/auditServices/(apigateway|actionapiServices|auditapiServices|certificateapiServices|contractapiServices|financeapiServices|findingsapiServices|notificationapiServices|scheduleapiServices|settingsapiServices|deploy|Database)/" || true)
+          if [[ -n "$NON_SERVICE_CHANGES" ]]; then
+            BUILD_ALL="true"
+          fi
+
+          SERVICES=()
+          for i in "${!SVC_NAMES[@]}"; do
+            NAME="${SVC_NAMES[$i]}"
+            PATH_PREFIX="${SVC_PATHS[$i]}"
+            if [[ "$BUILD_ALL" == "true" ]] || echo "$CHANGED" | grep -q "^${PATH_PREFIX}"; then
+              SERVICES+=("$(make_entry "$NAME")")
+            fi
+          done
+
+          if [[ ${#SERVICES[@]} -eq 0 ]]; then
+            echo "matrix={\"include\":[]}" >> "$GITHUB_OUTPUT"
+          else
+            JSON=$(printf '%s,' "${SERVICES[@]}")
+            JSON="[${JSON%,}]"
+            echo "matrix={\"include\":${JSON}}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Print matrix
+        run: echo '${{ steps.set-matrix.outputs.matrix }}'
+
+  # ── Build & Push ─────────────────────────────────────────────────────────
+  build-and-push:
+    name: Build ${{ matrix.name }}
+    needs: changes
+    if: ${{ fromJson(needs.changes.outputs.matrix).include[0] != null }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64

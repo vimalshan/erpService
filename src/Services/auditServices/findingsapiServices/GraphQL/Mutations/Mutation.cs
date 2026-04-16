@@ -6,7 +6,6 @@ using FindingsAPI.Gateway.Validators;
 
 namespace FindingsAPI.Gateway.GraphQL.Mutations
 {
-    [ExtendObjectType("Mutation")]
     public class Mutation
     {
         private readonly IFindingService _findingService;
@@ -46,13 +45,15 @@ namespace FindingsAPI.Gateway.GraphQL.Mutations
                 var command = new CreateFindingCommand
                 {
                     Title = input.Title,
-                    Category = input.Category,
-                    CompanyId = input.CompanyId,
+                    FindingType = "Observation",
                     SiteId = input.SiteId,
                     Services = input.Services ?? new List<int>(),
                     Description = input.Description,
                     Severity = input.Severity,
-                    CreatedBy = httpContextAccessor.HttpContext.User.Identity.Name
+                    FindingStatusId = 1,
+                    IdentifiedDate = DateTime.UtcNow,
+                    AuditId = 1, // default; update when input has AuditId
+                    FindingNumber = $"FND-GRPH-{DateTime.UtcNow:yyyyMMddHHmmss}",
                 };
                 
                 var finding = await _findingService.CreateFindingAsync(command);
@@ -94,10 +95,9 @@ namespace FindingsAPI.Gateway.GraphQL.Mutations
             var command = new UpdateFindingCommand
             {
                 FindingId = input.FindingId,
-                Status = input.Status,
-                Response = input.Response,
+                FindingStatusId = 0, // will keep existing if 0
                 DueDate = input.DueDate,
-                UpdatedBy = httpContextAccessor.HttpContext.User.Identity.Name
+                ModifiedBy = null
             };
             
             var updated = await _findingService.UpdateFindingAsync(command);
@@ -131,8 +131,7 @@ namespace FindingsAPI.Gateway.GraphQL.Mutations
             var command = new CloseFindingCommand
             {
                 FindingId = findingId,
-                ClosureNotes = closureNotes,
-                ClosedBy = httpContextAccessor.HttpContext.User.Identity.Name
+                ClosedBy = null
             };
             
             var closedFinding = await _findingService.CloseFindingAsync(command);
@@ -156,9 +155,9 @@ namespace FindingsAPI.Gateway.GraphQL.Mutations
             var command = new BulkUpdateStatusCommand
             {
                 FindingIds = findingIds,
-                NewStatus = newStatus,
+                FindingStatusId = 0,
                 Reason = reason,
-                UpdatedBy = httpContextAccessor.HttpContext.User.Identity.Name
+                ModifiedBy = null
             };
             
             var result = await _findingService.BulkUpdateStatusAsync(command);

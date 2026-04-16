@@ -11,7 +11,30 @@ namespace ActionService.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
+            // Create Actions table only if it doesn't already exist (may have been created by ActionDbContext domain migration)
+            migrationBuilder.Sql(@"
+                IF OBJECT_ID('Actions', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE Actions (
+                        id INT NOT NULL,
+                        action NVARCHAR(255) NULL,
+                        dueDate DATETIME NULL,
+                        highPriority BIT NOT NULL DEFAULT 0,
+                        message NVARCHAR(MAX) NULL,
+                        language NVARCHAR(50) NULL,
+                        service NVARCHAR(100) NULL,
+                        site NVARCHAR(100) NULL,
+                        entityType NVARCHAR(100) NULL,
+                        entityId INT NULL,
+                        subject NVARCHAR(255) NULL,
+                        snowLink NVARCHAR(255) NULL,
+                        CONSTRAINT PK_Actions PRIMARY KEY (id)
+                    );
+                END
+            ");
+
+            // --- DEAD CODE BLOCK BELOW kept for reference only, replaced by conditional SQL above ---
+            if (false) migrationBuilder.CreateTable(
                 name: "Actions",
                 columns: table => new
                 {
@@ -31,9 +54,9 @@ namespace ActionService.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Actions", x => x.id);
-                });
+                }); // end if(false) dead block
 
-            migrationBuilder.Sql(@"CREATE PROCEDURE Sp_ActionFilterCategories
+            migrationBuilder.Sql(@"CREATE OR ALTER PROCEDURE Sp_ActionFilterCategories
     @companies NVARCHAR(MAX) = NULL,  -- JSON array of company IDs
     @services NVARCHAR(MAX) = NULL,   -- JSON array of service IDs  
     @sites NVARCHAR(MAX) = NULL       -- JSON array of site IDs
@@ -55,7 +78,7 @@ BEGIN
     ORDER BY id;
 END");
 
-            migrationBuilder.Sql(@"CREATE PROCEDURE Sp_ActionFilterCompanies
+            migrationBuilder.Sql(@"CREATE OR ALTER PROCEDURE Sp_ActionFilterCompanies
     @categories NVARCHAR(MAX) = NULL,  -- JSON array of category IDs
     @services NVARCHAR(MAX) = NULL,    -- JSON array of service IDs
     @sites NVARCHAR(MAX) = NULL        -- JSON array of site IDs
@@ -142,7 +165,7 @@ BEGIN
     ORDER BY cd.label;
 END");
 
-            migrationBuilder.Sql(@"CREATE PROCEDURE Sp_ActionFilterServices
+            migrationBuilder.Sql(@"CREATE OR ALTER PROCEDURE Sp_ActionFilterServices
     @companies NVARCHAR(MAX) = NULL,   -- JSON array of company IDs
     @categories NVARCHAR(MAX) = NULL,  -- JSON array of category IDs
     @sites NVARCHAR(MAX) = NULL        -- JSON array of site IDs
@@ -227,7 +250,7 @@ BEGIN
     ORDER BY sd.label;
 END");
 
-            migrationBuilder.Sql(@"CREATE PROCEDURE Sp_ActionFilterSites
+            migrationBuilder.Sql(@"CREATE OR ALTER PROCEDURE Sp_ActionFilterSites
     @companies NVARCHAR(MAX) = NULL,   -- JSON array of company IDs
     @categories NVARCHAR(MAX) = NULL,  -- JSON array of category IDs
     @services NVARCHAR(MAX) = NULL     -- JSON array of service IDs
@@ -303,7 +326,7 @@ BEGIN
     ORDER BY co.CountryName, ci.CityName, s.SiteName;
 END");
 
-            migrationBuilder.Sql(@"CREATE PROCEDURE Sp_GetActions
+            migrationBuilder.Sql(@"CREATE OR ALTER PROCEDURE Sp_GetActions
     @category NVARCHAR(MAX) = NULL,        -- JSON array of category IDs
     @company NVARCHAR(MAX) = NULL,         -- JSON array of company IDs
     @service NVARCHAR(MAX) = NULL,         -- JSON array of service IDs
@@ -432,7 +455,7 @@ BEGIN
     FETCH NEXT @pageSize ROWS ONLY;
 END");
 
-            migrationBuilder.Sql(@"CREATE PROCEDURE Sp_InsertAction
+            migrationBuilder.Sql(@"CREATE OR ALTER PROCEDURE Sp_InsertAction
     @id INT,
     @action NVARCHAR(255),
     @dueDate DATETIME,
@@ -465,8 +488,8 @@ END");
             migrationBuilder.Sql(@"IF OBJECT_ID('Sp_ActionFilterCompanies', 'P') IS NOT NULL DROP PROCEDURE Sp_ActionFilterCompanies");
             migrationBuilder.Sql(@"IF OBJECT_ID('Sp_ActionFilterCategories', 'P') IS NOT NULL DROP PROCEDURE Sp_ActionFilterCategories");
 
-            migrationBuilder.DropTable(
-                name: "Actions");
+            // Actions table is shared with ActionDbContext domain migration; do not drop it here
+            // migrationBuilder.DropTable(name: "Actions");
         }
     }
 }

@@ -1,0 +1,61 @@
+---
+# ── Shared ConfigMap for all microservices ────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: erp-common-config
+  namespace: erp
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:8080"
+  RabbitMQ__Enabled: "true"
+  RabbitMQ__Host: "erp-rabbitmq"
+  RabbitMQ__Port: "5672"
+  RabbitMQ__VirtualHost: "erp"
+  RabbitMQ__ExchangeName: "erp.events"
+  RabbitMQ__RetryCount: "5"
+  RabbitMQ__RetryIntervalSeconds: "5"
+  Jwt__Issuer: "ERPMicroservice"
+  Jwt__Audience: "ERPMicroserviceClients"
+  Jwt__ExpiryMinutes: "60"
+
+---
+# ── Gateway-specific config ───────────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: erp-gateway-config
+  namespace: erp
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:8080"
+  Jwt__Issuer: "ERPGateway"
+  Jwt__Audience: "ERPServices"
+  Jwt__ExpiryInMinutes: "60"
+  ReverseProxy__Clusters__action-cluster__Destinations__action-node-1__Address: "http://erp-action-service:8080"
+  ReverseProxy__Clusters__audit-cluster__Destinations__audit-node-1__Address: "http://erp-audit-service:8080"
+  ReverseProxy__Clusters__certificate-cluster__Destinations__certificate-node-1__Address: "http://erp-certificate-service:8080"
+  ReverseProxy__Clusters__contract-cluster__Destinations__contract-node-1__Address: "http://erp-contract-service:8080"
+  ReverseProxy__Clusters__finance-cluster__Destinations__finance-node-1__Address: "http://erp-finance-service:8080"
+  ReverseProxy__Clusters__findings-cluster__Destinations__findings-node-1__Address: "http://erp-findings-service:8080"
+  ReverseProxy__Clusters__notification-cluster__Destinations__notification-node-1__Address: "http://erp-notification-service:8080"
+  ReverseProxy__Clusters__schedule-cluster__Destinations__schedule-node-1__Address: "http://erp-schedule-service:8080"
+  ReverseProxy__Clusters__settings-cluster__Destinations__settings-node-1__Address: "http://erp-settings-service:8080"
+  HealthChecks__Services__0__Name: "Action Service"
+  HealthChecks__Services__0__Uri: "http://erp-action-service:8080/health"
+  HealthChecks__Services__1__Name: "Audit Service"
+  HealthChecks__Services__1__Uri: "http://erp-audit-service:8080/health"
+  HealthChecks__Services__2__Name: "Certificate Service"
+  HealthChecks__Services__2__Uri: "http://erp-certificate-service:8080/health"
+  HealthChecks__Services__3__Name: "Contract Service"
+  HealthChecks__Services__3__Uri: "http://erp-contract-service:8080/health"
+  HealthChecks__Services__4__Name: "Finance Service"
+  HealthChecks__Services__4__Uri: "http://erp-finance-service:8080/health"
+  HealthChecks__Services__5__Name: "Findings Service"
+  HealthChecks__Services__5__Uri: "http://erp-findings-service:8080/health"
+  HealthChecks__Services__6__Name: "Notification Service"
+  HealthChecks__Services__6__Uri: "http://erp-notification-service:8080/health"
+  HealthChecks__Services__7__Name: "Schedule Service"
+  HealthChecks__Services__7__Uri: "http://erp-schedule-service:8080/health"
+  HealthChecks__Services__8__Name: "Settings Service"
+  HealthChecks__Services__8__Uri: "http://erp-settings-service:8080/health"

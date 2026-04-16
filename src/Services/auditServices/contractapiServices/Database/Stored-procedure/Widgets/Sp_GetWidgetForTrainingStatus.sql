@@ -1,20 +1,24 @@
 ﻿CREATE PROCEDURE [dbo].[Sp_GetWidgetForTrainingStatus]
-    @userId NVARCHAR(255) = NULL -- Optional: if not provided, can use current session context
+    @userId NVARCHAR(255) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
-    
     BEGIN TRY
-        -- Get training status data for widget
-        SELECT 
-            ; END TRY
+        SELECT COALESCE(t.TrainingName, '')  AS trainingName,
+               COALESCE(ut.Status, '')       AS trainingStatus,
+               CONVERT(NVARCHAR(10), COALESCE(ut.DueDate, t.DueDate), 23) AS trainingDueDate,
+               ''                           AS trainingLocation
+        FROM   UserTrainings ut
+        INNER JOIN Trainings t ON ut.TrainingId = t.TrainingId
+        WHERE  (
+               @userId IS NULL
+            OR ut.UserId = TRY_CAST(@userId AS INT)
+        )
+        ORDER BY ut.DueDate;
+    END TRY
     BEGIN CATCH
-        -- Handle any errors
-        SELECT 
-            0 as isSuccess,
-            ERROR_MESSAGE() as message,
-            'DATABASE_ERROR' as errorCode,
-            SELECT NULL as trainingData; END CATCH
+        SELECT '' AS trainingName, '' AS trainingStatus, NULL AS trainingDueDate, '' AS trainingLocation;
+    END CATCH
 END
 
 

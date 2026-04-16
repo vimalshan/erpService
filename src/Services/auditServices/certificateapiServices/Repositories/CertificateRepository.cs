@@ -86,7 +86,7 @@ namespace CertificateService.Repositories
             if (detail.SiteId.HasValue)
             {
                 site = await connection.QueryFirstOrDefaultAsync<SiteRow>(
-                    "SELECT SiteName, Address FROM Sites WHERE SiteId = @siteId",
+                    "SELECT SiteName, Location AS Address FROM Sites WHERE SiteId = @siteId",
                     new { siteId = detail.SiteId.Value });
             }
 
@@ -119,7 +119,7 @@ namespace CertificateService.Repositories
                 new { certificateId });
 
             var rows = await connection.QueryAsync<CertificateSiteDetailRow>(
-                "SELECT cs.SiteId, s.SiteName, s.Address, cs.Scope FROM CertificateSites cs JOIN Sites s ON cs.SiteId = s.SiteId WHERE cs.CertificateId = @certificateId",
+                "SELECT cs.SiteId, s.SiteName, s.Location AS Address, cs.Scope FROM CertificateSites cs JOIN Sites s ON cs.SiteId = s.SiteId WHERE cs.CertificateId = @certificateId",
                 new { certificateId });
 
             return rows.Select(row => new CertificateSiteResponse

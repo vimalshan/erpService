@@ -1,83 +1,92 @@
 -- Insert sample data for AuditSites table
--- This script maps which sites participate in audits
+-- Maps which sites participate in each audit (AuditId refs Audits.auditId 1-20)
 
-INSERT INTO [dbo].[AuditSites] 
-([AuditSiteId], [SiteId], [ServiceId], [IsActive], [IsMainSite], [CreatedDate], [ModifiedDate], [CreatedBy], [ModifiedBy])
+INSERT INTO [dbo].[AuditSites]
+    ([AuditId], [SiteId], [IsActive], [Status], [CreatedDate], [ModifiedDate], [CreatedBy], [ModifiedBy])
 VALUES
--- Acme Corporation audit sites
-(NEWID(), 1, 1, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Acme HQ - ISO 9001 (main site)
-(NEWID(), 2, 1, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Acme Manufacturing - ISO 9001
-(NEWID(), 3, 1, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Acme Warehouse - ISO 9001
-(NEWID(), 1, 2, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Acme HQ - ISO 14001 (main site)
-(NEWID(), 2, 2, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Acme Manufacturing - ISO 14001
-(NEWID(), 1, 3, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Acme HQ - ISO 45001 (main site)
-(NEWID(), 2, 3, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Acme Manufacturing - ISO 45001
-(NEWID(), 3, 3, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Acme Warehouse - ISO 45001
+-- Audit 1: Acme ISO9001 ICA — Sites 1,2,3
+(1, 1, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(1, 2, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(1, 3, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
 
--- TechFlow Industries audit sites
-(NEWID(), 4, 1, 1, 1, GETDATE(), GETDATE(), 1, 1), -- TechFlow Main Office - ISO 9001 (main site)
-(NEWID(), 5, 1, 1, 0, GETDATE(), GETDATE(), 1, 1), -- TechFlow Data Center - ISO 9001
-(NEWID(), 6, 1, 1, 0, GETDATE(), GETDATE(), 1, 1), -- TechFlow Dev Lab - ISO 9001
-(NEWID(), 4, 4, 1, 1, GETDATE(), GETDATE(), 1, 1), -- TechFlow Main Office - ISO 27001 (main site)
-(NEWID(), 5, 4, 1, 0, GETDATE(), GETDATE(), 1, 1), -- TechFlow Data Center - ISO 27001
-(NEWID(), 4, 10, 1, 1, GETDATE(), GETDATE(), 1, 1), -- TechFlow Main Office - ISO 20000-1 (main site)
-(NEWID(), 5, 10, 1, 0, GETDATE(), GETDATE(), 1, 1), -- TechFlow Data Center - ISO 20000-1
-(NEWID(), 4, 14, 1, 1, GETDATE(), GETDATE(), 1, 1), -- TechFlow Main Office - GDPR (main site)
+-- Audit 2: Acme ISO9001 Surveillance — Sites 1,2
+(2, 1, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(2, 2, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
 
--- Green Energy Solutions audit sites
-(NEWID(), 7, 2, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Green Energy HQ - ISO 14001 (main site)
-(NEWID(), 8, 2, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Wind Farm - ISO 14001
-(NEWID(), 9, 2, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Solar Installation - ISO 14001
-(NEWID(), 7, 3, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Green Energy HQ - ISO 45001 (main site)
-(NEWID(), 8, 3, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Wind Farm - ISO 45001
-(NEWID(), 7, 7, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Green Energy HQ - ISO 50001 (main site)
-(NEWID(), 8, 7, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Wind Farm - ISO 50001
-(NEWID(), 9, 7, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Solar Installation - ISO 50001
-(NEWID(), 8, 23, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Wind Farm - Wind Turbine Certification (main site)
-(NEWID(), 9, 24, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Solar Installation - Solar Panel Certification (main site)
-(NEWID(), 7, 26, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Green Energy HQ - Carbon Footprint (main site)
-(NEWID(), 8, 26, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Wind Farm - Carbon Footprint
-(NEWID(), 9, 26, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Solar Installation - Carbon Footprint
+-- Audit 3: Acme ISO14001 ICA — Sites 1,2
+(3, 1, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(3, 2, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
 
--- Maritime Solutions audit sites
-(NEWID(), 10, 1, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Maritime Oslo Office - ISO 9001 (main site)
-(NEWID(), 11, 1, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Maritime Shipyard - ISO 9001
-(NEWID(), 12, 1, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Maritime Port - ISO 9001
-(NEWID(), 10, 3, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Maritime Oslo Office - ISO 45001 (main site)
-(NEWID(), 11, 3, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Maritime Shipyard - ISO 45001
-(NEWID(), 12, 3, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Maritime Port - ISO 45001
-(NEWID(), 11, 22, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Maritime Shipyard - DNV Rules for Ships (main site)
-(NEWID(), 12, 22, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Maritime Port - DNV Rules for Ships
+-- Audit 4: Acme ISO14001 Surveillance — Sites 1,2
+(4, 1, 1, 'active', GETDATE(), GETDATE(), 1, 1),
+(4, 2, 1, 'active', GETDATE(), GETDATE(), 1, 1),
 
--- Food Excellence Corp audit sites
-(NEWID(), 13, 1, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Food Paris HQ - ISO 9001 (main site)
-(NEWID(), 14, 1, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Food Production Lyon - ISO 9001
-(NEWID(), 15, 1, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Food Distribution - ISO 9001
-(NEWID(), 13, 5, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Food Paris HQ - ISO 22000 (main site)
-(NEWID(), 14, 5, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Food Production Lyon - ISO 22000
-(NEWID(), 15, 5, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Food Distribution - ISO 22000
-(NEWID(), 14, 28, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Food Production Lyon - HACCP (main site)
-(NEWID(), 15, 28, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Food Distribution - HACCP
-(NEWID(), 14, 29, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Food Production Lyon - BRC Food Safety (main site)
+-- Audit 5: Acme ISO45001 Pre-Assessment — Site 1
+(5, 1, 1, 'active', GETDATE(), GETDATE(), 1, 1),
 
--- AutoTech Manufacturing audit sites
-(NEWID(), 16, 1, 1, 1, GETDATE(), GETDATE(), 1, 1), -- AutoTech Rome HQ - ISO 9001 (main site)
-(NEWID(), 17, 1, 1, 0, GETDATE(), GETDATE(), 1, 1), -- AutoTech Milan Factory - ISO 9001
-(NEWID(), 18, 1, 1, 0, GETDATE(), GETDATE(), 1, 1), -- AutoTech Turin R&D - ISO 9001
-(NEWID(), 16, 8, 1, 1, GETDATE(), GETDATE(), 1, 1), -- AutoTech Rome HQ - IATF 16949 (main site)
-(NEWID(), 17, 8, 1, 0, GETDATE(), GETDATE(), 1, 1), -- AutoTech Milan Factory - IATF 16949
-(NEWID(), 18, 8, 1, 0, GETDATE(), GETDATE(), 1, 1), -- AutoTech Turin R&D - IATF 16949
-(NEWID(), 17, 11, 1, 1, GETDATE(), GETDATE(), 1, 1), -- AutoTech Milan Factory - ISO 26262 (main site)
-(NEWID(), 18, 11, 1, 0, GETDATE(), GETDATE(), 1, 1), -- AutoTech Turin R&D - ISO 26262
+-- Audit 6: TechFlow ISO9001 ICA — Sites 4,5,6
+(6, 4, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(6, 5, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(6, 6, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
 
--- Global Manufacturing Inc audit sites (multi-national)
-(NEWID(), 19, 1, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Global US HQ - ISO 9001 (main site)
-(NEWID(), 20, 1, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Global UK Ops - ISO 9001
-(NEWID(), 21, 1, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Global DE Plant - ISO 9001
-(NEWID(), 22, 1, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Global AP Hub - ISO 9001
-(NEWID(), 19, 2, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Global US HQ - ISO 14001 (main site)
-(NEWID(), 20, 2, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Global UK Ops - ISO 14001
-(NEWID(), 21, 2, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Global DE Plant - ISO 14001
+-- Audit 7: TechFlow ISO9001 Surveillance Y1 — Sites 4,5
+(7, 4, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(7, 5, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+
+-- Audit 8: TechFlow ISO9001 Surveillance Y2 — Sites 4,5
+(8, 4, 1, 'active', GETDATE(), GETDATE(), 1, 1),
+(8, 5, 1, 'active', GETDATE(), GETDATE(), 1, 1),
+
+-- Audit 9: TechFlow ISO27001 ICA — Sites 4,5
+(9, 4, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(9, 5, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+
+-- Audit 10: TechFlow ISO27001 Surveillance — Sites 4,5
+(10, 4, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(10, 5, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+
+-- Audit 11: Green Energy ISO14001 ICA — Sites 7,8,9
+(11, 7, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(11, 8, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(11, 9, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+
+-- Audit 12: Green Energy ISO50001 ICA — Sites 7,8
+(12, 7, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(12, 8, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+
+-- Audit 13: Green Energy ISO50001 Surveillance — Sites 7,8
+(13, 7, 1, 'active', GETDATE(), GETDATE(), 1, 1),
+(13, 8, 1, 'active', GETDATE(), GETDATE(), 1, 1),
+
+-- Audit 14: Green Energy ISO50001 Pre-Assessment — Site 7
+(14, 7, 1, 'active', GETDATE(), GETDATE(), 1, 1),
+
+-- Audit 15: Maritime ISO9001 ICA — Sites 10,11,12
+(15, 10, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(15, 11, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(15, 12, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+
+-- Audit 16: Maritime ISM ICA — Sites 10,11,12
+(16, 10, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(16, 11, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(16, 12, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+
+-- Audit 17: Maritime ISM Surveillance — Sites 10,11
+(17, 10, 1, 'active', GETDATE(), GETDATE(), 1, 1),
+(17, 11, 1, 'active', GETDATE(), GETDATE(), 1, 1),
+
+-- Audit 18: Maritime ISO45001 ICA — Sites 10,11
+(18, 10, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(18, 11, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+
+-- Audit 19: Food Excellence ISO22000 ICA — Sites 13,14,15
+(19, 13, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(19, 14, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(19, 15, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+
+-- Audit 20: Food Excellence HACCP ICA — Sites 13,14
+(20, 13, 1, 'completed', GETDATE(), GETDATE(), 1, 1),
+(20, 14, 1, 'completed', GETDATE(), GETDATE(), 1, 1);
 (NEWID(), 19, 3, 1, 1, GETDATE(), GETDATE(), 1, 1), -- Global US HQ - ISO 45001 (main site)
 (NEWID(), 20, 3, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Global UK Ops - ISO 45001
 (NEWID(), 21, 3, 1, 0, GETDATE(), GETDATE(), 1, 1), -- Global DE Plant - ISO 45001

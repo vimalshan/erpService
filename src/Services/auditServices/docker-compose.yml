@@ -1,0 +1,392 @@
+version: "3.9"
+
+# ─── Networks ─────────────────────────────────────────────────────────────────
+networks:
+  erp-network:
+    driver: bridge
+
+# ─── Volumes ──────────────────────────────────────────────────────────────────
+volumes:
+  sqlserver-data:
+  rabbitmq-data:
+  seq-data:
+
+# ─── Services ─────────────────────────────────────────────────────────────────
+services:
+
+  # ── SQL Server ────────────────────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: erp-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "${SQL_SA_PASSWORD:-ErpStr0ng!Pass}"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./deploy/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $$SA_PASSWORD -Q 'SELECT 1' -C -b -o /dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ── DB Initializer (runs init.sql once) ───────────────────────────────────
+  db-init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    container_name: erp-db-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./deploy/database/init.sql:/init.sql:ro
+    command: >
+      /bin/bash -c "
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P $$SQL_SA_PASSWORD -i /init.sql -C -b
+      "
+    environment:
+      SQL_SA_PASSWORD: "${SQL_SA_PASSWORD:-ErpStr0ng!Pass}"
+    networks:
+      - erp-network
+    restart: "no"
+
+  # ── RabbitMQ ─────────────────────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: erp-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-erpadmin}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASS:-ErpR@bbit1}"
+      RABBITMQ_DEFAULT_VHOST: "erp"
+    ports:
+      - "5672:5672"
+      - "15672:15672"     # Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+  # ── Seq (structured log aggregation) ─────────────────────────────────────
+  seq:
+    image: datalust/seq:latest
+    container_name: erp-seq
+    environment:
+      ACCEPT_EULA: "Y"
+    ports:
+      - "5341:5341"
+      - "8888:80"         # Seq Web UI
+    volumes:
+      - seq-data:/data
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ── API Gateway ───────────────────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./apigateway
+      dockerfile: Dockerfile
+    image: erp-api-gateway:latest
+    container_name: erp-api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:8080"
+      ReverseProxy__Clusters__action-cluster__Destinations__action-node-1__Address: "http://action-service:8080"
+      ReverseProxy__Clusters__audit-cluster__Destinations__audit-node-1__Address: "http://audit-service:8080"
+      ReverseProxy__Clusters__certificate-cluster__Destinations__certificate-node-1__Address: "http://certificate-service:8080"
+      ReverseProxy__Clusters__contract-cluster__Destinations__contract-node-1__Address: "http://contract-service:8080"
+      ReverseProxy__Clusters__finance-cluster__Destinations__finance-node-1__Address: "http://finance-service:8080"
+      ReverseProxy__Clusters__findings-cluster__Destinations__findings-node-1__Address: "http://findings-service:8080"
+      ReverseProxy__Clusters__notification-cluster__Destinations__notification-node-1__Address: "http://notification-service:8080"
+      ReverseProxy__Clusters__schedule-cluster__Destinations__schedule-node-1__Address: "http://schedule-service:8080"
+      ReverseProxy__Clusters__settings-cluster__Destinations__settings-node-1__Address: "http://settings-service:8080"
+      HealthChecks__Services__0__Uri: "http://action-service:8080/health"
+      HealthChecks__Services__1__Uri: "http://audit-service:8080/health"
+      HealthChecks__Services__2__Uri: "http://certificate-service:8080/health"
+      HealthChecks__Services__3__Uri: "http://contract-service:8080/health"
+      HealthChecks__Services__4__Uri: "http://finance-service:8080/health"
+      HealthChecks__Services__5__Uri: "http://findings-service:8080/health"
+      HealthChecks__Services__6__Uri: "http://notification-service:8080/health"
+      HealthChecks__Services__7__Uri: "http://schedule-service:8080/health"
+      HealthChecks__Services__8__Uri: "http://settings-service:8080/health"
+      Jwt__Key: "${JWT_SECRET_KEY:-YourSuperSecretKeyForJWTTokenGenerationThatIsAtLeast32Characters}"
+    ports:
+      - "5000:8080"
+    depends_on:
+      - action-service
+      - audit-service
+      - certificate-service
+      - contract-service
+      - finance-service
+      - findings-service
+      - notification-service
+      - schedule-service
+      - settings-service
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ── Action Service ────────────────────────────────────────────────────────
+  action-service:
+    build:
+      context: ./actionapiServices
+      dockerfile: Dockerfile
+    image: erp-action-service:latest
+    container_name: erp-action-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ERPActionDB;User Id=sa;Password=${SQL_SA_PASSWORD:-ErpStr0ng!Pass};TrustServerCertificate=True;MultipleActiveResultSets=True;"
+      RabbitMQ__Enabled: "true"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__VirtualHost: "erp"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erpadmin}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-ErpR@bbit1}"
+      Jwt__Key: "${JWT_SECRET_KEY:-YourSuperSecretKeyThatIsAtLeast32Characters!}"
+    ports:
+      - "5001:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ── Audit Service ─────────────────────────────────────────────────────────
+  audit-service:
+    build:
+      context: ./auditapiServices
+      dockerfile: Dockerfile
+    image: erp-audit-service:latest
+    container_name: erp-audit-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ERPAuditDB;User Id=sa;Password=${SQL_SA_PASSWORD:-ErpStr0ng!Pass};TrustServerCertificate=True;MultipleActiveResultSets=True;"
+      RabbitMQ__Enabled: "true"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__VirtualHost: "erp"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erpadmin}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-ErpR@bbit1}"
+      Jwt__Key: "${JWT_SECRET_KEY:-YourSuperSecretKeyThatIsAtLeast32Characters!}"
+    ports:
+      - "5002:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ── Certificate Service ───────────────────────────────────────────────────
+  certificate-service:
+    build:
+      context: ./certificateapiServices
+      dockerfile: Dockerfile
+    image: erp-certificate-service:latest
+    container_name: erp-certificate-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ERPCertificateDB;User Id=sa;Password=${SQL_SA_PASSWORD:-ErpStr0ng!Pass};TrustServerCertificate=True;MultipleActiveResultSets=True;"
+      RabbitMQ__Enabled: "true"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__VirtualHost: "erp"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erpadmin}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-ErpR@bbit1}"
+      Jwt__Key: "${JWT_SECRET_KEY:-YourSuperSecretKeyThatIsAtLeast32Characters!}"
+    ports:
+      - "5003:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ── Contract Service ──────────────────────────────────────────────────────
+  contract-service:
+    build:
+      context: ./contractapiServices
+      dockerfile: Dockerfile
+    image: erp-contract-service:latest
+    container_name: erp-contract-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ERPContractDB;User Id=sa;Password=${SQL_SA_PASSWORD:-ErpStr0ng!Pass};TrustServerCertificate=True;MultipleActiveResultSets=True;"
+      RabbitMQ__Enabled: "true"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__VirtualHost: "erp"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erpadmin}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-ErpR@bbit1}"
+      Jwt__Key: "${JWT_SECRET_KEY:-YourSuperSecretKeyThatIsAtLeast32Characters!}"
+    ports:
+      - "5004:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ── Finance Service ───────────────────────────────────────────────────────
+  finance-service:
+    build:
+      context: ./financeapiServices
+      dockerfile: Dockerfile
+    image: erp-finance-service:latest
+    container_name: erp-finance-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ERPFinanceDB;User Id=sa;Password=${SQL_SA_PASSWORD:-ErpStr0ng!Pass};TrustServerCertificate=True;MultipleActiveResultSets=True;"
+      RabbitMQ__Enabled: "true"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__VirtualHost: "erp"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erpadmin}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-ErpR@bbit1}"
+      Jwt__Key: "${JWT_SECRET_KEY:-YourSuperSecretKeyThatIsAtLeast32Characters!}"
+    ports:
+      - "5005:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ── Findings Service ──────────────────────────────────────────────────────
+  findings-service:
+    build:
+      context: ./findingsapiServices
+      dockerfile: Dockerfile
+    image: erp-findings-service:latest
+    container_name: erp-findings-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ERPFindingsDB;User Id=sa;Password=${SQL_SA_PASSWORD:-ErpStr0ng!Pass};TrustServerCertificate=True;MultipleActiveResultSets=True;"
+      RabbitMQ__Enabled: "true"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__VirtualHost: "erp"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erpadmin}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-ErpR@bbit1}"
+      Jwt__Key: "${JWT_SECRET_KEY:-YourSuperSecretKeyThatIsAtLeast32Characters!}"
+    ports:
+      - "5006:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ── Notification Service ──────────────────────────────────────────────────
+  notification-service:
+    build:
+      context: ./notificationapiServices
+      dockerfile: Dockerfile
+    image: erp-notification-service:latest
+    container_name: erp-notification-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ERPNotificationDB;User Id=sa;Password=${SQL_SA_PASSWORD:-ErpStr0ng!Pass};TrustServerCertificate=True;MultipleActiveResultSets=True;"
+      RabbitMQ__Enabled: "true"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__VirtualHost: "erp"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erpadmin}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-ErpR@bbit1}"
+      Jwt__Key: "${JWT_SECRET_KEY:-YourSuperSecretKeyThatIsAtLeast32Characters!}"
+    ports:
+      - "5007:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ── Schedule Service ──────────────────────────────────────────────────────
+  schedule-service:
+    build:
+      context: ./scheduleapiServices
+      dockerfile: Dockerfile
+    image: erp-schedule-service:latest
+    container_name: erp-schedule-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ERPScheduleDB;User Id=sa;Password=${SQL_SA_PASSWORD:-ErpStr0ng!Pass};TrustServerCertificate=True;MultipleActiveResultSets=True;"
+      RabbitMQ__Enabled: "true"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__VirtualHost: "erp"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erpadmin}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-ErpR@bbit1}"
+      Jwt__Key: "${JWT_SECRET_KEY:-YourSuperSecretKeyThatIsAtLeast32Characters!}"
+    ports:
+      - "5008:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped
+
+  # ── Settings Service ──────────────────────────────────────────────────────
+  settings-service:
+    build:
+      context: ./settingsapiServices
+      dockerfile: Dockerfile
+    image: erp-settings-service:latest
+    container_name: erp-settings-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ERPSettingsDB;User Id=sa;Password=${SQL_SA_PASSWORD:-ErpStr0ng!Pass};TrustServerCertificate=True;MultipleActiveResultSets=True;"
+      RabbitMQ__Enabled: "true"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__VirtualHost: "erp"
+      RabbitMQ__Username: "${RABBITMQ_USER:-erpadmin}"
+      RabbitMQ__Password: "${RABBITMQ_PASS:-ErpR@bbit1}"
+      Jwt__Key: "${JWT_SECRET_KEY:-YourSuperSecretKeyThatIsAtLeast32Characters!}"
+    ports:
+      - "5009:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - erp-network
+    restart: unless-stopped

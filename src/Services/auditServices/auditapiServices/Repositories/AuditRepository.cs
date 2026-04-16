@@ -1,363 +1,325 @@
-using AuditService.Data;
+using AuditService.Domain.Entities;
+using AuditService.Infrastructure.Data;
 using AuditService.Models;
-using Dapper;
-using System.Data;
-using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace AuditService.Repositories
 {
     public class AuditRepository : IAuditRepository
     {
-        private readonly DapperContext _context;
+        private readonly AuditDomainDbContext _db;
 
-        public AuditRepository(DapperContext context)
+        public AuditRepository(AuditDomainDbContext db)
         {
-            _context = context;
+            _db = db;
         }
 
         public async Task<IReadOnlyList<AuditListResponse>> GetAuditListAsync()
         {
-            using var connection = _context.CreateConnection();
-            var audits = (await connection.QueryAsync<AuditListRow>(
-                "SELECT AuditId, CompanyId, Status, StartDate, EndDate, LeadAuditor, Type FROM Audits"))
-                .ToList();
+            var audits = await _db.Audits
+                .Include(a => a.AuditSites)
+                .Include(a => a.AuditServices)
+                .AsNoTracking()
+                .ToListAsync();
 
-            var siteRows = await connection.QueryAsync<AuditSiteIdRow>(
-                "SELECT AuditId, SiteId FROM AuditSiteAudits");
-            var serviceRows = await connection.QueryAsync<AuditServiceIdRow>(
-                "SELECT AuditId, ServiceId FROM AuditServices");
-
-            var siteMap = siteRows
-                .GroupBy(row => row.AuditId)
-                .ToDictionary(g => g.Key, g => g.Select(r => r.SiteId).Distinct().ToList());
-
-            var serviceMap = serviceRows
-                .GroupBy(row => row.AuditId)
-                .ToDictionary(g => g.Key, g => g.Select(r => r.ServiceId).Distinct().ToList());
-
-            return audits.Select(row => new AuditListResponse
+            return audits.Select(a => new AuditListResponse
             {
-                AuditId = row.AuditId,
-                CompanyId = row.CompanyId ?? 0,
-                Status = row.Status,
-                StartDate = row.StartDate,
-                EndDate = row.EndDate,
-                LeadAuditor = row.LeadAuditor,
-                Type = row.Type,
-                Sites = siteMap.TryGetValue(row.AuditId, out var sites) ? sites : new List<int>(),
-                Services = serviceMap.TryGetValue(row.AuditId, out var services) ? services : new List<int>()
+                AuditId    = a.AuditId,
+                CompanyId  = a.CompanyId ?? 0,
+                Status     = a.Status,
+                StartDate  = a.StartDate,
+                EndDate    = a.EndDate,
+                LeadAuditor= a.LeadAuditor,
+                Type       = a.Type,
+                Sites      = a.AuditSites.Select(s => s.SiteId).Distinct().ToList(),
+                Services   = a.AuditServices.Select(s => s.ServiceId).Distinct().ToList()
             }).ToList();
         }
 
         public async Task<AuditDetailResponse?> GetAuditDetailsAsync(int auditId)
         {
-            using var connection = _context.CreateConnection();
-            var result = await connection.QueryFirstOrDefaultAsync<AuditDetailRow>(
-                "Sp_GetAuditDetails",
-                new { auditId },
-                commandType: CommandType.StoredProcedure);
+            var audit = await _db.Audits
+                .Include(a => a.AuditSites)
+                .Include(a => a.AuditTeamMembers)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(a => a.AuditId == auditId);
 
-            if (result == null || result.AuditId == null)
-            {
-                return null;
-            }
+            if (audit == null) return null;
 
-            var services = await GetAuditServiceNamesAsync(connection, auditId);
-            var auditorTeam = string.IsNullOrWhiteSpace(result.LeadAuditor)
+            // Resolve real site names from the Sites table
+            var siteIds = audit.AuditSites.Select(s => s.SiteId).Distinct().ToList();
+            var sites = siteIds.Any()
+                ? await _db.Sites.Where(s => siteIds.Contains(s.SiteId)).AsNoTracking().ToListAsync()
+                : new List<SiteInfo>();
+
+            var siteNames     = sites.Any()
+                ? string.Join(", ", sites.Select(s => s.SiteName))
+                : (audit.Sites ?? "N/A");
+            var siteAddresses = sites.Any()
+                ? string.Join(", ", sites.Select(s => s.Location ?? s.SiteName))
+                : (audit.Sites ?? "N/A");
+
+            // Service names come from the plain-text Services column ("ISO 9001, ISO 14001")
+            var serviceNames = string.IsNullOrWhiteSpace(audit.Services)
                 ? new List<string>()
-                : new List<string> { result.LeadAuditor };
+                : audit.Services.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+
+            // Auditor team: lead + active team-member roles
+            var team = new List<string>();
+            if (!string.IsNullOrWhiteSpace(audit.LeadAuditor))
+                team.Add(audit.LeadAuditor);
+            foreach (var tm in audit.AuditTeamMembers.Where(m => m.IsActive))
+            {
+                var label = string.IsNullOrWhiteSpace(tm.Role) ? $"User {tm.UserId}" : tm.Role;
+                if (!team.Contains(label)) team.Add(label);
+            }
 
             return new AuditDetailResponse
             {
-                AuditId = result.AuditId.Value,
-                EndDate = result.EndDate,
-                LeadAuditor = result.LeadAuditor,
-                SiteAddress = result.SiteAddress,
-                SiteName = result.SiteName,
-                StartDate = result.StartDate,
-                Status = result.Status,
-                Services = services,
-                AuditorTeam = auditorTeam
+                AuditId     = audit.AuditId,
+                EndDate     = audit.EndDate?.ToString("yyyy-MM-dd"),
+                LeadAuditor = audit.LeadAuditor,
+                SiteAddress = siteAddresses,
+                SiteName    = siteNames,
+                StartDate   = audit.StartDate?.ToString("yyyy-MM-dd"),
+                Status      = audit.Status,
+                Services    = serviceNames,
+                AuditorTeam = team
             };
         }
 
         public async Task<IReadOnlyList<AuditFindingListResponse>> GetAuditFindingsAsync(int auditId)
         {
-            using var connection = _context.CreateConnection();
-            var rows = await connection.QueryAsync<AuditFindingRow>(
-                "Sp_GetAuditFindingList",
-                new { auditId },
-                commandType: CommandType.StoredProcedure);
+            var audit = await _db.Audits.Include(a => a.AuditSites)
+                .AsNoTracking().FirstOrDefaultAsync(a => a.AuditId == auditId);
+            if (audit == null) return new List<AuditFindingListResponse>();
 
-            return rows.Select(row => new AuditFindingListResponse
+            var siteIds   = audit.AuditSites.Select(s => s.SiteId).Distinct().ToList();
+            var companyId = audit.CompanyId ?? 0;
+            if (!siteIds.Any() || companyId == 0) return new List<AuditFindingListResponse>();
+
+            var siteIdCsv = string.Join(",", siteIds.Select(id => id.ToString()));
+            var sql = $@"SELECT FindingId, FindingNumber, ISNULL(Title,'') AS Title,
+                         ISNULL(Status,'') AS Status, ISNULL(Category,'') AS Category,
+                         ISNULL(CompanyId,0) AS CompanyId, ISNULL(SiteId,0) AS SiteId,
+                         OpenDate, DueDate, AcceptedDate, ClosedDate
+                         FROM Findings
+                         WHERE CompanyId = {companyId} AND SiteId IN ({siteIdCsv})";
+
+            var conn    = _db.Database.GetDbConnection();
+            var wasOpen = conn.State == System.Data.ConnectionState.Open;
+            if (!wasOpen) await conn.OpenAsync();
+            try
             {
-                AcceptedDate = row.AcceptedDate,
-                AuditId = row.AuditId,
-                Category = row.Category,
-                CompanyId = row.CompanyId,
-                ClosedDate = row.ClosedDate,
-                DueDate = row.DueDate,
-                FindingNumber = row.FindingNumber,
-                FindingsId = row.FindingsId,
-                OpenDate = row.OpenDate,
-                Services = SplitList(row.Services),
-                SiteId = row.SiteId,
-                Status = row.Status,
-                Title = row.Title
-            }).ToList();
+                using var cmd    = conn.CreateCommand();
+                cmd.CommandText  = sql;
+                using var reader = await cmd.ExecuteReaderAsync();
+                var results = new List<AuditFindingListResponse>();
+                while (await reader.ReadAsync())
+                {
+                    results.Add(new AuditFindingListResponse
+                    {
+                        FindingsId    = reader.GetInt32(0),
+                        FindingNumber = reader.IsDBNull(1)  ? "" : reader.GetString(1),
+                        Title         = reader.IsDBNull(2)  ? "" : reader.GetString(2),
+                        Status        = reader.IsDBNull(3)  ? "" : reader.GetString(3),
+                        Category      = reader.IsDBNull(4)  ? "" : reader.GetString(4),
+                        CompanyId     = reader.IsDBNull(5)  ? 0  : reader.GetInt32(5),
+                        SiteId        = reader.IsDBNull(6)  ? 0  : reader.GetInt32(6),
+                        OpenDate      = reader.IsDBNull(7)  ? null : reader.GetDateTime(7).ToString("yyyy-MM-dd"),
+                        DueDate       = reader.IsDBNull(8)  ? null : reader.GetDateTime(8).ToString("yyyy-MM-dd"),
+                        AcceptedDate  = reader.IsDBNull(9)  ? null : reader.GetDateTime(9).ToString("yyyy-MM-dd"),
+                        ClosedDate    = reader.IsDBNull(10) ? null : reader.GetDateTime(10).ToString("yyyy-MM-dd"),
+                        AuditId       = auditId,
+                        Services      = new List<string>()
+                    });
+                }
+                return results;
+            }
+            finally { if (!wasOpen) await conn.CloseAsync(); }
         }
 
         public async Task<IReadOnlyList<AuditSiteResponse>> GetAuditSitesAsync(int auditId)
         {
-            using var connection = _context.CreateConnection();
-            var rows = await connection.QueryAsync<AuditSiteResponse>(
-                "Sp_GetAuditSites",
-                new { auditId },
-                commandType: CommandType.StoredProcedure);
+            var siteIds = await _db.AuditSites
+                .Where(s => s.AuditId == auditId)
+                .Select(s => s.SiteId)
+                .Distinct()
+                .ToListAsync();
 
-            return rows.ToList();
+            var sites = siteIds.Any()
+                ? await _db.Sites.Where(s => siteIds.Contains(s.SiteId)).AsNoTracking().ToListAsync()
+                : new List<SiteInfo>();
+
+            return sites.Select(s =>
+            {
+                var parts   = (s.Location ?? "").Split(',', 2);
+                var city    = parts.Length > 0 ? parts[0].Trim() : "";
+                var country = parts.Length > 1 ? parts[1].Trim() : "";
+                return new AuditSiteResponse
+                {
+                    SiteName    = s.SiteName,
+                    AddressLine = s.Location ?? "N/A",
+                    City        = city,
+                    Country     = country,
+                    PostCode    = string.Empty
+                };
+            }).ToList();
         }
 
         public async Task<IReadOnlyList<SubAuditResponse>> GetSubAuditsAsync(int auditId)
         {
-            using var connection = _context.CreateConnection();
-            var rows = await connection.QueryAsync<SubAuditRow>(
-                "Sp_GetSubAudits",
-                new { auditId },
-                commandType: CommandType.StoredProcedure);
+            var siteAudits = await _db.AuditSiteAudits
+                .Where(sa => sa.AuditId == auditId)
+                .AsNoTracking()
+                .ToListAsync();
 
-            return rows.Select(row => new SubAuditResponse
+            var parentAudit = await _db.Audits.AsNoTracking().FirstOrDefaultAsync(a => a.AuditId == auditId);
+
+            return siteAudits.Select(sa => new SubAuditResponse
             {
-                AuditId = row.AuditId,
-                Sites = SplitIntList(row.Sites),
-                Services = SplitIntList(row.Services),
-                Status = row.Status,
-                StartDate = row.StartDate,
-                EndDate = row.EndDate,
-                AuditorTeam = SplitList(row.AuditorTeam)
+                AuditId     = sa.AuditId,
+                Sites       = new List<int> { sa.SiteId },
+                Services    = new List<int> { sa.AuditTypeId },
+                Status      = sa.Status,
+                StartDate   = sa.StartDate?.ToString("yyyy-MM-dd"),
+                EndDate     = sa.EndDate?.ToString("yyyy-MM-dd"),
+                AuditorTeam = sa.LeadAuditorId.HasValue && parentAudit != null
+                    ? new List<string> { parentAudit.LeadAuditor ?? $"Auditor {sa.LeadAuditorId}" }
+                    : new List<string>()
             }).ToList();
         }
 
-        public async Task<ApiResponse<AuditDaysGridResponse>> GetAuditDaysGridAsync(string startDate, string endDate, List<int> companies, List<string> services, List<int> sites)
+        public async Task<ApiResponse<AuditDaysGridResponse>> GetAuditDaysGridAsync(
+            string startDate, string endDate, List<int> companies, List<string> services, List<int> sites)
         {
-            using var connection = _context.CreateConnection();
-            var row = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                "Sp_GetAuditDaysGrid",
-                new
-                {
-                    startDate,
-                    endDate,
-                    companies = JsonSerializer.Serialize(companies),
-                    services = JsonSerializer.Serialize(services),
-                    sites = JsonSerializer.Serialize(sites)
-                },
-                commandType: CommandType.StoredProcedure);
+            DateTime.TryParse(startDate, out var start);
+            DateTime.TryParse(endDate, out var end);
 
-            return ParseJsonResponse<AuditDaysGridResponse>(row, "Audit days grid not available");
+            var query = _db.AuditSiteAudits
+                .Where(sa => sa.StartDate >= start && sa.EndDate <= end);
+
+            if (companies.Any())
+                query = query.Where(sa => _db.Audits.Any(a => a.AuditId == sa.AuditId && companies.Contains(a.CompanyId ?? 0)));
+
+            if (sites.Any())
+                query = query.Where(sa => sites.Contains(sa.SiteId));
+
+            var rows = await query.AsNoTracking().ToListAsync();
+
+            var gridSiteIds = rows.Select(r => r.SiteId).Distinct().ToList();
+            var siteNameMap = gridSiteIds.Any()
+                ? (await _db.Sites.Where(s => gridSiteIds.Contains(s.SiteId)).AsNoTracking().ToListAsync())
+                  .ToDictionary(s => s.SiteId, s => s.SiteName)
+                : new Dictionary<int, string>();
+
+            var nodes = rows
+                .GroupBy(sa => sa.SiteId)
+                .Select(g => new AuditDaysGridNode
+                {
+                    Data = new AuditDaysGridNodeData
+                    {
+                        Id       = g.Key,
+                        Name     = siteNameMap.TryGetValue(g.Key, out var sn) ? sn : $"Site {g.Key}",
+                        AuditDays= g.Sum(sa => sa.StartDate.HasValue && sa.EndDate.HasValue
+                                            ? (decimal)(sa.EndDate.Value - sa.StartDate.Value).TotalDays
+                                            : 0),
+                        DataType = "site"
+                    }
+                }).ToList();
+
+            return new ApiResponse<AuditDaysGridResponse>
+            {
+                Data      = new AuditDaysGridResponse { Data = nodes },
+                IsSuccess = true,
+                Message   = "Success",
+                ErrorCode = string.Empty
+            };
         }
 
         public async Task<ApiResponse<AuditDaysByServiceResponse>> GetAuditDaysByServiceAsync(AuditDaysFilter filters)
         {
-            using var connection = _context.CreateConnection();
-            var row = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                "Sp_GetAuditDaysByService",
-                new
-                {
-                    startDate = filters.StartDate,
-                    endDate = filters.EndDate,
-                    companies = JsonSerializer.Serialize(filters.Companies),
-                    services = JsonSerializer.Serialize(filters.Services),
-                    sites = JsonSerializer.Serialize(filters.Sites)
-                },
-                commandType: CommandType.StoredProcedure);
+            DateTime.TryParse(filters.StartDate, out var start);
+            DateTime.TryParse(filters.EndDate, out var end);
 
-            return ParseJsonResponse<AuditDaysByServiceResponse>(row, "Audit days by service not available");
+            var siteAudits = await _db.AuditSiteAudits
+                .Include(sa => sa.AuditTypeNavigation)
+                .Where(sa => (!sa.StartDate.HasValue || sa.StartDate >= start)
+                          && (!sa.EndDate.HasValue   || sa.EndDate   <= end))
+                .AsNoTracking()
+                .ToListAsync();
+
+            var total = siteAudits.Sum(sa => sa.StartDate.HasValue && sa.EndDate.HasValue
+                                           ? (decimal)(sa.EndDate.Value - sa.StartDate.Value).TotalDays : 0);
+
+            var items = siteAudits
+                .GroupBy(sa => sa.AuditTypeId)
+                .Select(g =>
+                {
+                    var days     = g.Sum(sa => sa.StartDate.HasValue && sa.EndDate.HasValue
+                                        ? (decimal)(sa.EndDate.Value - sa.StartDate.Value).TotalDays : 0);
+                    var typeName = g.First().AuditTypeNavigation?.AuditTypeName ?? $"AuditType {g.Key}";
+                    return new AuditDaysByServiceItem
+                    {
+                        ServiceName      = typeName,
+                        AuditDays        = days,
+                        AuditPercentage  = total > 0 ? (int)Math.Round(days / total * 100) : 0
+                    };
+                }).ToList();
+
+            return new ApiResponse<AuditDaysByServiceResponse>
+            {
+                Data      = new AuditDaysByServiceResponse { PieChartData = items, TotalServiceAuditsDayCount = total },
+                IsSuccess = true,
+                Message   = "Success",
+                ErrorCode = string.Empty
+            };
         }
 
         public async Task<ApiResponse<AuditDaysByMonthAndServiceResponse>> GetAuditDaysByMonthAndServiceAsync(AuditDaysByMonthFilter filters)
         {
-            using var connection = _context.CreateConnection();
-            var row = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                "Sp_GetAuditDaysByMonthAndService",
-                new
+            DateTime.TryParse(filters.StartDate, out var start);
+            DateTime.TryParse(filters.EndDate, out var end);
+
+            var siteAudits = await _db.AuditSiteAudits
+                .Include(sa => sa.AuditTypeNavigation)
+                .Where(sa => (!sa.StartDate.HasValue || sa.StartDate >= start)
+                          && (!sa.EndDate.HasValue   || sa.EndDate   <= end))
+                .AsNoTracking()
+                .ToListAsync();
+
+            var chartData = siteAudits
+                .Where(sa => sa.StartDate.HasValue)
+                .GroupBy(sa => new { sa.StartDate!.Value.Year, sa.StartDate.Value.Month })
+                .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+                .Select(g =>
                 {
-                    startDate = filters.StartDate,
-                    endDate = filters.EndDate,
-                    companyFilter = JsonSerializer.Serialize(filters.CompanyFilter),
-                    serviceFilter = JsonSerializer.Serialize(filters.ServiceFilter),
-                    siteFilter = JsonSerializer.Serialize(filters.SiteFilter)
-                },
-                commandType: CommandType.StoredProcedure);
-
-            return ParseJsonResponse<AuditDaysByMonthAndServiceResponse>(row, "Audit days by month and service not available");
-        }
-
-        private static List<string> SplitList(string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return new List<string>();
-            }
-
-            return value
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .ToList();
-        }
-
-        private static List<int> SplitIntList(string? value)
-        {
-            return SplitList(value)
-                .Select(item => int.TryParse(item, out var id) ? id : 0)
-                .Where(id => id > 0)
-                .ToList();
-        }
-
-        private async Task<List<string>> GetAuditServiceNamesAsync(IDbConnection connection, int auditId)
-        {
-            var rows = await connection.QueryAsync<string>(
-                "SELECT DISTINCT s.ServiceName FROM AuditServices a JOIN Services s ON a.ServiceId = s.ServiceId WHERE a.AuditId = @auditId",
-                new { auditId });
-
-            return rows.ToList();
-        }
-
-        private static ApiResponse<T> ParseJsonResponse<T>(object? row, string fallbackMessage)
-        {
-            if (row is IDictionary<string, object> dict)
-            {
-                if (dict.TryGetValue("JsonResponse", out var jsonValue) && jsonValue != null)
-                {
-                    return DeserializeApiResponse<T>(jsonValue.ToString(), fallbackMessage);
-                }
-
-                if (dict.TryGetValue("data", out var dataValue) && dataValue != null)
-                {
-                    var dataJson = dataValue.ToString();
-                    if (!string.IsNullOrWhiteSpace(dataJson) && dataJson.TrimStart().StartsWith("{"))
-                    {
-                        var data = JsonSerializer.Deserialize<T>(dataJson, JsonOptions());
-                        return new ApiResponse<T>
+                    var monthCount = g.Sum(sa => sa.StartDate.HasValue && sa.EndDate.HasValue
+                                              ? (decimal)(sa.EndDate.Value - sa.StartDate.Value).TotalDays : 0);
+                    var serviceData = g.GroupBy(sa => sa.AuditTypeId)
+                        .Select(sg => new AuditDaysServiceData
                         {
-                            Data = data,
-                            IsSuccess = true,
-                            Message = dict.TryGetValue("message", out var message) ? message?.ToString() : "",
-                            ErrorCode = dict.TryGetValue("errorCode", out var errorCode) ? errorCode?.ToString() : ""
-                        };
-                    }
-                }
-            }
+                            ServiceName = sg.First().AuditTypeNavigation?.AuditTypeName ?? $"AuditType {sg.Key}",
+                            AuditDays   = sg.Sum(sa => sa.StartDate.HasValue && sa.EndDate.HasValue
+                                                     ? (decimal)(sa.EndDate.Value - sa.StartDate.Value).TotalDays : 0)
+                        }).ToList();
 
-            return new ApiResponse<T>
+                    return new AuditDaysMonthData
+                    {
+                        Month       = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM yyyy"),
+                        MonthCount  = monthCount,
+                        ServiceData = serviceData
+                    };
+                }).ToList();
+
+            return new ApiResponse<AuditDaysByMonthAndServiceResponse>
             {
-                Data = default,
-                IsSuccess = false,
-                Message = fallbackMessage,
-                ErrorCode = "NOT_IMPLEMENTED"
+                Data      = new AuditDaysByMonthAndServiceResponse { ChartData = chartData },
+                IsSuccess = true,
+                Message   = "Success",
+                ErrorCode = string.Empty
             };
         }
 
-        private static ApiResponse<T> DeserializeApiResponse<T>(string? json, string fallbackMessage)
-        {
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return new ApiResponse<T>
-                {
-                    Data = default,
-                    IsSuccess = false,
-                    Message = fallbackMessage,
-                    ErrorCode = "EMPTY_RESPONSE"
-                };
-            }
-
-            try
-            {
-                var response = JsonSerializer.Deserialize<ApiResponse<T>>(json, JsonOptions());
-                if (response != null)
-                {
-                    return response;
-                }
-            }
-            catch
-            {
-            }
-
-            return new ApiResponse<T>
-            {
-                Data = default,
-                IsSuccess = false,
-                Message = fallbackMessage,
-                ErrorCode = "PARSE_ERROR"
-            };
-        }
-
-        private static JsonSerializerOptions JsonOptions()
-        {
-            return new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-        }
-
-        private sealed class AuditListRow
-        {
-            public int AuditId { get; set; }
-            public int? CompanyId { get; set; }
-            public string? Status { get; set; }
-            public DateTime? StartDate { get; set; }
-            public DateTime? EndDate { get; set; }
-            public string? LeadAuditor { get; set; }
-            public string? Type { get; set; }
-        }
-
-        private sealed class AuditSiteIdRow
-        {
-            public int AuditId { get; set; }
-            public int SiteId { get; set; }
-        }
-
-        private sealed class AuditServiceIdRow
-        {
-            public int AuditId { get; set; }
-            public int ServiceId { get; set; }
-        }
-
-        private sealed class AuditDetailRow
-        {
-            public int? AuditId { get; set; }
-            public string? EndDate { get; set; }
-            public string? LeadAuditor { get; set; }
-            public string? SiteAddress { get; set; }
-            public string? SiteName { get; set; }
-            public string? StartDate { get; set; }
-            public string? Status { get; set; }
-        }
-
-        private sealed class AuditFindingRow
-        {
-            public string? AcceptedDate { get; set; }
-            public int AuditId { get; set; }
-            public string? Category { get; set; }
-            public int CompanyId { get; set; }
-            public string? ClosedDate { get; set; }
-            public string? DueDate { get; set; }
-            public string? FindingNumber { get; set; }
-            public int FindingsId { get; set; }
-            public string? OpenDate { get; set; }
-            public string? Services { get; set; }
-            public int SiteId { get; set; }
-            public string? Status { get; set; }
-            public string? Title { get; set; }
-        }
-
-        private sealed class SubAuditRow
-        {
-            public int AuditId { get; set; }
-            public string? Sites { get; set; }
-            public string? Services { get; set; }
-            public string? Status { get; set; }
-            public string? StartDate { get; set; }
-            public string? EndDate { get; set; }
-            public string? AuditorTeam { get; set; }
-        }
     }
 }

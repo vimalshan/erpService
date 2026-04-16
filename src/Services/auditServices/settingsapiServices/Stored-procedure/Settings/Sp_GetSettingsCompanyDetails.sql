@@ -3,7 +3,7 @@
 -- Create date: 2025-09-19
 -- Description: Get settings company details for user including parent company and legal entities
 -- =============================================
-CREATE PROCEDURE [dbo].[Sp_GetSettingsCompanyDetails]
+CREATE OR ALTER PROCEDURE [dbo].[Sp_GetSettingsCompanyDetails]
     @Parameters NVARCHAR(MAX)
 AS
 BEGIN

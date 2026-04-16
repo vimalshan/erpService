@@ -3,7 +3,7 @@
 -- Create date: 2025-09-19
 -- Description: Get settings member list with company, service, and location access details
 -- =============================================
-CREATE PROCEDURE [dbo].[Sp_GetSettingsMemberList]
+CREATE OR ALTER PROCEDURE [dbo].[Sp_GetSettingsMemberList]
     @Parameters NVARCHAR(MAX)
 AS
 BEGIN

@@ -3,7 +3,7 @@
 -- Create date: 2025-09-19
 -- Description: Get settings admin list with company access and permissions
 -- =============================================
-CREATE PROCEDURE [dbo].[Sp_GetSettingsAdminList]
+CREATE OR ALTER PROCEDURE [dbo].[Sp_GetSettingsAdminList]
     @Parameters NVARCHAR(MAX)
 AS
 BEGIN

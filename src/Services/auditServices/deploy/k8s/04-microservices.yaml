@@ -1,0 +1,746 @@
+---
+# ════════════════════════════════════════════════════════════════
+# ACTION SERVICE
+# ════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-action-service
+  namespace: erp
+  labels:
+    app: erp-action-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: erp-action-service
+  template:
+    metadata:
+      labels:
+        app: erp-action-service
+    spec:
+      containers:
+        - name: action-service
+          image: your-registry.azurecr.io/erp-action-service:latest   # REPLACE registry
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: erp-common-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: connection-string-action
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-action-service
+  namespace: erp
+spec:
+  selector:
+    app: erp-action-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+# ════════════════════════════════════════════════════════════════
+# AUDIT SERVICE
+# ════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-audit-service
+  namespace: erp
+  labels:
+    app: erp-audit-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: erp-audit-service
+  template:
+    metadata:
+      labels:
+        app: erp-audit-service
+    spec:
+      containers:
+        - name: audit-service
+          image: your-registry.azurecr.io/erp-audit-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: erp-common-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: connection-string-audit
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-audit-service
+  namespace: erp
+spec:
+  selector:
+    app: erp-audit-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+# ════════════════════════════════════════════════════════════════
+# CERTIFICATE SERVICE
+# ════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-certificate-service
+  namespace: erp
+  labels:
+    app: erp-certificate-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: erp-certificate-service
+  template:
+    metadata:
+      labels:
+        app: erp-certificate-service
+    spec:
+      containers:
+        - name: certificate-service
+          image: your-registry.azurecr.io/erp-certificate-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: erp-common-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: connection-string-certificate
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-certificate-service
+  namespace: erp
+spec:
+  selector:
+    app: erp-certificate-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+# ════════════════════════════════════════════════════════════════
+# CONTRACT SERVICE
+# ════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-contract-service
+  namespace: erp
+  labels:
+    app: erp-contract-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: erp-contract-service
+  template:
+    metadata:
+      labels:
+        app: erp-contract-service
+    spec:
+      containers:
+        - name: contract-service
+          image: your-registry.azurecr.io/erp-contract-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: erp-common-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: connection-string-contract
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-contract-service
+  namespace: erp
+spec:
+  selector:
+    app: erp-contract-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+# ════════════════════════════════════════════════════════════════
+# FINANCE SERVICE
+# ════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-finance-service
+  namespace: erp
+  labels:
+    app: erp-finance-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: erp-finance-service
+  template:
+    metadata:
+      labels:
+        app: erp-finance-service
+    spec:
+      containers:
+        - name: finance-service
+          image: your-registry.azurecr.io/erp-finance-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: erp-common-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: connection-string-finance
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-finance-service
+  namespace: erp
+spec:
+  selector:
+    app: erp-finance-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+# ════════════════════════════════════════════════════════════════
+# FINDINGS SERVICE
+# ════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-findings-service
+  namespace: erp
+  labels:
+    app: erp-findings-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: erp-findings-service
+  template:
+    metadata:
+      labels:
+        app: erp-findings-service
+    spec:
+      containers:
+        - name: findings-service
+          image: your-registry.azurecr.io/erp-findings-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: erp-common-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: connection-string-findings
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-findings-service
+  namespace: erp
+spec:
+  selector:
+    app: erp-findings-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+# ════════════════════════════════════════════════════════════════
+# NOTIFICATION SERVICE
+# ════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-notification-service
+  namespace: erp
+  labels:
+    app: erp-notification-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: erp-notification-service
+  template:
+    metadata:
+      labels:
+        app: erp-notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: your-registry.azurecr.io/erp-notification-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: erp-common-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: connection-string-notification
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-notification-service
+  namespace: erp
+spec:
+  selector:
+    app: erp-notification-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+# ════════════════════════════════════════════════════════════════
+# SCHEDULE SERVICE
+# ════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-schedule-service
+  namespace: erp
+  labels:
+    app: erp-schedule-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: erp-schedule-service
+  template:
+    metadata:
+      labels:
+        app: erp-schedule-service
+    spec:
+      containers:
+        - name: schedule-service
+          image: your-registry.azurecr.io/erp-schedule-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: erp-common-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: connection-string-schedule
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-schedule-service
+  namespace: erp
+spec:
+  selector:
+    app: erp-schedule-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+# ════════════════════════════════════════════════════════════════
+# SETTINGS SERVICE
+# ════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-settings-service
+  namespace: erp
+  labels:
+    app: erp-settings-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: erp-settings-service
+  template:
+    metadata:
+      labels:
+        app: erp-settings-service
+    spec:
+      containers:
+        - name: settings-service
+          image: your-registry.azurecr.io/erp-settings-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: erp-common-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: connection-string-settings
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: password
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-settings-service
+  namespace: erp
+spec:
+  selector:
+    app: erp-settings-service
+  ports:
+    - port: 8080
+      targetPort: 8080

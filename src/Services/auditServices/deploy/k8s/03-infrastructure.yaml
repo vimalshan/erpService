@@ -1,0 +1,194 @@
+---
+# ── PVC for SQL Server data ───────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sqlserver-pvc
+  namespace: erp
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard      # adjust to your cluster's storage class
+
+---
+# ── PVC for RabbitMQ data ─────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rabbitmq-pvc
+  namespace: erp
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+
+---
+# ── SQL Server StatefulSet ────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: erp-sqlserver
+  namespace: erp
+  labels:
+    app: erp-sqlserver
+spec:
+  serviceName: erp-sqlserver
+  replicas: 1
+  selector:
+    matchLabels:
+      app: erp-sqlserver
+  template:
+    metadata:
+      labels:
+        app: erp-sqlserver
+    spec:
+      containers:
+        - name: sqlserver
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          ports:
+            - containerPort: 1433
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: SA_PASSWORD
+            - name: MSSQL_PID
+              value: "Developer"
+          volumeMounts:
+            - name: sqlserver-data
+              mountPath: /var/opt/mssql
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -Q 'SELECT 1' -C -b -o /dev/null"
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 10
+          livenessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -Q 'SELECT 1' -C -b -o /dev/null"
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 5
+      volumes:
+        - name: sqlserver-data
+          persistentVolumeClaim:
+            claimName: sqlserver-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-sqlserver
+  namespace: erp
+spec:
+  selector:
+    app: erp-sqlserver
+  ports:
+    - port: 1433
+      targetPort: 1433
+  clusterIP: None      # headless for StatefulSet
+
+---
+# ── RabbitMQ StatefulSet ──────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: erp-rabbitmq
+  namespace: erp
+  labels:
+    app: erp-rabbitmq
+spec:
+  serviceName: erp-rabbitmq
+  replicas: 1
+  selector:
+    matchLabels:
+      app: erp-rabbitmq
+  template:
+    metadata:
+      labels:
+        app: erp-rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3.13-management-alpine
+          ports:
+            - containerPort: 5672
+            - containerPort: 15672
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: username
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: password
+            - name: RABBITMQ_DEFAULT_VHOST
+              value: "erp"
+          volumeMounts:
+            - name: rabbitmq-data
+              mountPath: /var/lib/rabbitmq
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "-q", "ping"]
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 10
+          livenessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "-q", "ping"]
+            initialDelaySeconds: 60
+            periodSeconds: 30
+      volumes:
+        - name: rabbitmq-data
+          persistentVolumeClaim:
+            claimName: rabbitmq-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-rabbitmq
+  namespace: erp
+spec:
+  selector:
+    app: erp-rabbitmq
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: 5672
+    - name: management
+      port: 15672
+      targetPort: 15672
+  clusterIP: None

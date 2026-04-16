@@ -47,14 +47,21 @@ namespace FindingsAPI.Gateway.Services
                 return cachedFindings;
             }
 
-            // Try distributed cache
-            var distributedCached = await _distributedCache.GetStringAsync(cacheKey);
-            if (!string.IsNullOrEmpty(distributedCached))
+            // Try distributed cache (graceful fallback if unavailable)
+            try
             {
-                var findings = JsonSerializer.Deserialize<IEnumerable<Finding>>(distributedCached);
-                _memoryCache.Set(cacheKey, findings, TimeSpan.FromMinutes(5));
-                _logger.LogDebug("Distributed cache hit for findings query");
-                return findings;
+                var distributedCached = await _distributedCache.GetStringAsync(cacheKey);
+                if (!string.IsNullOrEmpty(distributedCached))
+                {
+                    var findings = JsonSerializer.Deserialize<IEnumerable<Finding>>(distributedCached);
+                    _memoryCache.Set(cacheKey, findings, TimeSpan.FromMinutes(5));
+                    _logger.LogDebug("Distributed cache hit for findings query");
+                    return findings;
+                }
+            }
+            catch (Exception cacheEx)
+            {
+                _logger.LogWarning(cacheEx, "Distributed cache unavailable, falling back to database");
             }
 
             try
@@ -75,10 +82,8 @@ namespace FindingsAPI.Gateway.Services
 
                 // Cache for 5 minutes
                 _memoryCache.Set(cacheKey, findings, TimeSpan.FromMinutes(5));
-                await _distributedCache.SetStringAsync(cacheKey, JsonSerializer.Serialize(findings), new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
-                });
+                try { await _distributedCache.SetStringAsync(cacheKey, JsonSerializer.Serialize(findings), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) }); }
+                catch (Exception cacheEx) { _logger.LogWarning(cacheEx, "Could not write to distributed cache"); }
 
                 return findings;
             }
@@ -100,14 +105,21 @@ namespace FindingsAPI.Gateway.Services
                 return cachedFinding;
             }
 
-            // Try distributed cache
-            var distributedCached = await _distributedCache.GetStringAsync(cacheKey);
-            if (!string.IsNullOrEmpty(distributedCached))
+            // Try distributed cache (graceful fallback if unavailable)
+            try
             {
-                var finding = JsonSerializer.Deserialize<Finding>(distributedCached);
-                _memoryCache.Set(cacheKey, finding, TimeSpan.FromMinutes(2));
-                _logger.LogDebug("Distributed cache hit for finding {Id}", id);
-                return finding;
+                var distributedCached = await _distributedCache.GetStringAsync(cacheKey);
+                if (!string.IsNullOrEmpty(distributedCached))
+                {
+                    var finding = JsonSerializer.Deserialize<Finding>(distributedCached);
+                    _memoryCache.Set(cacheKey, finding, TimeSpan.FromMinutes(2));
+                    _logger.LogDebug("Distributed cache hit for finding {Id}", id);
+                    return finding;
+                }
+            }
+            catch (Exception cacheEx)
+            {
+                _logger.LogWarning(cacheEx, "Distributed cache unavailable, falling back to database");
             }
 
             try
@@ -127,10 +139,8 @@ namespace FindingsAPI.Gateway.Services
 
                 // Cache for 2 minutes
                 _memoryCache.Set(cacheKey, finding, TimeSpan.FromMinutes(2));
-                await _distributedCache.SetStringAsync(cacheKey, JsonSerializer.Serialize(finding), new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2)
-                });
+                try { await _distributedCache.SetStringAsync(cacheKey, JsonSerializer.Serialize(finding), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2) }); }
+                catch (Exception cacheEx) { _logger.LogWarning(cacheEx, "Could not write to distributed cache"); }
 
                 return finding;
             }
@@ -147,25 +157,28 @@ namespace FindingsAPI.Gateway.Services
             {
                 var finding = new Finding
                 {
-                    Title = command.Title,
-                    Category = command.Category,
-                    CompanyId = command.CompanyId,
+                    FindingNumber = command.FindingNumber ?? $"FND-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                    AuditId = command.AuditId,
                     SiteId = command.SiteId,
-                    Services = command.Services,
-                    Description = command.Description,
+                    Title = command.Title,
+                    Description = command.Description ?? string.Empty,
+                    FindingType = command.FindingType ?? "Observation",
                     Severity = command.Severity,
+                    FindingStatusId = command.FindingStatusId > 0 ? command.FindingStatusId : 1,
+                    FindingCategoryId = command.FindingCategoryId,
+                    IdentifiedDate = command.IdentifiedDate == default ? DateTime.UtcNow : command.IdentifiedDate,
+                    IsActive = true,
+                    CreatedDate = DateTime.UtcNow,
+                    ModifiedDate = DateTime.UtcNow,
                     CreatedBy = command.CreatedBy,
-                    Status = "Open", // Default status
-                    OpenDate = DateTime.UtcNow,
-                    // Set other properties as needed
+                    ModifiedBy = command.ModifiedBy,
+                    IdentifiedBy = command.IdentifiedBy,
                 };
 
                 await _unitOfWork.Findings.AddAsync(finding);
                 await _unitOfWork.SaveChangesAsync();
 
-                // Invalidate relevant caches
                 InvalidateFindingsCache();
-
                 return finding;
             }
             catch (Exception ex)
@@ -185,10 +198,15 @@ namespace FindingsAPI.Gateway.Services
                     throw new System.Collections.Generic.KeyNotFoundException($"Finding with ID {command.FindingId} not found");
                 }
 
-                finding.Status = command.Status;
-                finding.Response = command.Response;
+                if (finding.Title != null && command.Title != null) finding.Title = command.Title;
+                if (command.Description != null) finding.Description = command.Description;
+                if (command.FindingType != null) finding.FindingType = command.FindingType;
+                if (command.Severity != null) finding.Severity = command.Severity;
+                if (command.FindingStatusId > 0) finding.FindingStatusId = command.FindingStatusId;
+                if (command.FindingCategoryId.HasValue) finding.FindingCategoryId = command.FindingCategoryId;
                 finding.DueDate = command.DueDate;
-                finding.UpdatedBy = command.UpdatedBy;
+                finding.ModifiedBy = command.ModifiedBy;
+                finding.ModifiedDate = DateTime.UtcNow;
 
                 await _unitOfWork.Findings.UpdateAsync(finding);
                 await _unitOfWork.SaveChangesAsync();
@@ -215,9 +233,10 @@ namespace FindingsAPI.Gateway.Services
                     throw new System.Collections.Generic.KeyNotFoundException($"Finding with ID {command.FindingId} not found");
                 }
 
-                finding.Status = "Closed";
-                finding.ClosureNotes = command.ClosureNotes;
-                finding.ClosedBy = command.ClosedBy;
+                finding.FindingStatusId = 8; // Closed status
+                finding.ClosedDate = DateTime.UtcNow;
+                finding.ModifiedDate = DateTime.UtcNow;
+                finding.ModifiedBy = command.ClosedBy;
 
                 await _unitOfWork.Findings.UpdateAsync(finding);
                 await _unitOfWork.SaveChangesAsync();
@@ -250,9 +269,9 @@ namespace FindingsAPI.Gateway.Services
                         var finding = await _unitOfWork.Findings.GetByIdAsync(findingId);
                         if (finding != null)
                         {
-                            finding.Status = command.NewStatus;
-                            finding.Response = command.Reason;
-                            finding.UpdatedBy = command.UpdatedBy;
+                            // Map status name to FindingStatusId (1=Open, ... 8=Closed by default)
+                            finding.FindingStatusId = command.FindingStatusId > 0 ? command.FindingStatusId : finding.FindingStatusId;
+                            finding.ModifiedDate = DateTime.UtcNow;
 
                             await _unitOfWork.Findings.UpdateAsync(finding);
                             result.UpdatedCount++;

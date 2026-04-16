@@ -1,5 +1,8 @@
+using SettingsService.Application.Commands;
+using SettingsService.Application.DTOs;
 using SettingsService.Models;
 using SettingsService.Services;
+using MediatR;
 
 namespace SettingsService.GraphQL.Mutations
 {
@@ -36,5 +39,25 @@ namespace SettingsService.GraphQL.Mutations
         {
             return _service.UpdateNotificationTemplateAsync(input);
         }
+
+        [GraphQLName("createUser")]
+        public async Task<UserDto> CreateUser([Service] IMediator mediator, CreateUserDto input)
+            => await mediator.Send(new CreateUserCommand(input));
+
+        [GraphQLName("updateUser")]
+        public async Task<UserDto> UpdateUser([Service] IMediator mediator, UpdateUserDto input)
+            => await mediator.Send(new UpdateUserCommand(input));
+
+        [GraphQLName("deactivateUser")]
+        public async Task<bool> DeactivateUser([Service] IMediator mediator, int userId, int? modifiedBy)
+            => await mediator.Send(new DeactivateUserCommand(userId, modifiedBy));
+
+        [GraphQLName("createRole")]
+        public async Task<RoleDto> CreateRole([Service] IMediator mediator, CreateRoleDto input)
+            => await mediator.Send(new CreateRoleCommand(input));
+
+        [GraphQLName("setUserPreference")]
+        public async Task<UserPreferenceDto> SetUserPreference([Service] IMediator mediator, SetUserPreferenceDto input)
+            => await mediator.Send(new SetUserPreferenceCommand(input));
     }
 }

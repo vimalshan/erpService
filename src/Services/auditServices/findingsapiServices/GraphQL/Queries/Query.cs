@@ -4,7 +4,6 @@ using HotChocolate.Authorization;
 
 namespace FindingsAPI.Gateway.GraphQL.Queries
 {
-    [ExtendObjectType("Query")]
     public class Query
     {
         private readonly IFindingService _findingService;

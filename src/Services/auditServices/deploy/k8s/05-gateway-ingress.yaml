@@ -1,0 +1,130 @@
+---
+# ════════════════════════════════════════════════════════════════
+# API GATEWAY Deployment
+# ════════════════════════════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-api-gateway
+  namespace: erp
+  labels:
+    app: erp-api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: erp-api-gateway
+  template:
+    metadata:
+      labels:
+        app: erp-api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: your-registry.azurecr.io/erp-api-gateway:latest   # REPLACE registry
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: erp-gateway-config
+          env:
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+
+---
+# ── Gateway ClusterIP Service ─────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-api-gateway
+  namespace: erp
+spec:
+  selector:
+    app: erp-api-gateway
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ── HorizontalPodAutoscaler for Gateway ───────────────────────────────────────
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: erp-api-gateway-hpa
+  namespace: erp
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: erp-api-gateway
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+---
+# ── Ingress (nginx) ───────────────────────────────────────────────────────────
+# Requires nginx ingress controller:
+#   kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.0/deploy/static/provider/cloud/deploy.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: erp-ingress
+  namespace: erp
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization, Content-Type, X-Correlation-Id"
+    # cert-manager TLS (uncomment when cert-manager is installed)
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  # tls:
+  #   - hosts:
+  #       - api.your-domain.com
+  #     secretName: erp-tls-secret
+  rules:
+    - host: api.your-domain.com    # REPLACE with your domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: erp-api-gateway
+                port:
+                  number: 80

@@ -5,52 +5,46 @@ namespace AuditService.GraphQL.Queries
 {
     public class Query
     {
-        private readonly IAuditService _service;
-
-        public Query(IAuditService service)
-        {
-            _service = service;
-        }
-
         [GraphQLName("viewAudits")]
-        public Task<ApiResponse<List<AuditListResponse>>> ViewAudits()
+        public Task<ApiResponse<List<AuditListResponse>>> ViewAudits([Service] IAuditService service)
         {
-            return _service.GetAuditListAsync();
+            return service.GetAuditListAsync();
         }
 
         [GraphQLName("auditDetails")]
-        public Task<ApiResponse<AuditDetailResponse>> AuditDetails(int auditId)
+        public Task<ApiResponse<AuditDetailResponse>> AuditDetails([Service] IAuditService service, int auditId)
         {
-            return _service.GetAuditDetailsAsync(auditId);
+            return service.GetAuditDetailsAsync(auditId);
         }
 
         [GraphQLName("viewFindings")]
-        public Task<ApiResponse<List<AuditFindingListResponse>>> ViewFindings(int auditId)
+        public Task<ApiResponse<List<AuditFindingListResponse>>> ViewFindings([Service] IAuditService service, int auditId)
         {
-            return _service.GetAuditFindingsAsync(auditId);
+            return service.GetAuditFindingsAsync(auditId);
         }
 
         [GraphQLName("viewSitesForAudit")]
-        public Task<ApiResponse<List<AuditSiteResponse>>> ViewSitesForAudit(int auditId)
+        public Task<ApiResponse<List<AuditSiteResponse>>> ViewSitesForAudit([Service] IAuditService service, int auditId)
         {
-            return _service.GetAuditSitesAsync(auditId);
+            return service.GetAuditSitesAsync(auditId);
         }
 
         [GraphQLName("viewSubAudits")]
-        public Task<ApiResponse<List<SubAuditResponse>>> ViewSubAudits(int auditId)
+        public Task<ApiResponse<List<SubAuditResponse>>> ViewSubAudits([Service] IAuditService service, int auditId)
         {
-            return _service.GetSubAuditsAsync(auditId);
+            return service.GetSubAuditsAsync(auditId);
         }
 
         [GraphQLName("getAuditDaysPerSite")]
         public Task<ApiResponse<AuditDaysGridResponse>> GetAuditDaysPerSite(
+            [Service] IAuditService service,
             string startDate,
             string endDate,
             List<int>? companies,
             List<int>? services,
             List<int>? sites)
         {
-            return _service.GetAuditDaysGridAsync(
+            return service.GetAuditDaysGridAsync(
                 startDate,
                 endDate,
                 companies ?? new List<int>(),
@@ -59,26 +53,28 @@ namespace AuditService.GraphQL.Queries
         }
 
         [GraphQLName("auditDaysbyServicePieChart")]
-        public Task<ApiResponse<AuditDaysByServiceResponse>> AuditDaysByServicePieChart(AuditDaysFilter filters)
+        public Task<ApiResponse<AuditDaysByServiceResponse>> AuditDaysByServicePieChart(
+            [Service] IAuditService service, AuditDaysFilter filters)
         {
-            return _service.GetAuditDaysByServiceAsync(filters);
+            return service.GetAuditDaysByServiceAsync(filters);
         }
 
         [GraphQLName("getAuditDaysByMonthAndService")]
         public Task<ApiResponse<AuditDaysByMonthAndServiceResponse>> GetAuditDaysByMonthAndService(
+            [Service] IAuditService service,
             string startDate,
             string endDate,
             List<int>? companyFilter,
             List<int>? serviceFilter,
             List<int>? siteFilter)
         {
-            return _service.GetAuditDaysByMonthAndServiceAsync(new AuditDaysByMonthFilter
+            return service.GetAuditDaysByMonthAndServiceAsync(new AuditDaysByMonthFilter
             {
-                StartDate = startDate,
-                EndDate = endDate,
+                StartDate     = startDate,
+                EndDate       = endDate,
                 CompanyFilter = companyFilter ?? new List<int>(),
                 ServiceFilter = serviceFilter ?? new List<int>(),
-                SiteFilter = siteFilter ?? new List<int>()
+                SiteFilter    = siteFilter    ?? new List<int>()
             });
         }
     }

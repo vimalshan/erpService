@@ -77,7 +77,7 @@ namespace FindingsAPI.Gateway.Controllers
         public async Task<ActionResult<Finding>> CreateFinding([FromBody] CreateFindingCommand command)
         {
             var finding = await _findingService.CreateFindingAsync(command);
-            return CreatedAtAction(nameof(GetFinding), new { id = finding.FindingsId }, finding);
+            return CreatedAtAction(nameof(GetFinding), new { id = finding.FindingId }, finding);
         }
 
         [HttpPut("{id:int}")]
