@@ -141,6 +141,14 @@ stages:
           - checkout: none
 
           - script: |
+              if [ -z "$GITHUB_TOKEN" ]; then
+                echo "##[error]GITHUB_TOKEN is not set. Add it as a secret pipeline variable (GitHub PAT with write:packages scope)."
+                exit 1
+              fi
+              if [ -z "$GITHUB_ACTOR" ]; then
+                echo "##[error]GITHUB_ACTOR is not set. Add it as a pipeline variable (your GitHub username)."
+                exit 1
+              fi
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             displayName: Login to GHCR
             env:
