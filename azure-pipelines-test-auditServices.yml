@@ -1,0 +1,156 @@
+# =============================================================================
+# TEST PIPELINE — auditServices  (10 services)
+#
+# Purpose : Validate Build → Push (GHCR) → Verify for one module.
+# Trigger : MANUAL ONLY — will never run automatically.
+#
+# Required pipeline variables (Azure DevOps → Pipeline → Edit → Variables):
+#   GITHUB_ACTOR  – your GitHub username  (vimalshan)
+#   GITHUB_TOKEN  – GitHub PAT with packages:write scope  (mark secret)
+# =============================================================================
+
+name: TEST · auditServices · $(Build.BuildId)
+
+trigger: none
+pr: none
+
+parameters:
+  - name: service
+    displayName: 'Service to build (or "all")'
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - action-service
+      - audit-service
+      - certificate-service
+      - contract-service
+      - finance-service
+      - findings-service
+      - notification-service
+      - schedule-service
+      - settings-service
+
+variables:
+  imagePrefix: 'ghcr.io/vimalshan/erp'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  # ── BUILD ──────────────────────────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build · auditServices'
+    jobs:
+      - job: BuildImages
+        displayName: Build Docker images
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - script: |
+              set -e
+              build_svc() {
+                local NAME=$1 CTX=$2 DF=$3
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Building $NAME ======="
+                  docker build \
+                    -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
+                    -t "$(imagePrefix)/$NAME:latest" \
+                    -f "$DF" "$CTX"
+                fi
+              }
+              build_svc 'api-gateway' 'src/Services/auditServices/apigateway' 'src/Services/auditServices/apigateway/Dockerfile'
+              build_svc 'action-service' 'src/Services/auditServices/actionapiServices' 'src/Services/auditServices/actionapiServices/Dockerfile'
+              build_svc 'audit-service' 'src/Services/auditServices/auditapiServices' 'src/Services/auditServices/auditapiServices/Dockerfile'
+              build_svc 'certificate-service' 'src/Services/auditServices/certificateapiServices' 'src/Services/auditServices/certificateapiServices/Dockerfile'
+              build_svc 'contract-service' 'src/Services/auditServices/contractapiServices' 'src/Services/auditServices/contractapiServices/Dockerfile'
+              build_svc 'finance-service' 'src/Services/auditServices/financeapiServices' 'src/Services/auditServices/financeapiServices/Dockerfile'
+              build_svc 'findings-service' 'src/Services/auditServices/findingsapiServices' 'src/Services/auditServices/findingsapiServices/Dockerfile'
+              build_svc 'notification-service' 'src/Services/auditServices/notificationapiServices' 'src/Services/auditServices/notificationapiServices/Dockerfile'
+              build_svc 'schedule-service' 'src/Services/auditServices/scheduleapiServices' 'src/Services/auditServices/scheduleapiServices/Dockerfile'
+              build_svc 'settings-service' 'src/Services/auditServices/settingsapiServices' 'src/Services/auditServices/settingsapiServices/Dockerfile'
+            displayName: 'docker build all selected services'
+
+  # ── PUSH ───────────────────────────────────────────────────────────────────
+  - stage: Push
+    displayName: 'Push · auditServices → GHCR'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: PushImages
+        displayName: Push to GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              push_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Pushing $NAME ======="
+                  docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  docker push "$(imagePrefix)/$NAME:latest"
+                fi
+              }
+              push_svc 'api-gateway'
+              push_svc 'action-service'
+              push_svc 'audit-service'
+              push_svc 'certificate-service'
+              push_svc 'contract-service'
+              push_svc 'finance-service'
+              push_svc 'findings-service'
+              push_svc 'notification-service'
+              push_svc 'schedule-service'
+              push_svc 'settings-service'
+            displayName: 'docker push all selected services'
+
+  # ── VERIFY ─────────────────────────────────────────────────────────────────
+  - stage: Verify
+    displayName: 'Verify · auditServices'
+    dependsOn: Push
+    condition: succeeded()
+    jobs:
+      - job: VerifyImages
+        displayName: Verify images exist in GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              verify_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  IMAGE="$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  echo "======= Verifying $IMAGE ======="
+                  docker pull "$IMAGE"
+                  echo "OK: $IMAGE"
+                fi
+              }
+              verify_svc 'api-gateway'
+              verify_svc 'action-service'
+              verify_svc 'audit-service'
+              verify_svc 'certificate-service'
+              verify_svc 'contract-service'
+              verify_svc 'finance-service'
+              verify_svc 'findings-service'
+              verify_svc 'notification-service'
+              verify_svc 'schedule-service'
+              verify_svc 'settings-service'
+            displayName: 'Pull & verify all selected images'

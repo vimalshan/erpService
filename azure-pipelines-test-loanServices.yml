@@ -1,0 +1,148 @@
+# =============================================================================
+# TEST PIPELINE — loanServices  (8 services)
+#
+# Purpose : Validate Build → Push (GHCR) → Verify for one module.
+# Trigger : MANUAL ONLY — will never run automatically.
+#
+# Required pipeline variables (Azure DevOps → Pipeline → Edit → Variables):
+#   GITHUB_ACTOR  – your GitHub username  (vimalshan)
+#   GITHUB_TOKEN  – GitHub PAT with packages:write scope  (mark secret)
+# =============================================================================
+
+name: TEST · loanServices · $(Build.BuildId)
+
+trigger: none
+pr: none
+
+parameters:
+  - name: service
+    displayName: 'Service to build (or "all")'
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - document-service
+      - loanaccount-service
+      - loanapplication-service
+      - loandefinition-service
+      - loan-transaction-service
+      - lov-service
+      - utility-service
+
+variables:
+  imagePrefix: 'ghcr.io/vimalshan/erp'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  # ── BUILD ──────────────────────────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build · loanServices'
+    jobs:
+      - job: BuildImages
+        displayName: Build Docker images
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - script: |
+              set -e
+              build_svc() {
+                local NAME=$1 CTX=$2 DF=$3
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Building $NAME ======="
+                  docker build \
+                    -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
+                    -t "$(imagePrefix)/$NAME:latest" \
+                    -f "$DF" "$CTX"
+                fi
+              }
+              build_svc 'api-gateway' 'src/Services/loanServices/apiGateway' 'src/Services/loanServices/apiGateway/Dockerfile'
+              build_svc 'document-service' 'src/Services/loanServices/documentServices' 'src/Services/loanServices/documentServices/Dockerfile'
+              build_svc 'loanaccount-service' 'src/Services/loanServices/loanaccountServices' 'src/Services/loanServices/loanaccountServices/Dockerfile'
+              build_svc 'loanapplication-service' 'src/Services/loanServices/loanapplicationServices' 'src/Services/loanServices/loanapplicationServices/Dockerfile'
+              build_svc 'loandefinition-service' 'src/Services/loanServices/loandefinitionServices' 'src/Services/loanServices/loandefinitionServices/Dockerfile'
+              build_svc 'loan-transaction-service' 'src/Services/loanServices/loanTransactionServices' 'src/Services/loanServices/loanTransactionServices/Dockerfile'
+              build_svc 'lov-service' 'src/Services/loanServices/lovServices' 'src/Services/loanServices/lovServices/Dockerfile'
+              build_svc 'utility-service' 'src/Services/loanServices/utilityServices' 'src/Services/loanServices/utilityServices/Dockerfile'
+            displayName: 'docker build all selected services'
+
+  # ── PUSH ───────────────────────────────────────────────────────────────────
+  - stage: Push
+    displayName: 'Push · loanServices → GHCR'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: PushImages
+        displayName: Push to GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              push_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Pushing $NAME ======="
+                  docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  docker push "$(imagePrefix)/$NAME:latest"
+                fi
+              }
+              push_svc 'api-gateway'
+              push_svc 'document-service'
+              push_svc 'loanaccount-service'
+              push_svc 'loanapplication-service'
+              push_svc 'loandefinition-service'
+              push_svc 'loan-transaction-service'
+              push_svc 'lov-service'
+              push_svc 'utility-service'
+            displayName: 'docker push all selected services'
+
+  # ── VERIFY ─────────────────────────────────────────────────────────────────
+  - stage: Verify
+    displayName: 'Verify · loanServices'
+    dependsOn: Push
+    condition: succeeded()
+    jobs:
+      - job: VerifyImages
+        displayName: Verify images exist in GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              verify_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  IMAGE="$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  echo "======= Verifying $IMAGE ======="
+                  docker pull "$IMAGE"
+                  echo "OK: $IMAGE"
+                fi
+              }
+              verify_svc 'api-gateway'
+              verify_svc 'document-service'
+              verify_svc 'loanaccount-service'
+              verify_svc 'loanapplication-service'
+              verify_svc 'loandefinition-service'
+              verify_svc 'loan-transaction-service'
+              verify_svc 'lov-service'
+              verify_svc 'utility-service'
+            displayName: 'Pull & verify all selected images'

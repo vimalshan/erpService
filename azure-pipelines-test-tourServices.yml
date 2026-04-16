@@ -1,0 +1,148 @@
+# =============================================================================
+# TEST PIPELINE — tourServices  (8 services)
+#
+# Purpose : Validate Build → Push (GHCR) → Verify for one module.
+# Trigger : MANUAL ONLY — will never run automatically.
+#
+# Required pipeline variables (Azure DevOps → Pipeline → Edit → Variables):
+#   GITHUB_ACTOR  – your GitHub username  (vimalshan)
+#   GITHUB_TOKEN  – GitHub PAT with packages:write scope  (mark secret)
+# =============================================================================
+
+name: TEST · tourServices · $(Build.BuildId)
+
+trigger: none
+pr: none
+
+parameters:
+  - name: service
+    displayName: 'Service to build (or "all")'
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - admin-service
+      - booking-service
+      - config-service
+      - tourplan-service
+      - tour-service
+      - transaction-service
+      - travel-service
+
+variables:
+  imagePrefix: 'ghcr.io/vimalshan/erp'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  # ── BUILD ──────────────────────────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build · tourServices'
+    jobs:
+      - job: BuildImages
+        displayName: Build Docker images
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - script: |
+              set -e
+              build_svc() {
+                local NAME=$1 CTX=$2 DF=$3
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Building $NAME ======="
+                  docker build \
+                    -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
+                    -t "$(imagePrefix)/$NAME:latest" \
+                    -f "$DF" "$CTX"
+                fi
+              }
+              build_svc 'api-gateway' 'src/Services/tourServices/apiGateway' 'src/Services/tourServices/apiGateway/Dockerfile'
+              build_svc 'admin-service' 'src/Services/tourServices/adminServices' 'src/Services/tourServices/adminServices/Dockerfile'
+              build_svc 'booking-service' 'src/Services/tourServices/bookingServices/BookingService' 'src/Services/tourServices/bookingServices/BookingService/Dockerfile'
+              build_svc 'config-service' 'src/Services/tourServices/configServices' 'src/Services/tourServices/configServices/Dockerfile'
+              build_svc 'tourplan-service' 'src/Services/tourServices/tourplanServices' 'src/Services/tourServices/tourplanServices/Dockerfile'
+              build_svc 'tour-service' 'src/Services/tourServices/tourServices' 'src/Services/tourServices/tourServices/Dockerfile'
+              build_svc 'transaction-service' 'src/Services/tourServices/transactionServices' 'src/Services/tourServices/transactionServices/Dockerfile'
+              build_svc 'travel-service' 'src/Services/tourServices/travelServices' 'src/Services/tourServices/travelServices/Dockerfile'
+            displayName: 'docker build all selected services'
+
+  # ── PUSH ───────────────────────────────────────────────────────────────────
+  - stage: Push
+    displayName: 'Push · tourServices → GHCR'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: PushImages
+        displayName: Push to GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              push_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Pushing $NAME ======="
+                  docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  docker push "$(imagePrefix)/$NAME:latest"
+                fi
+              }
+              push_svc 'api-gateway'
+              push_svc 'admin-service'
+              push_svc 'booking-service'
+              push_svc 'config-service'
+              push_svc 'tourplan-service'
+              push_svc 'tour-service'
+              push_svc 'transaction-service'
+              push_svc 'travel-service'
+            displayName: 'docker push all selected services'
+
+  # ── VERIFY ─────────────────────────────────────────────────────────────────
+  - stage: Verify
+    displayName: 'Verify · tourServices'
+    dependsOn: Push
+    condition: succeeded()
+    jobs:
+      - job: VerifyImages
+        displayName: Verify images exist in GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              verify_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  IMAGE="$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  echo "======= Verifying $IMAGE ======="
+                  docker pull "$IMAGE"
+                  echo "OK: $IMAGE"
+                fi
+              }
+              verify_svc 'api-gateway'
+              verify_svc 'admin-service'
+              verify_svc 'booking-service'
+              verify_svc 'config-service'
+              verify_svc 'tourplan-service'
+              verify_svc 'tour-service'
+              verify_svc 'transaction-service'
+              verify_svc 'travel-service'
+            displayName: 'Pull & verify all selected images'

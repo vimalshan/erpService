@@ -1,0 +1,184 @@
+# =============================================================================
+# TEST PIPELINE — wmsServices  (17 services)
+#
+# Purpose : Validate Build → Push (GHCR) → Verify for one module.
+# Trigger : MANUAL ONLY — will never run automatically.
+#
+# Required pipeline variables (Azure DevOps → Pipeline → Edit → Variables):
+#   GITHUB_ACTOR  – your GitHub username  (vimalshan)
+#   GITHUB_TOKEN  – GitHub PAT with packages:write scope  (mark secret)
+# =============================================================================
+
+name: TEST · wmsServices · $(Build.BuildId)
+
+trigger: none
+pr: none
+
+parameters:
+  - name: service
+    displayName: 'Service to build (or "all")'
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - auditlog-service
+      - customer-service
+      - employee-service
+      - fleet-management-service
+      - inventory-service
+      - order-service
+      - product-service
+      - purchaseorder-service
+      - rackingsystem-service
+      - receiving-service
+      - salesorder-service
+      - security-service
+      - shipment-service
+      - supplier-service
+      - warehousestructure-service
+      - wmtransactional-service
+
+variables:
+  imagePrefix: 'ghcr.io/vimalshan/erp'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  # ── BUILD ──────────────────────────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build · wmsServices'
+    jobs:
+      - job: BuildImages
+        displayName: Build Docker images
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - script: |
+              set -e
+              build_svc() {
+                local NAME=$1 CTX=$2 DF=$3
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Building $NAME ======="
+                  docker build \
+                    -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
+                    -t "$(imagePrefix)/$NAME:latest" \
+                    -f "$DF" "$CTX"
+                fi
+              }
+              build_svc 'api-gateway' 'src/Services/wmsServices/apiGateway' 'src/Services/wmsServices/apiGateway/Dockerfile'
+              build_svc 'auditlog-service' 'src/Services/wmsServices/auditlogService/AuditLogService' 'src/Services/wmsServices/auditlogService/AuditLogService/Dockerfile'
+              build_svc 'customer-service' 'src/Services/wmsServices/customerService' 'src/Services/wmsServices/customerService/Dockerfile'
+              build_svc 'employee-service' 'src/Services/wmsServices/emplyeeService' 'src/Services/wmsServices/emplyeeService/Dockerfile'
+              build_svc 'fleet-management-service' 'src/Services/wmsServices/fleetManagementService' 'src/Services/wmsServices/fleetManagementService/Dockerfile'
+              build_svc 'inventory-service' 'src/Services/wmsServices/inventoryService' 'src/Services/wmsServices/inventoryService/Dockerfile'
+              build_svc 'order-service' 'src/Services/wmsServices/orderService' 'src/Services/wmsServices/orderService/Dockerfile'
+              build_svc 'product-service' 'src/Services/wmsServices/productService' 'src/Services/wmsServices/productService/Dockerfile'
+              build_svc 'purchaseorder-service' 'src/Services/wmsServices/purchaseorderService' 'src/Services/wmsServices/purchaseorderService/Dockerfile'
+              build_svc 'rackingsystem-service' 'src/Services/wmsServices/rackingsystemService' 'src/Services/wmsServices/rackingsystemService/Dockerfile'
+              build_svc 'receiving-service' 'src/Services/wmsServices/receivingService' 'src/Services/wmsServices/receivingService/Dockerfile'
+              build_svc 'salesorder-service' 'src/Services/wmsServices/salesorderService' 'src/Services/wmsServices/salesorderService/Dockerfile'
+              build_svc 'security-service' 'src/Services/wmsServices/securityService' 'src/Services/wmsServices/securityService/Dockerfile'
+              build_svc 'shipment-service' 'src/Services/wmsServices/shipmentService' 'src/Services/wmsServices/shipmentService/Dockerfile'
+              build_svc 'supplier-service' 'src/Services/wmsServices/supplierService' 'src/Services/wmsServices/supplierService/Dockerfile'
+              build_svc 'warehousestructure-service' 'src/Services/wmsServices/warehousestructureService' 'src/Services/wmsServices/warehousestructureService/Dockerfile'
+              build_svc 'wmtransactional-service' 'src/Services/wmsServices/wmtransactionalService' 'src/Services/wmsServices/wmtransactionalService/Dockerfile'
+            displayName: 'docker build all selected services'
+
+  # ── PUSH ───────────────────────────────────────────────────────────────────
+  - stage: Push
+    displayName: 'Push · wmsServices → GHCR'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: PushImages
+        displayName: Push to GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              push_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Pushing $NAME ======="
+                  docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  docker push "$(imagePrefix)/$NAME:latest"
+                fi
+              }
+              push_svc 'api-gateway'
+              push_svc 'auditlog-service'
+              push_svc 'customer-service'
+              push_svc 'employee-service'
+              push_svc 'fleet-management-service'
+              push_svc 'inventory-service'
+              push_svc 'order-service'
+              push_svc 'product-service'
+              push_svc 'purchaseorder-service'
+              push_svc 'rackingsystem-service'
+              push_svc 'receiving-service'
+              push_svc 'salesorder-service'
+              push_svc 'security-service'
+              push_svc 'shipment-service'
+              push_svc 'supplier-service'
+              push_svc 'warehousestructure-service'
+              push_svc 'wmtransactional-service'
+            displayName: 'docker push all selected services'
+
+  # ── VERIFY ─────────────────────────────────────────────────────────────────
+  - stage: Verify
+    displayName: 'Verify · wmsServices'
+    dependsOn: Push
+    condition: succeeded()
+    jobs:
+      - job: VerifyImages
+        displayName: Verify images exist in GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              verify_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  IMAGE="$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  echo "======= Verifying $IMAGE ======="
+                  docker pull "$IMAGE"
+                  echo "OK: $IMAGE"
+                fi
+              }
+              verify_svc 'api-gateway'
+              verify_svc 'auditlog-service'
+              verify_svc 'customer-service'
+              verify_svc 'employee-service'
+              verify_svc 'fleet-management-service'
+              verify_svc 'inventory-service'
+              verify_svc 'order-service'
+              verify_svc 'product-service'
+              verify_svc 'purchaseorder-service'
+              verify_svc 'rackingsystem-service'
+              verify_svc 'receiving-service'
+              verify_svc 'salesorder-service'
+              verify_svc 'security-service'
+              verify_svc 'shipment-service'
+              verify_svc 'supplier-service'
+              verify_svc 'warehousestructure-service'
+              verify_svc 'wmtransactional-service'
+            displayName: 'Pull & verify all selected images'

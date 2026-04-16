@@ -1,0 +1,181 @@
+"""
+Generate a standalone test pipeline (azure-pipelines-test-<module>.yml) at
+the repo root for every module.  Manual trigger only — safe for testing without
+affecting the main CI.
+"""
+
+import pathlib, sys, importlib.util
+
+# Import MODULES registry from generate-module-pipelines.py (single source of truth)
+_spec = importlib.util.spec_from_file_location(
+    "gen_module",
+    pathlib.Path(__file__).parent / "generate-module-pipelines.py"
+)
+_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+MODULES = _mod.MODULES
+
+REPO = pathlib.Path(r"E:\ERPMicroservice")
+
+
+def make_test_pipeline(module_name: str, services: list) -> str:
+    svc_names = [s[0] for s in services]
+    param_values = "\n".join(f"      - {n}" for n in svc_names)
+
+    def build_lines():
+        parts = []
+        for name, ctx, df in services:
+            parts.append(
+                f"              build_svc '{name}' "
+                f"'{ctx}' "
+                f"'{ctx}/{df}'"
+            )
+        return "\n".join(parts)
+
+    def push_lines():
+        return "\n".join(
+            f"              push_svc '{name}'" for name, _, _ in services
+        )
+
+    def verify_lines():
+        return "\n".join(
+            f"              verify_svc '{name}'" for name, _, _ in services
+        )
+
+    return f"""\
+# =============================================================================
+# TEST PIPELINE — {module_name}  ({len(services)} services)
+#
+# Purpose : Validate Build → Push (GHCR) → Verify for one module.
+# Trigger : MANUAL ONLY — will never run automatically.
+#
+# Required pipeline variables (Azure DevOps → Pipeline → Edit → Variables):
+#   GITHUB_ACTOR  – your GitHub username  (vimalshan)
+#   GITHUB_TOKEN  – GitHub PAT with packages:write scope  (mark secret)
+# =============================================================================
+
+name: TEST · {module_name} · $(Build.BuildId)
+
+trigger: none
+pr: none
+
+parameters:
+  - name: service
+    displayName: 'Service to build (or "all")'
+    type: string
+    default: all
+    values:
+      - all
+{param_values}
+
+variables:
+  imagePrefix: 'ghcr.io/vimalshan/erp'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  # ── BUILD ──────────────────────────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build · {module_name}'
+    jobs:
+      - job: BuildImages
+        displayName: Build Docker images
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - script: |
+              set -e
+              build_svc() {{
+                local NAME=$1 CTX=$2 DF=$3
+                if [ "${{{{ parameters.service }}}}" = "all" ] || [ "${{{{ parameters.service }}}}" = "$NAME" ]; then
+                  echo "======= Building $NAME ======="
+                  docker build \\
+                    -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \\
+                    -t "$(imagePrefix)/$NAME:latest" \\
+                    -f "$DF" "$CTX"
+                fi
+              }}
+{build_lines()}
+            displayName: 'docker build all selected services'
+
+  # ── PUSH ───────────────────────────────────────────────────────────────────
+  - stage: Push
+    displayName: 'Push · {module_name} → GHCR'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: PushImages
+        displayName: Push to GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              push_svc() {{
+                local NAME=$1
+                if [ "${{{{ parameters.service }}}}" = "all" ] || [ "${{{{ parameters.service }}}}" = "$NAME" ]; then
+                  echo "======= Pushing $NAME ======="
+                  docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  docker push "$(imagePrefix)/$NAME:latest"
+                fi
+              }}
+{push_lines()}
+            displayName: 'docker push all selected services'
+
+  # ── VERIFY ─────────────────────────────────────────────────────────────────
+  - stage: Verify
+    displayName: 'Verify · {module_name}'
+    dependsOn: Push
+    condition: succeeded()
+    jobs:
+      - job: VerifyImages
+        displayName: Verify images exist in GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              verify_svc() {{
+                local NAME=$1
+                if [ "${{{{ parameters.service }}}}" = "all" ] || [ "${{{{ parameters.service }}}}" = "$NAME" ]; then
+                  IMAGE="$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  echo "======= Verifying $IMAGE ======="
+                  docker pull "$IMAGE"
+                  echo "OK: $IMAGE"
+                fi
+              }}
+{verify_lines()}
+            displayName: 'Pull & verify all selected images'
+"""
+
+
+# ── Generate ───────────────────────────────────────────────────────────────────
+count = 0
+for module_name, cfg in MODULES.items():
+    # Skip adminServices — already created manually
+    out = REPO / f"azure-pipelines-test-{module_name}.yml"
+    out.write_text(
+        make_test_pipeline(module_name, cfg["services"]),
+        encoding="utf-8"
+    )
+    print(f"  [{len(cfg['services']):2d} svcs]  {out.name}")
+    count += 1
+
+print(f"\nDone. Generated {count} test pipeline files.")

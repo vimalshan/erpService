@@ -1,0 +1,180 @@
+# =============================================================================
+# TEST PIPELINE — ddServices  (16 services)
+#
+# Purpose : Validate Build → Push (GHCR) → Verify for one module.
+# Trigger : MANUAL ONLY — will never run automatically.
+#
+# Required pipeline variables (Azure DevOps → Pipeline → Edit → Variables):
+#   GITHUB_ACTOR  – your GitHub username  (vimalshan)
+#   GITHUB_TOKEN  – GitHub PAT with packages:write scope  (mark secret)
+# =============================================================================
+
+name: TEST · ddServices · $(Build.BuildId)
+
+trigger: none
+pr: none
+
+parameters:
+  - name: service
+    displayName: 'Service to build (or "all")'
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - appraisal-service
+      - authorization-service
+      - compensation-service
+      - competency-service
+      - demand-management-service
+      - document-service
+      - employee-service
+      - feedback-service
+      - learning-service
+      - objective-service
+      - other-services
+      - promotion-service
+      - recruitment-service
+      - reporting-service
+      - transaction-service
+
+variables:
+  imagePrefix: 'ghcr.io/vimalshan/erp'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  # ── BUILD ──────────────────────────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build · ddServices'
+    jobs:
+      - job: BuildImages
+        displayName: Build Docker images
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - script: |
+              set -e
+              build_svc() {
+                local NAME=$1 CTX=$2 DF=$3
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Building $NAME ======="
+                  docker build \
+                    -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
+                    -t "$(imagePrefix)/$NAME:latest" \
+                    -f "$DF" "$CTX"
+                fi
+              }
+              build_svc 'api-gateway' 'src/Services/ddServices/apiGateway' 'src/Services/ddServices/apiGateway/Dockerfile'
+              build_svc 'appraisal-service' 'src/Services/ddServices/appraisalService' 'src/Services/ddServices/appraisalService/Dockerfile'
+              build_svc 'authorization-service' 'src/Services/ddServices/authorizationServices' 'src/Services/ddServices/authorizationServices/Dockerfile'
+              build_svc 'compensation-service' 'src/Services/ddServices/compensationServices' 'src/Services/ddServices/compensationServices/Dockerfile'
+              build_svc 'competency-service' 'src/Services/ddServices/competencyServices' 'src/Services/ddServices/competencyServices/Dockerfile'
+              build_svc 'demand-management-service' 'src/Services/ddServices/demandmanagementServices' 'src/Services/ddServices/demandmanagementServices/Dockerfile'
+              build_svc 'document-service' 'src/Services/ddServices/documentServices' 'src/Services/ddServices/documentServices/Dockerfile'
+              build_svc 'employee-service' 'src/Services/ddServices/employeeServices' 'src/Services/ddServices/employeeServices/Dockerfile'
+              build_svc 'feedback-service' 'src/Services/ddServices/feedbackServices' 'src/Services/ddServices/feedbackServices/Dockerfile'
+              build_svc 'learning-service' 'src/Services/ddServices/learningServices' 'src/Services/ddServices/learningServices/Dockerfile'
+              build_svc 'objective-service' 'src/Services/ddServices/objectiveServices' 'src/Services/ddServices/objectiveServices/Dockerfile'
+              build_svc 'other-services' 'src/Services/ddServices/OtherServices' 'src/Services/ddServices/OtherServices/Dockerfile'
+              build_svc 'promotion-service' 'src/Services/ddServices/promotionServices' 'src/Services/ddServices/promotionServices/Dockerfile'
+              build_svc 'recruitment-service' 'src/Services/ddServices/recruitmentServices' 'src/Services/ddServices/recruitmentServices/Dockerfile'
+              build_svc 'reporting-service' 'src/Services/ddServices/reportingServices' 'src/Services/ddServices/reportingServices/Dockerfile'
+              build_svc 'transaction-service' 'src/Services/ddServices/transactionServices' 'src/Services/ddServices/transactionServices/Dockerfile'
+            displayName: 'docker build all selected services'
+
+  # ── PUSH ───────────────────────────────────────────────────────────────────
+  - stage: Push
+    displayName: 'Push · ddServices → GHCR'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: PushImages
+        displayName: Push to GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              push_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Pushing $NAME ======="
+                  docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  docker push "$(imagePrefix)/$NAME:latest"
+                fi
+              }
+              push_svc 'api-gateway'
+              push_svc 'appraisal-service'
+              push_svc 'authorization-service'
+              push_svc 'compensation-service'
+              push_svc 'competency-service'
+              push_svc 'demand-management-service'
+              push_svc 'document-service'
+              push_svc 'employee-service'
+              push_svc 'feedback-service'
+              push_svc 'learning-service'
+              push_svc 'objective-service'
+              push_svc 'other-services'
+              push_svc 'promotion-service'
+              push_svc 'recruitment-service'
+              push_svc 'reporting-service'
+              push_svc 'transaction-service'
+            displayName: 'docker push all selected services'
+
+  # ── VERIFY ─────────────────────────────────────────────────────────────────
+  - stage: Verify
+    displayName: 'Verify · ddServices'
+    dependsOn: Push
+    condition: succeeded()
+    jobs:
+      - job: VerifyImages
+        displayName: Verify images exist in GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              verify_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  IMAGE="$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  echo "======= Verifying $IMAGE ======="
+                  docker pull "$IMAGE"
+                  echo "OK: $IMAGE"
+                fi
+              }
+              verify_svc 'api-gateway'
+              verify_svc 'appraisal-service'
+              verify_svc 'authorization-service'
+              verify_svc 'compensation-service'
+              verify_svc 'competency-service'
+              verify_svc 'demand-management-service'
+              verify_svc 'document-service'
+              verify_svc 'employee-service'
+              verify_svc 'feedback-service'
+              verify_svc 'learning-service'
+              verify_svc 'objective-service'
+              verify_svc 'other-services'
+              verify_svc 'promotion-service'
+              verify_svc 'recruitment-service'
+              verify_svc 'reporting-service'
+              verify_svc 'transaction-service'
+            displayName: 'Pull & verify all selected images'

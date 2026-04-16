@@ -1,0 +1,160 @@
+# =============================================================================
+# TEST PIPELINE — aimsServices  (11 services)
+#
+# Purpose : Validate Build → Push (GHCR) → Verify for one module.
+# Trigger : MANUAL ONLY — will never run automatically.
+#
+# Required pipeline variables (Azure DevOps → Pipeline → Edit → Variables):
+#   GITHUB_ACTOR  – your GitHub username  (vimalshan)
+#   GITHUB_TOKEN  – GitHub PAT with packages:write scope  (mark secret)
+# =============================================================================
+
+name: TEST · aimsServices · $(Build.BuildId)
+
+trigger: none
+pr: none
+
+parameters:
+  - name: service
+    displayName: 'Service to build (or "all")'
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - access-service
+      - aims-transaction-service
+      - attendance-service
+      - bus-services
+      - calendar-service
+      - employee-service
+      - groupincentive-service
+      - leave-services
+      - reference-service
+      - visitor-services
+
+variables:
+  imagePrefix: 'ghcr.io/vimalshan/erp'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  # ── BUILD ──────────────────────────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build · aimsServices'
+    jobs:
+      - job: BuildImages
+        displayName: Build Docker images
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - script: |
+              set -e
+              build_svc() {
+                local NAME=$1 CTX=$2 DF=$3
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Building $NAME ======="
+                  docker build \
+                    -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
+                    -t "$(imagePrefix)/$NAME:latest" \
+                    -f "$DF" "$CTX"
+                fi
+              }
+              build_svc 'api-gateway' 'src/Services/aimsServices/ApiGateway' 'src/Services/aimsServices/ApiGateway/Dockerfile'
+              build_svc 'access-service' 'src/Services/aimsServices/accessServices' 'src/Services/aimsServices/accessServices/Dockerfile'
+              build_svc 'aims-transaction-service' 'src/Services/aimsServices/aimsTransactionServices' 'src/Services/aimsServices/aimsTransactionServices/Dockerfile'
+              build_svc 'attendance-service' 'src/Services/aimsServices/attendanceServices' 'src/Services/aimsServices/attendanceServices/Dockerfile'
+              build_svc 'bus-services' 'src/Services/aimsServices/busServices' 'src/Services/aimsServices/busServices/Dockerfile'
+              build_svc 'calendar-service' 'src/Services/aimsServices/calendarServices' 'src/Services/aimsServices/calendarServices/Dockerfile'
+              build_svc 'employee-service' 'src/Services/aimsServices/employeeServices' 'src/Services/aimsServices/employeeServices/Dockerfile'
+              build_svc 'groupincentive-service' 'src/Services/aimsServices/groupincentiveServices' 'src/Services/aimsServices/groupincentiveServices/Dockerfile'
+              build_svc 'leave-services' 'src/Services/aimsServices/leaveServices' 'src/Services/aimsServices/leaveServices/Dockerfile'
+              build_svc 'reference-service' 'src/Services/aimsServices/referenceServices' 'src/Services/aimsServices/referenceServices/Dockerfile'
+              build_svc 'visitor-services' 'src/Services/aimsServices/visitorServices' 'src/Services/aimsServices/visitorServices/Dockerfile'
+            displayName: 'docker build all selected services'
+
+  # ── PUSH ───────────────────────────────────────────────────────────────────
+  - stage: Push
+    displayName: 'Push · aimsServices → GHCR'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: PushImages
+        displayName: Push to GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              push_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Pushing $NAME ======="
+                  docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  docker push "$(imagePrefix)/$NAME:latest"
+                fi
+              }
+              push_svc 'api-gateway'
+              push_svc 'access-service'
+              push_svc 'aims-transaction-service'
+              push_svc 'attendance-service'
+              push_svc 'bus-services'
+              push_svc 'calendar-service'
+              push_svc 'employee-service'
+              push_svc 'groupincentive-service'
+              push_svc 'leave-services'
+              push_svc 'reference-service'
+              push_svc 'visitor-services'
+            displayName: 'docker push all selected services'
+
+  # ── VERIFY ─────────────────────────────────────────────────────────────────
+  - stage: Verify
+    displayName: 'Verify · aimsServices'
+    dependsOn: Push
+    condition: succeeded()
+    jobs:
+      - job: VerifyImages
+        displayName: Verify images exist in GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              verify_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  IMAGE="$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  echo "======= Verifying $IMAGE ======="
+                  docker pull "$IMAGE"
+                  echo "OK: $IMAGE"
+                fi
+              }
+              verify_svc 'api-gateway'
+              verify_svc 'access-service'
+              verify_svc 'aims-transaction-service'
+              verify_svc 'attendance-service'
+              verify_svc 'bus-services'
+              verify_svc 'calendar-service'
+              verify_svc 'employee-service'
+              verify_svc 'groupincentive-service'
+              verify_svc 'leave-services'
+              verify_svc 'reference-service'
+              verify_svc 'visitor-services'
+            displayName: 'Pull & verify all selected images'

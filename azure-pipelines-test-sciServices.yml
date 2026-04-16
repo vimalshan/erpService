@@ -1,0 +1,180 @@
+# =============================================================================
+# TEST PIPELINE — sciServices  (16 services)
+#
+# Purpose : Validate Build → Push (GHCR) → Verify for one module.
+# Trigger : MANUAL ONLY — will never run automatically.
+#
+# Required pipeline variables (Azure DevOps → Pipeline → Edit → Variables):
+#   GITHUB_ACTOR  – your GitHub username  (vimalshan)
+#   GITHUB_TOKEN  – GitHub PAT with packages:write scope  (mark secret)
+# =============================================================================
+
+name: TEST · sciServices · $(Build.BuildId)
+
+trigger: none
+pr: none
+
+parameters:
+  - name: service
+    displayName: 'Service to build (or "all")'
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - dispatchplanning-service
+      - errorlogging-service
+      - eximmanagement-service
+      - fillingoperation-service
+      - gstcompliance-service
+      - inventorymanagement-service
+      - mamallocation-service
+      - masterdata-service
+      - orderschedule-service
+      - productionmanagement-service
+      - purchasesales-service
+      - sci-transaction-service
+      - security-service
+      - strategicstock-service
+      - vechicletracking-service
+
+variables:
+  imagePrefix: 'ghcr.io/vimalshan/erp'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  # ── BUILD ──────────────────────────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build · sciServices'
+    jobs:
+      - job: BuildImages
+        displayName: Build Docker images
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - script: |
+              set -e
+              build_svc() {
+                local NAME=$1 CTX=$2 DF=$3
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Building $NAME ======="
+                  docker build \
+                    -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
+                    -t "$(imagePrefix)/$NAME:latest" \
+                    -f "$DF" "$CTX"
+                fi
+              }
+              build_svc 'api-gateway' 'src/Services/sciServices/ApiGateway' 'src/Services/sciServices/ApiGateway/Dockerfile'
+              build_svc 'dispatchplanning-service' 'src/Services/sciServices/dispatchplanningServices' 'src/Services/sciServices/dispatchplanningServices/Dockerfile'
+              build_svc 'errorlogging-service' 'src/Services/sciServices/errorloggingServices' 'src/Services/sciServices/errorloggingServices/Dockerfile'
+              build_svc 'eximmanagement-service' 'src/Services/sciServices/eximmanagementServices' 'src/Services/sciServices/eximmanagementServices/Dockerfile'
+              build_svc 'fillingoperation-service' 'src/Services/sciServices/fillingoperationServices' 'src/Services/sciServices/fillingoperationServices/Dockerfile'
+              build_svc 'gstcompliance-service' 'src/Services/sciServices/gstcomplianceServices' 'src/Services/sciServices/gstcomplianceServices/Dockerfile'
+              build_svc 'inventorymanagement-service' 'src/Services/sciServices/inventorymanagementServices' 'src/Services/sciServices/inventorymanagementServices/Dockerfile'
+              build_svc 'mamallocation-service' 'src/Services/sciServices/mamallocationServices' 'src/Services/sciServices/mamallocationServices/Dockerfile'
+              build_svc 'masterdata-service' 'src/Services/sciServices/masterdataServices' 'src/Services/sciServices/masterdataServices/Dockerfile'
+              build_svc 'orderschedule-service' 'src/Services/sciServices/orderscheduleServices' 'src/Services/sciServices/orderscheduleServices/Dockerfile'
+              build_svc 'productionmanagement-service' 'src/Services/sciServices/productionmanagementServices' 'src/Services/sciServices/productionmanagementServices/Dockerfile'
+              build_svc 'purchasesales-service' 'src/Services/sciServices/purchasesalesService' 'src/Services/sciServices/purchasesalesService/Dockerfile'
+              build_svc 'sci-transaction-service' 'src/Services/sciServices/scitransactionalServices' 'src/Services/sciServices/scitransactionalServices/Dockerfile'
+              build_svc 'security-service' 'src/Services/sciServices/SecurityServices' 'src/Services/sciServices/SecurityServices/Dockerfile'
+              build_svc 'strategicstock-service' 'src/Services/sciServices/strategicstockServices' 'src/Services/sciServices/strategicstockServices/Dockerfile'
+              build_svc 'vechicletracking-service' 'src/Services/sciServices/vechicletrackingServices' 'src/Services/sciServices/vechicletrackingServices/Dockerfile'
+            displayName: 'docker build all selected services'
+
+  # ── PUSH ───────────────────────────────────────────────────────────────────
+  - stage: Push
+    displayName: 'Push · sciServices → GHCR'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: PushImages
+        displayName: Push to GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              push_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Pushing $NAME ======="
+                  docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  docker push "$(imagePrefix)/$NAME:latest"
+                fi
+              }
+              push_svc 'api-gateway'
+              push_svc 'dispatchplanning-service'
+              push_svc 'errorlogging-service'
+              push_svc 'eximmanagement-service'
+              push_svc 'fillingoperation-service'
+              push_svc 'gstcompliance-service'
+              push_svc 'inventorymanagement-service'
+              push_svc 'mamallocation-service'
+              push_svc 'masterdata-service'
+              push_svc 'orderschedule-service'
+              push_svc 'productionmanagement-service'
+              push_svc 'purchasesales-service'
+              push_svc 'sci-transaction-service'
+              push_svc 'security-service'
+              push_svc 'strategicstock-service'
+              push_svc 'vechicletracking-service'
+            displayName: 'docker push all selected services'
+
+  # ── VERIFY ─────────────────────────────────────────────────────────────────
+  - stage: Verify
+    displayName: 'Verify · sciServices'
+    dependsOn: Push
+    condition: succeeded()
+    jobs:
+      - job: VerifyImages
+        displayName: Verify images exist in GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              verify_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  IMAGE="$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  echo "======= Verifying $IMAGE ======="
+                  docker pull "$IMAGE"
+                  echo "OK: $IMAGE"
+                fi
+              }
+              verify_svc 'api-gateway'
+              verify_svc 'dispatchplanning-service'
+              verify_svc 'errorlogging-service'
+              verify_svc 'eximmanagement-service'
+              verify_svc 'fillingoperation-service'
+              verify_svc 'gstcompliance-service'
+              verify_svc 'inventorymanagement-service'
+              verify_svc 'mamallocation-service'
+              verify_svc 'masterdata-service'
+              verify_svc 'orderschedule-service'
+              verify_svc 'productionmanagement-service'
+              verify_svc 'purchasesales-service'
+              verify_svc 'sci-transaction-service'
+              verify_svc 'security-service'
+              verify_svc 'strategicstock-service'
+              verify_svc 'vechicletracking-service'
+            displayName: 'Pull & verify all selected images'

@@ -1,0 +1,156 @@
+# =============================================================================
+# TEST PIPELINE — travelServices  (10 services)
+#
+# Purpose : Validate Build → Push (GHCR) → Verify for one module.
+# Trigger : MANUAL ONLY — will never run automatically.
+#
+# Required pipeline variables (Azure DevOps → Pipeline → Edit → Variables):
+#   GITHUB_ACTOR  – your GitHub username  (vimalshan)
+#   GITHUB_TOKEN  – GitHub PAT with packages:write scope  (mark secret)
+# =============================================================================
+
+name: TEST · travelServices · $(Build.BuildId)
+
+trigger: none
+pr: none
+
+parameters:
+  - name: service
+    displayName: 'Service to build (or "all")'
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - admin-service
+      - agens-service
+      - booking-service
+      - travelexpense-service
+      - travelfinance-service
+      - insurance-service
+      - masterdata-service
+      - travelrequest-service
+      - travel-transaction-service
+
+variables:
+  imagePrefix: 'ghcr.io/vimalshan/erp'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  # ── BUILD ──────────────────────────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build · travelServices'
+    jobs:
+      - job: BuildImages
+        displayName: Build Docker images
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - script: |
+              set -e
+              build_svc() {
+                local NAME=$1 CTX=$2 DF=$3
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Building $NAME ======="
+                  docker build \
+                    -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
+                    -t "$(imagePrefix)/$NAME:latest" \
+                    -f "$DF" "$CTX"
+                fi
+              }
+              build_svc 'api-gateway' 'src/Services/travelServices/ApiGateway' 'src/Services/travelServices/ApiGateway/Dockerfile'
+              build_svc 'admin-service' 'src/Services/travelServices/adminServices' 'src/Services/travelServices/adminServices/Dockerfile'
+              build_svc 'agens-service' 'src/Services/travelServices/agensService' 'src/Services/travelServices/agensService/Dockerfile'
+              build_svc 'booking-service' 'src/Services/travelServices/bookingServices' 'src/Services/travelServices/bookingServices/Dockerfile'
+              build_svc 'travelexpense-service' 'src/Services/travelServices/expenseServices' 'src/Services/travelServices/expenseServices/Dockerfile'
+              build_svc 'travelfinance-service' 'src/Services/travelServices/financeServices' 'src/Services/travelServices/financeServices/Dockerfile'
+              build_svc 'insurance-service' 'src/Services/travelServices/insuranceServices' 'src/Services/travelServices/insuranceServices/Dockerfile'
+              build_svc 'masterdata-service' 'src/Services/travelServices/masterdataServices' 'src/Services/travelServices/masterdataServices/Dockerfile'
+              build_svc 'travelrequest-service' 'src/Services/travelServices/travelRequestServices' 'src/Services/travelServices/travelRequestServices/Dockerfile'
+              build_svc 'travel-transaction-service' 'src/Services/travelServices/traveltransactionServices' 'src/Services/travelServices/traveltransactionServices/Dockerfile'
+            displayName: 'docker build all selected services'
+
+  # ── PUSH ───────────────────────────────────────────────────────────────────
+  - stage: Push
+    displayName: 'Push · travelServices → GHCR'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: PushImages
+        displayName: Push to GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              push_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Pushing $NAME ======="
+                  docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  docker push "$(imagePrefix)/$NAME:latest"
+                fi
+              }
+              push_svc 'api-gateway'
+              push_svc 'admin-service'
+              push_svc 'agens-service'
+              push_svc 'booking-service'
+              push_svc 'travelexpense-service'
+              push_svc 'travelfinance-service'
+              push_svc 'insurance-service'
+              push_svc 'masterdata-service'
+              push_svc 'travelrequest-service'
+              push_svc 'travel-transaction-service'
+            displayName: 'docker push all selected services'
+
+  # ── VERIFY ─────────────────────────────────────────────────────────────────
+  - stage: Verify
+    displayName: 'Verify · travelServices'
+    dependsOn: Push
+    condition: succeeded()
+    jobs:
+      - job: VerifyImages
+        displayName: Verify images exist in GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              verify_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  IMAGE="$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  echo "======= Verifying $IMAGE ======="
+                  docker pull "$IMAGE"
+                  echo "OK: $IMAGE"
+                fi
+              }
+              verify_svc 'api-gateway'
+              verify_svc 'admin-service'
+              verify_svc 'agens-service'
+              verify_svc 'booking-service'
+              verify_svc 'travelexpense-service'
+              verify_svc 'travelfinance-service'
+              verify_svc 'insurance-service'
+              verify_svc 'masterdata-service'
+              verify_svc 'travelrequest-service'
+              verify_svc 'travel-transaction-service'
+            displayName: 'Pull & verify all selected images'

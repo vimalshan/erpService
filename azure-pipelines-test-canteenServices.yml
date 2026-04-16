@@ -1,0 +1,152 @@
+# =============================================================================
+# TEST PIPELINE — canteenServices  (9 services)
+#
+# Purpose : Validate Build → Push (GHCR) → Verify for one module.
+# Trigger : MANUAL ONLY — will never run automatically.
+#
+# Required pipeline variables (Azure DevOps → Pipeline → Edit → Variables):
+#   GITHUB_ACTOR  – your GitHub username  (vimalshan)
+#   GITHUB_TOKEN  – GitHub PAT with packages:write scope  (mark secret)
+# =============================================================================
+
+name: TEST · canteenServices · $(Build.BuildId)
+
+trigger: none
+pr: none
+
+parameters:
+  - name: service
+    displayName: 'Service to build (or "all")'
+    type: string
+    default: all
+    values:
+      - all
+      - api-gateway
+      - canteen-transaction-service
+      - canteen-unit-service
+      - card-management-service
+      - deduction-service
+      - eligibility-service
+      - item-master-service
+      - reference-data-service
+      - swipe-transaction-service
+
+variables:
+  imagePrefix: 'ghcr.io/vimalshan/erp'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  # ── BUILD ──────────────────────────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build · canteenServices'
+    jobs:
+      - job: BuildImages
+        displayName: Build Docker images
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - script: |
+              set -e
+              build_svc() {
+                local NAME=$1 CTX=$2 DF=$3
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Building $NAME ======="
+                  docker build \
+                    -t "$(imagePrefix)/$NAME:$(Build.BuildId)" \
+                    -t "$(imagePrefix)/$NAME:latest" \
+                    -f "$DF" "$CTX"
+                fi
+              }
+              build_svc 'api-gateway' 'src/Services/canteenServices/ApiGateway' 'src/Services/canteenServices/ApiGateway/Dockerfile'
+              build_svc 'canteen-transaction-service' 'src/Services/canteenServices/canteenTransactionServices' 'src/Services/canteenServices/canteenTransactionServices/Docker/Dockerfile'
+              build_svc 'canteen-unit-service' 'src/Services/canteenServices/canteenunitServices' 'src/Services/canteenServices/canteenunitServices/Docker/Dockerfile'
+              build_svc 'card-management-service' 'src/Services/canteenServices/cardmanagementServices' 'src/Services/canteenServices/cardmanagementServices/Docker/Dockerfile'
+              build_svc 'deduction-service' 'src/Services/canteenServices/deductionServices' 'src/Services/canteenServices/deductionServices/Docker/Dockerfile'
+              build_svc 'eligibility-service' 'src/Services/canteenServices/eligibilityServices' 'src/Services/canteenServices/eligibilityServices/Docker/Dockerfile'
+              build_svc 'item-master-service' 'src/Services/canteenServices/itemmasterServices' 'src/Services/canteenServices/itemmasterServices/Docker/Dockerfile'
+              build_svc 'reference-data-service' 'src/Services/canteenServices/referencedataServices' 'src/Services/canteenServices/referencedataServices/Docker/Dockerfile'
+              build_svc 'swipe-transaction-service' 'src/Services/canteenServices/swipeTransactionServices' 'src/Services/canteenServices/swipeTransactionServices/Docker/Dockerfile'
+            displayName: 'docker build all selected services'
+
+  # ── PUSH ───────────────────────────────────────────────────────────────────
+  - stage: Push
+    displayName: 'Push · canteenServices → GHCR'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: PushImages
+        displayName: Push to GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              push_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  echo "======= Pushing $NAME ======="
+                  docker push "$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  docker push "$(imagePrefix)/$NAME:latest"
+                fi
+              }
+              push_svc 'api-gateway'
+              push_svc 'canteen-transaction-service'
+              push_svc 'canteen-unit-service'
+              push_svc 'card-management-service'
+              push_svc 'deduction-service'
+              push_svc 'eligibility-service'
+              push_svc 'item-master-service'
+              push_svc 'reference-data-service'
+              push_svc 'swipe-transaction-service'
+            displayName: 'docker push all selected services'
+
+  # ── VERIFY ─────────────────────────────────────────────────────────────────
+  - stage: Verify
+    displayName: 'Verify · canteenServices'
+    dependsOn: Push
+    condition: succeeded()
+    jobs:
+      - job: VerifyImages
+        displayName: Verify images exist in GHCR
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            displayName: Login to GHCR
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
+
+          - script: |
+              set -e
+              verify_svc() {
+                local NAME=$1
+                if [ "${{ parameters.service }}" = "all" ] || [ "${{ parameters.service }}" = "$NAME" ]; then
+                  IMAGE="$(imagePrefix)/$NAME:$(Build.BuildId)"
+                  echo "======= Verifying $IMAGE ======="
+                  docker pull "$IMAGE"
+                  echo "OK: $IMAGE"
+                fi
+              }
+              verify_svc 'api-gateway'
+              verify_svc 'canteen-transaction-service'
+              verify_svc 'canteen-unit-service'
+              verify_svc 'card-management-service'
+              verify_svc 'deduction-service'
+              verify_svc 'eligibility-service'
+              verify_svc 'item-master-service'
+              verify_svc 'reference-data-service'
+              verify_svc 'swipe-transaction-service'
+            displayName: 'Pull & verify all selected images'
