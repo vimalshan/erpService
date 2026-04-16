@@ -468,11 +468,14 @@ stages:
 {matrix_block}
 
         steps:
-          - task: Docker@2
+          - checkout: none
+
+          - script: |
+              echo "$(GITHUB_TOKEN)" | docker login ghcr.io -u "$(GITHUB_ACTOR)" --password-stdin
             displayName: Login to GHCR
-            inputs:
-              command: login
-              containerRegistry: ghcr-service-connection
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              GITHUB_ACTOR: $(GITHUB_ACTOR)
 
           - task: Docker@2
             displayName: Push $(imageName)
