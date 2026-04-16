@@ -17,11 +17,11 @@ RUN dotnet publish "PayTransactionalService.API.csproj" -c Release -o /app/publi
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
+EXPOSE 5355
+ENV ASPNETCORE_URLS=http://+:5355
 COPY --from=publish /app/publish .
 RUN mkdir -p /app/Logs
 
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:80
 
-EXPOSE 80
 ENTRYPOINT ["dotnet", "PayTransactionalService.API.dll"]

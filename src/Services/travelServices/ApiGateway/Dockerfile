@@ -11,10 +11,10 @@ RUN dotnet publish "ApiGateway/ApiGateway.csproj" -c Release -o /app/publish /p:
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 5490
+ENV ASPNETCORE_URLS=http://+:5490
 
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:8080
 
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "ApiGateway.dll"]

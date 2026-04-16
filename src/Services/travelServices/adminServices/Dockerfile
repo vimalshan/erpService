@@ -15,10 +15,10 @@ RUN dotnet publish "AdminService.API/AdminService.API.csproj" -c Release -o /app
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 5491
+ENV ASPNETCORE_URLS=http://+:5491
 
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:8080
 
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "AdminService.API.dll"]

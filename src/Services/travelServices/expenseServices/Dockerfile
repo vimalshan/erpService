@@ -15,10 +15,10 @@ RUN dotnet publish "ExpenseService/src/ExpenseService.API/ExpenseService.API.csp
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 5494
+ENV ASPNETCORE_URLS=http://+:5494
 
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:8080
 
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "ExpenseService.API.dll"]

@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
-EXPOSE 80
+EXPOSE 5331
+ENV ASPNETCORE_URLS=http://+:5331
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release

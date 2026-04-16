@@ -17,11 +17,11 @@ RUN dotnet publish "HRService.API.csproj" -c Release -o /app/publish /p:UseAppHo
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
+EXPOSE 5353
+ENV ASPNETCORE_URLS=http://+:5353
 COPY --from=publish /app/publish .
 RUN mkdir -p /app/Logs
 
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:80
 
-EXPOSE 80
 ENTRYPOINT ["dotnet", "HRService.API.dll"]

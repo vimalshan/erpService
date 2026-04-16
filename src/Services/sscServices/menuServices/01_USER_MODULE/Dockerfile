@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 5441
+ENV ASPNETCORE_URLS=http://+:5441
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
@@ -17,5 +18,4 @@ RUN dotnet publish UserService.API/UserService.API.csproj -c Release -o /app/pub
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENV ASPNETCORE_URLS=http://+:8080
 ENTRYPOINT ["dotnet", "UserService.API.dll"]

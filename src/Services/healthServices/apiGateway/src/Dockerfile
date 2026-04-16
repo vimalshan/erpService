@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
-EXPOSE 5600
+EXPOSE 5230
+ENV ASPNETCORE_URLS=http://+:5230
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
@@ -16,6 +17,5 @@ RUN dotnet publish "HealthGateway.csproj" -c Release -o /app/publish /p:UseAppHo
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENV ASPNETCORE_URLS=http://+:5600
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENTRYPOINT ["dotnet", "HealthGateway.dll"]

@@ -15,10 +15,10 @@ RUN dotnet publish "src/InsuranceService.API/InsuranceService.API.csproj" -c Rel
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 5496
+ENV ASPNETCORE_URLS=http://+:5496
 
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:8080
 
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "InsuranceService.API.dll"]

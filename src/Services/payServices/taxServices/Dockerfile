@@ -17,11 +17,11 @@ RUN dotnet publish "TaxService.API.csproj" -c Release -o /app/publish /p:UseAppH
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
+EXPOSE 5356
+ENV ASPNETCORE_URLS=http://+:5356
 COPY --from=publish /app/publish .
 RUN mkdir -p /app/Logs
 
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:80
 
-EXPOSE 80
 ENTRYPOINT ["dotnet", "TaxService.API.dll"]

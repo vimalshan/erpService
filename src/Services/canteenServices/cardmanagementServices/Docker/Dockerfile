@@ -2,6 +2,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS builder
 
 WORKDIR /app
+EXPOSE 5173
+ENV ASPNETCORE_URLS=http://+:5173
 
 COPY src/CardManagement.slnx ./src/
 
@@ -34,14 +36,12 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-EXPOSE 5191
 
 COPY --from=publish /app/publish .
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:5191/health || exit 1
 
-ENV ASPNETCORE_URLS=http://+:5191
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 ENTRYPOINT ["dotnet", "CardManagement.API.dll"]

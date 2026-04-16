@@ -2,6 +2,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS builder
 
 WORKDIR /app
+EXPOSE 5176
+ENV ASPNETCORE_URLS=http://+:5176
 
 COPY src/ItemMasterService.Domain/ItemMasterService.Domain.csproj \
      ./src/ItemMasterService.Domain/
@@ -34,13 +36,11 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-EXPOSE 5194
 
 COPY --from=publish /app/publish .
 
 # Health check is managed by docker-compose.yml (start_period: 120s)
 
-ENV ASPNETCORE_URLS=http://+:5194
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 ENTRYPOINT ["dotnet", "ItemMasterService.API.dll"]

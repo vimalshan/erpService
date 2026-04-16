@@ -23,9 +23,9 @@ RUN dotnet publish "src/API/AgencyService.Api/AgencyService.Api.csproj" -c Relea
 # Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
+EXPOSE 5492
+ENV ASPNETCORE_URLS=http://+:5492
 COPY --from=publish /app/publish .
 
-EXPOSE 80
-EXPOSE 443
 
 ENTRYPOINT ["dotnet", "AgencyService.Api.dll"]

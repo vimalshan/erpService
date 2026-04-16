@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS base
 WORKDIR /app
-EXPOSE 80
+EXPOSE 5400
+ENV ASPNETCORE_URLS=http://+:5400
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
 WORKDIR /src
@@ -20,6 +21,5 @@ RUN dotnet publish "ProductionManagement.API.csproj" -c Release -o /app/publish 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENV ASPNETCORE_URLS=http://+:80
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENTRYPOINT ["dotnet", "ProductionManagement.API.dll"]

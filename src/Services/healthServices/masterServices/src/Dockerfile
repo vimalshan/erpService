@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
-EXPOSE 5200
+EXPOSE 5235
+ENV ASPNETCORE_URLS=http://+:5235
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
@@ -19,6 +20,5 @@ RUN dotnet publish "Masters.API.csproj" -c Release -o /app/publish /p:UseAppHost
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENV ASPNETCORE_URLS=http://+:5200
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENTRYPOINT ["dotnet", "Masters.API.dll"]

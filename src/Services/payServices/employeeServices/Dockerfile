@@ -17,11 +17,11 @@ RUN dotnet publish "EmployeeService.API.csproj" -c Release -o /app/publish /p:Us
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
+EXPOSE 5351
+ENV ASPNETCORE_URLS=http://+:5351
 COPY --from=publish /app/publish .
 RUN mkdir -p /app/Logs
 
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:80
 
-EXPOSE 80
 ENTRYPOINT ["dotnet", "EmployeeService.API.dll"]
