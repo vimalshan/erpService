@@ -2,6 +2,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS builder
 
 WORKDIR /app
+EXPOSE 5160
+ENV ASPNETCORE_URLS=http://+:5160
 
 # Copy solution file
 COPY AuthProvider.sln ./
@@ -40,7 +42,6 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-EXPOSE 5200
 
 # Copy published output
 COPY --from=publish /app/publish .
@@ -50,7 +51,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:5200/api/v1/minimal/auth/health || exit 1
 
 # Environment
-ENV ASPNETCORE_URLS=http://+:5200
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Entry point

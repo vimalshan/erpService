@@ -2,6 +2,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS builder
 
 WORKDIR /app
+EXPOSE 5108
+ENV ASPNETCORE_URLS=http://+:5108
 
 # Copy solution file
 COPY VendorService.slnx ./
@@ -44,7 +46,6 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-EXPOSE 5181
 
 # Copy published output
 COPY --from=publish /app/publish .
@@ -54,7 +55,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:5181/health || exit 1
 
 # Environment
-ENV ASPNETCORE_URLS=http://+:5181
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Entry point

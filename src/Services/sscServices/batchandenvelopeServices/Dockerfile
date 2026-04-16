@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS base
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 5432
+ENV ASPNETCORE_URLS=http://+:5432
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
 WORKDIR /src
@@ -17,5 +18,4 @@ RUN dotnet publish src/BatchAndEnvelopeService.API/BatchAndEnvelopeService.API.c
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENV ASPNETCORE_URLS=http://+:8080
 ENTRYPOINT ["dotnet", "BatchAndEnvelopeService.API.dll"]

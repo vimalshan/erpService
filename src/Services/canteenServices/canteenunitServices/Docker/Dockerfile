@@ -2,6 +2,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS builder
 
 WORKDIR /app
+EXPOSE 5172
+ENV ASPNETCORE_URLS=http://+:5172
 
 COPY CanteenUnit.slnx ./
 
@@ -34,14 +36,12 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-EXPOSE 5190
 
 COPY --from=publish /app/publish .
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:5190/health || exit 1
 
-ENV ASPNETCORE_URLS=http://+:5190
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 ENTRYPOINT ["dotnet", "CanteenUnit.API.dll"]

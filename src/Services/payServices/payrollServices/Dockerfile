@@ -17,11 +17,11 @@ RUN dotnet publish "PayrollServices.API.csproj" -c Release -o /app/publish /p:Us
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
+EXPOSE 5354
+ENV ASPNETCORE_URLS=http://+:5354
 COPY --from=publish /app/publish .
 RUN mkdir -p /app/Logs
 
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:80
 
-EXPOSE 80
 ENTRYPOINT ["dotnet", "PayrollServices.API.dll"]

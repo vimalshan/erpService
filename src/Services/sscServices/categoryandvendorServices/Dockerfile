@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS base
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 5433
+ENV ASPNETCORE_URLS=http://+:5433
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
 WORKDIR /src
@@ -17,5 +18,4 @@ RUN dotnet publish src/CategoryAndVendorService.API/CategoryAndVendorService.API
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENV ASPNETCORE_URLS=http://+:8080
 ENTRYPOINT ["dotnet", "CategoryAndVendorService.API.dll"]

@@ -17,11 +17,11 @@ RUN dotnet publish "FaqServices.API.csproj" -c Release -o /app/publish /p:UseApp
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
+EXPOSE 5352
+ENV ASPNETCORE_URLS=http://+:5352
 COPY --from=publish /app/publish .
 RUN mkdir -p /app/Logs
 
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:80
 
-EXPOSE 80
 ENTRYPOINT ["dotnet", "FaqServices.API.dll"]
