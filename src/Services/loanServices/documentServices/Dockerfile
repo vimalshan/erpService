@@ -20,14 +20,12 @@ WORKDIR /app
 EXPOSE 5291
 ENV ASPNETCORE_URLS=http://+:5291
 
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
 COPY --from=build /app/publish .
 
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
+  CMD wget -qO- http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["dotnet", "DocumentService.API.dll"]

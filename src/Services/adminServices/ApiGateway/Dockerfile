@@ -25,8 +25,6 @@ EXPOSE 5100
 ENV ASPNETCORE_URLS=http://+:5100
 
 # Install curl for health checks
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
 # Copy published application
 COPY --from=publish /app/publish .
 
@@ -40,7 +38,7 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:5000/health || exit 1
+  CMD wget -qO- http://localhost:5000/health || exit 1
 
 # Start application
 ENTRYPOINT ["dotnet", "ApiGateway.dll"]
