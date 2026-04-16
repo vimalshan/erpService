@@ -343,34 +343,18 @@ jobs:
 
       # ── Generate a docker-compose.yml that users can download and run locally
       - name: Generate docker-compose.yml artifact
+        env:
+          MATRIX_JSON: ${{ steps.build.outputs.matrix }}
+          TAG: ${{ github.event.inputs.tag || 'latest' }}
+          PREFIX: ghcr.io/${{ github.repository_owner }}/erp
         run: |
-          TAG="${{ github.event.inputs.tag || 'latest' }}"
-          PREFIX="ghcr.io/${{ github.repository_owner }}/erp"
+          python3 << 'PYEOF'
+          import json, os
 
-          python3 - <<'PYEOF'
-          import json, os, sys
-
-          matrix_json = os.environ.get("MATRIX_JSON", "")
-          tag         = os.environ.get("TAG", "latest")
-          prefix      = os.environ.get("PREFIX", "")
-
-          with open("/tmp/matrix.json", "w") as f:
-              f.write(matrix_json)
-          PYEOF
-
-          # Write matrix to file for python
-          echo '${{ steps.build.outputs.matrix }}' > /tmp/matrix.json
-          TAG="${{ github.event.inputs.tag || 'latest' }}"
-          PREFIX="ghcr.io/${{ github.repository_owner }}/erp"
-
-          python3 - <<PYEOF
-          import json
-
-          with open("/tmp/matrix.json") as f:
-              data = json.load(f)
+          data     = json.loads(os.environ["MATRIX_JSON"])
           services = data.get("include", [])
-          tag = "${TAG}"
-          prefix = "${PREFIX}"
+          tag      = os.environ.get("TAG", "latest")
+          prefix   = os.environ.get("PREFIX", "")
 
           lines = ["services:"]
           for s in services:
@@ -382,7 +366,7 @@ jobs:
               lines.append(f"    image: {prefix}/{name}:{tag}")
               lines.append(f"    container_name: {svc_key}")
               lines.append(f"    ports:")
-              lines.append(f"      - \"{port}:{port}\"")
+              lines.append(f'      - "{port}:{port}"')
               lines.append(f"    environment:")
               lines.append(f"      - ASPNETCORE_ENVIRONMENT=Development")
               lines.append(f"      - ASPNETCORE_URLS=http://+:{port}")
@@ -403,6 +387,8 @@ jobs:
           retention-days: 30
 
       - name: Write setup summary
+        env:
+          MATRIX_JSON: ${{ steps.build.outputs.matrix }}
         run: |
           TAG="${{ github.event.inputs.tag || 'latest' }}"
           PREFIX="ghcr.io/${{ github.repository_owner }}/erp"
@@ -429,13 +415,12 @@ jobs:
             echo "5. Open Swagger in your browser — examples:"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          echo '${{ steps.build.outputs.matrix }}' | python3 - <<'PYEOF'
-          import json, sys, os
-          raw = sys.stdin.read()
-          data = json.loads(raw)
+          python3 << 'PYEOF' >> "$GITHUB_STEP_SUMMARY"
+          import json, os
+          data = json.loads(os.environ["MATRIX_JSON"])
           svcs = data.get("include", [])
           lines = []
-          for s in svcs[:10]:   # show first 10 as examples
+          for s in svcs[:10]:
               lines.append(f"   - http://localhost:{s['port']}/swagger/index.html  ({s['module']} / {s['name']})")
           if len(svcs) > 10:
               lines.append(f"   - ... and {len(svcs)-10} more services")
