@@ -1,4 +1,5 @@
 using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
@@ -74,7 +75,8 @@ public class UserProfileImageUploader
 
             using (var stream = file.OpenReadStream())
             {
-                await _blobContainerClient.UploadBlobAsync(blobName, stream, overwrite: true);
+                var blobClient = _blobContainerClient.GetBlobClient(blobName);
+                await blobClient.UploadAsync(stream, overwrite: true);
             }
 
             _logger.LogInformation("Profile image uploaded successfully for user: {UserId}", userId);
@@ -118,7 +120,7 @@ public class UserStatusReportFunction
             throw;
         }
 
-        if (myTimer. isPastDue)
+        if (myTimer.IsPastDue)
         {
             _logger.LogWarning("Timer schedule status: overdue");
         }

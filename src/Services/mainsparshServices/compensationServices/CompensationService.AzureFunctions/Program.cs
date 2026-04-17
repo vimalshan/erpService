@@ -33,7 +33,7 @@ public class Program
                 services.AddExternalServices(configuration);
 
                 // Application services
-                services.AddMediatR(typeof(Program).Assembly);
+                services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
                 services.AddAutoMapper(typeof(CompensationGradeMappingProfile));
                 services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 

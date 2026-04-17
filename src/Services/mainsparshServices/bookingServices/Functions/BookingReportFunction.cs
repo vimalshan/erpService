@@ -11,16 +11,16 @@ namespace BookingService.Functions;
 /// </summary>
 public class BookingReportFunction
 {
-    private readonly IBookingQueryRepository _queryRepository;
+    private readonly IBookingRepository _bookingRepository;
     private readonly IBlobStorageService _blobStorage;
     private readonly ILogger<BookingReportFunction> _logger;
 
     public BookingReportFunction(
-        IBookingQueryRepository queryRepository,
+        IBookingRepository bookingRepository,
         IBlobStorageService blobStorage,
         ILogger<BookingReportFunction> logger)
     {
-        _queryRepository = queryRepository;
+        _bookingRepository = bookingRepository;
         _blobStorage = blobStorage;
         _logger = logger;
     }
@@ -37,9 +37,9 @@ public class BookingReportFunction
         try
         {
             var yesterday = DateTime.UtcNow.Date.AddDays(-1);
-            var bookings = await _queryRepository.GetAllBookingsAsync(1, 1000, statusFilter: null);
+            var bookings = await _bookingRepository.GetAllAsync(1, 1000, null);
 
-            var yesterdayBookings = bookings.Items
+            var yesterdayBookings = bookings
                 .Where(b => b.CreatedOn.Date == yesterday)
                 .ToList();
 
@@ -50,7 +50,7 @@ public class BookingReportFunction
             var containerName = "booking-reports";
 
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(reportContent));
-            await _blobStorage.UploadBlobAsync(containerName, fileName, stream, "text/csv");
+            await _blobStorage.UploadAsync(containerName, fileName, stream, "text/csv");
 
             _logger.LogInformation(
                 "Daily report generated: {FileName}, Bookings: {Count}",
@@ -78,9 +78,9 @@ public class BookingReportFunction
             var lastWeekStart = DateTime.UtcNow.Date.AddDays(-7);
             var lastWeekEnd = DateTime.UtcNow.Date.AddDays(-1);
 
-            var bookings = await _queryRepository.GetAllBookingsAsync(1, 10000, statusFilter: null);
+            var bookings = await _bookingRepository.GetAllAsync(1, 10000, null);
 
-            var weeklyBookings = bookings.Items
+            var weeklyBookings = bookings
                 .Where(b => b.CreatedOn.Date >= lastWeekStart && b.CreatedOn.Date <= lastWeekEnd)
                 .ToList();
 
@@ -109,7 +109,7 @@ public class BookingReportFunction
             var containerName = "booking-reports";
 
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(reportContent));
-            await _blobStorage.UploadBlobAsync(containerName, fileName, stream, "application/json");
+            await _blobStorage.UploadAsync(containerName, fileName, stream, "application/json");
 
             _logger.LogInformation("Weekly stats generated: {FileName}", fileName);
         }
@@ -120,14 +120,14 @@ public class BookingReportFunction
         }
     }
 
-    private string GenerateCsvReport(IEnumerable<dynamic> bookings)
+    private string GenerateCsvReport(IEnumerable<BookingService.Domain.Entities.BookMain> bookings)
     {
         var sb = new StringBuilder();
         sb.AppendLine("BookingId,AppNo,Title,LocationCode,BookingDate,Status,CreatedOn");
 
         foreach (var booking in bookings)
         {
-            sb.AppendLine($"{booking.BookingId},{booking.BookingAppNo},{booking.BookingTitle}," +
+            sb.AppendLine($"{booking.Id},{booking.BookingAppNo},{booking.BookingTitle}," +
                          $"{booking.LocationCode},{booking.BookingDate:yyyy-MM-dd},{booking.Status},{booking.CreatedOn:yyyy-MM-dd HH:mm:ss}");
         }
 

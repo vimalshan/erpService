@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 var host = new HostBuilder()
-    .ConfigureFunctionsWorkerDefaults()
+    .ConfigureFunctionsWebApplication()
     .ConfigureServices(services =>
     {
         // Add Azure Blob Storage
@@ -15,7 +15,7 @@ var host = new HostBuilder()
             new DefaultAzureCredential()));
 
         // Add Logging
-        services.AddApplicationInsightsTelemetry();
+        services.AddLogging();
     })
     .Build();
 

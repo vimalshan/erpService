@@ -7,15 +7,13 @@ using ReferenceService.Infrastructure.Persistence;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
-    .ConfigureServices(services =>
+    .ConfigureServices((context, services) =>
     {
-        services.AddApplicationInsights();
-        
         var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") ??
             "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=REFERENCEDB;Integrated Security=True;";
         
         // Add Infrastructure services
-        services.AddInfrastructureServices(connectionString);
+        services.AddInfrastructureServices(connectionString, context.Configuration);
         
         // Add Logging
         services.AddLogging();
