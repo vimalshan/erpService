@@ -29,7 +29,8 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS=http://+:5154
 
 # Install curl for health checks
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update --fix-missing && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* || \
+    (apt-get update --fix-missing && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*)
 
 COPY --from=publish /app/publish .
 
