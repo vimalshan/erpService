@@ -1,4 +1,4 @@
-using Microsoft.Azure.Functions.Worker;
+﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,8 +9,8 @@ var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices((context, services) =>
     {
-        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") ??
-            "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=REFERENCEDB;Integrated Security=True;";
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+            ?? throw new InvalidOperationException("Environment variable 'ConnectionStrings__DefaultConnection' not configured");
         
         // Add Infrastructure services
         services.AddInfrastructureServices(connectionString, context.Configuration);

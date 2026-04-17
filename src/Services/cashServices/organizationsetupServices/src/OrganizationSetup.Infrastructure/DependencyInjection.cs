@@ -1,4 +1,4 @@
-using Azure.Storage.Blobs;
+﻿using Azure.Storage.Blobs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,8 +18,8 @@ public static class DependencyInjection
         // Database
         services.AddDbContext<OrganizationSetupDbContext>(options =>
             options.UseSqlServer(
-                configuration.GetConnectionString("DefaultConnection") ?? 
-                "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=CASHDB;Integrated Security=True;",
+                configuration.GetConnectionString("DefaultConnection") ??
+                throw new InvalidOperationException("Connection string 'DefaultConnection' not configured in appsettings.json"),
                 sqlOptions => sqlOptions.MigrationsAssembly("OrganizationSetup.Infrastructure")
             )
         );

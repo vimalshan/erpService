@@ -1,3 +1,6 @@
+﻿using System.IO;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -16,9 +19,12 @@ public class EmailNotificationDbContextFactory : IDesignTimeDbContextFactory<Ema
     {
         var optionsBuilder = new DbContextOptionsBuilder<EmailNotificationDbContext>();
         
-        // Use a default SQL Server connection string for design-time operations
-        // This should match your development database
-        var connectionString = "Server=.;Database=EmailNotificationService;Trusted_Connection=true;TrustServerCertificate=true;";
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+        var connectionString = config.GetConnectionString("DefaultConnection")
+            ?? "Server=.;Database=EmailNotificationService;Trusted_Connection=true;TrustServerCertificate=true;";
         
         optionsBuilder.UseSqlServer(connectionString);
         

@@ -1,4 +1,4 @@
-using Microsoft.Azure.Functions.Worker;
+﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +16,7 @@ builder.Services
 
 // Register DbContext
 var connectionString = builder.Configuration["ConnectionStrings:TourDb"]
-    ?? "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=TOURDB;Integrated Security=True;TrustServerCertificate=True";
+    ?? throw new InvalidOperationException("Connection string 'TourDb' not configured");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString,

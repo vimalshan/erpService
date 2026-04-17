@@ -1,4 +1,4 @@
-using ReferenceService.API;
+﻿using ReferenceService.API;
 using ReferenceService.API.Auth;
 using ReferenceService.Application;
 using ReferenceService.Infrastructure;
@@ -9,8 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services
 var jwtConfig = builder.Configuration.GetSection("Jwt").Get<JwtConfiguration>() ?? new JwtConfiguration();
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=REFERENCEDB;Integrated Security=True;";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not configured in appsettings.json");
 
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(connectionString, builder.Configuration);

@@ -1,3 +1,6 @@
+﻿using System.IO;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -7,9 +10,14 @@ public class CanteenTransactionDbContextFactory : IDesignTimeDbContextFactory<Ca
 {
     public CanteenTransactionDbContext CreateDbContext(string[] args)
     {
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+        var connectionString = config.GetConnectionString("DefaultConnection")
+            ?? @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=CanteenTransactionDb;Integrated Security=True;TrustServerCertificate=True";
         var optionsBuilder = new DbContextOptionsBuilder<CanteenTransactionDbContext>();
-        optionsBuilder.UseSqlServer(
-            @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=CanteenTransactionDb;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Application Name=CanteenTransactionService");
+        optionsBuilder.UseSqlServer(connectionString);
 
         return new CanteenTransactionDbContext(optionsBuilder.Options);
     }

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using FinyearAPI.Data;
@@ -22,7 +22,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ===== DATABASE SETUP =====
 var configuration = builder.Configuration;
 var connectionString = configuration.GetConnectionString("AdminDbConnection")
-    ?? "Server=(localdb)\\mssqllocaldb;Database=FinyearDB;Trusted_Connection=true;";
+    ?? throw new InvalidOperationException("Connection string 'AdminDbConnection' not configured in appsettings.json");
 
 builder.Services.AddDbContext<AdminDbContext>(options =>
     options.UseSqlServer(connectionString, sqlOptions =>

@@ -1,5 +1,4 @@
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.WebJobs.Extensions.RabbitMQ;
 using Microsoft.Extensions.Logging;
 
 namespace LocationService.AzureFunctions

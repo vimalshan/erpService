@@ -67,7 +67,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddHealthChecks()
             .AddSqlServer(
-                configuration.GetConnectionString("DefaultConnection") ?? "Server=.;Database=SPARSHDB;",
+                configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not configured in appsettings.json"),
                 name: "SQL Server");
 
         return services;

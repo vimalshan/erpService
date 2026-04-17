@@ -1,4 +1,4 @@
-using EmployeeService.API.Middleware;
+﻿using EmployeeService.API.Middleware;
 using EmployeeService.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -8,8 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Get configuration
 var configuration = builder.Configuration;
-var connectionString = configuration.GetConnectionString("DefaultConnection") 
-    ?? "Data Source=(localdb)\\MSSQLLocalDB;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Application Name=\"SQL Server Management Studio\";Command Timeout=0";
+var connectionString = configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not configured in appsettings.json");
 
 // Add services to the container
 builder.Services.AddControllers();

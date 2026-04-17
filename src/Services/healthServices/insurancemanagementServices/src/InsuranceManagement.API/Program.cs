@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using InsuranceManagement.Infrastructure.Data;
 using InsuranceManagement.Infrastructure.Repositories;
 using InsuranceManagement.Infrastructure.Extensions;
@@ -26,8 +26,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 // DbContext
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? "Data Source=(localdb)\\MSSQLLocalDB;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Application Name=\"Insurance Service\";Command Timeout=0";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not configured in appsettings.json");
 
 builder.Services.AddDbContext<InsuranceManagementDbContext>(options =>
     options.UseSqlServer(connectionString, sqlOptions =>

@@ -1,3 +1,6 @@
+﻿using System.IO;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,8 +16,13 @@ public class ApprovalGroupDbContextFactory : IDesignTimeDbContextFactory<Approva
     public ApprovalGroupDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<ApprovalGroupDbContext>();
-        optionsBuilder.UseSqlServer(
-            @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=SSCDB;Integrated Security=True;Encrypt=True;TrustServerCertificate=True;");
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+        var connectionString = config.GetConnectionString("DefaultConnection")
+            ?? @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=SSCDB;Integrated Security=True;TrustServerCertificate=True;";
+        optionsBuilder.UseSqlServer(connectionString);
 
         // Provide logging before MediatR registration for design-time factory
         var services = new ServiceCollection();

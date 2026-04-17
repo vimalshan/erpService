@@ -1,3 +1,6 @@
+﻿using System.IO;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using MediatR;
@@ -13,8 +16,13 @@ public class AccountingDbContextDesignTimeFactory : IDesignTimeDbContextFactory<
     public AccountingDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<AccountingDbContext>();
-        optionsBuilder.UseSqlServer(
-            "Server=(localdb)\\MSSQLLocalDB;Database=PFDB;Integrated Security=True;TrustServerCertificate=True;",
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+        var connectionString = config.GetConnectionString("DefaultConnection")
+            ?? "Server=(localdb)\\MSSQLLocalDB;Database=PFDB;Integrated Security=True;TrustServerCertificate=True;";
+        optionsBuilder.UseSqlServer(connectionString,
             sql => sql.MigrationsAssembly(typeof(AccountingDbContext).Assembly.FullName));
 
         // Provide a no-op mediator for design-time usage

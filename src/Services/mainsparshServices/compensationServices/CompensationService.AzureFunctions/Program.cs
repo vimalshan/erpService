@@ -1,4 +1,4 @@
-using CompensationService.Infrastructure;
+﻿using CompensationService.Infrastructure;
 using CompensationService.Application.Mappings;
 using CompensationService.Application.Behaviors;
 using MediatR;
@@ -23,7 +23,7 @@ public class Program
             {
                 // Infrastructure
                 var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-                    ?? "Data Source=(localdb)\\MSSQLLocalDB;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Application Name=\"CompensationService.AzureFunctions\";Command Timeout=0";
+                    ?? throw new InvalidOperationException("Environment variable 'ConnectionStrings__DefaultConnection' not configured");
                 
                 var configBuilder = new ConfigurationBuilder();
                 configBuilder.AddEnvironmentVariables();

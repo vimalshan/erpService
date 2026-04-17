@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -20,7 +20,7 @@ var environment = builder.Environment;
 builder.Services.AddDbContext<AccidentManagementDbContext>(options =>
 {
     var connectionString = configuration.GetConnectionString("HealthDb")
-        ?? @"Server=(localdb)\MSSQLLocalDB;Database=HEALTHDB;Integrated Security=True;";
+        ?? throw new InvalidOperationException("Connection string 'HealthDb' not configured in appsettings.json");
 
     options.UseSqlServer(connectionString, b =>
         b.MigrationsAssembly("AccidentManagementService"));

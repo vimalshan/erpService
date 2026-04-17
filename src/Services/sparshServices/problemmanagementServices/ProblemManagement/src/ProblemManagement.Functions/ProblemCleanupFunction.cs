@@ -13,7 +13,7 @@ public class ProblemCleanupFunction(
     {
         logger.LogInformation("Problem cleanup function triggered at: {Time}", DateTime.UtcNow);
 
-        var problems = await problemRepository.GetByStatusAsync('R', ct);
+        var problems = await problemRepository.GetByStatusAsync("R", ct);
         var oldRejectedProblems = problems
             .Where(p => p.PrModOn < DateTime.UtcNow.AddDays(-90))
             .ToList();

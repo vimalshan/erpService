@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -14,8 +14,8 @@ using CompensationService.Infrastructure.MessageBroker;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-var connectionString = builder.Configuration.GetConnectionString("CompensationDb") ??
-    "Data Source=(localdb)\\MSSQLLocalDB;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Application Name=\"SQL Server Management Studio\";Command Timeout=0";
+var connectionString = builder.Configuration.GetConnectionString("CompensationDb")
+    ?? throw new InvalidOperationException("Connection string 'CompensationDb' not configured in appsettings.json");
 
 builder.Services.AddDbContext<CompensationDbContext>(options =>
     options.UseSqlServer(connectionString, sqlOptions =>

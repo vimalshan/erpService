@@ -1,4 +1,4 @@
-using WebsiteContentService.Application.Behaviors;
+﻿using WebsiteContentService.Application.Behaviors;
 using WebsiteContentService.Application.Commands.Pages;
 using WebsiteContentService.Application.Mappings;
 using WebsiteContentService.Infrastructure;
@@ -23,7 +23,7 @@ public class Program
             .ConfigureServices(services =>
             {
                 var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-                    ?? "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=SRFSPARSHDB;Integrated Security=True;TrustServerCertificate=True";
+                    ?? throw new InvalidOperationException("Environment variable 'ConnectionStrings__DefaultConnection' not configured");
 
                 var configBuilder = new ConfigurationBuilder();
                 configBuilder.AddEnvironmentVariables();
