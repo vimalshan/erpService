@@ -1,3 +1,6 @@
+﻿using System.IO;
+
+using Microsoft.Extensions.Configuration;
 using DealTicketing.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
@@ -14,8 +17,13 @@ public class DealTicketingDbContextFactory : IDesignTimeDbContextFactory<DealTic
     public DealTicketingDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<DealTicketingDbContext>();
-        optionsBuilder.UseSqlServer(
-            "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=CASHDB;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Application Name=DealTicketingMigrations",
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+        var connectionString = config.GetConnectionString("DefaultConnection")
+            ?? "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=CASHDB;Integrated Security=True;TrustServerCertificate=True";
+        optionsBuilder.UseSqlServer(connectionString,
             sql => sql.MigrationsAssembly(typeof(DealTicketingDbContextFactory).Assembly.FullName));
 
         return new DealTicketingDbContext(optionsBuilder.Options, new NoopMediator());

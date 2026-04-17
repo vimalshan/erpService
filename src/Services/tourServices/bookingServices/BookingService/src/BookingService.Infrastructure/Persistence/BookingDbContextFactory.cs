@@ -1,3 +1,6 @@
+﻿using System.IO;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -8,8 +11,13 @@ public class BookingDbContextFactory : IDesignTimeDbContextFactory<BookingDbCont
     public BookingDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<BookingDbContext>();
-        optionsBuilder.UseSqlServer(
-            @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=TOURDB;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Command Timeout=0");
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+        var connectionString = config.GetConnectionString("DefaultConnection")
+            ?? @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=TOURDB;Integrated Security=True;TrustServerCertificate=True";
+        optionsBuilder.UseSqlServer(connectionString);
 
         // Use a null mediator for design-time operations
         return new BookingDbContext(optionsBuilder.Options, null!);

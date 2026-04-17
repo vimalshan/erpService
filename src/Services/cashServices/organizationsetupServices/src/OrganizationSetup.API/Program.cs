@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using OrganizationSetup.API.Services;
 using OrganizationSetup.Application;
@@ -57,8 +57,8 @@ builder.Services
 // Health Checks
 builder.Services
     .AddHealthChecks()
-    .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ?? 
-        "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=CASHDB;Integrated Security=True;")
+    .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not configured in appsettings.json"))
     .AddRabbitMQ(sp =>
     {
         var config = builder.Configuration.GetSection("RabbitMQ");

@@ -45,7 +45,7 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddApiServices(settings);
 
 // Health Checks
-var connectionString = settings.GetConnectionString("DefaultConnection") ?? "Data Source=(localdb)\\MSSQLLocalDB;Integrated Security=True;";
+var connectionString = settings.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not configured in appsettings.json");
 builder.Services.AddApplicationHealthChecks(connectionString, settings["RabbitMQ:Hostname"]);
 
 // JWT Authentication

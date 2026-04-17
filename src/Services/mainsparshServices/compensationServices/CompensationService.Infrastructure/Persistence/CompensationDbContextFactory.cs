@@ -1,3 +1,6 @@
+﻿using System.IO;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -11,8 +14,13 @@ public class CompensationDbContextFactory : IDesignTimeDbContextFactory<Compensa
     public CompensationDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<CompensationDbContext>();
-        optionsBuilder.UseSqlServer(
-            "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=CompensationServiceDb;Integrated Security=True;TrustServerCertificate=True");
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+        var connectionString = config.GetConnectionString("DefaultConnection")
+            ?? "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=SRFSPARSHDB;Integrated Security=True;TrustServerCertificate=True";
+        optionsBuilder.UseSqlServer(connectionString);
 
         return new CompensationDbContext(optionsBuilder.Options);
     }

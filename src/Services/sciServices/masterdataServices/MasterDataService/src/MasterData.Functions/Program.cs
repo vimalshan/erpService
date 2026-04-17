@@ -1,4 +1,4 @@
-using Azure.Storage.Blobs;
+﻿using Azure.Storage.Blobs;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,7 +11,8 @@ var host = new HostBuilder()
     {
         
         // Add infrastructure services
-        var connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=MasterDataDB;Integrated Security=True;Encrypt=True;TrustServerCertificate=False";
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+            ?? throw new InvalidOperationException("Environment variable 'ConnectionStrings__DefaultConnection' not configured");
         services.AddInfrastructureServices(connectionString);
 
         // Add Blob Storage client

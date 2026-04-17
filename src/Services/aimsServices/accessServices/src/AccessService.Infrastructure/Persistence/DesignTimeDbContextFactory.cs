@@ -1,3 +1,6 @@
+﻿using System.IO;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -11,8 +14,12 @@ namespace AccessService.Infrastructure.Persistence
     {
         public AccessServiceDbContext CreateDbContext(string[] args)
         {
-            // Default connection string for development/migration
-            var connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Integrated Security=True;Initial Catalog=ACCESSDB;";
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true)
+                .Build();
+            var connectionString = config.GetConnectionString("DefaultConnection")
+                ?? "Data Source=(localdb)\\MSSQLLocalDB;Integrated Security=True;Initial Catalog=ACCESSDB;";
 
             var optionsBuilder = new DbContextOptionsBuilder<AccessServiceDbContext>();
             optionsBuilder.UseSqlServer(connectionString, options =>

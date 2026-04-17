@@ -1,3 +1,6 @@
+﻿using System.IO;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -12,8 +15,13 @@ public sealed class TimesheetDbContextFactory : IDesignTimeDbContextFactory<Time
     public TimesheetDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<TimesheetDbContext>();
-        optionsBuilder.UseSqlServer(
-            "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=SRFSPARSHDB;Integrated Security=True;Encrypt=True;TrustServerCertificate=True;",
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+        var connectionString = config.GetConnectionString("DefaultConnection")
+            ?? "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=SRFSPARSHDB;Integrated Security=True;TrustServerCertificate=True;";
+        optionsBuilder.UseSqlServer(connectionString,
             sql => sql.MigrationsAssembly(typeof(TimesheetDbContext).Assembly.FullName)
                       .EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null));
 

@@ -1,4 +1,4 @@
-using AgencyService.Api.Authentication;
+﻿using AgencyService.Api.Authentication;
 using AgencyService.Api.Endpoints;
 using AgencyService.Api.GraphQL;
 using AgencyService.Api.HealthChecks;
@@ -12,8 +12,8 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuration
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
-    "Data Source=(localdb)\\MSSQLLocalDB;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Application Name=\"SQL Server Management Studio\";Command Timeout=0";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not configured in appsettings.json");
 
 // Services
 builder.Services.AddLogging();

@@ -1,3 +1,6 @@
+﻿using System.IO;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -8,8 +11,13 @@ public class InventoryDbContextFactory : IDesignTimeDbContextFactory<InventoryDb
     public InventoryDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<InventoryDbContext>();
-        optionsBuilder.UseSqlServer(
-            "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=InventoryServiceDb;Integrated Security=True;TrustServerCertificate=True");
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+        var connectionString = config.GetConnectionString("DefaultConnection")
+            ?? "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=WMSDB;Integrated Security=True;TrustServerCertificate=True";
+        optionsBuilder.UseSqlServer(connectionString);
 
         return new InventoryDbContext(optionsBuilder.Options);
     }

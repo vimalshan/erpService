@@ -1,4 +1,4 @@
-namespace GroupManagementService.API.Configuration
+﻿namespace GroupManagementService.API.Configuration
 {
     public static class HealthCheckConfiguration
     {
@@ -8,7 +8,7 @@ namespace GroupManagementService.API.Configuration
             
             services
                 .AddHealthChecks()
-                .AddSqlServer(connString ?? "Server=(localdb)\\MSSQLLocalDB;Database=GroupManagementDb;Integrated Security=true;", 
+                .AddSqlServer(connString ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not configured in appsettings.json"), 
                     name: "Database", 
                     failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy);
 

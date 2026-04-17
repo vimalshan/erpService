@@ -1,3 +1,6 @@
+﻿using System.IO;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -13,11 +16,12 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<CurrencyDb
     {
         var optionsBuilder = new DbContextOptionsBuilder<CurrencyDbContext>();
         
-        // Use LocalDB for design-time
-        var connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=CASHDB;Integrated Security=True;" +
-                              "Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;" +
-                              "Encrypt=True;TrustServerCertificate=False;Application Name=\"CurrencyManagement.API\";" +
-                              "Command Timeout=0";
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+        var connectionString = config.GetConnectionString("DefaultConnection")
+            ?? "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=CASHDB;Integrated Security=True;TrustServerCertificate=True";
         
         optionsBuilder.UseSqlServer(connectionString);
         

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -27,7 +27,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Data Source=(localdb)\\MSSQLLocalDB;Integrated Security=True;Initial Catalog=ACCESSDB;";
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not configured in appsettings.json");
 
 // Domain Event Publisher - register before DbContext
 builder.Services.AddSingleton<IDomainEventPublisher, InMemoryDomainEventPublisher>();

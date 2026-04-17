@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Text;
@@ -20,8 +20,8 @@ builder.Host.UseSerilog();
 
 // Register Application and Infrastructure services
 builder.Services.AddApplication();
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? "Data Source=(localdb)\\MSSQLLocalDB;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Application Name=\"SQL Server Management Studio\";Command Timeout=0";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not configured in appsettings.json");
 builder.Services.AddInfrastructure(connectionString);
 
 // Register Token Service for JWT generation

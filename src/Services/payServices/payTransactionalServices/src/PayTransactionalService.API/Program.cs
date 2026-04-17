@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using PayTransactionalService.Application.Extensions;
@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Connection string
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=PayTransactionalService;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Application Name=\"PayTransactionalService\";Command Timeout=0";
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not configured in appsettings.json");
 
 // Register services
 builder.Services.AddApplicationServices();

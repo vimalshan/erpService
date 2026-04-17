@@ -1,3 +1,6 @@
+﻿using System.IO;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -9,8 +12,12 @@ public class FaqDbContextFactory : IDesignTimeDbContextFactory<FaqDbContext>
     {
         var optionsBuilder = new DbContextOptionsBuilder<FaqDbContext>();
         
-        // Default connection string for migrations
-        const string connectionString = "Server=(localdb)\\mssqllocaldb;Database=FaqDb;Trusted_Connection=true;";
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+        var connectionString = config.GetConnectionString("DefaultConnection")
+            ?? "Server=(localdb)\\mssqllocaldb;Database=FaqDb;Trusted_Connection=true;";
         
         optionsBuilder.UseSqlServer(
             connectionString,

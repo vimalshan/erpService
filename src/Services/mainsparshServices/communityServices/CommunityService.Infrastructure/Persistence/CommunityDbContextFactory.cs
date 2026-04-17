@@ -1,3 +1,6 @@
+﻿using System.IO;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -7,7 +10,12 @@ public class CommunityDbContextFactory : IDesignTimeDbContextFactory<CommunityDb
 {
     public CommunityDbContext CreateDbContext(string[] args)
     {
-        var connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=SRFSPARSHDB;Integrated Security=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
+        var config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+        var connectionString = config.GetConnectionString("DefaultConnection")
+            ?? "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=SRFSPARSHDB;Integrated Security=True;TrustServerCertificate=True;Connection Timeout=30;";
         
         var optionsBuilder = new DbContextOptionsBuilder<CommunityDbContext>();
         optionsBuilder.UseSqlServer(connectionString);
