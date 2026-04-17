@@ -1,4 +1,5 @@
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using ReferenceService.Infrastructure.Persistence;
 
@@ -66,7 +67,7 @@ public class SyncDataFunction
             // Implement data synchronization logic
             var response = req.CreateResponse(System.Net.HttpStatusCode.OK);
             response.Headers.Add("Content-Type", "application/json");
-            await response.WriteAsJsonAsync(new { message = "Sync completed successfully" });
+            await response.WriteStringAsync(System.Text.Json.JsonSerializer.Serialize(new { message = "Sync completed successfully" }));
             return response;
         }
         catch (Exception ex)
@@ -74,7 +75,7 @@ public class SyncDataFunction
             _logger.LogError(ex, "Error during data sync");
             var response = req.CreateResponse(System.Net.HttpStatusCode.InternalServerError);
             response.Headers.Add("Content-Type", "application/json");
-            await response.WriteAsJsonAsync(new { error = ex.Message });
+            await response.WriteStringAsync(System.Text.Json.JsonSerializer.Serialize(new { error = ex.Message }));
             return response;
         }
     }

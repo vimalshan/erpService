@@ -13,6 +13,9 @@ using FinyearAPI.GraphQL.Queries;
 using FinyearAPI.GraphQL.Mutations;
 using FinyearAPI.GraphQL.Subscriptions;
 using FinyearAPI.Application.Services;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,15 +44,42 @@ builder.Services.AddScoped<IFinancialYearService, FinancialYearService>();
 builder.Services.AddControllers();
 
 // ===== AUTHENTICATION =====
-var secretKey = configuration["Jwt:SecretKey"] ?? "your-secret-key-change-this-in-production-32-chars-minimum";
-var issuer = configuration["Jwt:Issuer"] ?? "FinyearAPI";
-var audience = configuration["Jwt:Audience"] ?? "FinyearAPI";
+var secretKey = configuration["Jwt:SecretKey"] ?? "AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!";
+var issuer = configuration["Jwt:Issuer"] ?? "AuthProvider";
+var audience = configuration["Jwt:Audience"] ?? "AuthProviderClients";
 var expirationMinutes = int.Parse(configuration["Jwt:ExpirationMinutes"] ?? "60");
 
 builder.Services.AddSingleton<IAuthService>(sp =>
     new JwtAuthService(secretKey, issuer, audience, expirationMinutes, sp.GetRequiredService<ILogger<JwtAuthService>>()));
 
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
+
+// ===== JWT BEARER AUTHENTICATION =====
+var jwtKey = Encoding.UTF8.GetBytes(configuration["JwtSettings:SecretKey"]
+    ?? configuration["Jwt:SecretKey"]
+    ?? "AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = configuration["JwtSettings:Issuer"] ?? configuration["Jwt:Issuer"] ?? "AuthProvider",
+        ValidAudience = configuration["JwtSettings:Audience"] ?? configuration["Jwt:Audience"] ?? "AuthProviderClients",
+        IssuerSigningKey = new SymmetricSecurityKey(jwtKey),
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization();
 
 // ===== API DOCUMENTATION =====
 builder.Services.AddEndpointsApiExplorer();
@@ -104,6 +134,8 @@ app.UseSwaggerUI(options =>
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseAuthorization();
 
 // ===== ROUTING & CONTROLLERS =====
 app.UseRouting();

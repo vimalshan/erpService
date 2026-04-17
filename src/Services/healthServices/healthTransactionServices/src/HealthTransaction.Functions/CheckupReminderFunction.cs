@@ -32,7 +32,7 @@ public class CheckupReminderFunction
             new { From = DateTime.Today, To = DateTime.Today.AddDays(7) });
 
         foreach (var row in upcoming)
-            _logger.LogInformation("Upcoming checkup — EmpNum: {EmpNum}, Date: {Date}", row.CPM_EMP_NUM, row.CPM_CHK_DAT);
+            _logger.LogInformation("Upcoming checkup — EmpNum: {EmpNum}, Date: {Date}", (object)row.CPM_EMP_NUM, (object)row.CPM_CHK_DAT);
 
         _logger.LogInformation("CheckupReminder completed. Checked {Count} records.", upcoming.Count());
     }
