@@ -1,0 +1,318 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Production Compose — pulls pre-built images from GHCR
+# Usage:  docker compose -f docker-compose.prod.yml up -d
+# Images: ghcr.io/vimalshan/erp/<service>:latest (public, no login required)
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  # ─── SQL Server ─────────────────────────────────────
+  mssql-server:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cash-sqlserver
+    environment:
+      ACCEPT_EULA: 'Y'
+      SA_PASSWORD: 'CashServices2026!'
+      MSSQL_PID: 'Express'
+      MSSQL_MEMORY_LIMIT_MB: '1024'
+    ports:
+      - "1435:1433"
+    volumes:
+      - cash_mssql_data:/var/opt/mssql
+    networks:
+      - cash-network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CashServices2026!' -No -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 15s
+      timeout: 10s
+      start_period: 60s
+      retries: 15
+    restart: unless-stopped
+
+  # ─── RabbitMQ ───────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: cash-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: 'guest'
+      RABBITMQ_DEFAULT_PASS: 'guest'
+      RABBITMQ_DEFAULT_VHOST: '/'
+    ports:
+      - "5674:5672"
+      - "15674:15672"
+    networks:
+      - cash-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 10
+    restart: unless-stopped
+
+  # ─── Azurite (Azure Storage Emulator) ───────────────
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: cash-azurite
+    ports:
+      - "10013:10000"
+      - "10014:10001"
+      - "10015:10002"
+    networks:
+      - cash-network
+    restart: unless-stopped
+
+  # ─── API Gateway (Port 5000) ────────────────────────
+  api-gateway:
+    image: ghcr.io/vimalshan/erp/api-gateway:latest
+    container_name: cash-api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5000'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=CashServices2026!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: 'guest'
+      RabbitMQ__Password: 'guest'
+      ServiceEndpoints__CashManagement: 'http://cash-management-api:5249'
+      ServiceEndpoints__CurrencyManagement: 'http://currency-management-api:5031'
+      ServiceEndpoints__DealTicketing: 'http://deal-ticketing-api:5081'
+      ServiceEndpoints__LoanManagement: 'http://loan-management-api:5268'
+      ServiceEndpoints__OrganizationSetup: 'http://organization-setup-api:5099'
+      ServiceEndpoints__EmailNotification: 'http://email-notification-api:5032'
+      ServiceEndpoints__TransactionProcessing: 'http://transaction-processing-api:5100'
+    ports:
+      - "5000:5000"
+    depends_on:
+      organization-setup-api:
+        condition: service_healthy
+      currency-management-api:
+        condition: service_healthy
+      deal-ticketing-api:
+        condition: service_healthy
+      loan-management-api:
+        condition: service_healthy
+      cash-management-api:
+        condition: service_healthy
+      email-notification-api:
+        condition: service_healthy
+      transaction-processing-api:
+        condition: service_healthy
+    networks:
+      - cash-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5000'"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Organization Setup Service (Port 5099) ─────────
+  organization-setup-api:
+    image: ghcr.io/vimalshan/erp/organization-setup-service:latest
+    container_name: cash-orgsetup-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5099'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=CashServices2026!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: 'guest'
+      RabbitMQ__Password: 'guest'
+    ports:
+      - "5099:5099"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cash-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5099'"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Currency Management Service (Port 5031) ────────
+  currency-management-api:
+    image: ghcr.io/vimalshan/erp/current-management-service:latest
+    container_name: cash-currency-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5031'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=CashServices2026!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: 'guest'
+      RabbitMQ__Password: 'guest'
+    ports:
+      - "5031:5031"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cash-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5031'"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Deal Ticketing Service (Port 5081) ─────────────
+  deal-ticketing-api:
+    image: ghcr.io/vimalshan/erp/deal-ticketing-service:latest
+    container_name: cash-deals-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5081'
+      ConnectionStrings__DealTicketingDb: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=CashServices2026!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+    ports:
+      - "5081:5081"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cash-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5081'"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Loan Management Service (Port 5268) ────────────
+  loan-management-api:
+    image: ghcr.io/vimalshan/erp/loan-management-service:latest
+    container_name: cash-loans-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5268'
+      ConnectionStrings__LoanManagement: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=CashServices2026!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: 'guest'
+      RabbitMQ__Password: 'guest'
+    ports:
+      - "5268:5268"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cash-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5268'"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Cash Management Service (Port 5249) ────────────
+  cash-management-api:
+    image: ghcr.io/vimalshan/erp/cash-management-service:latest
+    container_name: cash-management-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5249'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=CASHDB;User ID=sa;Password=CashServices2026!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: 'guest'
+      RabbitMQ__Password: 'guest'
+    ports:
+      - "5249:5249"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cash-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5249'"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Email Notification Service (Port 5032) ─────────
+  email-notification-api:
+    image: ghcr.io/vimalshan/erp/email-notification-service:latest
+    container_name: cash-email-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5032'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=EmailNotificationDb;User ID=sa;Password=CashServices2026!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: 'guest'
+      RabbitMQ__Password: 'guest'
+    ports:
+      - "5032:5032"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cash-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5032'"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Transaction Processing Service (Port 5100) ─────
+  transaction-processing-api:
+    image: ghcr.io/vimalshan/erp/transaction-service:latest
+    container_name: cash-transaction-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5100'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=TransactionProcessingDb;User ID=sa;Password=CashServices2026!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30'
+      RabbitMQ__Enabled: 'true'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: 'guest'
+      RabbitMQ__Password: 'guest'
+    ports:
+      - "5100:5100"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cash-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5100'"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  cash-network:
+    driver: bridge
+
+volumes:
+  cash_mssql_data:

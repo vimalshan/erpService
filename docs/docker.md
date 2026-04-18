@@ -5,6 +5,8 @@ Prerequisites for all modules:
 2. Start SQL Server and RabbitMQ on the same network first (see below).
 3. All `docker run` commands below include `--network erp-network` so containers can resolve each other by hostname.
 
+SQL_CONTAINER=sqlserver SA_PASSWORD="YourStrong@Passw0rd" bash scripts/create-databases.sh
+
 ```bash
 # SQL Server
 docker run -d --name sqlserver --network erp-network \
@@ -18,8 +20,29 @@ docker run -d --name rabbitmq --network erp-network \
   -e RABBITMQ_DEFAULT_USER=erpadmin -e RABBITMQ_DEFAULT_PASS=ErpR@bbit1 \
   rabbitmq:3-management
 ```
-
 🔑 AuthProvider
+Service	Host Port → Container Port
+auth-provider	5200 → 5200
+
+### Docker Compose (Recommended)
+
+```bash
+cd src/Services/AuthProvider
+docker compose -f docker-compose.prod.yml up -d
+```
+
+**Healthcheck:** The GHCR image has curl installed; uses the `/api/v1/minimal/auth/health` endpoint:
+
+```yaml
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:5200/api/v1/minimal/auth/health"]
+  interval: 30s
+  timeout: 10s
+  start_period: 30s
+  retries: 3
+```
+
+### Individual docker run command
 bash
 docker run -d --name auth-provider --network erp-network \
   -p 5200:5200 \
@@ -34,11 +57,33 @@ api-gateway	5000 → 5000
 finyear-api	5186 → 5000
 location-services	7136 → 7136
 vendor-service	5181 → 5181
-lov-service	5184 → 5181
+lov-service	5184 → 5103 (image bakes in port 5103, ignores ASPNETCORE_URLS override)
 scholarship-service	5166 → 5166
 stationery-service	5182 → 5181
 tds-service	5183 → 5181
 transaction-service	5185 → 5185
+
+### Docker Compose (Recommended)
+
+```bash
+cd src/Services/adminServices
+docker compose -f docker-compose.prod.yml up -d
+```
+
+**Healthcheck:** The GHCR images have a baked-in healthcheck using `wget` which is not installed in the container. The compose file overrides it with a bash TCP check:
+
+```yaml
+healthcheck:
+  test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/PORT'"]
+  interval: 30s
+  timeout: 5s
+  start_period: 30s
+  retries: 3
+```
+
+> **Note:** `lov-service` image ignores `ASPNETCORE_URLS` and always binds to port **5103** internally. The compose file maps `5184:5103` accordingly.
+
+### Individual docker run commands
 bash
 
 docker run -d --name finyear-api --network erp-network \
@@ -112,6 +157,26 @@ leave-service	5016 → 80
 reference-service	5017 → 80
 visitor-service	5018 → 80
 aimstransaction-service	5019 → 80
+
+### Docker Compose (Recommended)
+
+```bash
+cd src/Services/aimsServices
+docker compose -f docker-compose.prod.yml up -d
+```
+
+**Healthcheck:** Uses bash TCP check (same as adminServices — images don't have curl/wget):
+
+```yaml
+healthcheck:
+  test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/80'"]
+  interval: 30s
+  timeout: 5s
+  start_period: 30s
+  retries: 3
+```
+
+### Individual docker run commands
 bash
 docker run -d --name aims-access-service --network erp-network \
   -p 5010:80 \
@@ -200,6 +265,28 @@ findings-service	5006 → 8080
 notification-service	5007 → 8080
 schedule-service	5008 → 8080
 settings-service	5009 → 8080
+
+> **Note:** Dockerfile images bake in ports 5140–5149, but the compose overrides all to **8080** via `ASPNETCORE_URLS`.
+
+### Docker Compose (Recommended)
+
+```bash
+cd src/Services/auditServices
+docker compose -f docker-compose.prod.yml up -d
+```
+
+**Healthcheck:** Uses bash TCP check (images run as non-root `appuser`, no curl):
+
+```yaml
+healthcheck:
+  test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+  interval: 30s
+  timeout: 5s
+  start_period: 30s
+  retries: 3
+```
+
+### Individual docker run commands
 bash
 docker run -d --name audit-action-service --network erp-network \
   -p 5001:8080 \
@@ -279,16 +366,35 @@ docker run -d --name audit-api-gateway --network erp-network \
   -e "Jwt__Key=YourSuperSecretKeyThatIsAtLeast32Characters!" -e Jwt__Issuer=ERPSystem -e Jwt__Audience=ERPUsers \
   ghcr.io/vimalshan/erp/api-gateway:latest
 🍽️ canteenServices
-Service	Host Port
-api-gateway	5200
-canteen-unit-service	5190
-card-management-service	5191
-deduction-service	5192
-eligibility-service	5193
-itemmaster-service	5194
-referencedata-service	5195
-swipe-transaction-service	5196
-canteen-transaction-service	5197
+
+> **Dockerfile EXPOSE ports** (5170–5178) differ from runtime ports. The compose overrides them via `ASPNETCORE_URLS`.
+
+| Service | Host Port | Container Port | GHCR Image |
+|---|---|---|---|
+| api-gateway | 5200 | 5200 | ghcr.io/vimalshan/erp/api-gateway |
+| canteen-unit-service | 5190 | 5190 | ghcr.io/vimalshan/erp/canteen-unit-service |
+| card-management-service | 5191 | 5191 | ghcr.io/vimalshan/erp/card-management-service |
+| deduction-service | 5192 | 5192 | ghcr.io/vimalshan/erp/deduction-service |
+| eligibility-service | 5193 | 5193 | ghcr.io/vimalshan/erp/eligibility-service |
+| itemmaster-service | 5194 | 5194 | ghcr.io/vimalshan/erp/item-master-service |
+| referencedata-service | 5195 | 5195 | ghcr.io/vimalshan/erp/reference-data-service |
+| swipe-transaction-service | 5196 | 5196 | ghcr.io/vimalshan/erp/swipe-transaction-service |
+| canteen-transaction-service | 5197 | 5197 | ghcr.io/vimalshan/erp/canteen-transaction-service |
+
+**Infrastructure:** SQL Server on `1434:1433`, RabbitMQ on `5673:5672` / `15673:15672`, Azurite on `10010-10012`
+
+#### Docker Compose (recommended)
+
+```bash
+cd src/Services/canteenServices
+docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml ps        # verify all healthy
+```
+
+**Healthcheck:** `bash -c 'echo > /dev/tcp/localhost/<port>'` — no curl in images.
+SQL Server uses `shared-entrypoint.sh` + `init-all-databases.sql` with `:r` sqlcmd to create 7 databases.
+
+#### Individual docker run commands
 bash
 docker run -d --name canteen-unit-service --network erp-network \
   -p 5190:5190 \
@@ -351,69 +457,36 @@ docker run -d --name canteen-api-gateway --network erp-network \
   -e ASPNETCORE_ENVIRONMENT=Docker -e ASPNETCORE_URLS=http://+:5200 \
   ghcr.io/vimalshan/erp/api-gateway:latest
 💵 cashServices
-Service	Host Port
-api-gateway	5000
-organization-setup-api	5099
-currency-management-api	5031
-deal-ticketing-api	5081
-loan-management-api	5268
-cash-management-api	5249
-email-notification-api	5032
-transaction-processing-api	5100
-bash
-docker run -d --name cash-organization-setup --network erp-network \
-  -p 5099:5099 \
-  -e ASPNETCORE_ENVIRONMENT=Production -e ASPNETCORE_URLS=http://+:5099 \
-  -e "ConnectionStrings__DefaultConnection=Data Source=sqlserver,1433;Initial Catalog=CASHDB;User ID=sa;******;Encrypt=False;TrustServerCertificate=True;" \
-  -e RabbitMQ__HostName=rabbitmq -e RabbitMQ__Port=5672 -e RabbitMQ__UserName=guest -e RabbitMQ__Password=guest \
-  ghcr.io/vimalshan/erp/organization-setup-service:latest
 
-docker run -d --name cash-currency-management --network erp-network \
-  -p 5031:5031 \
-  -e ASPNETCORE_ENVIRONMENT=Production -e ASPNETCORE_URLS=http://+:5031 \
-  -e "ConnectionStrings__DefaultConnection=Data Source=sqlserver,1433;Initial Catalog=CASHDB;User ID=sa;******;Encrypt=False;TrustServerCertificate=True;" \
-  -e RabbitMQ__HostName=rabbitmq -e RabbitMQ__Port=5672 -e RabbitMQ__UserName=guest -e RabbitMQ__Password=guest \
-  ghcr.io/vimalshan/erp/current-management-service:latest
+> **Dockerfile note:** Dockerfiles bake EXPOSE 5190-5197 with matching `ASPNETCORE_URLS`, but the compose overrides them to the actual runtime ports below.
 
-docker run -d --name cash-deal-ticketing --network erp-network \
-  -p 5081:5081 \
-  -e ASPNETCORE_ENVIRONMENT=Production -e ASPNETCORE_URLS=http://+:5081 \
-  -e "ConnectionStrings__DealTicketingDb=Data Source=sqlserver,1433;Initial Catalog=CASHDB;User ID=sa;******;Encrypt=False;TrustServerCertificate=True;" \
-  -e RabbitMQ__Host=rabbitmq -e RabbitMQ__Username=guest -e RabbitMQ__Password=guest \
-  ghcr.io/vimalshan/erp/deal-ticketing-service:latest
+| Service | Host Port | Container Port | GHCR Image |
+|---|---|---|---|
+| api-gateway | 5000 | 5000 | `ghcr.io/vimalshan/erp/api-gateway:latest` |
+| organization-setup-api | 5099 | 5099 | `ghcr.io/vimalshan/erp/organization-setup-service:latest` |
+| currency-management-api | 5031 | 5031 | `ghcr.io/vimalshan/erp/current-management-service:latest` |
+| deal-ticketing-api | 5081 | 5081 | `ghcr.io/vimalshan/erp/deal-ticketing-service:latest` |
+| loan-management-api | 5268 | 5268 | `ghcr.io/vimalshan/erp/loan-management-service:latest` |
+| cash-management-api | 5249 | 5249 | `ghcr.io/vimalshan/erp/cash-management-service:latest` |
+| email-notification-api | 5032 | 5032 | `ghcr.io/vimalshan/erp/email-notification-service:latest` |
+| transaction-processing-api | 5100 | 5100 | `ghcr.io/vimalshan/erp/transaction-service:latest` |
+| SQL Server | 1435 | 1433 | `mcr.microsoft.com/mssql/server:2022-latest` |
+| RabbitMQ | 5674 / 15674 | 5672 / 15672 | `rabbitmq:3-management-alpine` |
+| Azurite | 10013-10015 | 10000-10002 | `mcr.microsoft.com/azure-storage/azurite` |
 
-docker run -d --name cash-loan-management --network erp-network \
-  -p 5268:5268 \
-  -e ASPNETCORE_ENVIRONMENT=Production -e ASPNETCORE_URLS=http://+:5268 \
-  -e "ConnectionStrings__LoanManagement=Data Source=sqlserver,1433;Initial Catalog=CASHDB;User ID=sa;******;Encrypt=False;TrustServerCertificate=True;" \
-  -e RabbitMQ__HostName=rabbitmq -e RabbitMQ__Port=5672 -e RabbitMQ__UserName=guest -e RabbitMQ__Password=guest \
-  ghcr.io/vimalshan/erp/loan-management-service:latest
+**Docker Compose (prod):**
+```bash
+cd src/Services/cashServices
+docker compose -f docker-compose.prod.yml up -d
+```
 
-docker run -d --name cash-management-api --network erp-network \
-  -p 5249:5249 \
-  -e ASPNETCORE_ENVIRONMENT=Production -e ASPNETCORE_URLS=http://+:5249 \
-  -e "ConnectionStrings__DefaultConnection=Data Source=sqlserver,1433;Initial Catalog=CASHDB;User ID=sa;******;Encrypt=False;TrustServerCertificate=True;" \
-  -e RabbitMQ__Host=rabbitmq -e RabbitMQ__Port=5672 -e RabbitMQ__UserName=guest -e RabbitMQ__Password=guest \
-  ghcr.io/vimalshan/erp/cash-management-service:latest
-
-docker run -d --name cash-email-notification --network erp-network \
-  -p 5032:5032 \
-  -e ASPNETCORE_ENVIRONMENT=Production -e ASPNETCORE_URLS=http://+:5032 \
-  -e "ConnectionStrings__DefaultConnection=Data Source=sqlserver,1433;Initial Catalog=EmailNotificationDb;User ID=sa;******;Encrypt=False;TrustServerCertificate=True;" \
-  -e RabbitMQ__HostName=rabbitmq -e RabbitMQ__Port=5672 -e RabbitMQ__UserName=guest -e RabbitMQ__Password=guest \
-  ghcr.io/vimalshan/erp/email-notification-service:latest
-
-docker run -d --name cash-transaction-processing --network erp-network \
-  -p 5100:5100 \
-  -e ASPNETCORE_ENVIRONMENT=Production -e ASPNETCORE_URLS=http://+:5100 \
-  -e "ConnectionStrings__DefaultConnection=Data Source=sqlserver,1433;Initial Catalog=TransactionProcessingDb;User ID=sa;******;Encrypt=False;TrustServerCertificate=True;" \
-  -e RabbitMQ__HostName=rabbitmq -e RabbitMQ__Port=5672 -e RabbitMQ__UserName=guest -e RabbitMQ__Password=guest \
-  ghcr.io/vimalshan/erp/transaction-service:latest
-
-docker run -d --name cash-api-gateway --network erp-network \
-  -p 5000:5000 \
-  -e ASPNETCORE_ENVIRONMENT=Production -e ASPNETCORE_URLS=http://+:5000 \
-  ghcr.io/vimalshan/erp/api-gateway:latest
+**Notes:**
+- API Gateway uses **YARP** reverse proxy (not Ocelot) with `appsettings.Production.json` for Docker service endpoints
+- All services use `wget` healthchecks (available in aspnet base images)
+- DB: CASHDB (shared), EmailNotificationDb, TransactionProcessingDb — EF migrations auto-create
+- SA_PASSWORD: `CashServices2026!`
+- Deal-ticketing uses `RabbitMQ__Host`/`RabbitMQ__Username` (different casing from others)
+- Cash-management uses `RabbitMQ__Host` (not `RabbitMQ__HostName`)
 📊 ddServices
 Service	Host Port
 api-gateway	5200

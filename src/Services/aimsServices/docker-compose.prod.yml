@@ -1,0 +1,442 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Production Compose — pulls pre-built images from GHCR
+# Usage:  docker compose -f docker-compose.prod.yml up -d
+# Images: ghcr.io/vimalshan/erp/<service>:latest (public, no login required)
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  # ─── Shared SQL Server ─────────────────────────────
+  mssql-server:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: aims-shared-sqlserver
+    environment:
+      ACCEPT_EULA: 'Y'
+      SA_PASSWORD: 'YourPassword123!'
+      MSSQL_PID: 'Express'
+      MSSQL_MEMORY_LIMIT_MB: '512'
+    ports:
+      - "1433:1433"
+    volumes:
+      - shared_mssql_data:/var/opt/mssql
+      - ./init-all-databases.sql:/init-all-databases.sql
+      - ./shared-entrypoint.sh:/shared-entrypoint.sh
+    entrypoint: ["/bin/bash", "/shared-entrypoint.sh"]
+    networks:
+      - aims-network
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourPassword123!", "-No", "-Q", "SELECT 1"]
+      interval: 15s
+      timeout: 10s
+      start_period: 120s
+      retries: 20
+
+  # ─── Shared RabbitMQ ────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: aims-shared-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: 'guest'
+      RABBITMQ_DEFAULT_PASS: 'guest'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - aims-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─── Azurite (for blob storage) ─────────────────────
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: aims-shared-azurite
+    command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0"
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - shared_azurite_data:/data
+    networks:
+      - aims-network
+
+  # ─── Access Service ────────────────────────────────
+  access-service:
+    image: ghcr.io/vimalshan/erp/access-service:latest
+    container_name: aims-access-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:80'
+      ConnectionStrings__DefaultConnection: 'Server=mssql-server;Database=ACCESSDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=true;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      Jwt__Issuer: 'AccessService'
+      Jwt__Audience: 'AccessService'
+      Jwt__Key: 'AccessService_SuperSecretKey_MinLength32Characters!'
+    ports:
+      - "5010:80"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aims-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/80'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # ─── Attendance Service ────────────────────────────
+  attendance-service:
+    image: ghcr.io/vimalshan/erp/attendance-service:latest
+    container_name: aims-attendance-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:80'
+      ConnectionStrings__AttendanceDb: 'Server=mssql-server;Database=ATTENDANCEDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=true;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      Jwt__Issuer: 'AttendanceService'
+      Jwt__Audience: 'AttendanceService'
+      Jwt__Key: 'AttendanceSuperSecretKey_Change_In_Production_2026!'
+      AzureStorage__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;'
+    ports:
+      - "5011:80"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aims-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/80'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # ─── Bus Service ───────────────────────────────────
+  bus-service:
+    image: ghcr.io/vimalshan/erp/bus-services:latest
+    container_name: aims-bus-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:80'
+      ConnectionStrings__BusDb: 'Server=mssql-server;Database=BUSDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=true;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      Jwt__Issuer: 'BusServices.API'
+      Jwt__Audience: 'BusServices.API'
+      Jwt__Key: 'BusServices-SuperSecretKey-Min32Chars!!'
+      AzureStorage__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;'
+    ports:
+      - "5012:80"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aims-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/80'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # ─── Calendar Service ──────────────────────────────
+  calendar-service:
+    image: ghcr.io/vimalshan/erp/calendar-service:latest
+    container_name: aims-calendar-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:80'
+      ConnectionStrings__CalendarDb: 'Server=mssql-server;Database=CALENDARDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=true;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      Jwt__Issuer: 'CalendarService'
+      Jwt__Audience: 'CalendarService'
+      Jwt__Key: 'CalendarServiceSuperSecretKey_ChangeInProd_256bit!'
+      AzureStorage__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;'
+    ports:
+      - "5013:80"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aims-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/80'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # ─── Employee Service ──────────────────────────────
+  employee-service:
+    image: ghcr.io/vimalshan/erp/employee-service:latest
+    container_name: aims-employee-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:80'
+      ConnectionStrings__EmployeeDb: 'Server=mssql-server;Database=EMPLOYEEDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=true;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      Jwt__Issuer: 'EmployeeService'
+      Jwt__Audience: 'EmployeeService'
+      Jwt__Key: 'EmployeeServiceSuperSecretSigningKey2026!!'
+      AzureStorage__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;'
+    ports:
+      - "5014:80"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aims-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/80'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # ─── Group Incentive Service ───────────────────────
+  groupincentive-service:
+    image: ghcr.io/vimalshan/erp/groupincentive-service:latest
+    container_name: aims-groupincentive-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:80'
+      ConnectionStrings__DefaultConnection: 'Server=mssql-server;Database=GROUPINCENTIVEDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=true;'
+      ConnectionStrings__AzureBlobStorage: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__VirtualHost: '/'
+      RabbitMQ__ExchangeName: 'groupincentive.events'
+      RabbitMQ__ApprovalQueue: 'groupincentive.approval.requests'
+      RabbitMQ__ApprovalRoutingKey: 'incentive.approve'
+      Jwt__Issuer: 'GroupIncentiveService'
+      Jwt__Audience: 'GroupIncentiveService'
+      Jwt__Key: 'GroupIncentiveService_Super_Secret_Key_2026_MinLength32Chars!'
+    ports:
+      - "5015:80"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aims-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/80'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # ─── Leave Service ─────────────────────────────────
+  leave-service:
+    image: ghcr.io/vimalshan/erp/leave-services:latest
+    container_name: aims-leave-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:80'
+      ConnectionStrings__LeaveDb: 'Server=mssql-server;Database=LEAVEDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=true;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      Jwt__Issuer: 'LeaveServices.API'
+      Jwt__Audience: 'LeaveServices.API'
+      Jwt__Key: 'CHANGE_ME_TO_A_STRONG_256BIT_SECRET_KEY_IN_PRODUCTION'
+      AzureStorage__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;'
+    ports:
+      - "5016:80"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aims-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/80'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # ─── Reference Service ─────────────────────────────
+  reference-service:
+    image: ghcr.io/vimalshan/erp/reference-service:latest
+    container_name: aims-reference-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:80'
+      ConnectionStrings__DefaultConnection: 'Server=mssql-server;Database=REFERENCEDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=true;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__VirtualHost: '/'
+      RabbitMQ__ExchangeName: 'reference.events'
+      RabbitMQ__LovTypeQueue: 'reference.lovtype.updates'
+      Jwt__Issuer: 'reference-service'
+      Jwt__Audience: 'reference-service-api'
+      Jwt__Key: 'your-secret-key-must-be-at-least-32-characters-long!'
+    ports:
+      - "5017:80"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aims-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/80'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # ─── Visitor Service ───────────────────────────────
+  visitor-service:
+    image: ghcr.io/vimalshan/erp/visitor-services:latest
+    container_name: aims-visitor-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:80'
+      ConnectionStrings__VisitorDb: 'Server=mssql-server;Database=VISITORDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=true;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__VirtualHost: '/'
+      Jwt__Issuer: 'VisitorServices'
+      Jwt__Audience: 'VisitorServices'
+      Jwt__Key: 'VisitorServices_SuperSecretKey_32chars!'
+      ConnectionStrings__AzureStorage: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;'
+    ports:
+      - "5018:80"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aims-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/80'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # ─── AIMS Transaction Service ──────────────────────
+  aimstransaction-service:
+    image: ghcr.io/vimalshan/erp/aims-transaction-service:latest
+    container_name: aims-aimstransaction-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:80'
+      ConnectionStrings__AimsTransactionDb: 'Server=mssql-server;Database=AIMSDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=true;'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__VirtualHost: '/'
+      Jwt__Issuer: 'AimsTransactionService'
+      Jwt__Audience: 'AimsTransactionService'
+      Jwt__Key: 'AimsTransactionService_SuperSecretKey_32chars!'
+      ConnectionStrings__AzureStorage: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;'
+    ports:
+      - "5019:80"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - aims-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/80'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # ─── API Gateway ───────────────────────────────────
+  api-gateway:
+    image: ghcr.io/vimalshan/erp/api-gateway:latest
+    container_name: aims-api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:80'
+      Jwt__Key: 'ApiGateway_SuperSecretSigningKey_2026_MinLength32Chars!!'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      Services__AccessService: 'http://access-service:80'
+      Services__AttendanceService: 'http://attendance-service:80'
+      Services__BusService: 'http://bus-service:80'
+      Services__CalendarService: 'http://calendar-service:80'
+      Services__EmployeeService: 'http://employee-service:80'
+      Services__GroupIncentiveService: 'http://groupincentive-service:80'
+      Services__LeaveService: 'http://leave-service:80'
+      Services__ReferenceService: 'http://reference-service:80'
+      Services__VisitorService: 'http://visitor-service:80'
+      Services__AimsTransactionService: 'http://aimstransaction-service:80'
+    ports:
+      - "5020:80"
+    depends_on:
+      - access-service
+      - attendance-service
+      - bus-service
+      - calendar-service
+      - employee-service
+      - groupincentive-service
+      - leave-service
+      - reference-service
+      - visitor-service
+      - aimstransaction-service
+    networks:
+      - aims-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/80'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+networks:
+  aims-network:
+    driver: bridge
+
+volumes:
+  shared_mssql_data:
+  shared_azurite_data:

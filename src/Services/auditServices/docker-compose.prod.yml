@@ -1,0 +1,423 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Production Compose — pulls pre-built images from GHCR
+# Usage:  docker compose -f docker-compose.prod.yml up -d
+# Images: ghcr.io/vimalshan/erp/<service>:latest (public, no login required)
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  # ─── SQL Server ─────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: audit-sqlserver
+    environment:
+      ACCEPT_EULA: 'Y'
+      SA_PASSWORD: 'ErpStr0ng!Pass'
+      MSSQL_PID: 'Developer'
+      MSSQL_MEMORY_LIMIT_MB: '512'
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./deploy/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'ErpStr0ng!Pass' -Q 'SELECT 1' -C -b -o /dev/null"]
+      interval: 15s
+      timeout: 10s
+      start_period: 120s
+      retries: 20
+    restart: unless-stopped
+
+  # ─── DB Initializer (runs init.sql once) ────────────
+  db-init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    container_name: audit-db-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./deploy/database/init.sql:/init.sql:ro
+    command: >
+      /bin/bash -c "
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P 'ErpStr0ng!Pass' -i /init.sql -C -b
+      "
+    networks:
+      - audit-network
+    restart: "no"
+
+  # ─── RabbitMQ ───────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: audit-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: 'erpadmin'
+      RABBITMQ_DEFAULT_PASS: 'ErpR@bbit1'
+      RABBITMQ_DEFAULT_VHOST: 'erp'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      start_period: 20s
+      retries: 10
+    restart: unless-stopped
+
+  # ─── Action Service ────────────────────────────────
+  action-service:
+    image: ghcr.io/vimalshan/erp/action-service:latest
+    container_name: audit-action-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:8080'
+      ConnectionStrings__DefaultConnection: 'Server=sqlserver,1433;Database=ERPActionDB;User Id=sa;Password=ErpStr0ng!Pass;TrustServerCertificate=True;MultipleActiveResultSets=True;'
+      RabbitMQ__Enabled: 'true'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__VirtualHost: 'erp'
+      RabbitMQ__Username: 'erpadmin'
+      RabbitMQ__Password: 'ErpR@bbit1'
+      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
+      Jwt__Issuer: 'ERPSystem'
+      Jwt__Audience: 'ERPUsers'
+    ports:
+      - "5001:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # ─── Audit Service ─────────────────────────────────
+  audit-service:
+    image: ghcr.io/vimalshan/erp/audit-service:latest
+    container_name: audit-audit-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:8080'
+      ConnectionStrings__DefaultConnection: 'Server=sqlserver,1433;Database=ERPAuditDB;User Id=sa;Password=ErpStr0ng!Pass;TrustServerCertificate=True;MultipleActiveResultSets=True;'
+      RabbitMQ__Enabled: 'true'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__VirtualHost: 'erp'
+      RabbitMQ__Username: 'erpadmin'
+      RabbitMQ__Password: 'ErpR@bbit1'
+      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
+      Jwt__Issuer: 'ERPSystem'
+      Jwt__Audience: 'ERPUsers'
+    ports:
+      - "5002:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # ─── Certificate Service ───────────────────────────
+  certificate-service:
+    image: ghcr.io/vimalshan/erp/certificate-service:latest
+    container_name: audit-certificate-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:8080'
+      ConnectionStrings__DefaultConnection: 'Server=sqlserver,1433;Database=ERPCertificateDB;User Id=sa;Password=ErpStr0ng!Pass;TrustServerCertificate=True;MultipleActiveResultSets=True;'
+      RabbitMQ__Enabled: 'true'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__VirtualHost: 'erp'
+      RabbitMQ__Username: 'erpadmin'
+      RabbitMQ__Password: 'ErpR@bbit1'
+      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
+      Jwt__Issuer: 'ERPSystem'
+      Jwt__Audience: 'ERPUsers'
+    ports:
+      - "5003:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # ─── Contract Service ──────────────────────────────
+  contract-service:
+    image: ghcr.io/vimalshan/erp/contract-service:latest
+    container_name: audit-contract-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:8080'
+      ConnectionStrings__DefaultConnection: 'Server=sqlserver,1433;Database=ERPContractDB;User Id=sa;Password=ErpStr0ng!Pass;TrustServerCertificate=True;MultipleActiveResultSets=True;'
+      RabbitMQ__Enabled: 'true'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__VirtualHost: 'erp'
+      RabbitMQ__Username: 'erpadmin'
+      RabbitMQ__Password: 'ErpR@bbit1'
+      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
+      Jwt__Issuer: 'ERPSystem'
+      Jwt__Audience: 'ERPUsers'
+    ports:
+      - "5004:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # ─── Finance Service ───────────────────────────────
+  finance-service:
+    image: ghcr.io/vimalshan/erp/finance-service:latest
+    container_name: audit-finance-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:8080'
+      ConnectionStrings__DefaultConnection: 'Server=sqlserver,1433;Database=ERPFinanceDB;User Id=sa;Password=ErpStr0ng!Pass;TrustServerCertificate=True;MultipleActiveResultSets=True;'
+      RabbitMQ__Enabled: 'true'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__VirtualHost: 'erp'
+      RabbitMQ__Username: 'erpadmin'
+      RabbitMQ__Password: 'ErpR@bbit1'
+      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
+      Jwt__Issuer: 'ERPSystem'
+      Jwt__Audience: 'ERPUsers'
+    ports:
+      - "5005:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # ─── Findings Service ──────────────────────────────
+  findings-service:
+    image: ghcr.io/vimalshan/erp/findings-service:latest
+    container_name: audit-findings-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:8080'
+      Kestrel__Endpoints__Http__Url: 'http://+:8080'
+      ConnectionStrings__DefaultConnection: 'Server=sqlserver,1433;Database=ERPFindingsDB;User Id=sa;Password=ErpStr0ng!Pass;TrustServerCertificate=True;MultipleActiveResultSets=True;'
+      RabbitMQ__Enabled: 'true'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__VirtualHost: 'erp'
+      RabbitMQ__Username: 'erpadmin'
+      RabbitMQ__Password: 'ErpR@bbit1'
+      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
+      Jwt__Issuer: 'ERPSystem'
+      Jwt__Audience: 'ERPUsers'
+    ports:
+      - "5006:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # ─── Notification Service ──────────────────────────
+  notification-service:
+    image: ghcr.io/vimalshan/erp/notification-service:latest
+    container_name: audit-notification-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:8080'
+      ConnectionStrings__DefaultConnection: 'Server=sqlserver,1433;Database=ERPNotificationDB;User Id=sa;Password=ErpStr0ng!Pass;TrustServerCertificate=True;MultipleActiveResultSets=True;'
+      RabbitMQ__Enabled: 'true'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__VirtualHost: 'erp'
+      RabbitMQ__Username: 'erpadmin'
+      RabbitMQ__Password: 'ErpR@bbit1'
+      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
+      Jwt__Issuer: 'ERPSystem'
+      Jwt__Audience: 'ERPUsers'
+    ports:
+      - "5007:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # ─── Schedule Service ──────────────────────────────
+  schedule-service:
+    image: ghcr.io/vimalshan/erp/schedule-service:latest
+    container_name: audit-schedule-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:8080'
+      ConnectionStrings__DefaultConnection: 'Server=sqlserver,1433;Database=ERPScheduleDB;User Id=sa;Password=ErpStr0ng!Pass;TrustServerCertificate=True;MultipleActiveResultSets=True;'
+      RabbitMQ__Enabled: 'true'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__VirtualHost: 'erp'
+      RabbitMQ__Username: 'erpadmin'
+      RabbitMQ__Password: 'ErpR@bbit1'
+      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
+      Jwt__Issuer: 'ERPSystem'
+      Jwt__Audience: 'ERPUsers'
+    ports:
+      - "5008:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # ─── Settings Service ──────────────────────────────
+  settings-service:
+    image: ghcr.io/vimalshan/erp/settings-service:latest
+    container_name: audit-settings-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:8080'
+      ConnectionStrings__DefaultConnection: 'Server=sqlserver,1433;Database=ERPSettingsDB;User Id=sa;Password=ErpStr0ng!Pass;TrustServerCertificate=True;MultipleActiveResultSets=True;'
+      RabbitMQ__Enabled: 'true'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__VirtualHost: 'erp'
+      RabbitMQ__Username: 'erpadmin'
+      RabbitMQ__Password: 'ErpR@bbit1'
+      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
+      Jwt__Issuer: 'ERPSystem'
+      Jwt__Audience: 'ERPUsers'
+    ports:
+      - "5009:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # ─── API Gateway ───────────────────────────────────
+  api-gateway:
+    image: ghcr.io/vimalshan/erp/api-gateway:latest
+    container_name: audit-api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:8080'
+      ReverseProxy__Clusters__action-cluster__Destinations__action-node-1__Address: 'http://action-service:8080'
+      ReverseProxy__Clusters__audit-cluster__Destinations__audit-node-1__Address: 'http://audit-service:8080'
+      ReverseProxy__Clusters__certificate-cluster__Destinations__certificate-node-1__Address: 'http://certificate-service:8080'
+      ReverseProxy__Clusters__contract-cluster__Destinations__contract-node-1__Address: 'http://contract-service:8080'
+      ReverseProxy__Clusters__finance-cluster__Destinations__finance-node-1__Address: 'http://finance-service:8080'
+      ReverseProxy__Clusters__findings-cluster__Destinations__findings-node-1__Address: 'http://findings-service:8080'
+      ReverseProxy__Clusters__notification-cluster__Destinations__notification-node-1__Address: 'http://notification-service:8080'
+      ReverseProxy__Clusters__schedule-cluster__Destinations__schedule-node-1__Address: 'http://schedule-service:8080'
+      ReverseProxy__Clusters__settings-cluster__Destinations__settings-node-1__Address: 'http://settings-service:8080'
+      HealthChecks__Services__0__Uri: 'http://action-service:8080/health'
+      HealthChecks__Services__1__Uri: 'http://audit-service:8080/health'
+      HealthChecks__Services__2__Uri: 'http://certificate-service:8080/health'
+      HealthChecks__Services__3__Uri: 'http://contract-service:8080/health'
+      HealthChecks__Services__4__Uri: 'http://finance-service:8080/health'
+      HealthChecks__Services__5__Uri: 'http://findings-service:8080/health'
+      HealthChecks__Services__6__Uri: 'http://notification-service:8080/health'
+      HealthChecks__Services__7__Uri: 'http://schedule-service:8080/health'
+      HealthChecks__Services__8__Uri: 'http://settings-service:8080/health'
+      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
+      Jwt__Issuer: 'ERPSystem'
+      Jwt__Audience: 'ERPUsers'
+    ports:
+      - "5000:8080"
+    depends_on:
+      - action-service
+      - audit-service
+      - certificate-service
+      - contract-service
+      - finance-service
+      - findings-service
+      - notification-service
+      - schedule-service
+      - settings-service
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  audit-network:
+    driver: bridge
+
+volumes:
+  sqlserver-data:
