@@ -365,6 +365,74 @@ services:
       retries: 3
     restart: unless-stopped
 
+  # ─── Documents Service ─────────────────────────────
+  documents-service:
+    image: ghcr.io/vimalshan/erp/documents-service:latest
+    container_name: audit-documents-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:8080'
+      ConnectionStrings__DefaultConnection: 'Server=sqlserver,1433;Database=ERPDocumentsDB;User Id=sa;Password=ErpStr0ng!Pass;TrustServerCertificate=True;MultipleActiveResultSets=True;'
+      RabbitMQ__Enabled: 'true'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__VirtualHost: 'erp'
+      RabbitMQ__Username: 'erpadmin'
+      RabbitMQ__Password: 'ErpR@bbit1'
+      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
+      Jwt__Issuer: 'ERPSystem'
+      Jwt__Audience: 'ERPUsers'
+      AzureStorage__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;'
+      AzureStorage__ContainerName: 'documents'
+    ports:
+      - "5010:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # ─── Overview Service ──────────────────────────────
+  overview-service:
+    image: ghcr.io/vimalshan/erp/overview-service:latest
+    container_name: audit-overview-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:8080'
+      ConnectionStrings__DefaultConnection: 'Server=sqlserver,1433;Database=ERPOverviewDB;User Id=sa;Password=ErpStr0ng!Pass;TrustServerCertificate=True;MultipleActiveResultSets=True;'
+      RabbitMQ__Enabled: 'true'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__VirtualHost: 'erp'
+      RabbitMQ__Username: 'erpadmin'
+      RabbitMQ__Password: 'ErpR@bbit1'
+      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
+      Jwt__Issuer: 'ERPSystem'
+      Jwt__Audience: 'ERPUsers'
+    ports:
+      - "5011:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - audit-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
   # ─── API Gateway ───────────────────────────────────
   api-gateway:
     image: ghcr.io/vimalshan/erp/api-gateway:latest
@@ -381,6 +449,8 @@ services:
       ReverseProxy__Clusters__notification-cluster__Destinations__notification-node-1__Address: 'http://notification-service:8080'
       ReverseProxy__Clusters__schedule-cluster__Destinations__schedule-node-1__Address: 'http://schedule-service:8080'
       ReverseProxy__Clusters__settings-cluster__Destinations__settings-node-1__Address: 'http://settings-service:8080'
+      ReverseProxy__Clusters__documents-cluster__Destinations__documents-node-1__Address: 'http://documents-service:8080'
+      ReverseProxy__Clusters__overview-cluster__Destinations__overview-node-1__Address: 'http://overview-service:8080'
       HealthChecks__Services__0__Uri: 'http://action-service:8080/health'
       HealthChecks__Services__1__Uri: 'http://audit-service:8080/health'
       HealthChecks__Services__2__Uri: 'http://certificate-service:8080/health'
@@ -390,6 +460,8 @@ services:
       HealthChecks__Services__6__Uri: 'http://notification-service:8080/health'
       HealthChecks__Services__7__Uri: 'http://schedule-service:8080/health'
       HealthChecks__Services__8__Uri: 'http://settings-service:8080/health'
+      HealthChecks__Services__9__Uri: 'http://documents-service:8080/health'
+      HealthChecks__Services__10__Uri: 'http://overview-service:8080/health'
       Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
       Jwt__Issuer: 'ERPSystem'
       Jwt__Audience: 'ERPUsers'
@@ -405,6 +477,8 @@ services:
       - notification-service
       - schedule-service
       - settings-service
+      - documents-service
+      - overview-service
     networks:
       - audit-network
     healthcheck:

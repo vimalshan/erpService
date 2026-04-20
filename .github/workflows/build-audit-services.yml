@@ -39,6 +39,8 @@ on:
           - notification-service
           - schedule-service
           - settings-service
+          - documents-service
+          - overview-service
 
 permissions:
   contents: read
@@ -75,9 +77,11 @@ jobs:
           SVC_CONTEXT[notification-service]="src/Services/auditServices/notificationapiServices";          SVC_DOCKERFILE[notification-service]="Dockerfile"
           SVC_CONTEXT[schedule-service]="src/Services/auditServices/scheduleapiServices";                  SVC_DOCKERFILE[schedule-service]="Dockerfile"
           SVC_CONTEXT[settings-service]="src/Services/auditServices/settingsapiServices";                  SVC_DOCKERFILE[settings-service]="Dockerfile"
+          SVC_CONTEXT[documents-service]="src/Services/auditServices/documentsapiServices";               SVC_DOCKERFILE[documents-service]="Dockerfile"
+          SVC_CONTEXT[overview-service]="src/Services/auditServices/overviewapiServices";                SVC_DOCKERFILE[overview-service]="Dockerfile"
 
           # Ordered list matching the paths for change detection
-          SVC_NAMES=(api-gateway action-service audit-service certificate-service contract-service finance-service findings-service notification-service schedule-service settings-service)
+          SVC_NAMES=(api-gateway action-service audit-service certificate-service contract-service finance-service findings-service notification-service schedule-service settings-service documents-service overview-service)
           SVC_PATHS=(
             "src/Services/auditServices/apigateway/"
             "src/Services/auditServices/actionapiServices/"
@@ -89,6 +93,8 @@ jobs:
             "src/Services/auditServices/notificationapiServices/"
             "src/Services/auditServices/scheduleapiServices/"
             "src/Services/auditServices/settingsapiServices/"
+            "src/Services/auditServices/documentsapiServices/"
+            "src/Services/auditServices/overviewapiServices/"
           )
 
           make_entry() {
@@ -116,7 +122,7 @@ jobs:
           fi
 
           # If shared Audit root files changed (outside specific service folders), rebuild all
-          NON_SERVICE_CHANGES=$(echo "$CHANGED" | grep "^src/Services/auditServices/" | grep -Ev "^src/Services/auditServices/(apigateway|actionapiServices|auditapiServices|certificateapiServices|contractapiServices|financeapiServices|findingsapiServices|notificationapiServices|scheduleapiServices|settingsapiServices|deploy|Database)/" || true)
+          NON_SERVICE_CHANGES=$(echo "$CHANGED" | grep "^src/Services/auditServices/" | grep -Ev "^src/Services/auditServices/(apigateway|actionapiServices|auditapiServices|certificateapiServices|contractapiServices|financeapiServices|findingsapiServices|notificationapiServices|scheduleapiServices|settingsapiServices|documentsapiServices|overviewapiServices|deploy|Database)/" || true)
           if [[ -n "$NON_SERVICE_CHANGES" ]]; then
             BUILD_ALL="true"
           fi

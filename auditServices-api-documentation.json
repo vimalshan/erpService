@@ -1,0 +1,1875 @@
+{
+  "auditServices_module": {
+    "summary": "Complete API documentation for auditServices module",
+    "services": [
+      {
+        "name": "actionapiServices",
+        "description": "Manages audit actions and action tracking",
+        "port": 5001,
+        "postmanEndpoints": [
+          {
+            "method": "POST",
+            "path": "/graphql",
+            "description": "GraphQL endpoint for queries and mutations",
+            "auth": "Bearer Token"
+          }
+        ],
+        "postmanGraphQLQueries": [
+          {
+            "name": "Handle",
+            "description": "Handle query - basic resolver"
+          },
+          {
+            "name": "GetAllActions",
+            "description": "Retrieve all actions"
+          },
+          {
+            "name": "GetActionById",
+            "description": "Retrieve action by ID"
+          },
+          {
+            "name": "GetActionsByEntity",
+            "description": "Retrieve actions filtered by entity type and ID"
+          },
+          {
+            "name": "Actions",
+            "description": "Paginated actions with filtering by category, company, service, site"
+          },
+          {
+            "name": "ActionCategoriesFilter",
+            "description": "Filter action categories"
+          },
+          {
+            "name": "ActionCompaniesFilter",
+            "description": "Filter action companies"
+          },
+          {
+            "name": "ActionServicesFilter",
+            "description": "Filter action services"
+          },
+          {
+            "name": "ActionSitesFilter",
+            "description": "Filter action sites"
+          },
+          {
+            "name": "GetActionByIdQuery",
+            "description": "Query action by ID"
+          },
+          {
+            "name": "GetAllActionsQuery",
+            "description": "Query all actions"
+          }
+        ],
+        "codeGraphQL": {
+          "queries": [
+            {
+              "name": "allActions",
+              "description": "Get all actions",
+              "returnType": "IEnumerable<ActionDto>"
+            },
+            {
+              "name": "actionById",
+              "description": "Get action by ID",
+              "parameters": [
+                {
+                  "name": "id",
+                  "type": "int"
+                }
+              ],
+              "returnType": "ActionDto?"
+            },
+            {
+              "name": "actionsByEntity",
+              "description": "Get actions by entity type and ID",
+              "parameters": [
+                {
+                  "name": "entityType",
+                  "type": "string"
+                },
+                {
+                  "name": "entityId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "IEnumerable<ActionDto>"
+            },
+            {
+              "name": "actions",
+              "description": "Paginated actions with filtering",
+              "parameters": [
+                {
+                  "name": "category",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "company",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "service",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "site",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "isHighPriority",
+                  "type": "bool"
+                },
+                {
+                  "name": "pageNumber",
+                  "type": "int"
+                },
+                {
+                  "name": "pageSize",
+                  "type": "int"
+                }
+              ],
+              "returnType": "ApiResponse<ActionsPaginationResponse>"
+            },
+            {
+              "name": "actionCategoriesFilter",
+              "description": "Filter action categories",
+              "parameters": [
+                {
+                  "name": "companies",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "services",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "sites",
+                  "type": "List<int>?"
+                }
+              ],
+              "returnType": "ApiResponse<List<ActionFilterItem>>"
+            },
+            {
+              "name": "actionCompaniesFilter",
+              "description": "Filter action companies",
+              "returnType": "ApiResponse<List<ActionFilterItem>>"
+            },
+            {
+              "name": "actionServicesFilter",
+              "description": "Filter action services",
+              "returnType": "ApiResponse<List<ActionFilterItem>>"
+            },
+            {
+              "name": "actionSitesFilter",
+              "description": "Filter action sites",
+              "returnType": "ApiResponse<List<ActionSiteNode>>"
+            }
+          ],
+          "mutations": [
+            {
+              "name": "createAction",
+              "description": "Create a new action",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "CreateActionDto"
+                }
+              ],
+              "returnType": "ActionDto"
+            },
+            {
+              "name": "updateAction",
+              "description": "Update an existing action",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "UpdateActionDto"
+                }
+              ],
+              "returnType": "ActionDto"
+            },
+            {
+              "name": "deleteAction",
+              "description": "Delete an action",
+              "parameters": [
+                {
+                  "name": "id",
+                  "type": "int"
+                }
+              ],
+              "returnType": "bool"
+            },
+            {
+              "name": "completeAction",
+              "description": "Mark action as complete",
+              "parameters": [
+                {
+                  "name": "id",
+                  "type": "int"
+                }
+              ],
+              "returnType": "bool"
+            }
+          ]
+        }
+      },
+      {
+        "name": "auditapiServices",
+        "description": "Manages audit operations and audit tracking",
+        "port": 5001,
+        "postmanEndpoints": [
+          {
+            "method": "POST",
+            "path": "/graphql",
+            "description": "GraphQL endpoint"
+          }
+        ],
+        "postmanGraphQLQueries": [
+          {
+            "name": "Handle",
+            "description": "Basic handle query"
+          },
+          {
+            "name": "GetAuditByIdQuery",
+            "description": "Get audit by ID"
+          },
+          {
+            "name": "GetAllAuditsQuery",
+            "description": "Get all audits"
+          },
+          {
+            "name": "GetAuditTypesQuery",
+            "description": "Get audit types"
+          },
+          {
+            "name": "GetSiteAuditsQuery",
+            "description": "Get audits for a site"
+          },
+          {
+            "name": "ViewAudits",
+            "description": "View audit list"
+          },
+          {
+            "name": "AuditDetails",
+            "description": "Get audit details"
+          },
+          {
+            "name": "ViewFindings",
+            "description": "View findings for an audit"
+          },
+          {
+            "name": "ViewSitesForAudit",
+            "description": "View sites in an audit"
+          },
+          {
+            "name": "ViewSubAudits",
+            "description": "View sub-audits"
+          }
+        ],
+        "codeGraphQL": {
+          "queries": [
+            {
+              "name": "viewAudits",
+              "description": "Get list of audits",
+              "returnType": "ApiResponse<List<AuditListResponse>>"
+            },
+            {
+              "name": "auditDetails",
+              "description": "Get detailed audit information",
+              "parameters": [
+                {
+                  "name": "auditId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "ApiResponse<AuditDetailResponse>"
+            },
+            {
+              "name": "viewFindings",
+              "description": "Get findings for an audit",
+              "parameters": [
+                {
+                  "name": "auditId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "ApiResponse<List<AuditFindingListResponse>>"
+            },
+            {
+              "name": "viewSitesForAudit",
+              "description": "Get sites in an audit",
+              "parameters": [
+                {
+                  "name": "auditId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "ApiResponse<List<AuditSiteResponse>>"
+            },
+            {
+              "name": "viewSubAudits",
+              "description": "Get sub-audits",
+              "parameters": [
+                {
+                  "name": "auditId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "ApiResponse<List<SubAuditResponse>>"
+            },
+            {
+              "name": "getAuditDaysPerSite",
+              "description": "Get audit days grid per site",
+              "parameters": [
+                {
+                  "name": "startDate",
+                  "type": "string"
+                },
+                {
+                  "name": "endDate",
+                  "type": "string"
+                },
+                {
+                  "name": "companies",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "services",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "sites",
+                  "type": "List<int>?"
+                }
+              ],
+              "returnType": "ApiResponse<AuditDaysGridResponse>"
+            },
+            {
+              "name": "auditDaysbyServicePieChart",
+              "description": "Get audit days pie chart data",
+              "parameters": [
+                {
+                  "name": "filters",
+                  "type": "AuditDaysFilter"
+                }
+              ],
+              "returnType": "ApiResponse<AuditDaysByServiceResponse>"
+            },
+            {
+              "name": "getAuditDaysByMonthAndService",
+              "description": "Get audit days by month and service",
+              "parameters": [
+                {
+                  "name": "startDate",
+                  "type": "string"
+                },
+                {
+                  "name": "endDate",
+                  "type": "string"
+                },
+                {
+                  "name": "companyFilter",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "serviceFilter",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "siteFilter",
+                  "type": "List<int>?"
+                }
+              ],
+              "returnType": "ApiResponse<AuditDaysByMonthAndServiceResponse>"
+            }
+          ],
+          "mutations": [
+            {
+              "name": "createAudit",
+              "description": "Create a new audit",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "CreateAuditDto"
+                }
+              ],
+              "returnType": "AuditDto"
+            },
+            {
+              "name": "updateAudit",
+              "description": "Update an audit",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "UpdateAuditDto"
+                }
+              ],
+              "returnType": "AuditDto"
+            },
+            {
+              "name": "deleteAudit",
+              "description": "Delete an audit",
+              "parameters": [
+                {
+                  "name": "id",
+                  "type": "int"
+                }
+              ],
+              "returnType": "bool"
+            },
+            {
+              "name": "changeAuditStatus",
+              "description": "Change audit status",
+              "parameters": [
+                {
+                  "name": "auditId",
+                  "type": "int"
+                },
+                {
+                  "name": "newStatus",
+                  "type": "string"
+                }
+              ],
+              "returnType": "bool"
+            }
+          ]
+        }
+      },
+      {
+        "name": "certificateapiServices",
+        "description": "Manages audit certificates and certifications",
+        "port": 5001,
+        "postmanEndpoints": [
+          {
+            "method": "POST",
+            "path": "/graphql",
+            "description": "GraphQL endpoint"
+          },
+          {
+            "method": "GET",
+            "path": "/api/certificates/minimal",
+            "description": "Get minimal certificate data"
+          },
+          {
+            "method": "GET",
+            "path": "/api/certificates/minimal/{id}",
+            "description": "Get minimal certificate data by ID"
+          }
+        ],
+        "postmanGraphQLQueries": [
+          {
+            "name": "GetCertificateByIdQuery",
+            "description": "Get certificate by ID"
+          },
+          {
+            "name": "GetAllCertificatesQuery",
+            "description": "Get all certificates"
+          },
+          {
+            "name": "Handle",
+            "description": "Basic handle query"
+          },
+          {
+            "name": "Certificates",
+            "description": "List all certificates"
+          },
+          {
+            "name": "ViewCertificateDetails",
+            "description": "View certificate details"
+          },
+          {
+            "name": "SitesInScope",
+            "description": "Get sites in scope"
+          },
+          {
+            "name": "Preferences",
+            "description": "Get preferences"
+          }
+        ],
+        "postmanGraphQLMutations": [
+          {
+            "name": "CreateCertificate",
+            "description": "Create a new certificate"
+          },
+          {
+            "name": "UpdateCertificate",
+            "description": "Update certificate"
+          },
+          {
+            "name": "DeleteCertificate",
+            "description": "Delete certificate"
+          }
+        ],
+        "codeGraphQL": {
+          "queries": [
+            {
+              "name": "certificates",
+              "description": "Get list of certificates",
+              "returnType": "ApiResponse<List<CertificateListResponse>>"
+            },
+            {
+              "name": "viewCertificateDetails",
+              "description": "Get certificate details",
+              "parameters": [
+                {
+                  "name": "certificateId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "ApiResponse<CertificateDetailResponse>"
+            },
+            {
+              "name": "sitesInScope",
+              "description": "Get sites in scope for certificate",
+              "parameters": [
+                {
+                  "name": "certificateId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "ApiResponse<List<CertificateSiteResponse>>"
+            },
+            {
+              "name": "preferences",
+              "description": "Get preferences",
+              "parameters": [
+                {
+                  "name": "objectType",
+                  "type": "string"
+                },
+                {
+                  "name": "objectName",
+                  "type": "string"
+                },
+                {
+                  "name": "pageName",
+                  "type": "string"
+                }
+              ],
+              "returnType": "ApiResponse<PreferenceResponse>"
+            }
+          ],
+          "mutations": [
+            {
+              "name": "createCertificate",
+              "description": "Create a new certificate",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "CreateCertificateDto"
+                }
+              ],
+              "returnType": "CertificateDto"
+            },
+            {
+              "name": "updateCertificate",
+              "description": "Update certificate",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "UpdateCertificateDto"
+                }
+              ],
+              "returnType": "CertificateDto"
+            },
+            {
+              "name": "deleteCertificate",
+              "description": "Delete certificate",
+              "parameters": [
+                {
+                  "name": "id",
+                  "type": "int"
+                }
+              ],
+              "returnType": "bool"
+            }
+          ]
+        }
+      },
+      {
+        "name": "contractapiServices",
+        "description": "Manages audit contracts and contract tracking",
+        "port": 5001,
+        "postmanEndpoints": [
+          {
+            "method": "POST",
+            "path": "/graphql",
+            "description": "GraphQL endpoint"
+          }
+        ],
+        "postmanGraphQLQueries": [
+          {
+            "name": "GetContractByIdQuery",
+            "description": "Get contract by ID"
+          },
+          {
+            "name": "GetAllContractsQuery",
+            "description": "Get all contracts"
+          },
+          {
+            "name": "GetContractsByCompanyQuery",
+            "description": "Get contracts by company"
+          },
+          {
+            "name": "Handle",
+            "description": "Basic handle query"
+          },
+          {
+            "name": "ValidateUser",
+            "description": "Validate user"
+          },
+          {
+            "name": "UserProfile",
+            "description": "Get user profile"
+          },
+          {
+            "name": "MasterSiteList",
+            "description": "Get master site list"
+          },
+          {
+            "name": "MasterServiceList",
+            "description": "Get master service list"
+          },
+          {
+            "name": "ViewCertificationQuicklinkCard",
+            "description": "Get certification quicklink card"
+          },
+          {
+            "name": "OverviewCompanyServiceSiteFilter",
+            "description": "Get overview filters"
+          },
+          {
+            "name": "GetWidgetforFinancials",
+            "description": "Get financial widget data"
+          }
+        ],
+        "codeGraphQL": {
+          "queries": [
+            {
+              "name": "validateUser",
+              "description": "Validate user",
+              "parameters": [
+                {
+                  "name": "userId",
+                  "type": "string?"
+                },
+                {
+                  "name": "veracityId",
+                  "type": "string?"
+                }
+              ],
+              "returnType": "ApiResponse<UserValidationResponse>"
+            },
+            {
+              "name": "userProfile",
+              "description": "Get user profile",
+              "parameters": [
+                {
+                  "name": "userId",
+                  "type": "string?"
+                },
+                {
+                  "name": "veracityId",
+                  "type": "string?"
+                }
+              ],
+              "returnType": "ApiResponse<UserProfileDetailsResponse>"
+            },
+            {
+              "name": "masterSiteList",
+              "description": "Get master site list",
+              "returnType": "ApiResponse<List<SiteDetailsResponse>>"
+            },
+            {
+              "name": "masterServiceList",
+              "description": "Get master service list",
+              "returnType": "ApiResponse<List<ServiceDetailsResponse>>"
+            },
+            {
+              "name": "viewCertificationQuicklinkCard",
+              "description": "Get certification quicklink card",
+              "parameters": [
+                {
+                  "name": "filter",
+                  "type": "OverviewFilter"
+                }
+              ],
+              "returnType": "ApiResponse<OverviewCardResponse>"
+            },
+            {
+              "name": "overviewCompanyServiceSiteFilter",
+              "description": "Get overview filters",
+              "returnType": "ApiResponse<List<OverviewCompanyServiceSiteFilterResult>>"
+            },
+            {
+              "name": "getWidgetforFinancials",
+              "description": "Get financial widget data",
+              "returnType": "ApiResponse<List<WidgetFinancialStatusResponse>>"
+            },
+            {
+              "name": "widgetforTrainingStatus",
+              "description": "Get training status widget",
+              "parameters": [
+                {
+                  "name": "userId",
+                  "type": "string?"
+                }
+              ],
+              "returnType": "ApiResponse<WidgetTrainingDataResponse>"
+            },
+            {
+              "name": "getWidgetForUpcomingAudit",
+              "description": "Get upcoming audit widget",
+              "parameters": [
+                {
+                  "name": "startDate",
+                  "type": "DateTime?"
+                },
+                {
+                  "name": "endDate",
+                  "type": "DateTime?"
+                }
+              ],
+              "returnType": "ApiResponse<List<UpcomingAuditResponse>>"
+            },
+            {
+              "name": "preferences",
+              "description": "Get preferences",
+              "parameters": [
+                {
+                  "name": "objectType",
+                  "type": "string"
+                },
+                {
+                  "name": "objectName",
+                  "type": "string"
+                },
+                {
+                  "name": "pageName",
+                  "type": "string"
+                }
+              ],
+              "returnType": "ApiResponse<PreferenceResponse>"
+            }
+          ],
+          "mutations": [
+            {
+              "name": "createContract",
+              "description": "Create a new contract",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "CreateContractDto"
+                }
+              ],
+              "returnType": "ContractDto"
+            },
+            {
+              "name": "updateContract",
+              "description": "Update contract",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "UpdateContractDto"
+                }
+              ],
+              "returnType": "ContractDto"
+            },
+            {
+              "name": "deleteContract",
+              "description": "Delete contract",
+              "parameters": [
+                {
+                  "name": "contractId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "bool"
+            },
+            {
+              "name": "changeContractStatus",
+              "description": "Change contract status",
+              "parameters": [
+                {
+                  "name": "contractId",
+                  "type": "int"
+                },
+                {
+                  "name": "newStatus",
+                  "type": "string"
+                },
+                {
+                  "name": "modifiedBy",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "ContractDto"
+            },
+            {
+              "name": "renewContract",
+              "description": "Renew contract",
+              "parameters": [
+                {
+                  "name": "contractId",
+                  "type": "int"
+                },
+                {
+                  "name": "newEndDate",
+                  "type": "DateTime?"
+                },
+                {
+                  "name": "modifiedBy",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "ContractDto"
+            }
+          ]
+        }
+      },
+      {
+        "name": "financeapiServices",
+        "description": "Manages financial operations and invoice tracking",
+        "port": 5001,
+        "postmanEndpoints": [
+          {
+            "method": "POST",
+            "path": "/graphql",
+            "description": "GraphQL endpoint"
+          }
+        ],
+        "postmanGraphQLQueries": [
+          {
+            "name": "InvoiceListPage",
+            "description": "Get invoice list page"
+          },
+          {
+            "name": "DownloadInvoice",
+            "description": "Download invoice"
+          },
+          {
+            "name": "GetInvoiceByIdQuery",
+            "description": "Get invoice by ID"
+          },
+          {
+            "name": "GetAllInvoicesQuery",
+            "description": "Get all invoices"
+          },
+          {
+            "name": "GetInvoicesByCompanyQuery",
+            "description": "Get invoices by company"
+          },
+          {
+            "name": "GetFinancialsByCompanyQuery",
+            "description": "Get financials by company"
+          },
+          {
+            "name": "Handle",
+            "description": "Basic handle query"
+          }
+        ],
+        "postmanGraphQLMutations": [
+          {
+            "name": "UpdatePlannedPaymentDate",
+            "description": "Update planned payment date"
+          },
+          {
+            "name": "CreateInvoice",
+            "description": "Create invoice"
+          },
+          {
+            "name": "UpdateInvoice",
+            "description": "Update invoice"
+          }
+        ],
+        "codeGraphQL": {
+          "queries": [
+            {
+              "name": "InvoiceListPage",
+              "description": "Get invoice list page",
+              "parameters": [
+                {
+                  "name": "pageNumber",
+                  "type": "int",
+                  "default": 1
+                },
+                {
+                  "name": "pageSize",
+                  "type": "int",
+                  "default": 10
+                },
+                {
+                  "name": "status",
+                  "type": "string?"
+                },
+                {
+                  "name": "companyFilter",
+                  "type": "string?"
+                },
+                {
+                  "name": "startDate",
+                  "type": "DateTime?"
+                },
+                {
+                  "name": "endDate",
+                  "type": "DateTime?"
+                }
+              ],
+              "returnType": "ApiResponse<InvoiceListPageData>"
+            },
+            {
+              "name": "DownloadInvoice",
+              "description": "Download invoice",
+              "parameters": [
+                {
+                  "name": "invoiceNumber",
+                  "type": "List<string>"
+                },
+                {
+                  "name": "userId",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "ApiResponse<DownloadInvoiceResponse>"
+            }
+          ],
+          "mutations": [
+            {
+              "name": "UpdatePlannedPaymentDate",
+              "description": "Update planned payment date",
+              "parameters": [
+                {
+                  "name": "invoiceNumber",
+                  "type": "List<string>"
+                },
+                {
+                  "name": "plannedDates",
+                  "type": "DateTime"
+                }
+              ],
+              "returnType": "ApiResponse<bool>"
+            },
+            {
+              "name": "createInvoice",
+              "description": "Create a new invoice",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "CreateInvoiceDto"
+                }
+              ],
+              "returnType": "InvoiceDto"
+            },
+            {
+              "name": "updateInvoice",
+              "description": "Update invoice",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "UpdateInvoiceDto"
+                }
+              ],
+              "returnType": "InvoiceDto"
+            },
+            {
+              "name": "deleteInvoice",
+              "description": "Delete invoice",
+              "parameters": [
+                {
+                  "name": "invoiceId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "bool"
+            },
+            {
+              "name": "markInvoicePaid",
+              "description": "Mark invoice as paid",
+              "parameters": [
+                {
+                  "name": "invoiceId",
+                  "type": "int"
+                },
+                {
+                  "name": "paidDate",
+                  "type": "DateTime"
+                },
+                {
+                  "name": "paymentMethod",
+                  "type": "string?"
+                },
+                {
+                  "name": "paymentReference",
+                  "type": "string?"
+                },
+                {
+                  "name": "modifiedBy",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "InvoiceDto"
+            },
+            {
+              "name": "changeInvoiceStatus",
+              "description": "Change invoice status",
+              "parameters": [
+                {
+                  "name": "invoiceId",
+                  "type": "int"
+                },
+                {
+                  "name": "newStatus",
+                  "type": "string"
+                },
+                {
+                  "name": "modifiedBy",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "InvoiceDto"
+            },
+            {
+              "name": "createFinancial",
+              "description": "Create a financial record",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "CreateFinancialDto"
+                }
+              ],
+              "returnType": "FinancialDto"
+            }
+          ]
+        }
+      },
+      {
+        "name": "findingsapiServices",
+        "description": "Manages audit findings and findings tracking",
+        "port": 5001,
+        "postmanEndpoints": [
+          {
+            "method": "GET",
+            "path": "/api/companies",
+            "description": "Get all companies"
+          },
+          {
+            "method": "GET",
+            "path": "/api/findings",
+            "description": "Get all findings"
+          },
+          {
+            "method": "GET",
+            "path": "/api/findings/search",
+            "description": "Search findings"
+          },
+          {
+            "method": "PUT",
+            "path": "/api/findings/{id}",
+            "description": "Update finding by ID"
+          },
+          {
+            "method": "POST",
+            "path": "/api/findings/{id}/close",
+            "description": "Close finding by ID"
+          },
+          {
+            "method": "POST",
+            "path": "/api/findings/bulk-status",
+            "description": "Bulk update findings status"
+          },
+          {
+            "method": "POST",
+            "path": "/graphql",
+            "description": "GraphQL endpoint"
+          }
+        ],
+        "postmanGraphQLQueries": [
+          {
+            "name": "GetFindingDomainByIdQuery",
+            "description": "Get finding domain by ID"
+          },
+          {
+            "name": "GetFindingsByAuditQuery",
+            "description": "Get findings by audit"
+          },
+          {
+            "name": "GetFindingsBySiteQuery",
+            "description": "Get findings by site"
+          },
+          {
+            "name": "GetFindingResponsesQuery",
+            "description": "Get finding responses"
+          },
+          {
+            "name": "Handle",
+            "description": "Basic handle query"
+          }
+        ],
+        "codeGraphQL": {
+          "queries": [
+            {
+              "name": "getFindings",
+              "description": "Get all findings with optional filtering and pagination",
+              "parameters": [
+                {
+                  "name": "companyId",
+                  "type": "int?"
+                },
+                {
+                  "name": "status",
+                  "type": "string?"
+                },
+                {
+                  "name": "category",
+                  "type": "string?"
+                }
+              ],
+              "returnType": "IEnumerable<Finding>"
+            },
+            {
+              "name": "getFinding",
+              "description": "Get a specific finding by ID",
+              "parameters": [
+                {
+                  "name": "id",
+                  "type": "int"
+                }
+              ],
+              "returnType": "Finding?"
+            },
+            {
+              "name": "getFindingsStatistics",
+              "description": "Get findings statistics",
+              "parameters": [
+                {
+                  "name": "companyId",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "FindingsStatistics"
+            },
+            {
+              "name": "searchFindings",
+              "description": "Search findings by text",
+              "parameters": [
+                {
+                  "name": "searchTerm",
+                  "type": "string"
+                },
+                {
+                  "name": "searchIn",
+                  "type": "SearchField",
+                  "default": "All"
+                }
+              ],
+              "returnType": "IEnumerable<Finding>"
+            },
+            {
+              "name": "getCompanies",
+              "description": "Get all companies",
+              "returnType": "IEnumerable<Company>"
+            },
+            {
+              "name": "getCompany",
+              "description": "Get company by ID",
+              "parameters": [
+                {
+                  "name": "id",
+                  "type": "int"
+                }
+              ],
+              "returnType": "Company?"
+            },
+            {
+              "name": "getSites",
+              "description": "Get sites for a company",
+              "parameters": [
+                {
+                  "name": "companyId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "IEnumerable<Site>"
+            }
+          ],
+          "mutations": [
+            {
+              "name": "createFinding",
+              "description": "Create a new finding",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "CreateFindingInput"
+                }
+              ],
+              "returnType": "CreateFindingPayload",
+              "authorization": "Auditor"
+            },
+            {
+              "name": "updateFinding",
+              "description": "Update an existing finding",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "UpdateFindingInput"
+                }
+              ],
+              "returnType": "UpdateFindingPayload",
+              "authorization": "Auditor"
+            },
+            {
+              "name": "closeFinding",
+              "description": "Close a finding",
+              "parameters": [
+                {
+                  "name": "findingId",
+                  "type": "int"
+                },
+                {
+                  "name": "closureNotes",
+                  "type": "string"
+                }
+              ],
+              "returnType": "CloseFindingPayload",
+              "authorization": "Admin"
+            },
+            {
+              "name": "bulkUpdateFindingsStatus",
+              "description": "Bulk update findings status",
+              "parameters": [
+                {
+                  "name": "findingIds",
+                  "type": "List<int>"
+                }
+              ],
+              "returnType": "BulkUpdatePayload",
+              "authorization": "Admin"
+            }
+          ]
+        }
+      },
+      {
+        "name": "notificationapiServices",
+        "description": "Manages notifications and notification tracking",
+        "port": 5001,
+        "postmanEndpoints": [
+          {
+            "method": "POST",
+            "path": "/graphql",
+            "description": "GraphQL endpoint"
+          }
+        ],
+        "postmanGraphQLQueries": [
+          {
+            "name": "Notifications",
+            "description": "Get notifications"
+          },
+          {
+            "name": "CategoriesFilter",
+            "description": "Filter categories"
+          },
+          {
+            "name": "ServicesFilter",
+            "description": "Filter services"
+          },
+          {
+            "name": "CompaniesFilter",
+            "description": "Filter companies"
+          },
+          {
+            "name": "SitesFilter",
+            "description": "Filter sites"
+          },
+          {
+            "name": "GetNotificationByIdQuery",
+            "description": "Get notification by ID"
+          },
+          {
+            "name": "GetAllNotificationsQuery",
+            "description": "Get all notifications"
+          },
+          {
+            "name": "GetNotificationCategoriesQuery",
+            "description": "Get notification categories"
+          },
+          {
+            "name": "Handle",
+            "description": "Basic handle query"
+          }
+        ],
+        "postmanGraphQLMutations": [
+          {
+            "name": "CreateNotification",
+            "description": "Create notification"
+          },
+          {
+            "name": "UpdateNotification",
+            "description": "Update notification"
+          }
+        ],
+        "codeGraphQL": {
+          "queries": [
+            {
+              "name": "notifications",
+              "description": "Get notifications with filtering and pagination",
+              "parameters": [
+                {
+                  "name": "category",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "company",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "service",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "site",
+                  "type": "List<int>?"
+                },
+                {
+                  "name": "pageNumber",
+                  "type": "int"
+                },
+                {
+                  "name": "pageSize",
+                  "type": "int"
+                }
+              ],
+              "returnType": "ApiResponse<NotificationPaginationResponse>"
+            },
+            {
+              "name": "categoriesFilter",
+              "description": "Filter categories",
+              "returnType": "ApiResponse<List<NotificationFilterItem>>"
+            },
+            {
+              "name": "servicesFilter",
+              "description": "Filter services",
+              "returnType": "ApiResponse<List<NotificationFilterItem>>"
+            },
+            {
+              "name": "companiesFilter",
+              "description": "Filter companies",
+              "returnType": "ApiResponse<List<NotificationFilterItem>>"
+            },
+            {
+              "name": "sitesFilter",
+              "description": "Filter sites",
+              "returnType": "ApiResponse<List<NotificationSiteNode>>"
+            }
+          ],
+          "mutations": [
+            {
+              "name": "createNotification",
+              "description": "Create a new notification",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "CreateNotificationDto"
+                }
+              ],
+              "returnType": "NotificationDto"
+            },
+            {
+              "name": "updateNotification",
+              "description": "Update notification",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "UpdateNotificationDto"
+                }
+              ],
+              "returnType": "NotificationDto"
+            },
+            {
+              "name": "deleteNotification",
+              "description": "Delete notification",
+              "parameters": [
+                {
+                  "name": "notificationId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "bool"
+            },
+            {
+              "name": "markNotificationRead",
+              "description": "Mark notification as read",
+              "parameters": [
+                {
+                  "name": "notificationId",
+                  "type": "int"
+                },
+                {
+                  "name": "userId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "NotificationDto"
+            },
+            {
+              "name": "archiveNotification",
+              "description": "Archive notification",
+              "parameters": [
+                {
+                  "name": "notificationId",
+                  "type": "int"
+                },
+                {
+                  "name": "modifiedBy",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "NotificationDto"
+            },
+            {
+              "name": "createNotificationCategory",
+              "description": "Create notification category",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "CreateNotificationCategoryDto"
+                }
+              ],
+              "returnType": "NotificationCategoryDto"
+            }
+          ]
+        }
+      },
+      {
+        "name": "scheduleapiServices",
+        "description": "Manages audit schedules and scheduling",
+        "port": 5001,
+        "postmanEndpoints": [
+          {
+            "method": "POST",
+            "path": "/graphql",
+            "description": "GraphQL endpoint"
+          }
+        ],
+        "postmanGraphQLQueries": [
+          {
+            "name": "GetScheduleByIdQuery",
+            "description": "Get schedule by ID"
+          },
+          {
+            "name": "GetAllSchedulesQuery",
+            "description": "Get all schedules"
+          },
+          {
+            "name": "GetSchedulesByAuditQuery",
+            "description": "Get schedules by audit"
+          },
+          {
+            "name": "GetSchedulesBySiteQuery",
+            "description": "Get schedules by site"
+          },
+          {
+            "name": "Handle",
+            "description": "Basic handle query"
+          },
+          {
+            "name": "ViewAuditSchedules",
+            "description": "View audit schedules"
+          },
+          {
+            "name": "AddToCalender",
+            "description": "Add to calendar"
+          }
+        ],
+        "postmanGraphQLMutations": [
+          {
+            "name": "ScheduleAudit",
+            "description": "Schedule audit"
+          },
+          {
+            "name": "UpdateSchedule",
+            "description": "Update schedule"
+          },
+          {
+            "name": "DeleteSchedule",
+            "description": "Delete schedule"
+          }
+        ],
+        "codeGraphQL": {
+          "queries": [
+            {
+              "name": "viewAuditSchedules",
+              "description": "Get audit schedules",
+              "parameters": [
+                {
+                  "name": "calendarScheduleFilter",
+                  "type": "CalendarScheduleFilterInput"
+                }
+              ],
+              "returnType": "ApiResponse<List<AuditScheduleResponse>>"
+            },
+            {
+              "name": "addToCalender",
+              "description": "Get calendar invite for schedule",
+              "parameters": [
+                {
+                  "name": "isAddToCalender",
+                  "type": "bool"
+                },
+                {
+                  "name": "siteAuditId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "ApiResponse<CalendarResponse>"
+            }
+          ],
+          "mutations": [
+            {
+              "name": "scheduleAudit",
+              "description": "Schedule an audit",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "CreateAuditSiteAuditDto"
+                }
+              ],
+              "returnType": "AuditSiteAuditDto"
+            },
+            {
+              "name": "updateSchedule",
+              "description": "Update schedule",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "UpdateAuditSiteAuditDto"
+                }
+              ],
+              "returnType": "AuditSiteAuditDto"
+            },
+            {
+              "name": "deleteSchedule",
+              "description": "Delete schedule",
+              "parameters": [
+                {
+                  "name": "auditSiteAuditId",
+                  "type": "int"
+                }
+              ],
+              "returnType": "bool"
+            },
+            {
+              "name": "rescheduleAudit",
+              "description": "Reschedule audit",
+              "parameters": [
+                {
+                  "name": "auditSiteAuditId",
+                  "type": "int"
+                },
+                {
+                  "name": "newDate",
+                  "type": "DateTime?"
+                },
+                {
+                  "name": "modifiedBy",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "AuditSiteAuditDto"
+            },
+            {
+              "name": "startAudit",
+              "description": "Start audit",
+              "parameters": [
+                {
+                  "name": "auditSiteAuditId",
+                  "type": "int"
+                },
+                {
+                  "name": "startDate",
+                  "type": "DateTime"
+                },
+                {
+                  "name": "modifiedBy",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "AuditSiteAuditDto"
+            },
+            {
+              "name": "completeAudit",
+              "description": "Complete audit",
+              "parameters": [
+                {
+                  "name": "auditSiteAuditId",
+                  "type": "int"
+                },
+                {
+                  "name": "completedDate",
+                  "type": "DateTime"
+                },
+                {
+                  "name": "reportPath",
+                  "type": "string?"
+                },
+                {
+                  "name": "modifiedBy",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "AuditSiteAuditDto"
+            }
+          ]
+        }
+      },
+      {
+        "name": "settingsapiServices",
+        "description": "Manages system settings, users, and preferences",
+        "port": 5001,
+        "postmanEndpoints": [
+          {
+            "method": "POST",
+            "path": "/graphql",
+            "description": "GraphQL endpoint"
+          }
+        ],
+        "postmanGraphQLQueries": [
+          {
+            "name": "UserCompanyDetails",
+            "description": "Get user company details"
+          },
+          {
+            "name": "AdminList",
+            "description": "Get admin user list"
+          },
+          {
+            "name": "MemberList",
+            "description": "Get member user list"
+          },
+          {
+            "name": "GetCountries",
+            "description": "Get countries list"
+          },
+          {
+            "name": "Preferences",
+            "description": "Get preferences"
+          },
+          {
+            "name": "GetUserByIdQuery",
+            "description": "Get user by ID"
+          },
+          {
+            "name": "GetAllUsersQuery",
+            "description": "Get all users"
+          },
+          {
+            "name": "GetAllRolesQuery",
+            "description": "Get all roles"
+          },
+          {
+            "name": "GetUserPreferencesQuery",
+            "description": "Get user preferences"
+          },
+          {
+            "name": "Handle",
+            "description": "Basic handle query"
+          }
+        ],
+        "codeGraphQL": {
+          "queries": [
+            {
+              "name": "userCompanyDetails",
+              "description": "Get user company details",
+              "parameters": [
+                {
+                  "name": "userId",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "ApiResponse<SettingsCompanyDetailsResponse>"
+            },
+            {
+              "name": "adminList",
+              "description": "Get admin user list",
+              "parameters": [
+                {
+                  "name": "accountDNVId",
+                  "type": "string?"
+                },
+                {
+                  "name": "userId",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "ApiResponse<List<AdminUserResponse>>"
+            },
+            {
+              "name": "memberList",
+              "description": "Get member user list",
+              "parameters": [
+                {
+                  "name": "accountDNVId",
+                  "type": "string?"
+                },
+                {
+                  "name": "userId",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "ApiResponse<List<MemberUserResponse>>"
+            },
+            {
+              "name": "getCountries",
+              "description": "Get countries list",
+              "returnType": "ApiResponse<List<CountryResponse>>"
+            },
+            {
+              "name": "preferences",
+              "description": "Get preferences",
+              "parameters": [
+                {
+                  "name": "objectType",
+                  "type": "string"
+                },
+                {
+                  "name": "objectName",
+                  "type": "string"
+                },
+                {
+                  "name": "pageName",
+                  "type": "string"
+                }
+              ],
+              "returnType": "ApiResponse<PreferenceResponse>"
+            }
+          ],
+          "mutations": [
+            {
+              "name": "updateCompanyDetails",
+              "description": "Update company details",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "CompanyDetailsUpdateRequest"
+                }
+              ],
+              "returnType": "ApiResponse<CompanyDetailsUpdateResponse>"
+            },
+            {
+              "name": "updateUserPreferences",
+              "description": "Update user preferences",
+              "parameters": [
+                {
+                  "name": "userId",
+                  "type": "int"
+                },
+                {
+                  "name": "input",
+                  "type": "UserPreferencesUpdateRequest"
+                }
+              ],
+              "returnType": "ApiResponse<UserPreferencesUpdateResponse>"
+            },
+            {
+              "name": "updateSystemPreferences",
+              "description": "Update system preferences",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "SystemPreferencesUpdateRequest"
+                }
+              ],
+              "returnType": "ApiResponse<SystemPreferencesUpdateResponse>"
+            },
+            {
+              "name": "updateNotificationTemplate",
+              "description": "Update notification template",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "NotificationTemplateUpdateRequest"
+                }
+              ],
+              "returnType": "ApiResponse<NotificationTemplateUpdateResponse>"
+            },
+            {
+              "name": "createUser",
+              "description": "Create a new user",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "CreateUserDto"
+                }
+              ],
+              "returnType": "UserDto"
+            },
+            {
+              "name": "updateUser",
+              "description": "Update user",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "UpdateUserDto"
+                }
+              ],
+              "returnType": "UserDto"
+            },
+            {
+              "name": "deactivateUser",
+              "description": "Deactivate user",
+              "parameters": [
+                {
+                  "name": "userId",
+                  "type": "int"
+                },
+                {
+                  "name": "modifiedBy",
+                  "type": "int?"
+                }
+              ],
+              "returnType": "bool"
+            },
+            {
+              "name": "createRole",
+              "description": "Create a role",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "CreateRoleDto"
+                }
+              ],
+              "returnType": "RoleDto"
+            },
+            {
+              "name": "setUserPreference",
+              "description": "Set user preference",
+              "parameters": [
+                {
+                  "name": "input",
+                  "type": "SetUserPreferenceDto"
+                }
+              ],
+              "returnType": "UserPreferenceDto"
+            }
+          ]
+        }
+      }
+    ],
+    "summary_statistics": {
+      "total_services": 10,
+      "total_graphql_queries": 75,
+      "total_graphql_mutations": 50,
+      "total_rest_endpoints": 6,
+      "services_with_rest_apis": [
+        "certificateapiServices",
+        "findingsapiServices"
+      ],
+      "services_with_graphql_only": [
+        "actionapiServices",
+        "auditapiServices",
+        "contractapiServices",
+        "financeapiServices",
+        "notificationapiServices",
+        "scheduleapiServices",
+        "settingsapiServices"
+      ]
+    }
+  }
+}
