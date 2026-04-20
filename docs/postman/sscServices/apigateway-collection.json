@@ -1,0 +1,57 @@
+{
+  "info": {
+    "name": "sscServices - apigateway",
+    "description": "API collection for apigateway in sscServices",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "erp-sscservices-apigateway"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Minimal APIs",
+      "item": [
+        {
+          "name": "GET /gateway/info",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gateway/info",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "info"
+              ],
+              "variable": []
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

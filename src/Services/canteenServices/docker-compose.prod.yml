@@ -1,0 +1,397 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Production Compose — pulls pre-built images from GHCR
+# Usage:  docker compose -f docker-compose.prod.yml up -d
+# Images: ghcr.io/vimalshan/erp/<service>:latest (public, no login required)
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  # ─── SQL Server ─────────────────────────────────────
+  mssql-server:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: canteen-sqlserver
+    environment:
+      ACCEPT_EULA: 'Y'
+      SA_PASSWORD: 'YourPassword123!'
+      MSSQL_PID: 'Express'
+      MSSQL_MEMORY_LIMIT_MB: '1024'
+    ports:
+      - "1434:1433"
+    volumes:
+      - canteen_mssql_data:/var/opt/mssql
+    networks:
+      - canteen-network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourPassword123!' -No -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 15s
+      timeout: 10s
+      start_period: 120s
+      retries: 20
+    restart: unless-stopped
+
+  # ─── RabbitMQ ───────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: canteen-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: 'guest'
+      RABBITMQ_DEFAULT_PASS: 'guest'
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    networks:
+      - canteen-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ─── Azurite (blob storage) ─────────────────────────
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: canteen-azurite
+    ports:
+      - "10010:10000"
+      - "10011:10001"
+      - "10012:10002"
+    networks:
+      - canteen-network
+    restart: unless-stopped
+
+  # ─── CanteenUnit Service ────────────────────────────
+  canteen-unit-service:
+    image: ghcr.io/vimalshan/erp/canteen-unit-service:latest
+    container_name: canteen-unit-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5190'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=CanteenUnitDb;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      Jwt__Key: 'CanteenUnit-SuperSecretKey-ChangeInProduction-Min32Characters!'
+      Jwt__Issuer: 'CanteenUnitAPI'
+      Jwt__Audience: 'CanteenUnitClients'
+      Jwt__ExpiresInMinutes: '60'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__VHost: '/'
+    ports:
+      - "5190:5190"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - canteen-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5190'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── CardManagement Service ─────────────────────────
+  card-management-service:
+    image: ghcr.io/vimalshan/erp/card-management-service:latest
+    container_name: card-management-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5191'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=CardManagementDb;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      Jwt__Key: 'CardManagement-SuperSecretKey-ChangeInProduction-Min32Characters!'
+      Jwt__Issuer: 'CardManagementAPI'
+      Jwt__Audience: 'CardManagementClients'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__VirtualHost: '/'
+    ports:
+      - "5191:5191"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - canteen-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5191'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── DeductionService ──────────────────────────────
+  deduction-service:
+    image: ghcr.io/vimalshan/erp/deduction-service:latest
+    container_name: deduction-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5192'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=DeductionServiceDb;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      Jwt__Key: 'DeductionService-SuperSecretKey-ChangeInProduction-Min32Characters!'
+      Jwt__Issuer: 'DeductionService'
+      Jwt__Audience: 'DeductionServiceClients'
+      Jwt__ExpiryMinutes: '60'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__VirtualHost: '/'
+      RabbitMQ__Exchange: 'deduction.exchange'
+    ports:
+      - "5192:5192"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - canteen-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5192'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── EligibilityService ────────────────────────────
+  eligibility-service:
+    image: ghcr.io/vimalshan/erp/eligibility-service:latest
+    container_name: eligibility-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5193'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=EligibilityServiceDb;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      Jwt__Key: 'EligibilityService-SuperSecretKey-ChangeInProduction-Min32Characters!'
+      Jwt__Issuer: 'EligibilityService'
+      Jwt__Audience: 'EligibilityServiceClients'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__VirtualHost: '/'
+    ports:
+      - "5193:5193"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - canteen-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5193'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── ItemMasterService ─────────────────────────────
+  itemmaster-service:
+    image: ghcr.io/vimalshan/erp/item-master-service:latest
+    container_name: itemmaster-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5194'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=ItemMasterDb;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      Jwt__Key: 'ItemMasterService-SuperSecretKey-ChangeInProduction-Min32Characters!'
+      Jwt__Issuer: 'ItemMasterService'
+      Jwt__Audience: 'ItemMasterServiceClients'
+      Jwt__ExpiresInMinutes: '60'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__VirtualHost: '/'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__ExchangeName: 'itemmaster.exchange'
+    ports:
+      - "5194:5194"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - canteen-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5194'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── ReferenceDataService ──────────────────────────
+  referencedata-service:
+    image: ghcr.io/vimalshan/erp/reference-data-service:latest
+    container_name: referencedata-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5195'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=ReferenceDataDb;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      Jwt__Key: 'ReferenceDataService-SuperSecretKey-ChangeInProduction-Min32Characters!'
+      Jwt__Issuer: 'ReferenceDataService'
+      Jwt__Audience: 'ReferenceDataService.Clients'
+      Jwt__ExpireMinutes: '60'
+      RabbitMQ__HostName: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: 'guest'
+      RabbitMQ__Password: 'guest'
+      AzureBlobStorage__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;'
+      AzureBlobStorage__ContainerName: 'stationery-images'
+    ports:
+      - "5195:5195"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      azurite:
+        condition: service_started
+    networks:
+      - canteen-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5195'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── SwipeTransactionService ───────────────────────
+  swipe-transaction-service:
+    image: ghcr.io/vimalshan/erp/swipe-transaction-service:latest
+    container_name: swipe-transaction-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5196'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=SwipeTransactionDb;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      Jwt__Secret: 'SwipeTransactionService-SuperSecretKey-ChangeInProduction-Min32Characters!'
+      Jwt__Issuer: 'SwipeTransactionService'
+      Jwt__Audience: 'SwipeTransactionServiceClients'
+      Jwt__ExpiryMinutes: '60'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__VirtualHost: '/'
+    ports:
+      - "5196:5196"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - canteen-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5196'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── CanteenTransaction Service ────────────────────
+  canteen-transaction-service:
+    image: ghcr.io/vimalshan/erp/canteen-transaction-service:latest
+    container_name: canteen-transaction-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      ASPNETCORE_URLS: 'http://+:5197'
+      ConnectionStrings__DefaultConnection: 'Data Source=mssql-server,1433;Initial Catalog=CanteenTransactionDb;User ID=sa;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;'
+      Jwt__Key: 'CanteenTransactionService-SuperSecretKey-ChangeInProduction-Min32Characters!'
+      Jwt__Issuer: 'CanteenTransactionService'
+      Jwt__Audience: 'CanteenTransactionServiceClients'
+      Jwt__ExpiresInMinutes: '60'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__VirtualHost: '/'
+      RabbitMQ__ExchangeName: 'canteentransaction.exchange'
+    ports:
+      - "5197:5197"
+    depends_on:
+      mssql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - canteen-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5197'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── API Gateway (Ocelot) ──────────────────────────
+  api-gateway:
+    image: ghcr.io/vimalshan/erp/api-gateway:latest
+    container_name: canteen-api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Docker'
+      ASPNETCORE_URLS: 'http://+:5200'
+      Jwt__Key: 'CanteenGateway-SuperSecretKey-ChangeInProduction-Min32Characters!'
+      Jwt__Issuer: 'CanteenGateway'
+      Jwt__Audience: 'CanteenGatewayClients'
+      RabbitMQ__Host: 'rabbitmq'
+      RabbitMQ__Port: '5672'
+      RabbitMQ__Username: 'guest'
+      RabbitMQ__Password: 'guest'
+      RabbitMQ__VirtualHost: '/'
+      ServiceEndpoints__CanteenUnit: 'http://canteen-unit-service:5190'
+      ServiceEndpoints__CardManagement: 'http://card-management-service:5191'
+      ServiceEndpoints__Deduction: 'http://deduction-service:5192'
+      ServiceEndpoints__Eligibility: 'http://eligibility-service:5193'
+      ServiceEndpoints__ItemMaster: 'http://itemmaster-service:5194'
+      ServiceEndpoints__ReferenceData: 'http://referencedata-service:5195'
+      ServiceEndpoints__SwipeTransaction: 'http://swipe-transaction-service:5196'
+      ServiceEndpoints__CanteenTransaction: 'http://canteen-transaction-service:5197'
+    ports:
+      - "5200:5200"
+    depends_on:
+      canteen-unit-service:
+        condition: service_healthy
+      card-management-service:
+        condition: service_healthy
+      deduction-service:
+        condition: service_healthy
+      eligibility-service:
+        condition: service_healthy
+      itemmaster-service:
+        condition: service_healthy
+      referencedata-service:
+        condition: service_healthy
+      swipe-transaction-service:
+        condition: service_healthy
+      canteen-transaction-service:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - canteen-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/5200'"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  canteen-network:
+    driver: bridge
+
+volumes:
+  canteen_mssql_data:
