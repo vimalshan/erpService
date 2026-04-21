@@ -51,7 +51,52 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          matrix=$(python scripts/export-module-registry.py services --module "${{ inputs.module }}")
+          matrix=$(python - <<'PY'
+          import ast
+          import json
+          from pathlib import Path
+
+          selected_module = "${{ inputs.module }}"
+          source_file = Path("scripts/generate-module-pipelines.py")
+          tree = ast.parse(source_file.read_text(encoding="utf-8"), filename=str(source_file))
+
+          modules = None
+          for node in tree.body:
+            if isinstance(node, ast.Assign):
+              for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "MODULES":
+                  modules = ast.literal_eval(node.value)
+                  break
+            if modules is not None:
+              break
+
+          if modules is None:
+            raise RuntimeError("MODULES registry not found in scripts/generate-module-pipelines.py")
+
+          def module_slug(name: str) -> str:
+            return "".join(ch.lower() for ch in name if ch.isalnum())
+
+          entries = []
+          for module_name, config in modules.items():
+            if selected_module != "all" and selected_module != module_name:
+              continue
+
+            slug = module_slug(module_name)
+            for service_name, context, dockerfile in config["services"]:
+              entries.append(
+                {
+                  "module": module_name,
+                  "module_slug": slug,
+                  "service": service_name,
+                  "context": context,
+                  "dockerfile": f"{context}/{dockerfile}",
+                  "image": f"{slug}-{service_name}",
+                }
+              )
+
+          print(json.dumps({"include": entries}, separators=(",", ":")))
+          PY
+          )
           echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
 
   publish:
