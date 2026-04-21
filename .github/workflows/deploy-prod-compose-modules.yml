@@ -28,39 +28,15 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - uses: actions/checkout@v4
+
       - name: Build matrix JSON
         id: set-matrix
         shell: bash
         run: |
           set -euo pipefail
-
-          REGISTRY=(
-            "adminServices|src/Services/adminServices"
-            "aimsServices|src/Services/aimsServices"
-            "auditServices|src/Services/auditServices"
-            "AuthProvider|src/Services/AuthProvider"
-            "canteenServices|src/Services/canteenServices"
-            "cashServices|src/Services/cashServices"
-          )
-
-          selected="${{ inputs.module }}"
-          entries=()
-
-          for item in "${REGISTRY[@]}"; do
-            IFS='|' read -r module path <<< "$item"
-            if [[ "$selected" == "all" || "$selected" == "$module" ]]; then
-              entries+=("{\"module\":\"${module}\",\"path\":\"${path}\"}")
-            fi
-          done
-
-          if [[ ${#entries[@]} -eq 0 ]]; then
-            echo 'matrix={"include":[]}' >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          json=$(printf '%s,' "${entries[@]}")
-          json="[${json%,}]"
-          echo "matrix={\"include\":${json}}" >> "$GITHUB_OUTPUT"
+          matrix=$(python scripts/export-module-registry.py deploy --module "${{ inputs.module }}")
+          echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
 
   deploy:
     name: Deploy ${{ matrix.module }}
@@ -77,6 +53,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Show Docker versions
         shell: bash
         run: |
@@ -88,10 +71,24 @@ jobs:
         working-directory: ${{ matrix.path }}
         env:
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          MODULE_SLUG: ${{ matrix.module_slug }}
         run: |
           set -euo pipefail
-          cp docker-compose.prod.yml "$COMPOSE_FILE_NAME"
-          sed -i "s|ghcr.io/vimalshan/erp/|ghcr.io/${GITHUB_REPOSITORY_OWNER}/erp/|g" "$COMPOSE_FILE_NAME"
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          compose_file = Path(os.environ["COMPOSE_FILE_NAME"])
+          owner = os.environ["GITHUB_REPOSITORY_OWNER"]
+          module_slug = os.environ["MODULE_SLUG"]
+          source = Path("docker-compose.prod.yml").read_text(encoding="utf-8")
+
+          pattern = re.compile(r"ghcr\.io/[^/]+/erp/([A-Za-z0-9_.-]+)(:[A-Za-z0-9_.-]+)")
+          rewritten = pattern.sub(lambda match: f"ghcr.io/{owner}/erp/{module_slug}-{match.group(1)}{match.group(2)}", source)
+
+          compose_file.write_text(rewritten, encoding="utf-8")
+          PY
 
       - name: Validate compose file
         shell: bash
