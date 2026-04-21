@@ -1,0 +1,121 @@
+name: Deploy Prod Compose Modules
+
+on:
+  workflow_dispatch:
+    inputs:
+      module:
+        description: Deploy one supported prod-compose module or all supported modules
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - adminServices
+          - aimsServices
+          - auditServices
+          - AuthProvider
+          - canteenServices
+          - cashServices
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  setup:
+    name: Resolve deployment matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Build matrix JSON
+        id: set-matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          REGISTRY=(
+            "adminServices|src/Services/adminServices"
+            "aimsServices|src/Services/aimsServices"
+            "auditServices|src/Services/auditServices"
+            "AuthProvider|src/Services/AuthProvider"
+            "canteenServices|src/Services/canteenServices"
+            "cashServices|src/Services/cashServices"
+          )
+
+          selected="${{ inputs.module }}"
+          entries=()
+
+          for item in "${REGISTRY[@]}"; do
+            IFS='|' read -r module path <<< "$item"
+            if [[ "$selected" == "all" || "$selected" == "$module" ]]; then
+              entries+=("{\"module\":\"${module}\",\"path\":\"${path}\"}")
+            fi
+          done
+
+          if [[ ${#entries[@]} -eq 0 ]]; then
+            echo 'matrix={"include":[]}' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          json=$(printf '%s,' "${entries[@]}")
+          json="[${json%,}]"
+          echo "matrix={\"include\":${json}}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy ${{ matrix.module }}
+    needs: setup
+    if: ${{ fromJson(needs.setup.outputs.matrix).include[0] != null }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      COMPOSE_FILE_NAME: docker-compose.workflow.yml
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Docker versions
+        shell: bash
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Prepare workflow compose file
+        shell: bash
+        working-directory: ${{ matrix.path }}
+        env:
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          cp docker-compose.prod.yml "$COMPOSE_FILE_NAME"
+          sed -i "s|ghcr.io/vimalshan/erp/|ghcr.io/${GITHUB_REPOSITORY_OWNER}/erp/|g" "$COMPOSE_FILE_NAME"
+
+      - name: Validate compose file
+        shell: bash
+        working-directory: ${{ matrix.path }}
+        run: |
+          set -euo pipefail
+          test -f "$COMPOSE_FILE_NAME"
+          docker compose -f "$COMPOSE_FILE_NAME" config -q
+
+      - name: Start production stack
+        shell: bash
+        working-directory: ${{ matrix.path }}
+        run: |
+          set -euo pipefail
+          docker compose -f "$COMPOSE_FILE_NAME" up -d --pull always --wait --wait-timeout 900
+
+      - name: Show stack status
+        if: always()
+        shell: bash
+        working-directory: ${{ matrix.path }}
+        run: docker compose -f "$COMPOSE_FILE_NAME" ps
+
+      - name: Collect container logs on failure
+        if: failure()
+        shell: bash
+        working-directory: ${{ matrix.path }}
+        run: docker compose -f "$COMPOSE_FILE_NAME" logs --no-color --tail=200
