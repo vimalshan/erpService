@@ -38,7 +38,7 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD wget -qO- http://localhost:5191/health || exit 1
+     CMD bash -c 'echo > /dev/tcp/localhost/5191' || exit 1
 
 ENV ASPNETCORE_ENVIRONMENT=Production
 
