@@ -38,19 +38,16 @@ RUN dotnet publish AuthProvider.API.csproj -c Release -o /app/publish /p:UseAppH
 # ── Runtime stage ─────────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 
-# Install curl for health checks
-RUN apt-get update -o APT::Update::Error-Mode=any || true && \
-    apt-get install -y --no-install-recommends curl && \
-    rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
+EXPOSE 5200
+ENV ASPNETCORE_URLS=http://+:5200
 
 # Copy published output
 COPY --from=publish /app/publish .
 
 # Health check against the /health endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD curl -f http://localhost:5200/api/v1/minimal/auth/health || exit 1
+     CMD bash -c 'echo > /dev/tcp/localhost/5200' || exit 1
 
 # Environment
 ENV ASPNETCORE_ENVIRONMENT=Production

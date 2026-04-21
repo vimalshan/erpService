@@ -142,6 +142,24 @@ jobs:
         working-directory: ${{ matrix.path }}
         run: docker compose -f "$COMPOSE_FILE_NAME" ps
 
+      - name: Show deployment URLs
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Module: ${{ matrix.module }}"
+          case "${{ matrix.module }}" in
+            AuthProvider)
+              echo "Base URL: http://<deployment-host>:5200"
+              echo "Swagger:  http://<deployment-host>:5200/swagger"
+              echo "GraphQL:  http://<deployment-host>:5200/graphql"
+              echo "Health:   http://<deployment-host>:5200/health"
+              ;;
+            *)
+              echo "Use the published host port mappings from docker-compose.prod.yml for this module."
+              ;;
+          esac
+
       - name: Collect container logs on failure
         if: failure()
         shell: bash
