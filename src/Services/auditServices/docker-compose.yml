@@ -435,6 +435,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: "Production"
       ASPNETCORE_URLS: "http://+:8080"
+      Kestrel__Endpoints__Http__Url: "http://+:8080"
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ERPOverviewDB;User Id=sa;Password=${SQL_SA_PASSWORD:-ErpStr0ng!Pass};TrustServerCertificate=True;MultipleActiveResultSets=True;"
       RabbitMQ__Enabled: "true"
       RabbitMQ__Host: "rabbitmq"
