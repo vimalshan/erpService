@@ -22,6 +22,9 @@ GO
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'ERPContractDB')
     CREATE DATABASE [ERPContractDB];
 GO
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'ERPDocumentsDB')
+    CREATE DATABASE [ERPDocumentsDB];
+GO
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'ERPFinanceDB')
     CREATE DATABASE [ERPFinanceDB];
 GO
@@ -30,6 +33,9 @@ IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'ERPFindingsDB')
 GO
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'ERPNotificationDB')
     CREATE DATABASE [ERPNotificationDB];
+GO
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'ERPOverviewDB')
+    CREATE DATABASE [ERPOverviewDB];
 GO
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'ERPScheduleDB')
     CREATE DATABASE [ERPScheduleDB];

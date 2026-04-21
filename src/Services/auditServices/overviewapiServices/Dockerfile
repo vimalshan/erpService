@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
-EXPOSE 5141
-ENV ASPNETCORE_URLS=http://+:5141
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
@@ -26,6 +26,6 @@ RUN groupadd --system --gid 1001 appgroup && \
 USER appuser
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=1 \
-  CMD bash -c 'echo > /dev/tcp/localhost/5141' || exit 1
+  CMD bash -c 'echo > /dev/tcp/localhost/8080' || exit 1
 
 ENTRYPOINT ["dotnet", "OverviewService.dll"]
