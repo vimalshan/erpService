@@ -35,7 +35,38 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          matrix=$(python scripts/export-module-registry.py deploy --module "${{ inputs.module }}")
+          matrix=$(python - <<'PY'
+          import json
+
+          selected_module = "${{ inputs.module }}"
+
+          def module_slug(name: str) -> str:
+            return "".join(ch.lower() for ch in name if ch.isalnum())
+
+          supported = [
+            ("adminServices", "src/Services/adminServices"),
+            ("aimsServices", "src/Services/aimsServices"),
+            ("auditServices", "src/Services/auditServices"),
+            ("AuthProvider", "src/Services/AuthProvider"),
+            ("canteenServices", "src/Services/canteenServices"),
+            ("cashServices", "src/Services/cashServices"),
+          ]
+
+          entries = []
+          for module_name, path in supported:
+            if selected_module != "all" and selected_module != module_name:
+              continue
+            entries.append(
+              {
+                "module": module_name,
+                "module_slug": module_slug(module_name),
+                "path": path,
+              }
+            )
+
+          print(json.dumps({"include": entries}, separators=(",", ":")))
+          PY
+          )
           echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
 
   deploy:
