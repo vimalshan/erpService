@@ -27,7 +27,22 @@ public static class ServiceExtensions
     public static IServiceCollection AddMessagingServices(this IServiceCollection services, IConfiguration config)
     {
         if (!config.GetValue<bool>("RabbitMQ:Enabled"))
+        {
+            // Register in-memory bus so IPublishEndpoint is available for MediatR handlers
+            services.AddMassTransit(x =>
+            {
+                x.AddConsumer<AuditScheduledConsumer>();
+                x.AddConsumer<AuditCompletedConsumer>();
+                x.UsingInMemory((ctx, cfg) => cfg.ConfigureEndpoints(ctx));
+            });
+
+            // Register MediatR bridge handlers
+            services.AddTransient<INotificationHandler<AuditScheduledEvent>, AuditScheduledEventHandler>();
+            services.AddTransient<INotificationHandler<AuditCompletedEvent>, AuditCompletedEventHandler>();
             return services;
+        }
+
+        var virtualHost = config["RabbitMQ:VirtualHost"] ?? "/";
 
         services.AddMassTransit(x =>
         {
@@ -35,7 +50,7 @@ public static class ServiceExtensions
             x.AddConsumer<AuditCompletedConsumer>();
             x.UsingRabbitMq((ctx, cfg) =>
             {
-                cfg.Host(config["RabbitMQ:Host"] ?? "localhost", h =>
+                cfg.Host(config["RabbitMQ:Host"] ?? "localhost", virtualHost, h =>
                 {
                     h.Username(config["RabbitMQ:Username"] ?? "guest");
                     h.Password(config["RabbitMQ:Password"] ?? "guest");

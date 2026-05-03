@@ -102,7 +102,25 @@ WHERE {whereClause}
 
         public async Task UpdateAsync(Finding entity)
         {
-            await _writeRepository.UpdateAsync(entity);
+            using var connection = new SqlConnection(_connectionString);
+            const string sql = @"
+UPDATE Findings SET
+    FindingNumber = @FindingNumber,
+    AuditId = @AuditId,
+    SiteId = @SiteId,
+    Title = @Title,
+    Description = @Description,
+    FindingType = @FindingType,
+    Severity = @Severity,
+    FindingStatusId = @FindingStatusId,
+    FindingCategoryId = @FindingCategoryId,
+    DueDate = @DueDate,
+    ClosedDate = @ClosedDate,
+    IsActive = @IsActive,
+    ModifiedDate = @ModifiedDate,
+    ModifiedBy = @ModifiedBy
+WHERE FindingId = @FindingId";
+            await connection.ExecuteAsync(sql, entity);
         }
 
         public async Task DeleteAsync(Finding entity)
@@ -112,7 +130,8 @@ WHERE {whereClause}
 
         public Task<int> SaveChangesAsync()
         {
-            return _writeRepository.SaveChangesAsync();
+            // Direct SQL UPDATE/DELETE already persisted; return success.
+            return Task.FromResult(0);
         }
     }
 }

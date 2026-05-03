@@ -1,8 +1,10 @@
 using OverviewService.GraphQL.Queries;
 using OverviewService.GraphQL.Types;
+using OverviewService.Infrastructure.Data;
 using OverviewService.Middleware;
 using OverviewService.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Text;
@@ -21,6 +23,10 @@ builder.Host.UseSerilog();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// DbContext
+builder.Services.AddDbContext<OverviewDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Services
 builder.Services.AddScoped<IOverviewService, OverviewService.Services.OverviewService>();
@@ -60,7 +66,8 @@ builder.Services
     .AddFiltering()
     .AddSorting()
     .AddProjections()
-    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment());
+    .AddErrorFilter<OverviewService.GraphQL.GraphQLErrorFilter>()
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true);
 
 // CORS
 builder.Services.AddCors(options =>
@@ -69,7 +76,8 @@ builder.Services.AddCors(options =>
 });
 
 // Health checks
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<OverviewDbContext>("OverviewDb");
 
 var app = builder.Build();
 

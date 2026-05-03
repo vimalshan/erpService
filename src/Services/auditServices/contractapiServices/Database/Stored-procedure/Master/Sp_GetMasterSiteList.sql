@@ -10,7 +10,7 @@ BEGIN
                ''                                   AS city,
                0                                    AS countryId,
                ''                                   AS countryName,
-               COALESCE(s.Location, '')             AS formattedAddress,
+               COALESCE(s.Address, '')              AS formattedAddress,
                ''                                   AS siteState,
                ''                                   AS siteZip
         FROM   Sites s

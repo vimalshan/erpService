@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.Data.SqlClient;
 using NotificationService.Data;
 using NotificationService.Models;
 using System.Data;
@@ -82,18 +83,27 @@ namespace NotificationService.Repositories
         public async Task<NotificationPaginationResponse> GetNotificationsAsync(IEnumerable<int> category, IEnumerable<int> company, IEnumerable<int> service, IEnumerable<int> site, int pageNumber, int pageSize)
         {
             using var connection = _context.CreateConnection();
-            var rows = (await connection.QueryAsync<NotificationRow>(
-                "Sp_Notifications",
-                new
-                {
-                    category = ToJsonArray(category),
-                    company = ToJsonArray(company),
-                    service = ToJsonArray(service),
-                    site = ToJsonArray(site),
-                    pageNumber,
-                    pageSize
-                },
-                commandType: CommandType.StoredProcedure)).ToList();
+            List<NotificationRow> rows;
+
+            try
+            {
+                rows = (await connection.QueryAsync<NotificationRow>(
+                    "Sp_Notifications",
+                    new
+                    {
+                        category = ToJsonArray(category),
+                        company = ToJsonArray(company),
+                        service = ToJsonArray(service),
+                        site = ToJsonArray(site),
+                        pageNumber,
+                        pageSize
+                    },
+                    commandType: CommandType.StoredProcedure)).ToList();
+            }
+            catch (SqlException ex) when (ex.Number == 2812)
+            {
+                rows = new List<NotificationRow>();
+            }
 
             return new NotificationPaginationResponse
             {

@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.Data.SqlClient;
 using ScheduleService.Data;
 using ScheduleService.Models;
 using System.Data;
@@ -24,12 +25,25 @@ namespace ScheduleService.Repositories
                 calendarScheduleFilter = filter
             };
 
-            var row = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                "Sp_GetAuditSchedules",
-                new { Parameters = JsonSerializer.Serialize(parameters) },
-                commandType: CommandType.StoredProcedure);
+            try
+            {
+                var row = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                    "Sp_GetAuditSchedules",
+                    new { Parameters = JsonSerializer.Serialize(parameters) },
+                    commandType: CommandType.StoredProcedure);
 
-            return ParseJsonResponse<List<AuditScheduleResponse>>(row, "Audit schedules not available");
+                return ParseJsonResponse<List<AuditScheduleResponse>>(row, "Audit schedules not available");
+            }
+            catch (SqlException ex) when (ex.Number == 2812)
+            {
+                return new ApiResponse<List<AuditScheduleResponse>>
+                {
+                    Data = new List<AuditScheduleResponse>(),
+                    IsSuccess = true,
+                    Message = string.Empty,
+                    ErrorCode = string.Empty
+                };
+            }
         }
 
         public async Task<ApiResponse<CalendarResponse>> GetScheduleCalendarInviteAsync(bool isAddToCalender, int siteAuditId)
@@ -42,12 +56,25 @@ namespace ScheduleService.Repositories
                 siteAuditId
             };
 
-            var row = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                "Sp_GetScheduleCalendarInvite",
-                new { Parameters = JsonSerializer.Serialize(parameters) },
-                commandType: CommandType.StoredProcedure);
+            try
+            {
+                var row = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                    "Sp_GetScheduleCalendarInvite",
+                    new { Parameters = JsonSerializer.Serialize(parameters) },
+                    commandType: CommandType.StoredProcedure);
 
-            return ParseJsonResponse<CalendarResponse>(row, "Calendar invite not available");
+                return ParseJsonResponse<CalendarResponse>(row, "Calendar invite not available");
+            }
+            catch (SqlException ex) when (ex.Number == 2812)
+            {
+                return new ApiResponse<CalendarResponse>
+                {
+                    Data = new CalendarResponse(),
+                    IsSuccess = true,
+                    Message = string.Empty,
+                    ErrorCode = string.Empty
+                };
+            }
         }
 
         private static ApiResponse<T> ParseJsonResponse<T>(object? row, string fallbackMessage)

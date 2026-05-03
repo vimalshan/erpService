@@ -52,7 +52,8 @@ builder.Services.AddGraphQLServer()
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
     .AddFiltering().AddSorting().AddProjections()
-    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment());
+    .AddErrorFilter<SettingsService.GraphQL.GraphQLErrorFilter>()
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true);
 
 builder.Services.AddCors(o => o.AddPolicy("AllowAll", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 

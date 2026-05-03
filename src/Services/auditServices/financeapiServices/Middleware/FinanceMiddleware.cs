@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace FinanceService.Middleware;
 
@@ -37,6 +39,46 @@ public class GlobalExceptionMiddleware
             context.Response.StatusCode = (int)HttpStatusCode.NotFound;
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is SqlException sql && (sql.Number == 2601 || sql.Number == 2627))
+        {
+            _logger.LogWarning(ex, "Duplicate key violation");
+            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new { isSuccess = false, errorCode = "DUPLICATE_KEY", message = "A record with the same unique key already exists." }));
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is SqlException sql && sql.Number == 547)
+        {
+            _logger.LogWarning(ex, "Foreign key violation");
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new { isSuccess = false, errorCode = "FK_VIOLATION", message = "Referenced entity does not exist or is in use." }));
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _logger.LogWarning(ex, "Concurrency conflict");
+            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new { isSuccess = false, errorCode = "CONCURRENCY", message = "The record was modified by another user." }));
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database update failed");
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new { isSuccess = false, errorCode = "DB_UPDATE_FAILED", message = ex.InnerException?.Message ?? ex.Message }));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new { isSuccess = false, errorCode = "FORBIDDEN", message = ex.Message }));
+        }
+        catch (ArgumentException ex)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new { isSuccess = false, errorCode = "INVALID_ARGUMENT", message = ex.Message }));
         }
         catch (Exception ex)
         {

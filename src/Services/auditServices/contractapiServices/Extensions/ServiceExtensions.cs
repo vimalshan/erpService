@@ -28,6 +28,8 @@ public static class ServiceExtensions
         if (!config.GetValue<bool>("RabbitMQ:Enabled"))
             return services;
 
+        var virtualHost = config["RabbitMQ:VirtualHost"] ?? "/";
+
         services.AddMassTransit(x =>
         {
             x.AddConsumer<ContractCreatedConsumer>();
@@ -35,7 +37,7 @@ public static class ServiceExtensions
             x.AddConsumer<ContractRenewedConsumer>();
             x.UsingRabbitMq((ctx, cfg) =>
             {
-                cfg.Host(config["RabbitMQ:Host"] ?? "localhost", h =>
+                cfg.Host(config["RabbitMQ:Host"] ?? "localhost", virtualHost, h =>
                 {
                     h.Username(config["RabbitMQ:Username"] ?? "guest");
                     h.Password(config["RabbitMQ:Password"] ?? "guest");

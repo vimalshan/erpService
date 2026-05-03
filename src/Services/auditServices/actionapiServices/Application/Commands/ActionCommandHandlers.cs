@@ -93,7 +93,11 @@ public class CompleteActionHandler : IRequestHandler<CompleteActionCommand, bool
     public async Task<bool> Handle(CompleteActionCommand request, CancellationToken ct)
     {
         var entity = await _repository.GetByIdAsync(request.Id, ct)
-            ?? throw new System.Collections.Generic.KeyNotFoundException($"Action {request.Id} not found");
+            ;
+        if (entity == null)
+        {
+            return false;
+        }
         entity.MarkComplete();
 
         await _repository.UpdateAsync(entity, ct);

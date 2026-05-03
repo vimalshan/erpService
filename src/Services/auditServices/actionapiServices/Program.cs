@@ -74,7 +74,8 @@ builder.Services
     .AddFiltering()
     .AddSorting()
     .AddProjections()
-    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment());
+    .AddErrorFilter<ActionService.GraphQL.GraphQLErrorFilter>()
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true);
 
 // CORS
 builder.Services.AddCors(options =>
@@ -83,6 +84,21 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Apply migrations and seed data on startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ActionService.Infrastructure.Data.ActionDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        await ActionService.Infrastructure.Data.ActionDataSeeder.SeedAsync(db, logger);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Database migration/seeding failed");
+    }
+}
 
 // Middleware pipeline
 app.UseMiddleware<CorrelationIdMiddleware>();

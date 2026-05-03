@@ -33,15 +33,16 @@ services:
   db-init:
     image: mcr.microsoft.com/mssql-tools:latest
     container_name: audit-db-init
+    environment:
+      SQL_SA_PASSWORD: 'ErpStr0ng!Pass'
+      SQL_HOST: 'sqlserver'
     depends_on:
       sqlserver:
         condition: service_healthy
     volumes:
-      - ./deploy/database/init.sql:/init.sql:ro
+      - ./:/workspace:ro
     command: >
-      /bin/bash -c "
-        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P 'ErpStr0ng!Pass' -i /init.sql -C -b
-      "
+      /bin/bash /workspace/deploy/scripts/init-compose-db.sh
     networks:
       - audit-network
     restart: "no"
@@ -69,6 +70,9 @@ services:
 
   # ─── Action Service ────────────────────────────────
   action-service:
+    build:
+      context: ./actionapiServices
+      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/action-service:latest
     container_name: audit-action-service
     environment:
@@ -80,14 +84,16 @@ services:
       RabbitMQ__VirtualHost: 'erp'
       RabbitMQ__Username: 'erpadmin'
       RabbitMQ__Password: 'ErpR@bbit1'
-      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
-      Jwt__Issuer: 'ERPSystem'
-      Jwt__Audience: 'ERPUsers'
+      Jwt__Key: 'AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!'
+      Jwt__Issuer: 'AuthProvider'
+      Jwt__Audience: 'AuthProviderClients'
     ports:
       - "5001:8080"
     depends_on:
       sqlserver:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     networks:
@@ -102,6 +108,9 @@ services:
 
   # ─── Audit Service ─────────────────────────────────
   audit-service:
+    build:
+      context: ./auditapiServices
+      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/audit-service:latest
     container_name: audit-audit-service
     environment:
@@ -113,14 +122,16 @@ services:
       RabbitMQ__VirtualHost: 'erp'
       RabbitMQ__Username: 'erpadmin'
       RabbitMQ__Password: 'ErpR@bbit1'
-      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
-      Jwt__Issuer: 'ERPSystem'
-      Jwt__Audience: 'ERPUsers'
+      Jwt__Key: 'AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!'
+      Jwt__Issuer: 'AuthProvider'
+      Jwt__Audience: 'AuthProviderClients'
     ports:
       - "5002:8080"
     depends_on:
       sqlserver:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     networks:
@@ -135,6 +146,9 @@ services:
 
   # ─── Certificate Service ───────────────────────────
   certificate-service:
+    build:
+      context: ./certificateapiServices
+      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/certificate-service:latest
     container_name: audit-certificate-service
     environment:
@@ -146,14 +160,16 @@ services:
       RabbitMQ__VirtualHost: 'erp'
       RabbitMQ__Username: 'erpadmin'
       RabbitMQ__Password: 'ErpR@bbit1'
-      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
-      Jwt__Issuer: 'ERPSystem'
-      Jwt__Audience: 'ERPUsers'
+      Jwt__Key: 'AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!'
+      Jwt__Issuer: 'AuthProvider'
+      Jwt__Audience: 'AuthProviderClients'
     ports:
       - "5003:8080"
     depends_on:
       sqlserver:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     networks:
@@ -168,6 +184,9 @@ services:
 
   # ─── Contract Service ──────────────────────────────
   contract-service:
+    build:
+      context: ./contractapiServices
+      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/contract-service:latest
     container_name: audit-contract-service
     environment:
@@ -179,14 +198,16 @@ services:
       RabbitMQ__VirtualHost: 'erp'
       RabbitMQ__Username: 'erpadmin'
       RabbitMQ__Password: 'ErpR@bbit1'
-      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
-      Jwt__Issuer: 'ERPSystem'
-      Jwt__Audience: 'ERPUsers'
+      Jwt__Key: 'AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!'
+      Jwt__Issuer: 'AuthProvider'
+      Jwt__Audience: 'AuthProviderClients'
     ports:
       - "5004:8080"
     depends_on:
       sqlserver:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     networks:
@@ -201,6 +222,9 @@ services:
 
   # ─── Finance Service ───────────────────────────────
   finance-service:
+    build:
+      context: ./financeapiServices
+      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/finance-service:latest
     container_name: audit-finance-service
     environment:
@@ -212,14 +236,16 @@ services:
       RabbitMQ__VirtualHost: 'erp'
       RabbitMQ__Username: 'erpadmin'
       RabbitMQ__Password: 'ErpR@bbit1'
-      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
-      Jwt__Issuer: 'ERPSystem'
-      Jwt__Audience: 'ERPUsers'
+      Jwt__Key: 'AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!'
+      Jwt__Issuer: 'AuthProvider'
+      Jwt__Audience: 'AuthProviderClients'
     ports:
       - "5005:8080"
     depends_on:
       sqlserver:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     networks:
@@ -234,6 +260,9 @@ services:
 
   # ─── Findings Service ──────────────────────────────
   findings-service:
+    build:
+      context: ./findingsapiServices
+      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/findings-service:latest
     container_name: audit-findings-service
     environment:
@@ -246,14 +275,16 @@ services:
       RabbitMQ__VirtualHost: 'erp'
       RabbitMQ__Username: 'erpadmin'
       RabbitMQ__Password: 'ErpR@bbit1'
-      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
-      Jwt__Issuer: 'ERPSystem'
-      Jwt__Audience: 'ERPUsers'
+      Jwt__Key: 'AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!'
+      Jwt__Issuer: 'AuthProvider'
+      Jwt__Audience: 'AuthProviderClients'
     ports:
       - "5006:8080"
     depends_on:
       sqlserver:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     networks:
@@ -268,6 +299,9 @@ services:
 
   # ─── Notification Service ──────────────────────────
   notification-service:
+    build:
+      context: ./notificationapiServices
+      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/notification-service:latest
     container_name: audit-notification-service
     environment:
@@ -279,14 +313,16 @@ services:
       RabbitMQ__VirtualHost: 'erp'
       RabbitMQ__Username: 'erpadmin'
       RabbitMQ__Password: 'ErpR@bbit1'
-      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
-      Jwt__Issuer: 'ERPSystem'
-      Jwt__Audience: 'ERPUsers'
+      Jwt__Key: 'AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!'
+      Jwt__Issuer: 'AuthProvider'
+      Jwt__Audience: 'AuthProviderClients'
     ports:
       - "5007:8080"
     depends_on:
       sqlserver:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     networks:
@@ -301,6 +337,9 @@ services:
 
   # ─── Schedule Service ──────────────────────────────
   schedule-service:
+    build:
+      context: ./scheduleapiServices
+      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/schedule-service:latest
     container_name: audit-schedule-service
     environment:
@@ -312,14 +351,16 @@ services:
       RabbitMQ__VirtualHost: 'erp'
       RabbitMQ__Username: 'erpadmin'
       RabbitMQ__Password: 'ErpR@bbit1'
-      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
-      Jwt__Issuer: 'ERPSystem'
-      Jwt__Audience: 'ERPUsers'
+      Jwt__Key: 'AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!'
+      Jwt__Issuer: 'AuthProvider'
+      Jwt__Audience: 'AuthProviderClients'
     ports:
       - "5008:8080"
     depends_on:
       sqlserver:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     networks:
@@ -334,6 +375,9 @@ services:
 
   # ─── Settings Service ──────────────────────────────
   settings-service:
+    build:
+      context: ./settingsapiServices
+      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/settings-service:latest
     container_name: audit-settings-service
     environment:
@@ -345,14 +389,16 @@ services:
       RabbitMQ__VirtualHost: 'erp'
       RabbitMQ__Username: 'erpadmin'
       RabbitMQ__Password: 'ErpR@bbit1'
-      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
-      Jwt__Issuer: 'ERPSystem'
-      Jwt__Audience: 'ERPUsers'
+      Jwt__Key: 'AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!'
+      Jwt__Issuer: 'AuthProvider'
+      Jwt__Audience: 'AuthProviderClients'
     ports:
       - "5009:8080"
     depends_on:
       sqlserver:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     networks:
@@ -367,6 +413,9 @@ services:
 
   # ─── Documents Service ─────────────────────────────
   documents-service:
+    build:
+      context: ./documentsapiServices
+      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/documents-service:latest
     container_name: audit-documents-service
     environment:
@@ -378,9 +427,9 @@ services:
       RabbitMQ__VirtualHost: 'erp'
       RabbitMQ__Username: 'erpadmin'
       RabbitMQ__Password: 'ErpR@bbit1'
-      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
-      Jwt__Issuer: 'ERPSystem'
-      Jwt__Audience: 'ERPUsers'
+      Jwt__Key: 'AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!'
+      Jwt__Issuer: 'AuthProvider'
+      Jwt__Audience: 'AuthProviderClients'
       AzureStorage__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;'
       AzureStorage__ContainerName: 'documents'
     ports:
@@ -388,6 +437,8 @@ services:
     depends_on:
       sqlserver:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     networks:
@@ -417,14 +468,16 @@ services:
       RabbitMQ__VirtualHost: 'erp'
       RabbitMQ__Username: 'erpadmin'
       RabbitMQ__Password: 'ErpR@bbit1'
-      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
-      Jwt__Issuer: 'ERPSystem'
-      Jwt__Audience: 'ERPUsers'
+      Jwt__Key: 'AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!'
+      Jwt__Issuer: 'AuthProvider'
+      Jwt__Audience: 'AuthProviderClients'
     ports:
       - "5011:8080"
     depends_on:
       sqlserver:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     networks:
@@ -439,6 +492,9 @@ services:
 
   # ─── API Gateway ───────────────────────────────────
   api-gateway:
+    build:
+      context: ./apigateway
+      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/api-gateway:latest
     container_name: audit-api-gateway
     environment:
@@ -466,9 +522,9 @@ services:
       HealthChecks__Services__8__Uri: 'http://settings-service:8080/health'
       HealthChecks__Services__9__Uri: 'http://documents-service:8080/health'
       HealthChecks__Services__10__Uri: 'http://overview-service:8080/health'
-      Jwt__Key: 'YourSuperSecretKeyThatIsAtLeast32Characters!'
-      Jwt__Issuer: 'ERPSystem'
-      Jwt__Audience: 'ERPUsers'
+      Jwt__Key: 'AuthProviderSuperSecretKey_ChangeInProduction_Min32Chars!'
+      Jwt__Issuer: 'AuthProvider'
+      Jwt__Audience: 'AuthProviderClients'
     ports:
       - "5000:8080"
     depends_on:

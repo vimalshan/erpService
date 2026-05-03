@@ -230,7 +230,7 @@ namespace FindingsAPI.Gateway.Services
                 var finding = await _unitOfWork.Findings.GetByIdAsync(command.FindingId);
                 if (finding == null)
                 {
-                    throw new System.Collections.Generic.KeyNotFoundException($"Finding with ID {command.FindingId} not found");
+                    throw new FindingNotFoundException(command.FindingId);
                 }
 
                 finding.FindingStatusId = 8; // Closed status

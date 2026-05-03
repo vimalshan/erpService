@@ -18,13 +18,13 @@ BEGIN
                 ELSE 'Unknown'
             END as status,
             CASE 
-                WHEN c.IssuedDate IS NOT NULL 
-                THEN CONVERT(VARCHAR(10), c.IssuedDate, 23)
+                WHEN c.IssueDate IS NOT NULL 
+                THEN CONVERT(VARCHAR(10), c.IssueDate, 23)
                 ELSE NULL
             END as issuedDate,
             CASE 
-                WHEN c.ValidUntilDate IS NOT NULL 
-                THEN CONVERT(VARCHAR(10), c.ValidUntilDate, 23)
+                WHEN c.ExpiryDate IS NOT NULL 
+                THEN CONVERT(VARCHAR(10), c.ExpiryDate, 23)
                 ELSE NULL
             END as validUntil,
             COALESCE(c.RevisionNumber, '1') as revisionNumber

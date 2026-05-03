@@ -20,7 +20,7 @@ namespace FindingsAPI.Gateway.GraphQL.Mutations
 
     public class CloseFindingPayload
     {
-        public Finding Finding { get; set; }
+        public Finding? Finding { get; set; }
         public string Message { get; set; }
         public DateTime Timestamp { get; set; }
     }

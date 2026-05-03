@@ -57,11 +57,13 @@ public class DeactivateUserCommandHandler : IRequestHandler<DeactivateUserComman
 
     public async Task<bool> Handle(DeactivateUserCommand request, CancellationToken ct)
     {
-        var e = await _repo.GetUserByIdAsync(request.UserId) ?? throw new System.Collections.Generic.KeyNotFoundException($"User {request.UserId} not found");
-        e.Deactivate(request.ModifiedBy);
-        await _repo.UpdateUserAsync(e);
-        foreach (var evt in e.DomainEvents) await _mediator.Publish(evt, ct);
-        e.ClearDomainEvents();
+        var deactivated = await _repo.DeactivateUserAsync(request.UserId, request.ModifiedBy);
+        if (!deactivated)
+        {
+            return false;
+        }
+
+        await _mediator.Publish(new SettingsService.Domain.Events.UserDeactivatedEvent(request.UserId, string.Empty), ct);
         return true;
     }
 }

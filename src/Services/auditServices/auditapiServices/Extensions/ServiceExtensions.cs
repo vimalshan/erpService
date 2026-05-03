@@ -20,7 +20,9 @@ public static class ServiceExtensions
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehaviour<,>));
         services.AddValidatorsFromAssembly(typeof(Program).Assembly);
         services.AddDbContext<AuditDomainDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            options
+                .UseSqlServer(configuration.GetConnectionString("DefaultConnection"))
+                .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
         services.AddScoped<IAuditDomainRepository, EfAuditDomainRepository>();
         return services;
     }
@@ -30,13 +32,15 @@ public static class ServiceExtensions
         if (!configuration.GetValue<bool>("RabbitMQ:Enabled"))
             return services;
 
+        var virtualHost = configuration["RabbitMQ:VirtualHost"] ?? "/";
+
         services.AddMassTransit(x =>
         {
             x.AddConsumer<AuditCreatedConsumer>();
             x.AddConsumer<AuditStatusChangedConsumer>();
             x.UsingRabbitMq((context, cfg) =>
             {
-                cfg.Host(configuration["RabbitMQ:Host"], "/", h =>
+                cfg.Host(configuration["RabbitMQ:Host"], virtualHost, h =>
                 {
                     h.Username(configuration["RabbitMQ:Username"] ?? "guest");
                     h.Password(configuration["RabbitMQ:Password"] ?? "guest");

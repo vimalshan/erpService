@@ -183,7 +183,7 @@ BEGIN
             @EndDate         = asa.EndDate,
             @LeadAuditorName = ISNULL(usr.Username, ''),
             @SiteName        = ISNULL(s.SiteName, ''),
-            @SiteLocation    = ISNULL(s.Location, '')
+            @SiteLocation    = ISNULL(s.Address, '')
         FROM AuditSiteAudits asa
         INNER JOIN Sites s          ON asa.SiteId        = s.SiteId
         LEFT JOIN  AuditTypes atype ON asa.AuditTypeId   = atype.AuditTypeId
@@ -254,7 +254,7 @@ BEGIN
         SELECT '{"isSuccess":true,"message":"Success","errorCode":null,"data":' + @Data + '}' AS JsonResponse;
     END TRY
     BEGIN CATCH
-        INSERT INTO ErrorLogs (UserId, ErrorMessage, StackTrace, CreatedAt)
+        INSERT INTO ErrorLogs (UserId, ErrorMessage, StackTrace, CreatedDate)
         VALUES (@UserId, ERROR_MESSAGE(), CONCAT('Procedure: Sp_GetScheduleCalendarInvite, Line: ', ERROR_LINE()), GETDATE());
         SELECT '{"isSuccess":false,"message":"An error occurred retrieving calendar invite.","errorCode":"SERVER_ERROR","data":null}' AS JsonResponse;
     END CATCH
