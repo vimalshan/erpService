@@ -31,8 +31,9 @@ services:
 
   # ─── DB Initializer (runs init.sql once) ────────────
   db-init:
-    image: mcr.microsoft.com/mssql-tools:latest
+    image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: audit-db-init
+    entrypoint: ["/bin/bash", "/workspace/deploy/scripts/init-compose-db.sh"]
     environment:
       SQL_SA_PASSWORD: 'ErpStr0ng!Pass'
       SQL_HOST: 'sqlserver'
@@ -70,10 +71,8 @@ services:
 
   # ─── Action Service ────────────────────────────────
   action-service:
-    build:
-      context: ./actionapiServices
-      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/action-service:latest
+    pull_policy: always
     container_name: audit-action-service
     environment:
       ASPNETCORE_ENVIRONMENT: 'Production'
@@ -108,10 +107,8 @@ services:
 
   # ─── Audit Service ─────────────────────────────────
   audit-service:
-    build:
-      context: ./auditapiServices
-      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/audit-service:latest
+    pull_policy: always
     container_name: audit-audit-service
     environment:
       ASPNETCORE_ENVIRONMENT: 'Production'
@@ -146,10 +143,8 @@ services:
 
   # ─── Certificate Service ───────────────────────────
   certificate-service:
-    build:
-      context: ./certificateapiServices
-      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/certificate-service:latest
+    pull_policy: always
     container_name: audit-certificate-service
     environment:
       ASPNETCORE_ENVIRONMENT: 'Production'
@@ -184,10 +179,8 @@ services:
 
   # ─── Contract Service ──────────────────────────────
   contract-service:
-    build:
-      context: ./contractapiServices
-      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/contract-service:latest
+    pull_policy: always
     container_name: audit-contract-service
     environment:
       ASPNETCORE_ENVIRONMENT: 'Production'
@@ -222,10 +215,8 @@ services:
 
   # ─── Finance Service ───────────────────────────────
   finance-service:
-    build:
-      context: ./financeapiServices
-      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/finance-service:latest
+    pull_policy: always
     container_name: audit-finance-service
     environment:
       ASPNETCORE_ENVIRONMENT: 'Production'
@@ -260,10 +251,8 @@ services:
 
   # ─── Findings Service ──────────────────────────────
   findings-service:
-    build:
-      context: ./findingsapiServices
-      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/findings-service:latest
+    pull_policy: always
     container_name: audit-findings-service
     environment:
       ASPNETCORE_ENVIRONMENT: 'Production'
@@ -299,10 +288,8 @@ services:
 
   # ─── Notification Service ──────────────────────────
   notification-service:
-    build:
-      context: ./notificationapiServices
-      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/notification-service:latest
+    pull_policy: always
     container_name: audit-notification-service
     environment:
       ASPNETCORE_ENVIRONMENT: 'Production'
@@ -337,10 +324,8 @@ services:
 
   # ─── Schedule Service ──────────────────────────────
   schedule-service:
-    build:
-      context: ./scheduleapiServices
-      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/schedule-service:latest
+    pull_policy: always
     container_name: audit-schedule-service
     environment:
       ASPNETCORE_ENVIRONMENT: 'Production'
@@ -375,14 +360,13 @@ services:
 
   # ─── Settings Service ──────────────────────────────
   settings-service:
-    build:
-      context: ./settingsapiServices
-      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/settings-service:latest
+    pull_policy: always
     container_name: audit-settings-service
     environment:
       ASPNETCORE_ENVIRONMENT: 'Production'
       ASPNETCORE_URLS: 'http://+:8080'
+      Kestrel__Endpoints__Http__Url: 'http://+:8080'
       ConnectionStrings__DefaultConnection: 'Server=sqlserver,1433;Database=ERPSettingsDB;User Id=sa;Password=ErpStr0ng!Pass;TrustServerCertificate=True;MultipleActiveResultSets=True;'
       RabbitMQ__Enabled: 'true'
       RabbitMQ__Host: 'rabbitmq'
@@ -413,10 +397,8 @@ services:
 
   # ─── Documents Service ─────────────────────────────
   documents-service:
-    build:
-      context: ./documentsapiServices
-      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/documents-service:latest
+    pull_policy: always
     container_name: audit-documents-service
     environment:
       ASPNETCORE_ENVIRONMENT: 'Production'
@@ -453,10 +435,8 @@ services:
 
   # ─── Overview Service ──────────────────────────────
   overview-service:
-    build:
-      context: ./overviewapiServices
-      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/overview-service:latest
+    pull_policy: always
     container_name: audit-overview-service
     environment:
       ASPNETCORE_ENVIRONMENT: 'Production'
@@ -492,10 +472,8 @@ services:
 
   # ─── API Gateway ───────────────────────────────────
   api-gateway:
-    build:
-      context: ./apigateway
-      dockerfile: Dockerfile
     image: ghcr.io/vimalshan/erp/api-gateway:latest
+    pull_policy: always
     container_name: audit-api-gateway
     environment:
       ASPNETCORE_ENVIRONMENT: 'Production'
