@@ -449,6 +449,26 @@ namespace AuditService.Migrations.Domain
                     b.ToTable("AuditTypes", (string)null);
                 });
 
+            modelBuilder.Entity("AuditService.Domain.Entities.SiteInfo", b =>
+                {
+                    b.Property<int>("SiteId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SiteId"));
+
+                    b.Property<string>("Location")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SiteName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("SiteId");
+
+                    b.ToTable("Sites", (string)null);
+                });
+
             modelBuilder.Entity("AuditService.Domain.Entities.AuditServiceEntity", b =>
                 {
                     b.HasOne("AuditService.Domain.Entities.Audit", "Audit")

@@ -27,10 +27,19 @@ public static class ServiceExtensions
     public static IServiceCollection AddMessagingServices(this IServiceCollection services, IConfiguration config)
     {
         if (!config.GetValue<bool>("RabbitMQ:Enabled"))
+        {
+            services.AddMassTransit(x =>
+            {
+                x.AddConsumer<UserCreatedConsumer>();
+                x.AddConsumer<UserDeactivatedConsumer>();
+                x.UsingInMemory((ctx, cfg) => cfg.ConfigureEndpoints(ctx));
+            });
+            services.AddTransient<INotificationHandler<UserCreatedEvent>, UserCreatedEventHandler>();
+            services.AddTransient<INotificationHandler<UserDeactivatedEvent>, UserDeactivatedEventHandler>();
             return services;
+        }
 
-        services.AddTransient<INotificationHandler<UserCreatedEvent>, UserCreatedEventHandler>();
-        services.AddTransient<INotificationHandler<UserDeactivatedEvent>, UserDeactivatedEventHandler>();
+        var virtualHost = config["RabbitMQ:VirtualHost"] ?? "/";
 
         services.AddMassTransit(x =>
         {
@@ -38,7 +47,7 @@ public static class ServiceExtensions
             x.AddConsumer<UserDeactivatedConsumer>();
             x.UsingRabbitMq((ctx, cfg) =>
             {
-                cfg.Host(config["RabbitMQ:Host"] ?? "localhost", h =>
+                cfg.Host(config["RabbitMQ:Host"] ?? "localhost", virtualHost, h =>
                 {
                     h.Username(config["RabbitMQ:Username"] ?? "guest");
                     h.Password(config["RabbitMQ:Password"] ?? "guest");
@@ -46,6 +55,8 @@ public static class ServiceExtensions
                 cfg.ConfigureEndpoints(ctx);
             });
         });
+        services.AddTransient<INotificationHandler<UserCreatedEvent>, UserCreatedEventHandler>();
+        services.AddTransient<INotificationHandler<UserDeactivatedEvent>, UserDeactivatedEventHandler>();
         return services;
     }
 

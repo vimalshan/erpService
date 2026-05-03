@@ -48,7 +48,7 @@ BEGIN
             @EndDate         = asa.EndDate,
             @LeadAuditorName = ISNULL(usr.Username, ''),
             @SiteName        = ISNULL(s.SiteName, ''),
-            @SiteLocation    = ISNULL(s.Location, '')
+            @SiteLocation    = ISNULL(s.Address, '')
         FROM AuditSiteAudits asa
         INNER JOIN Sites s          ON asa.SiteId        = s.SiteId
         LEFT JOIN  AuditTypes atype ON asa.AuditTypeId   = atype.AuditTypeId

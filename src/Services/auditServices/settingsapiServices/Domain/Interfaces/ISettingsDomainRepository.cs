@@ -16,4 +16,5 @@ public interface ISettingsDomainRepository
     Task<IEnumerable<UserPreference>> GetUserPreferencesAsync(int userId);
     Task<UserPreference> AddPreferenceAsync(UserPreference pref);
     Task UpdatePreferenceAsync(UserPreference pref);
+    Task<bool> DeactivateUserAsync(int userId, int? modifiedBy);
 }

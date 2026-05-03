@@ -2,6 +2,7 @@ using SettingsService.Domain.Entities;
 using SettingsService.Domain.Interfaces;
 using SettingsService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 
 namespace SettingsService.Infrastructure.Repositories;
 
@@ -61,5 +62,15 @@ public class EfSettingsDomainRepository : ISettingsDomainRepository
     public async Task UpdatePreferenceAsync(UserPreference pref)
     {
         _ctx.UserPreferences.Update(pref); await _ctx.SaveChangesAsync();
+    }
+
+    public async Task<bool> DeactivateUserAsync(int userId, int? modifiedBy)
+    {
+        var userIdParameter = new SqlParameter("@userId", userId);
+        var rowsAffected = await _ctx.Database.ExecuteSqlRawAsync(
+            "UPDATE [Users] SET [IsActive] = 0, [ModifiedDate] = GETUTCDATE() WHERE [UserId] = @userId AND [IsActive] = 1",
+            userIdParameter);
+
+        return rowsAffected > 0;
     }
 }

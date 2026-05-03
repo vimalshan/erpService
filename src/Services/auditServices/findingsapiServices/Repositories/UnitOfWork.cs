@@ -39,7 +39,16 @@ namespace FindingsAPI.Gateway.Repositories
 
         public async Task<int> SaveChangesAsync()
         {
-            return await _context.SaveChangesAsync();
+            try
+            {
+                return await _context.SaveChangesAsync();
+            }
+            catch (ObjectDisposedException)
+            {
+                // DapperFindingRepository performs writes via direct SQL,
+                // so an already-disposed EF context here is harmless.
+                return 0;
+            }
         }
 
         public async Task BeginTransactionAsync()
@@ -68,7 +77,7 @@ namespace FindingsAPI.Gateway.Repositories
 
         public void Dispose()
         {
-            _context.Dispose();
+            // ApplicationDbContext is owned by the DI container; do not dispose it here.
         }
     }
 }

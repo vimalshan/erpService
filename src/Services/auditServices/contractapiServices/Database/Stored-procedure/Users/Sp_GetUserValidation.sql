@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[Sp_GetUserValidation]
+CREATE OR ALTER PROCEDURE [dbo].[Sp_GetUserValidation]
     @userId     NVARCHAR(255) = NULL,
     @veracityId NVARCHAR(255) = NULL
 AS
@@ -7,13 +7,19 @@ BEGIN
     BEGIN TRY
         SELECT TOP 1
                CAST(u.IsActive AS BIT)        AS userIsActive,
-               ''                           AS termsAcceptanceRedirectUrl,
+               ''                            AS termsAcceptanceRedirectUrl,
                NULL                           AS policySubCode,
-               CASE WHEN u.Role = 'admin' THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS isDnvUser,
-               COALESCE(u.Email, '')        AS userEmail,
-               ''                           AS veracityId,
-               'en'                         AS portalLanguage,
-               CASE WHEN u.Role = 'admin' THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS isAdmin
+               CAST(ISNULL((SELECT MAX(CASE WHEN r.RoleCode = 'ADMIN' OR r.RoleName = 'admin' THEN 1 ELSE 0 END)
+                            FROM UserRoles ur
+                            INNER JOIN Roles r ON r.RoleId = ur.RoleId
+                            WHERE ur.UserId = u.UserId AND ur.IsActive = 1), 0) AS BIT) AS isDnvUser,
+               COALESCE(u.Email, '')         AS userEmail,
+               ''                            AS veracityId,
+               COALESCE(u.Language, 'en')    AS portalLanguage,
+               CAST(ISNULL((SELECT MAX(CASE WHEN r.RoleCode = 'ADMIN' OR r.RoleName = 'admin' THEN 1 ELSE 0 END)
+                            FROM UserRoles ur
+                            INNER JOIN Roles r ON r.RoleId = ur.RoleId
+                            WHERE ur.UserId = u.UserId AND ur.IsActive = 1), 0) AS BIT) AS isAdmin
         FROM   Users u
         WHERE  u.IsActive = 1
           AND  (

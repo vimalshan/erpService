@@ -55,11 +55,27 @@ builder.Services.AddGraphQLServer()
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
     .AddFiltering().AddSorting().AddProjections()
-    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment());
+    .AddErrorFilter<AuditService.GraphQL.GraphQLErrorFilter>()
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true);
 
 builder.Services.AddCors(o => o.AddPolicy("AllowAll", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
 var app = builder.Build();
+
+// Apply migrations and seed data on startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AuditService.Infrastructure.Data.AuditDomainDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        await AuditService.Infrastructure.Data.AuditDataSeeder.SeedAsync(db, logger);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Database seeding failed");
+    }
+}
 
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<GlobalExceptionMiddleware>();

@@ -26,6 +26,7 @@ using Polly;
 using Polly.Extensions.Http;
 using Serilog;
 using StackExchange.Redis;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -73,7 +74,7 @@ builder.Services
     //     .SetName("findings")
     //     .PublishToRedis("FindingsSchema", sp => sp.GetRequiredService<IConnectionMultiplexer>()))
     // .AddApolloTracing()
-    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment());
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true);
 
 // HTTP Clients with Polly policies - REMOVED: No longer needed as services now use database directly
 // builder.Services.AddHttpClient("FindingsService", client =>
@@ -140,23 +141,42 @@ builder.Services.AddAuthentication(options =>
 });
 
 // Authorization
+static bool HasAnyRole(ClaimsPrincipal user, params string[] allowedRoles)
+{
+    var normalizedRoles = allowedRoles.Select(role => role.ToUpperInvariant()).ToHashSet();
+    var roleClaimTypes = new[]
+    {
+        "role",
+        ClaimTypes.Role,
+        "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+    };
+
+    return user.Claims.Any(claim =>
+        roleClaimTypes.Contains(claim.Type) &&
+        normalizedRoles.Contains(claim.Value.ToUpperInvariant()));
+}
+
+static bool CanReadFindings(ClaimsPrincipal user)
+{
+    return user.Claims.Any(claim =>
+               claim.Type == "permissions" &&
+               claim.Value.Contains("findings:read", StringComparison.OrdinalIgnoreCase))
+           || HasAnyRole(user, "admin", "auditor");
+}
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy => 
-        policy.RequireClaim("role", "admin"));
+        policy.RequireAssertion(context => HasAnyRole(context.User, "admin")));
     
     options.AddPolicy("Auditor", policy => 
-        policy.RequireClaim("role", "auditor", "admin"));
+        policy.RequireAssertion(context => HasAnyRole(context.User, "auditor", "admin")));
     
     options.AddPolicy("User", policy => 
-        policy.RequireClaim("role", "user", "auditor", "admin"));
+        policy.RequireAssertion(context => HasAnyRole(context.User, "user", "auditor", "admin")));
     
-    // GraphQL specific policies
     options.AddPolicy("CanViewFindings", policy =>
-        policy.RequireAssertion(context =>
-            context.User.HasClaim(c => 
-                c.Type == "permissions" && 
-                c.Value.Contains("findings:read"))));
+        policy.RequireAssertion(context => CanReadFindings(context.User)));
 });
 
 // CORS

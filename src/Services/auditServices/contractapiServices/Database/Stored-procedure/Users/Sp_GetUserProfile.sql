@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[Sp_GetUserProfile]
+CREATE OR ALTER PROCEDURE [dbo].[Sp_GetUserProfile]
     @userId     NVARCHAR(255) = NULL,
     @veracityId NVARCHAR(255) = NULL
 AS
@@ -6,17 +6,17 @@ BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
         SELECT TOP 1
-               COALESCE(u.Username, '')  AS firstName,
-               ''                        AS lastName,
-               COALESCE(u.Username, '')  AS displayName,
+               COALESCE(u.FirstName, u.Username, '')  AS firstName,
+               COALESCE(u.LastName, '')               AS lastName,
+               COALESCE(NULLIF(LTRIM(RTRIM(CONCAT(u.FirstName, ' ', u.LastName))), ''), u.Username, '') AS displayName,
                ''                        AS country,
                ''                        AS countryCode,
                ''                        AS region,
                COALESCE(u.Email, '')     AS email,
-               NULL                        AS phone,
+               u.Phone                   AS phone,
                'English'                 AS communicationLanguage,
-               COALESCE(u.Role, '')      AS jobTitle,
-               'en'                      AS portalLanguage,
+               COALESCE(u.Position, '')  AS jobTitle,
+               COALESCE(u.Language, 'en') AS portalLanguage,
                ''                        AS veracityId
         FROM   Users u
         WHERE  u.IsActive = 1

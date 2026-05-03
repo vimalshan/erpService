@@ -1,53 +1,62 @@
-﻿CREATE PROCEDURE [dbo].[Sp_GetOverviewFinancialStatus]
+﻿-- =============================================
+-- Sp_GetOverviewFinancialStatus
+-- Returns counts and percentages of invoices grouped by Status.
+-- (Rewritten: original file had multiple syntax errors; the SP was
+-- not referenced in code but is now valid SQL for completeness.)
+-- =============================================
+CREATE PROCEDURE [dbo].[Sp_GetOverviewFinancialStatus]
 AS
 BEGIN
     SET NOCOUNT ON;
-    
+
     BEGIN TRY
-        -- Calculate financial status statistics
-        WITH FinancialStatusData AS SELECT CASE 
-                    WHEN f.PaymentStatus = 1 THEN 'Not Paid'
-                    WHEN f.PaymentStatus = 2 THEN 'Overdue'
-                    WHEN f.PaymentStatus = 3 THEN 'Paid'
-                    WHEN f.PaymentStatus = 4 THEN 'Partially Paid'
-                    ELSE 'Unknown'
-                END as FinancialStatus,
-                COUNT(*) as FinancialCount
-            FROM Financials f
-            WHERE f.PaymentStatus IS NOT NULL
-            GROUP BY f.PaymentStatus
+        ;WITH StatusData AS
+        (
+            SELECT
+                COALESCE(NULLIF(LTRIM(RTRIM(i.Status)), ''), 'Unknown') AS FinancialStatus,
+                COUNT(*) AS FinancialCount
+            FROM dbo.Invoices i
+            WHERE i.IsActive = 1
+            GROUP BY COALESCE(NULLIF(LTRIM(RTRIM(i.Status)), ''), 'Unknown')
         ),
-        TotalCount AS SELECT CAST(SUM(FinancialCount) AS FLOAT) as Total
-            FROM FinancialStatusData
+        TotalCount AS
+        (
+            SELECT CAST(SUM(FinancialCount) AS FLOAT) AS Total FROM StatusData
+        ),
+        Template AS
+        (
+                       SELECT 'Pending'        AS StatusName, 1 AS SortOrder
+            UNION ALL  SELECT 'Overdue'        AS StatusName, 2 AS SortOrder
+            UNION ALL  SELECT 'Paid'           AS StatusName, 3 AS SortOrder
+            UNION ALL  SELECT 'Partially Paid' AS StatusName, 4 AS SortOrder
         )
-        SELECT 
-            1 as isSuccess,
-            'Successfully retrieved the data.' as message,
-            SELECT COALESCE(fsd.FinancialStatus, status_template.StatusName) as financialStatus,
-                    COALESCE(fsd.FinancialCount, 0) as financialCount,
-                    CASE 
-                        WHEN tc.Total > 0 AND fsd.FinancialCount IS NOT NULL 
-                        THEN ROUND((CAST(fsd.FinancialCount AS FLOAT) / tc.Total) * 100, 1)
+        SELECT
+            CAST(1 AS BIT) AS isSuccess,
+            'Successfully retrieved the data.' AS message,
+            (
+                SELECT
+                    t.StatusName                                                                                          AS financialStatus,
+                    COALESCE(s.FinancialCount, 0)                                                                          AS financialCount,
+                    CASE
+                        WHEN tc.Total > 0 AND s.FinancialCount IS NOT NULL
+                        THEN ROUND((CAST(s.FinancialCount AS FLOAT) / tc.Total) * 100.0, 1)
                         ELSE 0.0
-                    END as financialpercentage FROM SELECT 'Not Paid' as StatusName, 1 as SortOrder
-                    UNION ALL
-                    SELECT 'Overdue' as StatusName, 2 as SortOrder
-                    UNION ALL
-                    SELECT 'Paid' as StatusName, 3 as SortOrder
-                    UNION ALL
-                    SELECT 'Partially Paid' as StatusName, 4 as SortOrder
-                ) status_template
+                    END                                                                                                    AS financialPercentage
+                FROM Template t
                 CROSS JOIN TotalCount tc
-                LEFT JOIN FinancialStatusData fsd ON fsd.FinancialStatus = status_template.StatusName
-                ORDER BY status_template.SortOrder
-            END TRY
+                LEFT JOIN StatusData s ON s.FinancialStatus = t.StatusName
+                ORDER BY t.SortOrder
+                FOR JSON PATH
+            ) AS data,
+            CAST(NULL AS NVARCHAR(50)) AS errorCode
+        FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
+    END TRY
     BEGIN CATCH
-        -- Handle any errors
-        SELECT 
-            0 as isSuccess,
-            ERROR_MESSAGE() as message,
-            'DATABASE_ERROR' as errorCode,
-            JSON_QUERY('[]'END CATCH
+        SELECT
+            CAST(0 AS BIT)                AS isSuccess,
+            ERROR_MESSAGE()               AS message,
+            'DATABASE_ERROR'              AS errorCode,
+            JSON_QUERY('[]')              AS data
+        FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
+    END CATCH
 END
-
-

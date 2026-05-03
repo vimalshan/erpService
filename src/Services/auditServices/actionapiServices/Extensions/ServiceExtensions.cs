@@ -41,6 +41,8 @@ public static class ServiceExtensions
         if (!configuration.GetValue<bool>("RabbitMQ:Enabled"))
             return services;
 
+        var virtualHost = configuration["RabbitMQ:VirtualHost"] ?? "/";
+
         services.AddMassTransit(x =>
         {
             x.AddConsumer<ActionCreatedConsumer>();
@@ -48,7 +50,7 @@ public static class ServiceExtensions
 
             x.UsingRabbitMq((context, cfg) =>
             {
-                cfg.Host(configuration["RabbitMQ:Host"], "/", h =>
+                cfg.Host(configuration["RabbitMQ:Host"], virtualHost, h =>
                 {
                     h.Username(configuration["RabbitMQ:Username"] ?? "guest");
                     h.Password(configuration["RabbitMQ:Password"] ?? "guest");

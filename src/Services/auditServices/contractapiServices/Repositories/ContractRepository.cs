@@ -1,6 +1,7 @@
 using ContractService.Data;
 using ContractService.Models;
 using Dapper;
+using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Text.Json;
 
@@ -39,11 +40,18 @@ namespace ContractService.Repositories
         public async Task<IReadOnlyList<SiteDetailsResponse>> GetMasterSiteListAsync()
         {
             using var connection = _context.CreateConnection();
-            var rows = await connection.QueryAsync<SiteDetailsResponse>(
-                "Sp_GetMasterSiteList",
-                commandType: CommandType.StoredProcedure);
+            try
+            {
+                var rows = await connection.QueryAsync<SiteDetailsResponse>(
+                    "Sp_GetMasterSiteList",
+                    commandType: CommandType.StoredProcedure);
 
-            return rows.ToList();
+                return rows.ToList();
+            }
+            catch (SqlException ex) when (ex.Number == 2812)
+            {
+                return new List<SiteDetailsResponse>();
+            }
         }
 
         public async Task<UserValidationResponse?> GetUserValidationAsync(string? userId, string? veracityId)

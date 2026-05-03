@@ -133,15 +133,29 @@ namespace FindingsAPI.Gateway.GraphQL.Mutations
                 FindingId = findingId,
                 ClosedBy = null
             };
-            
-            var closedFinding = await _findingService.CloseFindingAsync(command);
-            
-            return new CloseFindingPayload
+
+            try
             {
-                Finding = closedFinding,
-                Message = "Finding closed successfully",
-                Timestamp = DateTime.UtcNow
-            };
+                var closedFinding = await _findingService.CloseFindingAsync(command);
+
+                return new CloseFindingPayload
+                {
+                    Finding = closedFinding,
+                    Message = "Finding closed successfully",
+                    Timestamp = DateTime.UtcNow
+                };
+            }
+            catch (FindingNotFoundException ex)
+            {
+                _logger.LogInformation(ex, "GraphQL Mutation: CloseFinding {FindingId} not found", findingId);
+
+                return new CloseFindingPayload
+                {
+                    Finding = null,
+                    Message = ex.Message,
+                    Timestamp = DateTime.UtcNow
+                };
+            }
         }
 
         [GraphQLDescription("Bulk update findings status")]

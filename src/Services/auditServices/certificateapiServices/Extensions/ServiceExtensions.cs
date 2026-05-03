@@ -28,10 +28,12 @@ public static class ServiceExtensions
         if (!config.GetValue<bool>("RabbitMQ:Enabled"))
             return services;
 
+        var virtualHost = config["RabbitMQ:VirtualHost"] ?? "/";
+
         services.AddMassTransit(x =>
         {
             x.AddConsumer<CertificateIssuedConsumer>();
-            x.UsingRabbitMq((ctx, cfg) => { cfg.Host(config["RabbitMQ:Host"], "/", h => { h.Username(config["RabbitMQ:Username"] ?? "guest"); h.Password(config["RabbitMQ:Password"] ?? "guest"); }); cfg.ConfigureEndpoints(ctx); });
+            x.UsingRabbitMq((ctx, cfg) => { cfg.Host(config["RabbitMQ:Host"], virtualHost, h => { h.Username(config["RabbitMQ:Username"] ?? "guest"); h.Password(config["RabbitMQ:Password"] ?? "guest"); }); cfg.ConfigureEndpoints(ctx); });
         });
         return services;
     }

@@ -91,7 +91,11 @@ public class ChangeAuditStatusHandler : IRequestHandler<ChangeAuditStatusCommand
     public async Task<bool> Handle(ChangeAuditStatusCommand request, CancellationToken ct)
     {
         var entity = await _repository.GetByIdAsync(request.AuditId, ct)
-            ?? throw new System.Collections.Generic.KeyNotFoundException($"Audit {request.AuditId} not found");
+            ;
+        if (entity == null)
+        {
+            return false;
+        }
         entity.ChangeStatus(request.NewStatus);
         await _repository.UpdateAsync(entity, ct);
 

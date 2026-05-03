@@ -122,7 +122,7 @@ BEGIN
         SELECT '{"isSuccess":true,"message":"Success","errorCode":null,"data":' + @Results + '}' AS JsonResponse;
     END TRY
     BEGIN CATCH
-        INSERT INTO ErrorLogs (UserId, ErrorMessage, StackTrace, CreatedDate)
+        INSERT INTO ErrorLogs (UserId, ErrorMessage, StackTrace, CreatedAt)
         VALUES (@UserId, ERROR_MESSAGE(), CONCAT('Procedure: Sp_GetAuditSchedules, Line: ', ERROR_LINE()), GETDATE());
         SELECT '{"isSuccess":false,"message":"An error occurred retrieving audit schedules.","errorCode":"SERVER_ERROR","data":null}' AS JsonResponse;
     END CATCH
