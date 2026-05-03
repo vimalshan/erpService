@@ -1,5 +1,6 @@
 using SettingsService.Data;
 using SettingsService.Extensions;
+using SettingsService.Infrastructure.Data;
 using SettingsService.GraphQL.Mutations;
 using SettingsService.GraphQL.Queries;
 using SettingsService.Middleware;
@@ -58,6 +59,13 @@ builder.Services.AddGraphQLServer()
 builder.Services.AddCors(o => o.AddPolicy("AllowAll", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
 var app = builder.Build();
+
+// Auto-migrate SettingsDomainDbContext on startup (Users, Roles, UserRoles, UserPreferences)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<SettingsDomainDbContext>();
+    db.Database.Migrate();
+}
 
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<GlobalExceptionMiddleware>();

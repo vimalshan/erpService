@@ -81,6 +81,13 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+// Auto-migrate on startup (creates WidgetConfigs table if not present)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<OverviewDbContext>();
+    db.Database.Migrate();
+}
+
 // Middleware pipeline
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();

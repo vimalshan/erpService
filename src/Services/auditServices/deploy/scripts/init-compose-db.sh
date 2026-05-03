@@ -15,6 +15,21 @@ else
   exit 1
 fi
 
+# Wait for SQL Server to accept connections and finish recovery
+echo "Waiting for SQL Server to be fully ready..."
+max_retries=40
+attempt=0
+until "$SQLCMD_BIN" -S "$SQL_HOST" -U sa -P "$SA_PASSWORD" -Q "SELECT name FROM sys.databases WHERE name = 'master'" -C -b > /dev/null 2>&1; do
+  attempt=$((attempt + 1))
+  if [ $attempt -ge $max_retries ]; then
+    echo "SQL Server did not become available after $max_retries attempts" >&2
+    exit 1
+  fi
+  echo "SQL Server not ready (attempt $attempt/$max_retries), retrying in 5s..."
+  sleep 5
+done
+echo "SQL Server is ready"
+
 run_sql_file() {
   local database="$1"
   local file_path="$2"
@@ -107,7 +122,10 @@ apply_sql_tree() {
 recreate_database() {
   local database="$1"
   echo "Recreating database $database"
-  run_sql_query master "IF DB_ID(N'$database') IS NOT NULL BEGIN ALTER DATABASE [$database] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [$database]; END; CREATE DATABASE [$database];"
+  # DROP in a separate call so SQL Server has time to release file handles before CREATE
+  run_sql_query master "IF DB_ID(N'$database') IS NOT NULL BEGIN ALTER DATABASE [$database] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [$database]; END;"
+  sleep 2
+  run_sql_query master "CREATE DATABASE [$database];"
 }
 
 apply_service_schema() {
@@ -140,9 +158,11 @@ apply_service_schema "ERPActionDB" "$SCRIPT_ROOT/actionapiServices"
 apply_service_schema "ERPAuditDB" "$SCRIPT_ROOT/auditapiServices"
 apply_service_schema "ERPCertificateDB" "$SCRIPT_ROOT/certificateapiServices"
 apply_service_schema "ERPContractDB" "$SCRIPT_ROOT/contractapiServices"
+apply_service_schema "ERPDocumentsDB" "$SCRIPT_ROOT/documentsapiServices"
 apply_service_schema "ERPFinanceDB" "$SCRIPT_ROOT/financeapiServices"
 apply_service_schema "ERPFindingsDB" "$SCRIPT_ROOT/findingsapiServices"
 apply_service_schema "ERPNotificationDB" "$SCRIPT_ROOT/notificationapiServices"
+apply_service_schema "ERPOverviewDB" "$SCRIPT_ROOT/overviewapiServices"
 apply_service_schema "ERPScheduleDB" "$SCRIPT_ROOT/scheduleapiServices"
 apply_service_schema "ERPSettingsDB" "$SCRIPT_ROOT/settingsapiServices"
 
